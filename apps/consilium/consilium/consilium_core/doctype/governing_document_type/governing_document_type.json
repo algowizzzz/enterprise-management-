@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:document_type_code",
+ "creation": "2026-09-17 21:54:49.356114",
+ "description": "Policy, standard, procedure, guideline and so on.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "document_type_code",
+  "document_type_name",
+  "description",
+  "is_active",
+  "requires_committee_approval"
+ ],
+ "fields": [
+  {
+   "description": "Stable identifier. Used by integrations and imports; do not reuse a retired code.",
+   "fieldname": "document_type_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "document_type_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "default": "1",
+   "description": "Inactive values stay on historical records but are not offered for new ones.",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_committee_approval",
+   "fieldtype": "Check",
+   "label": "Requires Committee Approval"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 21:54:49.356123",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Governing Document Type",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Taxonomy Administrator",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "search_fields": "document_type_name,document_type_code",
+ "sort_field": "document_type_name",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "document_type_name",
+ "track_changes": 1
+}

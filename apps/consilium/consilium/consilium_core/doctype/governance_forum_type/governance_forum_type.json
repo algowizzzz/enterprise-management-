@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:forum_type_code",
+ "creation": "2026-09-17 21:54:49.355792",
+ "description": "Committee, council, oversight body and any other forum kind the organisation recognises.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "forum_type_code",
+  "forum_type_name",
+  "description",
+  "is_active",
+  "definition"
+ ],
+ "fields": [
+  {
+   "description": "Stable identifier. Used by integrations and imports; do not reuse a retired code.",
+   "fieldname": "forum_type_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "forum_type_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "default": "1",
+   "description": "Inactive values stay on historical records but are not offered for new ones.",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "description": "Shown in the user guide so a requester can tell forum types apart.",
+   "fieldname": "definition",
+   "fieldtype": "Text",
+   "label": "Definition"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 21:54:49.355803",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Governance Forum Type",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Taxonomy Administrator",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "search_fields": "forum_type_name,forum_type_code",
+ "sort_field": "forum_type_name",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "forum_type_name",
+ "track_changes": 1
+}

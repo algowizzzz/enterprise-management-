@@ -1,0 +1,68 @@
+{
+  "name": "Horizon Scanning Coverage Area",
+  "module": "Consilium Core",
+  "description": "The areas a periodic horizon scan is expected to cover.",
+  "autoname": "field:coverage_area_code",
+  "allow_rename": 1,
+  "title_field": "coverage_area_name",
+  "search_fields": "coverage_area_name,coverage_area_code",
+  "sort_field": "coverage_area_name",
+  "sort_order": "ASC",
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "coverage_area_code",
+      "fieldtype": "Data",
+      "label": "Code",
+      "reqd": 1,
+      "unique": 1,
+      "description": "Stable identifier. Used by integrations and imports; do not reuse a retired code."
+    },
+    {
+      "fieldname": "coverage_area_name",
+      "fieldtype": "Data",
+      "label": "Name",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1,
+      "description": "Inactive values stay on historical records but are not offered for new ones."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Taxonomy Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "All",
+      "read": 1
+    }
+  ]
+}

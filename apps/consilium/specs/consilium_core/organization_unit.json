@@ -1,0 +1,116 @@
+{
+  "name": "Organization Unit",
+  "module": "Consilium Core",
+  "description": "The organisational hierarchy. A tree, because ownership is recorded at different levels.",
+  "autoname": "field:org_unit_code",
+  "allow_rename": 1,
+  "title_field": "org_unit_name",
+  "search_fields": "org_unit_name,org_unit_code",
+  "sort_field": "org_unit_name",
+  "sort_order": "ASC",
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "org_unit_code",
+      "fieldtype": "Data",
+      "label": "Code",
+      "reqd": 1,
+      "unique": 1,
+      "description": "Stable identifier. Used by integrations and imports; do not reuse a retired code."
+    },
+    {
+      "fieldname": "org_unit_name",
+      "fieldtype": "Data",
+      "label": "Name",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1,
+      "description": "Inactive values stay on historical records but are not offered for new ones."
+    },
+    {
+      "fieldname": "parent_org_unit",
+      "fieldtype": "Link",
+      "label": "Parent",
+      "options": "Organization Unit",
+      "ignore_user_permissions": 1
+    },
+    {
+      "fieldname": "is_group",
+      "fieldtype": "Check",
+      "label": "Is Group",
+      "default": "0"
+    },
+    {
+      "fieldname": "lft",
+      "fieldtype": "Int",
+      "label": "lft",
+      "hidden": 1,
+      "no_copy": 1,
+      "print_hide": 1
+    },
+    {
+      "fieldname": "rgt",
+      "fieldtype": "Int",
+      "label": "rgt",
+      "hidden": 1,
+      "no_copy": 1,
+      "print_hide": 1
+    },
+    {
+      "fieldname": "old_parent",
+      "fieldtype": "Link",
+      "label": "Old Parent",
+      "options": "Organization Unit",
+      "hidden": 1,
+      "no_copy": 1,
+      "print_hide": 1
+    },
+    {
+      "fieldname": "unit_level",
+      "fieldtype": "Select",
+      "label": "Level",
+      "options": "Operating Group\nCorporate Support\nLine of Business\nBusiness Unit",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Taxonomy Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "All",
+      "read": 1
+    }
+  ],
+  "is_tree": 1,
+  "nsm_parent_field": "parent_org_unit"
+}

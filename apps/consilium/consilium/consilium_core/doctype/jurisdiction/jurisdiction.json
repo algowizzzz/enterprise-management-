@@ -1,0 +1,138 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:jurisdiction_code",
+ "creation": "2026-09-17 21:54:49.356629",
+ "description": "Regulatory jurisdictions used for applicability and for tagging.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "jurisdiction_code",
+  "jurisdiction_name",
+  "description",
+  "is_active",
+  "parent_jurisdiction",
+  "is_group",
+  "lft",
+  "rgt",
+  "old_parent",
+  "jurisdiction_level"
+ ],
+ "fields": [
+  {
+   "description": "Stable identifier. Used by integrations and imports; do not reuse a retired code.",
+   "fieldname": "jurisdiction_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "jurisdiction_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "default": "1",
+   "description": "Inactive values stay on historical records but are not offered for new ones.",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "parent_jurisdiction",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Parent",
+   "options": "Jurisdiction"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "lft",
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "rgt",
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Old Parent",
+   "no_copy": 1,
+   "options": "Jurisdiction",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "jurisdiction_level",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Level",
+   "options": "International\nFederal\nProvincial or State\nMunicipal"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_tree": 1,
+ "links": [],
+ "modified": "2026-09-17 21:54:49.356637",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Jurisdiction",
+ "nsm_parent_field": "parent_jurisdiction",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Taxonomy Administrator",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "search_fields": "jurisdiction_name,jurisdiction_code",
+ "sort_field": "jurisdiction_name",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "jurisdiction_name",
+ "track_changes": 1
+}

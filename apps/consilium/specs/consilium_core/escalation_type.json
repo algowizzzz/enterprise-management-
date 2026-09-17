@@ -1,0 +1,68 @@
+{
+  "name": "Escalation Type",
+  "module": "Consilium Core",
+  "description": "The kinds of matter that can be escalated. Drives which template is used.",
+  "autoname": "field:escalation_type_code",
+  "allow_rename": 1,
+  "title_field": "escalation_type_name",
+  "search_fields": "escalation_type_name,escalation_type_code",
+  "sort_field": "escalation_type_name",
+  "sort_order": "ASC",
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "escalation_type_code",
+      "fieldtype": "Data",
+      "label": "Code",
+      "reqd": 1,
+      "unique": 1,
+      "description": "Stable identifier. Used by integrations and imports; do not reuse a retired code."
+    },
+    {
+      "fieldname": "escalation_type_name",
+      "fieldtype": "Data",
+      "label": "Name",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1,
+      "description": "Inactive values stay on historical records but are not offered for new ones."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Taxonomy Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "All",
+      "read": 1
+    }
+  ]
+}

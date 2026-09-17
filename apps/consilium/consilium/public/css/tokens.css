@@ -1,0 +1,280 @@
+/* ==========================================================================
+   Design tokens
+   --------------------------------------------------------------------------
+   Every visual constant in the portal lives here. Changing a palette is a
+   change to this file only; no other stylesheet hard-codes a colour.
+
+   Naming is deliberately generic and functional (surface / text / border /
+   primary / semantic) so the tokens carry no product or organisation
+   identity and can be re-pointed without renaming anything downstream.
+
+   Structure
+     1. Non-themed primitives  (spacing, radius, type scale, motion, z-index)
+     2. Light theme values     (:root, and [data-theme="light"])
+     3. Dark theme values      ([data-theme="dark"])
+
+   Themes are selected by the `data-theme` attribute on <html>. The attribute
+   is written by the theme controller in consilium.js before first paint.
+   ========================================================================== */
+
+:root {
+  /* --- Typography ------------------------------------------------------ */
+  /* The single knob the font-size control turns. Everything type-related is
+     expressed in rem, so changing this one value rescales the whole page
+     coherently: text, gutters that use the type scale, and control heights. */
+  --cns-font-root: 16px;
+
+  --cns-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --cns-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* Modular type scale (ratio ~1.2), all relative to --cns-font-root. */
+  --cns-text-2xs: 0.694rem;
+  --cns-text-xs: 0.75rem;
+  --cns-text-sm: 0.875rem;
+  --cns-text-md: 1rem;
+  --cns-text-lg: 1.125rem;
+  --cns-text-xl: 1.375rem;
+  --cns-text-2xl: 1.75rem;
+  --cns-text-3xl: 2.125rem;
+
+  --cns-weight-normal: 400;
+  --cns-weight-medium: 500;
+  --cns-weight-semibold: 600;
+  --cns-weight-bold: 700;
+
+  --cns-leading-tight: 1.25;
+  --cns-leading-normal: 1.5;
+  --cns-leading-loose: 1.7;
+
+  --cns-tracking-wide: 0.02em;
+  --cns-tracking-caps: 0.06em;
+
+  /* --- Spacing scale (4px base at the default root size) --------------- */
+  --cns-space-0: 0;
+  --cns-space-1: 0.25rem;
+  --cns-space-2: 0.5rem;
+  --cns-space-3: 0.75rem;
+  --cns-space-4: 1rem;
+  --cns-space-5: 1.5rem;
+  --cns-space-6: 2rem;
+  --cns-space-7: 3rem;
+  --cns-space-8: 4rem;
+
+  /* --- Radius ---------------------------------------------------------- */
+  --cns-radius-xs: 2px;
+  --cns-radius-sm: 4px;
+  --cns-radius-md: 6px;
+  --cns-radius-lg: 10px;
+  --cns-radius-pill: 999px;
+
+  /* --- Borders --------------------------------------------------------- */
+  --cns-border-width: 1px;
+  --cns-border-width-thick: 2px;
+  --cns-focus-ring-width: 3px;
+
+  /* --- Motion ---------------------------------------------------------- */
+  --cns-transition-fast: 90ms ease;
+  --cns-transition-base: 160ms ease;
+
+  /* --- Layout ---------------------------------------------------------- */
+  --cns-container-max: 1320px;
+  --cns-header-height: 3.5rem;
+
+  /* --- Stacking -------------------------------------------------------- */
+  --cns-z-header: 1030;
+  --cns-z-dropdown: 1040;
+  --cns-z-toast: 1080;
+
+  /* ====================================================================
+     Light theme — professional corporate palette on a deep navy primary.
+     Also the fallback when no data-theme attribute is present.
+     ==================================================================== */
+
+  /* Primary ramp: deep navy */
+  --cns-primary-050: #eef2f8;
+  --cns-primary-100: #d6e0ee;
+  --cns-primary-200: #adc0dc;
+  --cns-primary-300: #7d97c0;
+  --cns-primary-400: #4e6a99;
+  --cns-primary-500: #2d4a77;
+  --cns-primary-600: #1d3557;
+  --cns-primary-700: #172a45;
+  --cns-primary-800: #111f33;
+  --cns-primary-900: #0b1524;
+
+  --cns-primary: var(--cns-primary-600);
+  --cns-primary-hover: var(--cns-primary-700);
+  --cns-primary-active: var(--cns-primary-800);
+  --cns-primary-subtle: var(--cns-primary-050);
+  --cns-primary-subtle-border: var(--cns-primary-200);
+  --cns-on-primary: #ffffff;
+
+  /* Accent — used sparingly for secondary emphasis, never for status. */
+  --cns-accent: #0f6c8c;
+  --cns-accent-subtle: #e4f1f6;
+  --cns-on-accent: #ffffff;
+
+  /* Surfaces */
+  --cns-surface-page: #f4f6f9;
+  --cns-surface: #ffffff;
+  --cns-surface-raised: #ffffff;
+  --cns-surface-sunken: #eef1f5;
+  --cns-surface-muted: #f8f9fb;
+  --cns-surface-hover: #eef2f7;
+  --cns-surface-selected: var(--cns-primary-050);
+  --cns-surface-inverse: var(--cns-primary-800);
+  --cns-overlay: rgba(11, 21, 36, 0.45);
+
+  /* Text */
+  --cns-text: #16202e;
+  --cns-text-secondary: #46536b;
+  --cns-text-muted: #66738c;
+  --cns-text-disabled: #97a1b3;
+  --cns-text-inverse: #f4f6f9;
+  --cns-text-link: var(--cns-primary-500);
+  --cns-text-link-hover: var(--cns-primary-700);
+
+  /* Borders */
+  --cns-border: #d7dde7;
+  --cns-border-strong: #b6c0ce;
+  --cns-border-subtle: #e6eaf1;
+  --cns-divider: #e6eaf1;
+
+  /* Semantic status — background / border / foreground triplets so a status
+     pill in either theme is one token lookup and always contrast-safe. */
+  --cns-success: #1f7a45;
+  --cns-success-bg: #e6f4ec;
+  --cns-success-border: #a8d6bc;
+  --cns-success-fg: #135c32;
+
+  --cns-warning: #8a5a00;
+  --cns-warning-bg: #fdf3e0;
+  --cns-warning-border: #e8cd96;
+  --cns-warning-fg: #6b4500;
+
+  --cns-danger: #a32323;
+  --cns-danger-bg: #fbeaea;
+  --cns-danger-border: #e6b0b0;
+  --cns-danger-fg: #831c1c;
+
+  --cns-info: #10567a;
+  --cns-info-bg: #e6f1f7;
+  --cns-info-border: #a9cbde;
+  --cns-info-fg: #0d4560;
+
+  --cns-neutral: #4f5b70;
+  --cns-neutral-bg: #eef0f4;
+  --cns-neutral-border: #ccd3de;
+  --cns-neutral-fg: #3c4759;
+
+  /* Focus */
+  --cns-focus-ring: rgba(45, 74, 119, 0.45);
+  --cns-focus-ring-contrast: #2d4a77;
+
+  /* Elevation */
+  --cns-shadow-xs: 0 1px 1px rgba(16, 27, 43, 0.05);
+  --cns-shadow-sm: 0 1px 3px rgba(16, 27, 43, 0.08), 0 1px 2px rgba(16, 27, 43, 0.06);
+  --cns-shadow-md: 0 4px 10px rgba(16, 27, 43, 0.09), 0 1px 3px rgba(16, 27, 43, 0.06);
+  --cns-shadow-lg: 0 12px 28px rgba(16, 27, 43, 0.14);
+
+  /* Skeleton / loading shimmer */
+  --cns-skeleton-base: #e6eaf1;
+  --cns-skeleton-sheen: #f3f6fa;
+
+  color-scheme: light;
+}
+
+/* Explicit light selection (user chose light while the OS prefers dark). */
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* ======================================================================
+   Dark theme — dark navy ground, same token names, re-pointed values.
+   ====================================================================== */
+[data-theme="dark"] {
+  --cns-primary-050: #101d31;
+  --cns-primary-100: #16273f;
+  --cns-primary-200: #1e3452;
+  --cns-primary-300: #2c4a72;
+  --cns-primary-400: #40679a;
+  --cns-primary-500: #6c93c4;
+  --cns-primary-600: #8fb0da;
+  --cns-primary-700: #b2caea;
+  --cns-primary-800: #d3e1f5;
+  --cns-primary-900: #eaf1fb;
+
+  --cns-primary: #7ea7d8;
+  --cns-primary-hover: #9cbde5;
+  --cns-primary-active: #b8d1ef;
+  --cns-primary-subtle: #16273f;
+  --cns-primary-subtle-border: #2b4468;
+  --cns-on-primary: #0a1220;
+
+  --cns-accent: #63b6d4;
+  --cns-accent-subtle: #10303c;
+  --cns-on-accent: #071318;
+
+  --cns-surface-page: #0a1220;
+  --cns-surface: #111c2e;
+  --cns-surface-raised: #16243a;
+  --cns-surface-sunken: #0d1728;
+  --cns-surface-muted: #142034;
+  --cns-surface-hover: #1b2b44;
+  --cns-surface-selected: #1c3151;
+  --cns-surface-inverse: #e8edf5;
+  --cns-overlay: rgba(4, 8, 15, 0.66);
+
+  --cns-text: #e8edf5;
+  --cns-text-secondary: #b7c2d4;
+  --cns-text-muted: #94a2b8;
+  --cns-text-disabled: #6a788f;
+  --cns-text-inverse: #0a1220;
+  --cns-text-link: #8fb6e2;
+  --cns-text-link-hover: #b3cdee;
+
+  --cns-border: #27364f;
+  --cns-border-strong: #3b4d6c;
+  --cns-border-subtle: #1c2940;
+  --cns-divider: #1c2940;
+
+  --cns-success: #5cbb85;
+  --cns-success-bg: #10281c;
+  --cns-success-border: #27523a;
+  --cns-success-fg: #86d3a7;
+
+  --cns-warning: #dca34f;
+  --cns-warning-bg: #2c2210;
+  --cns-warning-border: #57431c;
+  --cns-warning-fg: #edc37c;
+
+  --cns-danger: #e5766f;
+  --cns-danger-bg: #2e1413;
+  --cns-danger-border: #5a2724;
+  --cns-danger-fg: #f0a09a;
+
+  --cns-info: #6cb2d8;
+  --cns-info-bg: #102532;
+  --cns-info-border: #244a61;
+  --cns-info-fg: #97cbe8;
+
+  --cns-neutral: #9aa8bf;
+  --cns-neutral-bg: #1a2740;
+  --cns-neutral-border: #30405c;
+  --cns-neutral-fg: #b9c5d8;
+
+  --cns-focus-ring: rgba(143, 182, 226, 0.55);
+  --cns-focus-ring-contrast: #8fb6e2;
+
+  --cns-shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.4);
+  --cns-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --cns-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --cns-shadow-lg: 0 16px 34px rgba(0, 0, 0, 0.6);
+
+  --cns-skeleton-base: #1a2740;
+  --cns-skeleton-sheen: #24354f;
+
+  color-scheme: dark;
+}
