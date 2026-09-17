@@ -52,9 +52,9 @@ Status: **✅ done and verified** · **◑ partial** · **○ not started**
 
 | | Item | Notes |
 |---|---|---|
-| ◑ | Long-running service configuration | Documented, not scripted. A service wrapper for each platform is still to do. |
-| ◑ | Backup and restore | The framework's own commands work; a restore into an empty database has not been rehearsed end to end. **Taking a backup is not evidence; restoring one is.** |
-| ○ | Log and metric guidance | No stated list of what to watch. |
+| ◑ | Long-running service configuration | Documented in `docs/OPERATIONS.md`, including which of the three processes does what and what breaks without each. Service definitions for systemd and Windows are still to write. |
+| ✅ | Backup and restore | Rehearsed end to end: backup taken, restored into a **different, empty** database, verified by row count and by the health check on the restored site. Procedure in `docs/OPERATIONS.md`. Scheduling it is still the operator's job. |
+| ◑ | Log and metric guidance | `docs/OPERATIONS.md` says what to watch; nothing collects or alerts on it yet. |
 | ○ | Certificate, port and service-account guidance | Deferred by direction. Must be closed before go-live. |
 
 ## 5. Understanding it
@@ -78,8 +78,11 @@ Status: **✅ done and verified** · **◑ partial** · **○ not started**
    There is no basis for assuming the known list is complete. This is the single
    largest unknown and it can only be closed on the target.
 
-2. **Restore has not been rehearsed.** Backups are taken. Whether they restore
-   is a different question and an untested backup is not a backup.
+2. ~~**Restore has not been rehearsed.**~~ **Done.** A backup was taken,
+   restored into a separate empty database, and verified by row count and by the
+   health check. The procedure is in `docs/OPERATIONS.md`. What remains is
+   scheduling backups and rehearsing the restore quarterly, both of which are
+   operational habits rather than engineering work.
 
 3. **Certificates, ports and service accounts are undecided.** Deferred by
    direction, and correctly so at this stage — but nothing can go live until
