@@ -36,10 +36,50 @@ So this repository also contains the **platform port**: Frappe running
 **natively on Windows, on PostgreSQL**, with no WSL, no Docker, no supervisor,
 no nginx and no gunicorn. The same tree runs unchanged on Linux.
 
-**Status: working, and never yet run on a real Windows machine.** Everything was
-verified on Linux; Windows paths are covered by tests that simulate Windows.
-Running it on a managed corporate Windows laptop is the first job. See
-[`HANDOVER.md`](HANDOVER.md) §4.
+---
+
+## Current state
+
+What is built and verified, and what is not. Everything in the first list was
+run, not reasoned about.
+
+**Verified working**
+
+- **The application.** 57 entities in the shared Core module, with the engines
+  the three business modules depend on: document versioning and revert,
+  attestation, retention and legal hold, the classification rules engine,
+  notifications, imports and SLA timing. 293 tests pass against a real
+  PostgreSQL database.
+- **Offline installation.** A single bundle carries every dependency as a built
+  wheel, the framework, the application, prebuilt front-end assets and the
+  installation tooling. It has been installed into a clean target **with every
+  proxy variable pointed at a dead port**, so nothing could have reached the
+  network. 15/15 health checks pass, the site serves, and all 44 asset bundles
+  the interface references return 200.
+- **Backup and restore.** Rehearsed: a backup taken, restored into a separate
+  empty database, and verified by row count and by the health check on the
+  restored site.
+- **The interface foundation.** Design tokens, light and dark themes, a
+  text-size control, and a table component doing pagination, sorting and search
+  in the database rather than the browser. Verified in a real browser.
+- **The platform rules**, enforced by a check that fails the build: no CDN
+  reference, no package manager in the build, vendored files matching their
+  checksums, no client-identifying content, and no business logic branching on a
+  workflow state name.
+
+**Not yet done**
+
+- The three business modules are in progress; Core is complete.
+- The screens are not built. The foundation they sit on is.
+- No migration rehearsal on a target server. The framework describes its
+  PostgreSQL support as second-class in this major version and three divergences
+  between the two database backends are already known; there is no basis for
+  assuming that list is complete. **This is the largest remaining unknown** and
+  it can only be closed on the target.
+- No load rehearsal, and no measured accessibility contrast audit.
+- Certificates, ports and service accounts are undecided.
+
+`docs/delivery/DEPLOYMENT-READINESS.md` is the full checklist.
 
 ---
 
