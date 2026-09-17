@@ -1,0 +1,119 @@
+{
+  "name": "Escalation Closure",
+  "module": "Escalation",
+  "description": "The recorded outcome of an escalation matter (E-10, E17-S3). A matter cannot reach a closed state without one.",
+  "autoname": "ESCC-.#####",
+  "naming_rule": "Expression (old style)",
+  "title_field": "escalation_matter",
+  "search_fields": "escalation_matter,closure_type",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Escalation Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "share": 1,
+      "email": 1
+    },
+    {
+      "role": "Escalation Reviewer",
+      "read": 1,
+      "write": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "fields": [
+    {
+      "fieldname": "escalation_matter",
+      "fieldtype": "Link",
+      "label": "Escalation Matter",
+      "options": "Escalation Matter",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1,
+      "description": "One closure per matter; the uniqueness is also a partial unique index."
+    },
+    {
+      "fieldname": "closure_type",
+      "fieldtype": "Select",
+      "label": "Closure Type",
+      "reqd": 1,
+      "in_list_view": 1,
+      "options": "Resolved\nRisk Accepted\nTransferred Externally\nNo Action Required"
+    },
+    {
+      "fieldname": "closure_summary",
+      "fieldtype": "Text",
+      "label": "Closure Summary",
+      "reqd": 1,
+      "description": "The recorded outcome. E17-S3: closure requires one."
+    },
+    {
+      "fieldname": "criteria_met",
+      "fieldtype": "Table",
+      "label": "Criteria",
+      "options": "Closure Criterion"
+    },
+    {
+      "fieldname": "evidence",
+      "fieldtype": "Attach",
+      "label": "Evidence"
+    },
+    {
+      "fieldname": "approved_by",
+      "fieldtype": "Link",
+      "label": "Approved By",
+      "options": "User"
+    },
+    {
+      "fieldname": "approved_on",
+      "fieldtype": "Datetime",
+      "label": "Approved On"
+    },
+    {
+      "fieldname": "external_reference",
+      "fieldtype": "Link",
+      "label": "External Reference",
+      "options": "External Reference",
+      "description": "Required where the closure type transfers tracking to an external system of record."
+    },
+    {
+      "fieldname": "sensitive",
+      "fieldtype": "Check",
+      "label": "Sensitive",
+      "read_only": 1,
+      "default": "0"
+    }
+  ]
+}

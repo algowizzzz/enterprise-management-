@@ -1,0 +1,453 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 0,
+ "autoname": "ESC-.YYYY.-.#####",
+ "creation": "2026-09-17 22:47:49.024783",
+ "description": "A specific issue raised through the escalation process for decision at a defined authority level (02-data-model.md \u00a78.2). The field set is the source template appendix, verbatim and therefore authoritative.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "escalation_id",
+  "escalation_title",
+  "escalation_type",
+  "escalation_template",
+  "escalation_identification_date",
+  "escalation_date",
+  "description",
+  "tier_1_risk_type",
+  "tier_2_risk_type",
+  "impacted_entities",
+  "identified_by",
+  "organizational_level",
+  "accountable_executive",
+  "response_owner",
+  "escalation_trigger",
+  "severity",
+  "severity_source",
+  "escalation_matrix",
+  "matched_matrix_rule",
+  "governance_forums",
+  "material_entity_impact",
+  "risk_appetite_breach",
+  "risk_appetite_reference",
+  "related_risk_reference",
+  "source_policy_violation",
+  "sensitive",
+  "status",
+  "workflow_state",
+  "is_editable",
+  "is_active",
+  "is_open",
+  "requires_review",
+  "is_committable",
+  "requires_statement",
+  "external_reference",
+  "opened_on",
+  "closed_on",
+  "response_template_completed",
+  "retention_class",
+  "sla_definition",
+  "sla_clock",
+  "threshold_breached",
+  "breach_count",
+  "last_breach_on",
+  "auto_escalated",
+  "reviews"
+ ],
+ "fields": [
+  {
+   "description": "The quotable identifier. Assigned from the record's key on first save.",
+   "fieldname": "escalation_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Escalation ID",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "escalation_title",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "label": "Escalation Title",
+   "reqd": 1
+  },
+  {
+   "description": "Drives the template and, with severity, the required-field set.",
+   "fieldname": "escalation_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Escalation Type",
+   "options": "Escalation Type",
+   "reqd": 1
+  },
+  {
+   "description": "Resolved from the type on validate; overridable.",
+   "fieldname": "escalation_template",
+   "fieldtype": "Link",
+   "label": "Escalation Template",
+   "options": "Escalation Template"
+  },
+  {
+   "description": "When the matter was identified. Distinct from the escalation date below.",
+   "fieldname": "escalation_identification_date",
+   "fieldtype": "Date",
+   "label": "Identification Date",
+   "reqd": 1
+  },
+  {
+   "description": "When it was escalated. A separate field, per the template appendix.",
+   "fieldname": "escalation_date",
+   "fieldtype": "Date",
+   "label": "Escalation Date"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tier_1_risk_type",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Tier 1 Risk Type",
+   "options": "Risk Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tier_2_risk_type",
+   "fieldtype": "Link",
+   "label": "Tier 2 Risk Type",
+   "options": "Risk Type"
+  },
+  {
+   "fieldname": "impacted_entities",
+   "fieldtype": "Table",
+   "label": "Impacted Entities",
+   "options": "Escalation Impacted Entity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "identified_by",
+   "fieldtype": "Link",
+   "label": "Identified By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organizational_level",
+   "fieldtype": "Link",
+   "label": "Organizational Level",
+   "options": "Organizational Level",
+   "reqd": 1
+  },
+  {
+   "fieldname": "accountable_executive",
+   "fieldtype": "Link",
+   "label": "Accountable Executive",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_owner",
+   "fieldtype": "Link",
+   "label": "Response Owner",
+   "options": "User"
+  },
+  {
+   "fieldname": "escalation_trigger",
+   "fieldtype": "Data",
+   "label": "Escalation Trigger",
+   "reqd": 1
+  },
+  {
+   "default": "Medium",
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Severity",
+   "options": "High\nMedium\nLow",
+   "reqd": 1
+  },
+  {
+   "default": "Matrix",
+   "description": "[Inferred \u2014 \u00a711.] Manual Override keeps a person's severity; Matrix lets the matrix resolve it.",
+   "fieldname": "severity_source",
+   "fieldtype": "Select",
+   "label": "Severity Source",
+   "options": "Matrix\nManual Override",
+   "reqd": 1
+  },
+  {
+   "fieldname": "escalation_matrix",
+   "fieldtype": "Link",
+   "label": "Escalation Matrix",
+   "options": "Escalation Matrix",
+   "read_only": 1
+  },
+  {
+   "description": "The rule code that fired, stored like the classification trace.",
+   "fieldname": "matched_matrix_rule",
+   "fieldtype": "Data",
+   "label": "Matched Matrix Rule",
+   "read_only": 1
+  },
+  {
+   "fieldname": "governance_forums",
+   "fieldtype": "Table",
+   "label": "Governance Forums",
+   "options": "Escalation Forum Link"
+  },
+  {
+   "default": "0",
+   "fieldname": "material_entity_impact",
+   "fieldtype": "Check",
+   "label": "Material Entity Impact"
+  },
+  {
+   "default": "0",
+   "fieldname": "risk_appetite_breach",
+   "fieldtype": "Check",
+   "label": "Risk Appetite Breach"
+  },
+  {
+   "fieldname": "risk_appetite_reference",
+   "fieldtype": "Link",
+   "label": "Risk Appetite Reference",
+   "options": "External Reference"
+  },
+  {
+   "fieldname": "related_risk_reference",
+   "fieldtype": "Link",
+   "label": "Related Risk Reference",
+   "options": "External Reference"
+  },
+  {
+   "fieldname": "source_policy_violation",
+   "fieldtype": "Link",
+   "label": "Source Policy Violation",
+   "options": "Policy Violation"
+  },
+  {
+   "default": "0",
+   "description": "E-16 restricted visibility. A sensitive matter is excluded from list, search, report and API reads for users without the Sensitive Escalation Access role.",
+   "fieldname": "sensitive",
+   "fieldtype": "Check",
+   "label": "Sensitive"
+  },
+  {
+   "default": "Open",
+   "description": "A label. Business logic reads the semantic flags, never this string.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Open\nIn Progress\nUnder Review\nPending Review\nClosed\nClosed \u2014 Tracked Externally",
+   "reqd": 1
+  },
+  {
+   "description": "Set by the framework's workflow engine where one is configured. Flags are derived from it as well as from status.",
+   "fieldname": "workflow_state",
+   "fieldtype": "Data",
+   "label": "Workflow State",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_committable",
+   "fieldtype": "Check",
+   "label": "Is Committable",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "requires_statement",
+   "fieldtype": "Check",
+   "label": "Requires Statement",
+   "read_only": 1
+  },
+  {
+   "description": "The issue-management record where closure is tracked outside the platform.",
+   "fieldname": "external_reference",
+   "fieldtype": "Link",
+   "label": "External Reference",
+   "options": "External Reference"
+  },
+  {
+   "fieldname": "opened_on",
+   "fieldtype": "Datetime",
+   "label": "Opened On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "closed_on",
+   "fieldtype": "Datetime",
+   "label": "Closed On",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "E-9 makes this mandatory for every escalation, including externally-tracked ones.",
+   "fieldname": "response_template_completed",
+   "fieldtype": "Check",
+   "label": "Response Template Completed"
+  },
+  {
+   "fieldname": "retention_class",
+   "fieldtype": "Link",
+   "label": "Retention Class",
+   "options": "Retention Class"
+  },
+  {
+   "description": "[Inferred] The time threshold the matched matrix rule imposed.",
+   "fieldname": "sla_definition",
+   "fieldtype": "Link",
+   "label": "SLA Definition",
+   "options": "SLA Definition",
+   "read_only": 1
+  },
+  {
+   "description": "[Inferred] Core's clock for this matter. The module writes no timing logic of its own.",
+   "fieldname": "sla_clock",
+   "fieldtype": "Link",
+   "label": "SLA Clock",
+   "options": "SLA Clock",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "[Inferred \u2014 E17-S4 requires the breach to be recorded.]",
+   "fieldname": "threshold_breached",
+   "fieldtype": "Check",
+   "label": "Threshold Breached",
+   "read_only": 1
+  },
+  {
+   "fieldname": "breach_count",
+   "fieldtype": "Int",
+   "label": "Breach Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_breach_on",
+   "fieldtype": "Datetime",
+   "label": "Last Breach On",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "[Inferred] Set when a breach raised the matter without a person acting.",
+   "fieldname": "auto_escalated",
+   "fieldtype": "Check",
+   "label": "Auto Escalated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reviews",
+   "fieldtype": "Table",
+   "label": "Reviews",
+   "options": "Escalation Review"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.024793",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Escalation Matter",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Owner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Reviewer",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "escalation_title,escalation_id",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "escalation_title",
+ "track_changes": 1
+}

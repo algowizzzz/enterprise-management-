@@ -1,0 +1,51 @@
+{
+  "name": "Document Applicability",
+  "module": "Policy",
+  "description": "Where a document applies (P-21). Notification of affected parties is derived from these rows; there is no hand-maintained recipient list anywhere in the module.",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "scope_type",
+      "fieldtype": "Select",
+      "label": "Scope",
+      "options": "Organization Unit\nLegal Entity\nMaterial Entity\nJurisdiction\nRole\nFunction",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "scope_value",
+      "fieldtype": "Dynamic Link",
+      "label": "Scope Value",
+      "options": "scope_type",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "scope_label",
+      "fieldtype": "Data",
+      "label": "Scope Label",
+      "description": "Used where the scope names no record \u2014 a business function."
+    },
+    {
+      "fieldname": "applies_from",
+      "fieldtype": "Date",
+      "label": "Applies From"
+    },
+    {
+      "fieldname": "applies_to",
+      "fieldtype": "Date",
+      "label": "Applies To"
+    },
+    {
+      "fieldname": "notification_group",
+      "fieldtype": "Link",
+      "label": "Notification Group",
+      "options": "User Group",
+      "description": "The group notified for this scope. Optional: a Role scope resolves to its holders."
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Notes"
+    }
+  ]
+}

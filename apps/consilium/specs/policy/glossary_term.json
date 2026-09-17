@@ -1,0 +1,182 @@
+{
+  "name": "Glossary Term",
+  "module": "Policy",
+  "description": "P-24. A centrally maintained, versioned term. Each approved change writes a new Document Version through Core's versioning engine, so the wording in force on any past date has exactly one answer.",
+  "autoname": "GTRM-.#####",
+  "naming_rule": "Expression (old style)",
+  "title_field": "term",
+  "search_fields": "term,definition",
+  "fields": [
+    {
+      "fieldname": "term",
+      "fieldtype": "Data",
+      "label": "Term",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "definition",
+      "fieldtype": "Text",
+      "label": "Definition",
+      "reqd": 1
+    },
+    {
+      "fieldname": "scope_level",
+      "fieldtype": "Select",
+      "label": "Scope",
+      "reqd": 1,
+      "default": "Enterprise",
+      "in_list_view": 1,
+      "options": "Enterprise\nDocument Family\nDocument"
+    },
+    {
+      "fieldname": "scope_document",
+      "fieldtype": "Link",
+      "label": "Scope Document",
+      "options": "Governing Document"
+    },
+    {
+      "fieldname": "term_status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Proposed",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "options": "Proposed\nPublished\nDeprecated"
+    },
+    {
+      "fieldname": "approved_by",
+      "fieldtype": "Link",
+      "label": "Approved By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "approved_on",
+      "fieldtype": "Date",
+      "label": "Approved On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "synonyms",
+      "fieldtype": "Table",
+      "label": "Synonyms",
+      "options": "Glossary Synonym"
+    },
+    {
+      "fieldname": "enforce_usage",
+      "fieldtype": "Check",
+      "label": "Enforce Usage",
+      "default": "0"
+    },
+    {
+      "fieldname": "superseded_by",
+      "fieldtype": "Link",
+      "label": "Superseded By",
+      "options": "Glossary Term"
+    },
+    {
+      "fieldname": "current_version",
+      "fieldtype": "Link",
+      "label": "Current Version",
+      "options": "Document Version",
+      "read_only": 1
+    },
+    {
+      "fieldname": "version_label",
+      "fieldtype": "Data",
+      "label": "Version",
+      "read_only": 1
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag set from the configured state. Logic reads this, never the label."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "All",
+      "read": 1
+    }
+  ]
+}

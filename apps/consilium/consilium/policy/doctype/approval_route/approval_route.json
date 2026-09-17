@@ -1,0 +1,167 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:route_title",
+ "creation": "2026-09-17 23:02:22.312078",
+ "description": "Conditional approval routing as configuration (E12-S3). The most specific active route wins; its steps are resolved against the record so the path can be shown before the record is submitted. [Addition \u2014 the data model requires conditional routing but defines no entity to hold it.]",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "route_title",
+  "target_doctype",
+  "document_type",
+  "change_classification",
+  "primary_risk_category",
+  "handling_classification",
+  "priority",
+  "is_active",
+  "steps",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "route_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Route",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "Governing Document",
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Target DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "description": "Leave empty to match any document type.",
+   "fieldname": "document_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Document Type",
+   "options": "Governing Document Type"
+  },
+  {
+   "description": "Matches the classification outcome the intake produced. Empty matches any.",
+   "fieldname": "change_classification",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Change Classification"
+  },
+  {
+   "description": "Matches this category or any of its descendants. Empty matches any.",
+   "fieldname": "primary_risk_category",
+   "fieldtype": "Link",
+   "label": "Primary Risk Category",
+   "options": "Risk Category"
+  },
+  {
+   "fieldname": "handling_classification",
+   "fieldtype": "Select",
+   "label": "Handling Classification",
+   "options": "\nPublic\nInternal\nConfidential\nRestricted"
+  },
+  {
+   "default": "100",
+   "description": "Lower evaluates first; the first matching route wins, and specificity breaks ties.",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Priority",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "steps",
+   "fieldtype": "Table",
+   "label": "Steps",
+   "options": "Approval Route Step"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:02:22.312089",
+ "modified_by": "Administrator",
+ "module": "Policy",
+ "name": "Approval Route",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Enterprise Policy Office",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Policy Owner"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Policy Reviewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "search_fields": "route_title,document_type",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "route_title",
+ "track_changes": 1
+}

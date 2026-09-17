@@ -1,0 +1,64 @@
+{
+  "name": "Disbandment Approval",
+  "module": "Governance",
+  "description": "One of the four approvals G-11 names for a disbandment. The row records who must approve; the decision itself is a Core Approval Decision, so that delegation, exception authorisation and the semantic open flag are the same machinery the rest of the platform uses. The mirrored decision label here is for display and is never compared.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "approver_role",
+      "fieldtype": "Select",
+      "label": "Approver Role",
+      "options": "Delegating Authority\nSponsor\nChair\nJurisdictional CRO",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "approver",
+      "fieldtype": "Link",
+      "label": "Approver",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "required",
+      "fieldtype": "Check",
+      "label": "Required",
+      "default": "1",
+      "in_list_view": 1,
+      "description": "A jurisdictional CRO approval applies only where one applies."
+    },
+    {
+      "fieldname": "approval_decision",
+      "fieldtype": "Link",
+      "label": "Approval Decision",
+      "options": "Approval Decision",
+      "read_only": 1,
+      "description": "The Core record carrying the decision, the acting delegation and any exception authorisation."
+    },
+    {
+      "fieldname": "decision",
+      "fieldtype": "Data",
+      "label": "Decision",
+      "read_only": 1,
+      "in_list_view": 1,
+      "description": "Mirrored from the Approval Decision for display. Logic reads the Core record's semantic open flag, never this label."
+    },
+    {
+      "fieldname": "decided_on",
+      "fieldtype": "Datetime",
+      "label": "Decided On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "evidence",
+      "fieldtype": "Attach",
+      "label": "Evidence"
+    }
+  ],
+  "permissions": [],
+  "istable": 1
+}

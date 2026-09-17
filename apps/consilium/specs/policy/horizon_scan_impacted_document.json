@@ -1,0 +1,16 @@
+{
+  "name": "Horizon Scan Impacted Document",
+  "module": "Policy",
+  "description": "A single Governing Document held in a multi-valued field (02-data-model.md \u00a77 'Multi \u2192 X').",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "governing_document",
+      "fieldtype": "Link",
+      "label": "Impacted Document",
+      "options": "Governing Document",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ]
+}

@@ -1,0 +1,275 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 0,
+ "autoname": "RACC-.#####",
+ "creation": "2026-09-17 22:47:49.026747",
+ "description": "A documented, approved and time-bounded decision to accept a risk rather than remediate it (E-6, E-9, E16-S4). Subject to periodic reassessment.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "escalation_matter",
+  "risk_acceptance_name",
+  "external_acceptance_id",
+  "escalation_template",
+  "start_date",
+  "end_date",
+  "accountable_executive",
+  "rationale",
+  "status",
+  "is_editable",
+  "is_active",
+  "is_open",
+  "requires_review",
+  "is_committable",
+  "requires_statement",
+  "governance_forums",
+  "approval_decision",
+  "approval_motion",
+  "approved_by",
+  "approved_on",
+  "next_reassessment_on",
+  "reassessment_frequency_months",
+  "external_reference",
+  "sensitive"
+ ],
+ "fields": [
+  {
+   "fieldname": "escalation_matter",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Escalation Matter",
+   "options": "Escalation Matter",
+   "reqd": 1
+  },
+  {
+   "fieldname": "risk_acceptance_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Risk Acceptance Name",
+   "reqd": 1
+  },
+  {
+   "description": "Where the acceptance originates elsewhere and only its identifier is held here.",
+   "fieldname": "external_acceptance_id",
+   "fieldtype": "Data",
+   "label": "External Acceptance ID"
+  },
+  {
+   "fieldname": "escalation_template",
+   "fieldtype": "Link",
+   "label": "Escalation Template",
+   "options": "Escalation Template",
+   "read_only": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "description": "The acceptance period is bounded: an unbounded acceptance is not an acceptance.",
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "End Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "accountable_executive",
+   "fieldtype": "Link",
+   "label": "Accountable Executive",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rationale",
+   "fieldtype": "Text",
+   "label": "Rationale",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "description": "A label. Business logic reads the semantic flags.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nPending Approval\nApproved\nExpired\nWithdrawn",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_committable",
+   "fieldtype": "Check",
+   "label": "Is Committable",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "requires_statement",
+   "fieldtype": "Check",
+   "label": "Requires Statement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "governance_forums",
+   "fieldtype": "Table MultiSelect",
+   "label": "Governance Forums",
+   "options": "Escalation Forum Reference"
+  },
+  {
+   "description": "Core's approval record. An acceptance whose state takes effect without one is refused.",
+   "fieldname": "approval_decision",
+   "fieldtype": "Link",
+   "label": "Approval Decision",
+   "options": "Approval Decision",
+   "read_only": 1
+  },
+  {
+   "description": "Where the approval was taken as a forum motion instead.",
+   "fieldname": "approval_motion",
+   "fieldtype": "Link",
+   "label": "Approval Motion",
+   "options": "Forum Motion"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On",
+   "read_only": 1
+  },
+  {
+   "description": "[Inferred] Risk acceptance is subject to periodic reassessment.",
+   "fieldname": "next_reassessment_on",
+   "fieldtype": "Date",
+   "label": "Next Reassessment On"
+  },
+  {
+   "description": "[Inferred]",
+   "fieldname": "reassessment_frequency_months",
+   "fieldtype": "Int",
+   "label": "Reassessment Frequency (Months)"
+  },
+  {
+   "fieldname": "external_reference",
+   "fieldtype": "Link",
+   "label": "External Reference",
+   "options": "External Reference"
+  },
+  {
+   "default": "0",
+   "fieldname": "sensitive",
+   "fieldtype": "Check",
+   "label": "Sensitive",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.026755",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Risk Acceptance",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Owner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Reviewer",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "risk_acceptance_name,escalation_matter",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "risk_acceptance_name",
+ "track_changes": 1
+}

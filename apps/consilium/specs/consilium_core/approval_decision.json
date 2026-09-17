@@ -119,6 +119,22 @@
       "label": "Exception Authorisation",
       "options": "Exception Authorisation",
       "description": "Required for a bypassed decision."
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "0",
+      "description": "Set from the state-flag map."
+    },
+    {
+      "fieldname": "is_affirmative",
+      "fieldtype": "Check",
+      "label": "Is Affirmative",
+      "read_only": 1,
+      "default": "0",
+      "description": "Set from the state-flag map. True only for a state that expresses positive consent, so an abstention is not counted as an approval."
     }
   ],
   "permissions": [

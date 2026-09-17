@@ -1,0 +1,63 @@
+{
+  "name": "Escalation Matrix Rule",
+  "module": "Escalation",
+  "description": "One routing rule of an approved escalation matrix (02-data-model.md \u00a78.3). The condition is data, evaluated by consilium.escalation.routing.",
+  "istable": 1,
+  "permissions": [],
+  "fields": [
+    {
+      "fieldname": "rule_code",
+      "fieldtype": "Data",
+      "label": "Rule Code",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Stable identifier. Stored on the matter as the trace of which rule fired, and joins the route and notification rows below."
+    },
+    {
+      "fieldname": "priority",
+      "fieldtype": "Int",
+      "label": "Priority",
+      "default": "100",
+      "in_list_view": 1,
+      "description": "Lowest number wins. Rules are evaluated in priority order and the first match fires."
+    },
+    {
+      "fieldname": "condition",
+      "fieldtype": "JSON",
+      "label": "Condition",
+      "description": "Object over escalation_type, tier_1_risk_type, tier_2_risk_type, organizational_level, material_entity_impact and risk_appetite_breach. An absent key means 'any'. A list value means 'one of'."
+    },
+    {
+      "fieldname": "resulting_severity",
+      "fieldtype": "Select",
+      "label": "Resulting Severity",
+      "options": "High\nMedium\nLow",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "route_to_role",
+      "fieldtype": "Link",
+      "label": "Route To Role",
+      "options": "Role"
+    },
+    {
+      "fieldname": "sla_definition",
+      "fieldtype": "Link",
+      "label": "SLA Definition",
+      "options": "SLA Definition",
+      "description": "The time threshold this rule imposes. Core's SLA clock measures it; breach raises the matter."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1"
+    },
+    {
+      "fieldname": "rule_description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    }
+  ]
+}

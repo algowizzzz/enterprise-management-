@@ -1,0 +1,211 @@
+{
+  "name": "Implementation Plan",
+  "module": "Policy",
+  "description": "Lifecycle stage 4. The implementation plan is held in this system of record, with its impact assessment across people, process, technology and data.",
+  "autoname": "PIMP-.#####",
+  "naming_rule": "Expression (old style)",
+  "title_field": "plan_title",
+  "search_fields": "plan_title,document",
+  "fields": [
+    {
+      "fieldname": "document",
+      "fieldtype": "Link",
+      "label": "Document",
+      "options": "Governing Document",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "plan_title",
+      "fieldtype": "Data",
+      "label": "Plan",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "plan_owner",
+      "fieldtype": "Link",
+      "label": "Plan Owner",
+      "options": "User",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "impact_people",
+      "fieldtype": "Text",
+      "label": "People Impact"
+    },
+    {
+      "fieldname": "impact_process",
+      "fieldtype": "Text",
+      "label": "Process Impact"
+    },
+    {
+      "fieldname": "impact_technology",
+      "fieldtype": "Text",
+      "label": "Technology Impact"
+    },
+    {
+      "fieldname": "impact_data",
+      "fieldtype": "Text",
+      "label": "Data Impact"
+    },
+    {
+      "fieldname": "impact_sizing",
+      "fieldtype": "Select",
+      "label": "Impact Sizing",
+      "reqd": 1,
+      "default": "Medium",
+      "options": "Low\nMedium\nHigh"
+    },
+    {
+      "fieldname": "training_required",
+      "fieldtype": "Check",
+      "label": "Training Required",
+      "default": "0"
+    },
+    {
+      "fieldname": "working_groups",
+      "fieldtype": "Table MultiSelect",
+      "label": "Working Groups",
+      "options": "Implementation Working Group"
+    },
+    {
+      "fieldname": "impacted_processes",
+      "fieldtype": "Table MultiSelect",
+      "label": "Impacted Processes",
+      "options": "Implementation Reference"
+    },
+    {
+      "fieldname": "impacted_controls",
+      "fieldtype": "Table MultiSelect",
+      "label": "Impacted Controls",
+      "options": "Implementation Reference"
+    },
+    {
+      "fieldname": "impacted_risks",
+      "fieldtype": "Table MultiSelect",
+      "label": "Impacted Risks",
+      "options": "Implementation Reference"
+    },
+    {
+      "fieldname": "target_completion",
+      "fieldtype": "Date",
+      "label": "Target Completion",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "plan_status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Planned",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "options": "Planned\nUnderway\nConcluded\nAbandoned"
+    },
+    {
+      "fieldname": "tasks",
+      "fieldtype": "Table",
+      "label": "Tasks",
+      "options": "Implementation Task"
+    },
+    {
+      "fieldname": "verified_by",
+      "fieldtype": "Link",
+      "label": "Verified By",
+      "options": "User"
+    },
+    {
+      "fieldname": "verified_on",
+      "fieldtype": "Date",
+      "label": "Verified On"
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag set from the configured state. Logic reads this, never the label."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

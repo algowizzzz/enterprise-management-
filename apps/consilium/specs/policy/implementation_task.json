@@ -1,0 +1,46 @@
+{
+  "name": "Implementation Task",
+  "module": "Policy",
+  "description": "A unit of implementation work. Completion is read from `completed_on`, never from the label.",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "task_title",
+      "fieldtype": "Data",
+      "label": "Task",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "assigned_to",
+      "fieldtype": "Link",
+      "label": "Assigned To",
+      "options": "User",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "due_on",
+      "fieldtype": "Date",
+      "label": "Due On",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "task_status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "To Do\nDoing\nDone\nDropped",
+      "default": "To Do",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "completed_on",
+      "fieldtype": "Date",
+      "label": "Completed On"
+    },
+    {
+      "fieldname": "evidence",
+      "fieldtype": "Attach",
+      "label": "Evidence"
+    }
+  ]
+}

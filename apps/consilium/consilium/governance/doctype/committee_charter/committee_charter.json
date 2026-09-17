@@ -1,0 +1,192 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "CHT-.YYYY.-.#####",
+ "creation": "2026-09-17 23:00:00.185848",
+ "description": "The document establishing a forum. Its body is not held here: it lives in Core's Document Version chain (02-data-model.md \u00a75.4), so that what the charter said on a given date has exactly one answer.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "charter_title",
+  "forum",
+  "formation_request",
+  "current_version",
+  "rgo_challenge_status",
+  "is_editable",
+  "requires_review",
+  "requires_statement",
+  "rgo_challenge_comments",
+  "rgo_reviewed_by",
+  "rgo_reviewed_on",
+  "approval_evidence",
+  "effective_from",
+  "effective_to",
+  "next_charter_review_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "charter_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Charter Title",
+   "reqd": 1
+  },
+  {
+   "description": "Empty while the forum does not yet exist.",
+   "fieldname": "forum",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Forum",
+   "options": "Governance Forum"
+  },
+  {
+   "fieldname": "formation_request",
+   "fieldtype": "Link",
+   "label": "Formation Request",
+   "options": "Committee Formation Request"
+  },
+  {
+   "description": "Maintained by Core's versioning engine.",
+   "fieldname": "current_version",
+   "fieldtype": "Link",
+   "label": "Current Version",
+   "options": "Document Version",
+   "read_only": 1
+  },
+  {
+   "default": "Not Reviewed",
+   "description": "A label. The effective-challenge gate reads the semantic flags.",
+   "fieldname": "rgo_challenge_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "RGO Challenge Status",
+   "options": "Not Reviewed\nChanges Requested\nCleared",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_statement",
+   "fieldtype": "Check",
+   "label": "Requires Statement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rgo_challenge_comments",
+   "fieldtype": "Text",
+   "label": "RGO Challenge Comments"
+  },
+  {
+   "fieldname": "rgo_reviewed_by",
+   "fieldtype": "Link",
+   "label": "RGO Reviewed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rgo_reviewed_on",
+   "fieldtype": "Datetime",
+   "label": "RGO Reviewed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_evidence",
+   "fieldtype": "Table",
+   "label": "Approval Evidence",
+   "options": "Charter Approval Evidence"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From"
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To"
+  },
+  {
+   "fieldname": "next_charter_review_on",
+   "fieldtype": "Date",
+   "label": "Next Charter Review On"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.185860",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Committee Charter",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Risk Governance Office",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Committee Secretary",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Compliance Reviewer"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Governance Viewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "forum,formation_request",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

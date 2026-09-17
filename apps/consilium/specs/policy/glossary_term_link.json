@@ -1,0 +1,21 @@
+{
+  "name": "Glossary Term Link",
+  "module": "Policy",
+  "description": "Term-to-document linkage, which is what lets a defined term be surfaced in context (E15-S4).",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "glossary_term",
+      "fieldtype": "Link",
+      "label": "Glossary Term",
+      "options": "Glossary Term",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "context_note",
+      "fieldtype": "Text",
+      "label": "Context Note"
+    }
+  ]
+}

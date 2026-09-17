@@ -1,0 +1,217 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "FMTG-.YYYY.-.#####",
+ "creation": "2026-09-17 23:00:00.189278",
+ "description": "A sitting of a forum. Attendance is snapshotted, and whether the meeting was quorate is stored when it is recorded rather than derived later.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "forum",
+  "meeting_reference",
+  "scheduled_on",
+  "held_on",
+  "location",
+  "chaired_by",
+  "secretary",
+  "status",
+  "is_open",
+  "is_editable",
+  "is_active",
+  "is_committable",
+  "agenda_file",
+  "minutes_version",
+  "attendance",
+  "quorum_met",
+  "quorum_evaluated_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "forum",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Forum",
+   "options": "Governance Forum",
+   "reqd": 1
+  },
+  {
+   "fieldname": "meeting_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Meeting Reference",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scheduled_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Scheduled On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "held_on",
+   "fieldtype": "Datetime",
+   "label": "Held On"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
+  },
+  {
+   "fieldname": "chaired_by",
+   "fieldtype": "Link",
+   "label": "Chaired By",
+   "options": "User"
+  },
+  {
+   "fieldname": "secretary",
+   "fieldtype": "Link",
+   "label": "Secretary",
+   "options": "User"
+  },
+  {
+   "default": "Scheduled",
+   "description": "A label. Logic reads the semantic flags.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Scheduled\nHeld\nCancelled\nAdjourned",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag. True only where the meeting actually sat, which is when attendance and quorum may be recorded.",
+   "fieldname": "is_committable",
+   "fieldtype": "Check",
+   "label": "Is Committable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "agenda_file",
+   "fieldtype": "Attach",
+   "label": "Agenda"
+  },
+  {
+   "fieldname": "minutes_version",
+   "fieldtype": "Link",
+   "label": "Minutes Version",
+   "options": "Document Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attendance",
+   "fieldtype": "Table",
+   "label": "Attendance",
+   "options": "Meeting Attendance"
+  },
+  {
+   "default": "0",
+   "description": "Stored when attendance is recorded. A later membership change cannot rewrite it.",
+   "fieldname": "quorum_met",
+   "fieldtype": "Check",
+   "label": "Quorum Met",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quorum_evaluated_note",
+   "fieldtype": "Text",
+   "label": "Quorum Evaluation Note",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.189286",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Forum Meeting",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Committee Secretary",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Risk Governance Office",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Compliance Reviewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Forum Owner"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Governance Viewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "forum,meeting_reference",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "meeting_reference",
+ "track_changes": 1
+}

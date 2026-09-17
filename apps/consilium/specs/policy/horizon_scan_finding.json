@@ -1,0 +1,173 @@
+{
+  "name": "Horizon Scan Finding",
+  "module": "Policy",
+  "description": "A finding from a scan. Standalone rather than child so one finding can fan out to several documents.",
+  "autoname": "PHSF-.#####",
+  "naming_rule": "Expression (old style)",
+  "title_field": "finding_title",
+  "search_fields": "finding_title,horizon_scan",
+  "fields": [
+    {
+      "fieldname": "horizon_scan",
+      "fieldtype": "Link",
+      "label": "Horizon Scan",
+      "options": "Horizon Scan",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "finding_title",
+      "fieldtype": "Data",
+      "label": "Finding",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "coverage_area",
+      "fieldtype": "Link",
+      "label": "Coverage Area",
+      "options": "Horizon Scanning Coverage Area"
+    },
+    {
+      "fieldname": "regulatory_requirement",
+      "fieldtype": "Link",
+      "label": "Regulatory Requirement",
+      "options": "Regulatory Requirement"
+    },
+    {
+      "fieldname": "impacted_documents",
+      "fieldtype": "Table MultiSelect",
+      "label": "Impacted Documents",
+      "options": "Horizon Scan Impacted Document"
+    },
+    {
+      "fieldname": "assessed_impact",
+      "fieldtype": "Select",
+      "label": "Assessed Impact",
+      "reqd": 1,
+      "default": "Low",
+      "options": "None\nLow\nMedium\nHigh"
+    },
+    {
+      "fieldname": "action_taken",
+      "fieldtype": "Select",
+      "label": "Action Taken",
+      "reqd": 1,
+      "default": "Monitor",
+      "options": "Monitor\nReview Triggered\nUpdate Required\nNo Action"
+    },
+    {
+      "fieldname": "finding_owner",
+      "fieldtype": "Link",
+      "label": "Owner",
+      "options": "User",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "due_on",
+      "fieldtype": "Date",
+      "label": "Due On"
+    },
+    {
+      "fieldname": "finding_status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Raised",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "options": "Raised\nIn Hand\nConcluded"
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag set from the configured state. Logic reads this, never the label."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

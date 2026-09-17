@@ -1,0 +1,33 @@
+{
+  "name": "Escalation Matrix Route",
+  "module": "Escalation",
+  "description": "A destination forum for one matrix rule. Flattened out of Escalation Matrix Rule because the framework does not support a table inside a child table; the rule_code column keys the rows back to their rule.",
+  "istable": 1,
+  "permissions": [],
+  "fields": [
+    {
+      "fieldname": "rule_code",
+      "fieldtype": "Data",
+      "label": "Rule Code",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Matches Escalation Matrix Rule.rule_code on the same matrix."
+    },
+    {
+      "fieldname": "governance_forum",
+      "fieldtype": "Link",
+      "label": "Governance Forum",
+      "options": "Governance Forum",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "role_in_escalation",
+      "fieldtype": "Select",
+      "label": "Role In Escalation",
+      "options": "Decision\nOversight\nInformed",
+      "default": "Decision",
+      "in_list_view": 1
+    }
+  ]
+}

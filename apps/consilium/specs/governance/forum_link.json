@@ -1,0 +1,45 @@
+{
+  "name": "Forum Link",
+  "module": "Governance",
+  "description": "An upstream or downstream relationship between two forums (G-4 mapping, and the interconnectivity view). One child table used by two parent fields, which is why the parent index is composite — see 03-schema.md §7.1.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "linked_forum",
+      "fieldtype": "Link",
+      "label": "Linked Forum",
+      "options": "Governance Forum",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "direction",
+      "fieldtype": "Select",
+      "label": "Direction",
+      "options": "Upstream\nDownstream",
+      "reqd": 1,
+      "default": "Upstream",
+      "in_list_view": 1,
+      "description": "Set from the field the row sits in; the inverse is visible from the other forum."
+    },
+    {
+      "fieldname": "relationship_type",
+      "fieldtype": "Select",
+      "label": "Relationship Type",
+      "options": "Reports To\nDelegates To\nEscalates To\nInforms",
+      "reqd": 1,
+      "default": "Reports To",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Text",
+      "label": "Notes"
+    }
+  ],
+  "permissions": [],
+  "istable": 1
+}

@@ -1,0 +1,122 @@
+{
+  "name": "Monitoring Activity",
+  "module": "Policy",
+  "description": "P-11. A recurring monitoring obligation against a document.",
+  "autoname": "PMON-.#####",
+  "naming_rule": "Expression (old style)",
+  "title_field": "activity_title",
+  "search_fields": "activity_title,document",
+  "fields": [
+    {
+      "fieldname": "document",
+      "fieldtype": "Link",
+      "label": "Document",
+      "options": "Governing Document",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "activity_title",
+      "fieldtype": "Data",
+      "label": "Activity",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "frequency",
+      "fieldtype": "Select",
+      "label": "Frequency",
+      "reqd": 1,
+      "default": "Quarterly",
+      "options": "Monthly\nQuarterly\nSemi Annual\nAnnual\nAd Hoc"
+    },
+    {
+      "fieldname": "responsible",
+      "fieldtype": "Link",
+      "label": "Responsible",
+      "options": "User",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "next_due_on",
+      "fieldtype": "Date",
+      "label": "Next Due On",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "control_reference",
+      "fieldtype": "Data",
+      "label": "Control Reference"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

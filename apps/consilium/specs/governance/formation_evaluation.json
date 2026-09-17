@@ -1,0 +1,48 @@
+{
+  "name": "Formation Evaluation",
+  "module": "Governance",
+  "description": "One row per G-5 evaluation criterion, so the criteria set is data. A request cannot be approved while any criterion is unassessed.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "criterion",
+      "fieldtype": "Select",
+      "label": "Criterion",
+      "options": "Gap In Coverage\nDuplication\nEscalation Pathway\nFramework Alignment\nResource Feasibility",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "assessment",
+      "fieldtype": "Select",
+      "label": "Assessment",
+      "options": "Not Assessed\nPass\nFail",
+      "reqd": 1,
+      "default": "Not Assessed",
+      "in_list_view": 1,
+      "description": "A finding, not a workflow state. The approval gate asks whether every criterion has a finding."
+    },
+    {
+      "fieldname": "comments",
+      "fieldtype": "Text",
+      "label": "Comments",
+      "description": "Required once the criterion has a finding."
+    },
+    {
+      "fieldname": "reviewed_by",
+      "fieldtype": "Link",
+      "label": "Reviewed By",
+      "options": "User"
+    },
+    {
+      "fieldname": "reviewed_on",
+      "fieldtype": "Datetime",
+      "label": "Reviewed On"
+    }
+  ],
+  "permissions": [],
+  "istable": 1
+}

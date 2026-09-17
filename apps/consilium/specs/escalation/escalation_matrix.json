@@ -1,0 +1,130 @@
+{
+  "name": "Escalation Matrix",
+  "module": "Escalation",
+  "description": "The approved mapping from escalation attributes to severity and pathway (02-data-model.md \u00a78.3, E-4). The routing authority for escalation: pathways are data, not code.",
+  "autoname": "field:matrix_code",
+  "naming_rule": "By fieldname",
+  "allow_rename": 1,
+  "title_field": "title",
+  "search_fields": "title,matrix_code",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Escalation Owner",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Escalation Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "allow_import": 1,
+  "fields": [
+    {
+      "fieldname": "matrix_code",
+      "fieldtype": "Data",
+      "label": "Code",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "title",
+      "fieldtype": "Data",
+      "label": "Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "scope_risk_types",
+      "fieldtype": "Table MultiSelect",
+      "label": "Scope \u2014 Risk Types",
+      "options": "Escalation Risk Type Reference",
+      "description": "Empty means the matrix is in scope for every risk type."
+    },
+    {
+      "fieldname": "scope_legal_entities",
+      "fieldtype": "Table MultiSelect",
+      "label": "Scope \u2014 Legal Entities",
+      "options": "Escalation Legal Entity Reference",
+      "description": "Empty means the matrix is in scope for every legal entity."
+    },
+    {
+      "fieldname": "effective_from",
+      "fieldtype": "Date",
+      "label": "Effective From",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "effective_to",
+      "fieldtype": "Date",
+      "label": "Effective To"
+    },
+    {
+      "fieldname": "approved_by",
+      "fieldtype": "Link",
+      "label": "Approved By",
+      "options": "User"
+    },
+    {
+      "fieldname": "approved_on",
+      "fieldtype": "Date",
+      "label": "Approved On"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "rules",
+      "fieldtype": "Table",
+      "label": "Rules",
+      "options": "Escalation Matrix Rule"
+    },
+    {
+      "fieldname": "routes",
+      "fieldtype": "Table",
+      "label": "Rule Destinations",
+      "options": "Escalation Matrix Route"
+    },
+    {
+      "fieldname": "rule_notifications",
+      "fieldtype": "Table",
+      "label": "Rule Notifications",
+      "options": "Escalation Matrix Notification"
+    }
+  ]
+}

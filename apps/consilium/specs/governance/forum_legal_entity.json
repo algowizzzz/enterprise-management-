@@ -1,0 +1,21 @@
+{
+  "name": "Forum Legal Entity",
+  "module": "Governance",
+  "description": "One legal entity within a forum's scope. Multi-valued by decision M-3.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "legal_entity",
+      "fieldtype": "Link",
+      "label": "Legal Entity",
+      "options": "Legal Entity",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ],
+  "permissions": [],
+  "istable": 1
+}

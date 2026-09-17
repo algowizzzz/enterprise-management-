@@ -1,0 +1,34 @@
+{
+  "name": "Closure Criterion",
+  "module": "Escalation",
+  "description": "One criterion a closure must satisfy (E-10). [Inferred \u2014 E-10 requires closure criteria to be enforced but names none, so they are rows rather than code.]",
+  "istable": 1,
+  "permissions": [],
+  "fields": [
+    {
+      "fieldname": "criterion",
+      "fieldtype": "Data",
+      "label": "Criterion",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "required",
+      "fieldtype": "Check",
+      "label": "Required",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "met",
+      "fieldtype": "Check",
+      "label": "Met",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "evidence_note",
+      "fieldtype": "Text",
+      "label": "Evidence Note"
+    }
+  ]
+}

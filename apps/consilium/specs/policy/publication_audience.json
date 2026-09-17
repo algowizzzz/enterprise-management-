@@ -1,0 +1,25 @@
+{
+  "name": "Publication Audience",
+  "module": "Policy",
+  "description": "One audience a publication targeted (P-19).",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "audience_kind",
+      "fieldtype": "Select",
+      "label": "Audience Kind",
+      "reqd": 1,
+      "in_list_view": 1,
+      "options": "User Group\nRole\nOrganization Unit\nLegal Entity\nUser",
+      "description": "Spelled as the DocType it names, so it doubles as the Dynamic Link pointer."
+    },
+    {
+      "fieldname": "audience_value",
+      "fieldtype": "Dynamic Link",
+      "label": "Audience",
+      "options": "audience_kind",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ]
+}

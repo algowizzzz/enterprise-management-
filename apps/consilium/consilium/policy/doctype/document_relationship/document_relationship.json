@@ -1,0 +1,72 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 23:02:22.315040",
+ "description": "P-4 lineage: children, addenda, supersession and plain references. `owner_approval_required` is what makes P-8's parent-owner approval a derived step rather than a hand-added one.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "related_document",
+  "relationship_type",
+  "owner_approval_required",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "related_document",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Related Document",
+   "options": "Governing Document",
+   "reqd": 1
+  },
+  {
+   "fieldname": "relationship_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Relationship",
+   "options": "Child\nAddendum\nSupersedes\nReferences",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "When set, a change to the related document requires this document's owner to approve.",
+   "fieldname": "owner_approval_required",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Owner Approval Required"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 23:02:22.315048",
+ "modified_by": "Administrator",
+ "module": "Policy",
+ "name": "Document Relationship",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

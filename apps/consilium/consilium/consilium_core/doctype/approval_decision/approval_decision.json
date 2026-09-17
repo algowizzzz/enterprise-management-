@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "APRD-.#####",
- "creation": "2026-09-17 22:10:23.308630",
+ "creation": "2026-09-17 23:33:45.657231",
  "description": "An approval's basis, not merely the fact of it: which step, which role, whether a delegate acted, which document version it was given against, and whether an exception authorised a bypass (02-data-model.md \u00a75.9).",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -23,7 +23,9 @@
   "comments",
   "classification_at_decision",
   "based_on_version",
-  "exception_authorisation"
+  "exception_authorisation",
+  "requires_review",
+  "is_affirmative"
  ],
  "fields": [
   {
@@ -138,11 +140,27 @@
    "fieldtype": "Link",
    "label": "Exception Authorisation",
    "options": "Exception Authorisation"
+  },
+  {
+   "default": "0",
+   "description": "Set from the state-flag map.",
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Set from the state-flag map. True only for a state that expresses positive consent, so an abstention is not counted as an approval.",
+   "fieldname": "is_affirmative",
+   "fieldtype": "Check",
+   "label": "Is Affirmative",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 22:10:23.308640",
+ "modified": "2026-09-17 23:33:45.657244",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Approval Decision",

@@ -1,0 +1,170 @@
+{
+  "name": "Metadata Remediation Task",
+  "module": "Policy",
+  "description": "P-23. Raised when a lifecycle event invalidates a required field on a different record, or when the maintenance view finds a record with required metadata missing. Generic on purpose: one entity, several triggers, rather than a special case each.",
+  "autoname": "PMRT-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "subject_name,invalid_fieldname",
+  "fields": [
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Subject DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Subject",
+      "options": "subject_doctype",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "invalid_fieldname",
+      "fieldtype": "Data",
+      "label": "Field",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "trigger_event",
+      "fieldtype": "Select",
+      "label": "Trigger",
+      "reqd": 1,
+      "in_list_view": 1,
+      "options": "Parent Retired\nOwner Deactivated\nTaxonomy Deactivated\nForum Disbanded\nMissing Required Metadata"
+    },
+    {
+      "fieldname": "trigger_doctype",
+      "fieldtype": "Link",
+      "label": "Trigger DocType",
+      "options": "DocType"
+    },
+    {
+      "fieldname": "trigger_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Trigger Record",
+      "options": "trigger_doctype"
+    },
+    {
+      "fieldname": "assigned_to",
+      "fieldtype": "Link",
+      "label": "Assigned To",
+      "options": "User",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "due_on",
+      "fieldtype": "Date",
+      "label": "Due On"
+    },
+    {
+      "fieldname": "task_status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Raised",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "options": "Raised\nIn Hand\nResolved\nDismissed"
+    },
+    {
+      "fieldname": "resolved_on",
+      "fieldtype": "Date",
+      "label": "Resolved On"
+    },
+    {
+      "fieldname": "resolution_note",
+      "fieldtype": "Text",
+      "label": "Resolution Note"
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag set from the configured state. Logic reads this, never the label."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

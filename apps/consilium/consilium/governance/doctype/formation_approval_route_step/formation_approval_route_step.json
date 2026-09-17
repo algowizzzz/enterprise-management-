@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 23:00:00.187478",
+ "description": "One configured step of a formation approval route. Steps are configuration: a step can be added, reordered or made parallel without a deployment (E7-S4).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "step_title",
+  "step_sequence",
+  "mode",
+  "required_role",
+  "assign_to_field",
+  "assign_to_user",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "step_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Step Title",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Steps sharing a sequence in Parallel mode are raised together.",
+   "fieldname": "step_sequence",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sequence",
+   "reqd": 1
+  },
+  {
+   "default": "Sequential",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode",
+   "options": "Sequential\nParallel",
+   "reqd": 1
+  },
+  {
+   "description": "The access role a decider must hold. Both this and the record's own accountability must hold.",
+   "fieldname": "required_role",
+   "fieldtype": "Link",
+   "label": "Required Role",
+   "options": "Role"
+  },
+  {
+   "description": "A fieldname on the request naming the person this step is assigned to, e.g. delegating_authority. Read as configuration.",
+   "fieldname": "assign_to_field",
+   "fieldtype": "Data",
+   "label": "Assign To Field"
+  },
+  {
+   "description": "A fixed assignee, where the step is not derived from the request.",
+   "fieldname": "assign_to_user",
+   "fieldtype": "Link",
+   "label": "Assign To User",
+   "options": "User"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.187487",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Formation Approval Route Step",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,115 @@
+"""Restricted handling of sensitive escalations (E-16).
+
+The restriction must hold on every read path, so it is tested on the API path
+rather than on the form: `frappe.api.v1.document_list` is what
+`GET /api/resource/Escalation Matter` dispatches to, and `frappe.client.get` is
+what `GET /api/resource/Escalation Matter/<name>` dispatches to.
+"""
+
+from __future__ import annotations
+
+import frappe
+
+from consilium.escalation import sensitivity
+from consilium.escalation.tests.utils import (
+    EscalationTestCase,
+    as_user,
+    escalation_permission_hooks,
+    make_user,
+    rest_get,
+    rest_list,
+)
+
+
+class TestSensitiveMatters(EscalationTestCase):
+    def setUp(self):
+        super().setUp()
+        self.reference = self.reference_data()
+        self.ordinary = self.make_matter(self.reference, escalation_title="An ordinary matter")
+        self.restricted = self.make_matter(
+            self.reference, escalation_title="A restricted matter", sensitive=1
+        )
+        self.cleared = make_user("Escalation Owner", sensitivity.SENSITIVE_ROLE)
+        self.uncleared = make_user("Escalation Owner")
+
+    def test_the_api_list_hides_a_sensitive_matter(self):
+        with escalation_permission_hooks():
+            visible = [row["name"] for row in rest_list("Escalation Matter", self.uncleared, limit_page_length=0)]
+            self.assertIn(self.ordinary.name, visible)
+            self.assertNotIn(self.restricted.name, visible)
+
+            cleared = [row["name"] for row in rest_list("Escalation Matter", self.cleared, limit_page_length=0)]
+            self.assertIn(self.restricted.name, cleared)
+
+    def test_the_api_read_of_a_sensitive_matter_is_refused(self):
+        with escalation_permission_hooks():
+            with self.assertRaises(frappe.PermissionError):
+                rest_get("Escalation Matter", self.restricted.name, self.uncleared)
+
+            allowed = rest_get("Escalation Matter", self.restricted.name, self.cleared)
+            self.assertEqual(allowed.name, self.restricted.name)
+
+    def test_a_filtered_api_read_cannot_be_used_to_confirm_existence(self):
+        """Filtering on the title must not leak the row either."""
+        with escalation_permission_hooks():
+            rows = rest_list(
+                "Escalation Matter",
+                self.uncleared,
+                filters=[["Escalation Matter", "escalation_title", "=", "A restricted matter"]],
+                limit_page_length=0,
+            )
+            self.assertEqual(rows, [])
+
+    def test_reports_and_counts_are_restricted_too(self):
+        with escalation_permission_hooks():
+            with as_user(self.uncleared):
+                names = frappe.get_list("Escalation Matter", pluck="name", limit_page_length=0)
+                self.assertNotIn(self.restricted.name, names)
+                self.assertFalse(
+                    frappe.has_permission("Escalation Matter", "read", doc=self.restricted.name)
+                )
+
+    def test_the_restriction_follows_the_records_hanging_off_the_matter(self):
+        plan = frappe.get_doc(
+            {
+                "doctype": "Action Plan",
+                "escalation_matter": self.restricted.name,
+                "action_plan_name": "Remediate quietly",
+                "start_date": "2026-01-10",
+                "end_date": "2026-02-10",
+                "accountable_executive": self.reference["user"],
+                "owner_user": self.reference["user"],
+            }
+        ).insert(ignore_permissions=True)
+        self.assertTrue(plan.sensitive, msg="the flag is inherited from the matter")
+
+        with escalation_permission_hooks():
+            visible = [row["name"] for row in rest_list("Action Plan", self.uncleared, limit_page_length=0)]
+            self.assertNotIn(plan.name, visible)
+            with self.assertRaises(frappe.PermissionError):
+                rest_get("Action Plan", plan.name, self.uncleared)
+
+    def test_clearing_the_flag_restores_visibility_everywhere(self):
+        self.restricted.sensitive = 0
+        self.restricted.save(ignore_permissions=True)
+        with escalation_permission_hooks():
+            visible = [row["name"] for row in rest_list("Escalation Matter", self.uncleared, limit_page_length=0)]
+            self.assertIn(self.restricted.name, visible)
+
+    def test_setting_the_flag_propagates_to_existing_children(self):
+        plan = frappe.get_doc(
+            {
+                "doctype": "Action Plan",
+                "escalation_matter": self.ordinary.name,
+                "action_plan_name": "Remediate openly",
+                "start_date": "2026-01-10",
+                "end_date": "2026-02-10",
+                "accountable_executive": self.reference["user"],
+                "owner_user": self.reference["user"],
+            }
+        ).insert(ignore_permissions=True)
+        self.assertFalse(plan.sensitive)
+
+        self.ordinary.sensitive = 1
+        self.ordinary.save(ignore_permissions=True)
+        self.assertTrue(frappe.db.get_value("Action Plan", plan.name, "sensitive"))

@@ -35,11 +35,45 @@ doc_events = {
     }
 }
 
+# Restricted records.
+#
+# A sensitive escalation must be invisible to anyone without the right — not
+# only in the interface, but in list views, reports, search and the REST API.
+# The framework enforces that through these two hooks, and **only** through
+# these two hooks: the module's logic is inert until it is registered here.
+# There is no partial state. Either these entries exist and the restriction
+# holds on every read path, or they do not and it holds on none.
+permission_query_conditions = {
+    "Escalation Matter": "consilium.escalation.sensitivity.matter_conditions",
+    "Action Plan": "consilium.escalation.sensitivity.action_plan_conditions",
+    "Risk Acceptance": "consilium.escalation.sensitivity.risk_acceptance_conditions",
+    "Escalation Closure": "consilium.escalation.sensitivity.closure_conditions",
+}
+
+has_permission = {
+    "Escalation Matter": "consilium.escalation.sensitivity.has_permission",
+    "Action Plan": "consilium.escalation.sensitivity.has_permission",
+    "Risk Acceptance": "consilium.escalation.sensitivity.has_permission",
+    "Escalation Closure": "consilium.escalation.sensitivity.has_permission",
+}
+
 scheduler_events = {
     "daily": [
         "consilium.consilium_core.delegation.refresh_all",
         "consilium.consilium_core.attestation.expire_overdue",
         "consilium.consilium_core.sla.sweep",
+        # Matters past their time threshold are raised and their forums notified.
+        "consilium.escalation.resolution.sweep_breaches",
+        # Officer fields on a forum are derived from its membership. Concurrent
+        # membership saves can interleave and leave them stale, so they are
+        # reconciled daily rather than trusted to always be right.
+        "consilium.governance.membership.officer_drift",
+        # Forums and policies whose periodic review has fallen due.
+        "consilium.governance.reviews.overdue_reviews",
+        # Horizon scans that are due, chased to the owner and then the sponsor.
+        "consilium.policy.horizon.remind_due",
+        # Applicability exemptions that have reached their expiry.
+        "consilium.policy.doctype.applicability_exemption.applicability_exemption.lapse_expired",
     ],
     "hourly": [
         "consilium.consilium_core.notification.retry_failed",

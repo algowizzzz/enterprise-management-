@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 0,
+ "autoname": "PLGT-.#####",
+ "creation": "2026-09-17 23:02:22.313944",
+ "description": "A precondition a record must satisfy before it may enter a state. Gates are named, not coded: publication without a complete approval chain is refused because a gate row says so, and the same mechanism covers the other preconditions without a second code path. [Addition \u2014 the data model states the rule but defines no entity to hold it.]",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "target_doctype",
+  "state_field",
+  "state_value",
+  "gate",
+  "is_active",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "Governing Document",
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Target DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "default": "lifecycle_phase",
+   "fieldname": "state_field",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "State Field",
+   "reqd": 1
+  },
+  {
+   "description": "The state being entered. A label held as data, never compared in code.",
+   "fieldname": "state_value",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "State Value",
+   "reqd": 1
+  },
+  {
+   "fieldname": "gate",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Gate",
+   "options": "Complete Approval Chain\nCurrent Version Required\nPublication Record Required\nImplementation Plan Required\nRequired Metadata Complete\nApplicability Recorded",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:02:22.313952",
+ "modified_by": "Administrator",
+ "module": "Policy",
+ "name": "Document Lifecycle Gate",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Enterprise Policy Office",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Policy Owner"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Policy Reviewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "search_fields": "target_doctype,state_value",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

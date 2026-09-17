@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:route_title",
+ "creation": "2026-09-17 23:00:00.187200",
+ "description": "The configurable multi-step approval a committee formation request follows (E7-S4). Not named in 02-data-model.md \u00a76; added because the acceptance criterion requires the steps to be configuration rather than code. One active route per request type wins, most recently modified first.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "route_title",
+  "request_type",
+  "is_active",
+  "description",
+  "steps"
+ ],
+ "fields": [
+  {
+   "fieldname": "route_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Route Title",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "Any",
+   "fieldname": "request_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Applies To Request Type",
+   "options": "Any\nCreate\nModify\nRetire",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "steps",
+   "fieldtype": "Table",
+   "label": "Steps",
+   "options": "Formation Approval Route Step",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.187209",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Formation Approval Route",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Risk Governance Office"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "route_title,request_type",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "route_title",
+ "track_changes": 1
+}

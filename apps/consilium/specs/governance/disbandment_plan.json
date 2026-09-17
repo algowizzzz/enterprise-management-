@@ -1,0 +1,31 @@
+{
+  "name": "Disbandment Plan",
+  "module": "Governance",
+  "description": "The controlled dissolution of a forum (G-11): a plan, the named approvals, a successor and a records disposition decision. Disbandment makes the forum inactive; nothing is deleted and retention continues to apply.",
+  "autoname": "FDIS-.YYYY.-.#####",
+  "naming_rule": "Expression (old style)",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "search_fields": "forum",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {"fieldname": "forum", "fieldtype": "Link", "label": "Forum", "options": "Governance Forum", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+    {"fieldname": "trigger_scenario", "fieldtype": "Select", "label": "Trigger Scenario", "options": "Annual Inventory Review\nSelf Assessment\nCharter Review\nMandate Complete\nOther", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "plan_file", "fieldtype": "Attach", "label": "Plan"},
+    {"fieldname": "successor_forum", "fieldtype": "Link", "label": "Successor Forum", "options": "Governance Forum", "description": "Where the mandate continues elsewhere."},
+    {"fieldname": "records_disposition_note", "fieldtype": "Text", "label": "Records Disposition Note", "reqd": 1, "description": "What becomes of the forum's records. Retention still applies; this is the decision, not the disposal."},
+    {"fieldname": "approvals", "fieldtype": "Table", "label": "Approvals", "options": "Disbandment Approval", "description": "The four approvers G-11 names. Each decision is a Core Approval Decision."},
+    {"fieldname": "effective_on", "fieldtype": "Date", "label": "Effective On"},
+    {"fieldname": "executed_on", "fieldtype": "Datetime", "label": "Executed On", "read_only": 1, "description": "When the disbandment was actually applied to the forum."}
+  ],
+  "permissions": [
+    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1, "email": 1},
+    {"role": "Risk Governance Office", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1, "print": 1},
+    {"role": "Compliance Reviewer", "read": 1, "report": 1, "export": 1},
+    {"role": "Committee Secretary", "read": 1, "report": 1},
+    {"role": "Forum Owner", "read": 1, "report": 1},
+    {"role": "Governance Viewer", "read": 1, "report": 1},
+    {"role": "Consilium Audit", "read": 1, "report": 1, "export": 1}
+  ]
+}

@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 22:47:49.023175",
+ "description": "One impacted entity of an escalation matter. Plural by decision D-4: the template appendix says entities.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "entity_type",
+  "entity_doctype",
+  "entity_value",
+  "impact_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "entity_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Entity Type",
+   "options": "Legal Entity\nMaterial Entity\nBusiness Unit\nLine of Business",
+   "reqd": 1
+  },
+  {
+   "description": "Resolved from entity_type by the matter controller; the Dynamic Link below needs a Link to DocType to point at.",
+   "fieldname": "entity_doctype",
+   "fieldtype": "Link",
+   "label": "Entity DocType",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "entity_value",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Entity",
+   "options": "entity_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "impact_note",
+   "fieldtype": "Text",
+   "label": "Impact Note"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.023182",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Escalation Impacted Entity",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

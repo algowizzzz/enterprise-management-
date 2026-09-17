@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 22:47:49.025267",
+ "description": "One second-line challenge round on a matter (E-9). Effective challenge is a control, not a courtesy.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "round",
+  "reviewer",
+  "review_line",
+  "received_on",
+  "responded_on",
+  "outcome",
+  "comments",
+  "sla_clock"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "round",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Round",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reviewer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Reviewer",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "review_line",
+   "fieldtype": "Link",
+   "label": "Line Of Defence",
+   "options": "Line Of Defence"
+  },
+  {
+   "fieldname": "received_on",
+   "fieldtype": "Datetime",
+   "label": "Received On"
+  },
+  {
+   "fieldname": "responded_on",
+   "fieldtype": "Datetime",
+   "label": "Responded On"
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Outcome",
+   "options": "\nChallenged\nAccepted\nEscalated\nReturned"
+  },
+  {
+   "fieldname": "comments",
+   "fieldtype": "Text",
+   "label": "Comments"
+  },
+  {
+   "fieldname": "sla_clock",
+   "fieldtype": "Link",
+   "label": "SLA Clock",
+   "options": "SLA Clock",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.025275",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Escalation Review",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

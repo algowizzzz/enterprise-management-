@@ -1,0 +1,184 @@
+{
+  "name": "Applicability Exemption",
+  "module": "Policy",
+  "description": "P-21's formal exemption or deviation. Standalone because it carries its own approval and its own expiry, and because it suppresses the notification the applicability row would otherwise produce.",
+  "autoname": "PEXM-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "document,scope_value",
+  "fields": [
+    {
+      "fieldname": "document",
+      "fieldtype": "Link",
+      "label": "Document",
+      "options": "Governing Document",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "exemption_type",
+      "fieldtype": "Select",
+      "label": "Type",
+      "options": "Exemption\nDeviation",
+      "reqd": 1,
+      "default": "Exemption",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "scope_type",
+      "fieldtype": "Select",
+      "label": "Scope",
+      "options": "Organization Unit\nLegal Entity\nMaterial Entity\nJurisdiction\nRole\nFunction",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "scope_value",
+      "fieldtype": "Dynamic Link",
+      "label": "Scope Value",
+      "options": "scope_type",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "scope_label",
+      "fieldtype": "Data",
+      "label": "Scope Label"
+    },
+    {
+      "fieldname": "justification",
+      "fieldtype": "Text",
+      "label": "Justification",
+      "reqd": 1
+    },
+    {
+      "fieldname": "requested_by",
+      "fieldtype": "Link",
+      "label": "Requested By",
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "approved_by",
+      "fieldtype": "Link",
+      "label": "Approved By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "approved_on",
+      "fieldtype": "Date",
+      "label": "Approved On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "valid_from",
+      "fieldtype": "Date",
+      "label": "Valid From"
+    },
+    {
+      "fieldname": "valid_to",
+      "fieldtype": "Date",
+      "label": "Valid To"
+    },
+    {
+      "fieldname": "conditions",
+      "fieldtype": "Text",
+      "label": "Conditions"
+    },
+    {
+      "fieldname": "exemption_status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Requested",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "options": "Requested\nEndorsed\nAuthorised\nRefused\nWithdrawn\nLapsed"
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag set from the configured state. Logic reads this, never the label."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

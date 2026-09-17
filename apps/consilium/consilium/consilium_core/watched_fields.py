@@ -31,6 +31,39 @@ def _watched_doctypes() -> list[str]:
     return values
 
 
+# Row keys that say nothing about whether the content changed. Two loads of the
+# same unchanged child row differ in every one of these.
+_ROW_NOISE = frozenset({
+    "name", "owner", "creation", "modified", "modified_by", "docstatus", "idx",
+    "parent", "parentfield", "parenttype", "doctype", "__islocal", "__unsaved",
+})
+
+
+def _comparable(value):
+    """Reduce a field value to something two loads of the same data compare equal on.
+
+    A child-table field does not hold a value, it holds a list of documents, and
+    two loads of the same unchanged rows are never equal: different Python
+    objects, different `name` values for unsaved rows, different `modified`
+    timestamps. Compared directly, a watched child-table field reports a change
+    on every single save — which means a forum tagged with risk types would go
+    back for compliance review every time anyone touched it, for any reason.
+
+    So a list of rows becomes a sorted set of their meaningful values, and order
+    is deliberately ignored: rearranging the same rows is not a change.
+    """
+    if isinstance(value, (list, tuple)):
+        rows = []
+        for row in value:
+            data = row.as_dict() if hasattr(row, "as_dict") else dict(row or {})
+            rows.append(tuple(sorted(
+                (k, str(v)) for k, v in data.items()
+                if k not in _ROW_NOISE and not k.startswith("_") and v not in (None, "")
+            )))
+        return tuple(sorted(rows))
+    return value
+
+
 def _triggered(mode: str, before, after) -> bool:
     if mode == "Set To Empty":
         return bool(before) and not after
@@ -41,7 +74,7 @@ def _triggered(mode: str, before, after) -> bool:
             return float(after or 0) > float(before or 0)
         except (TypeError, ValueError):
             return False
-    return before != after
+    return _comparable(before) != _comparable(after)
 
 
 def changed_watched_fields(doc) -> list[dict]:

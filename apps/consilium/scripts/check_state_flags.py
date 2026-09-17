@@ -37,19 +37,47 @@ SEED_MODULE = PACKAGE / "consilium_core" / "setup" / "state_flag_seed.py"
 EXEMPT = {SEED_MODULE, Path(__file__).resolve()}
 
 
+def _seed_modules() -> list[Path]:
+    """Core's seed table, plus every module that declares its own states.
+
+    Each business module owns the states it introduces, so the vocabulary is
+    spread across several files. They are found by name rather than listed,
+    because a module added later must be policed without anyone remembering to
+    edit this script — and a module whose states this checker does not know is a
+    module whose state names can be written into a conditional with nothing to
+    catch them.
+    """
+    app = SEED_MODULE.parent.parent.parent
+    found = [SEED_MODULE]
+    for path in sorted(app.rglob("state_flag_seed.py")):
+        if path != SEED_MODULE:
+            found.append(path)
+    return found
+
+
 def state_vocabulary() -> set[str]:
-    """Every state label the platform configures, read from the seed table."""
-    tree = ast.parse(SEED_MODULE.read_text())
+    """Every state label the platform configures, read from the seed tables."""
     values: set[str] = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
+    for path in _seed_modules():
+        tree = ast.parse(path.read_text())
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Assign):
+                continue
             for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "STATE_FLAGS":
-                    for row in node.value.elts:
-                        # (doctype, state_field, state_value, *flags)
-                        state_value = row.elts[2]
-                        if isinstance(state_value, ast.Constant):
-                            values.add(state_value.value)
+                # Core's table, and each module's — `GOVERNANCE_STATE_FLAGS` and
+                # its kin. An assignment whose value is an expression rather than
+                # a literal (Core composes its final table from the modules') has
+                # no rows to read here; its rows are read from their own file.
+                if not (isinstance(target, ast.Name) and target.id.endswith("STATE_FLAGS")):
+                    continue
+                if not isinstance(node.value, (ast.List, ast.Tuple)):
+                    continue
+                for row in node.value.elts:
+                    if not isinstance(row, (ast.Tuple, ast.List)) or len(row.elts) < 3:
+                        continue
+                    state_value = row.elts[2]
+                    if isinstance(state_value, ast.Constant):
+                        values.add(state_value.value)
     return values
 
 

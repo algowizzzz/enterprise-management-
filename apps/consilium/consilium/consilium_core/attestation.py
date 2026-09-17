@@ -64,14 +64,40 @@ def _record_field_participants(campaign, record: str) -> list[dict]:
 
 def seat_query(campaign, record: str) -> dict:
     """The filter that draws attesting seats. Separated out so it can be tested
-    without a forum module being present."""
+    without a forum module being present.
+
+    The open-seat condition is deliberately **not** here — see `_open_seat_names`.
+    """
     filters = {campaign.seat_subject_field: record}
     if campaign.seat_role_field:
         roles = _attesting_seat_roles()
         filters[campaign.seat_role_field] = ["in", roles or [""]]
-    if campaign.seat_end_date_field:
-        filters[campaign.seat_end_date_field] = ["in", [None, ""]]
     return filters
+
+
+def _open_seat_names(campaign, record: str) -> list[str] | None:
+    """Names of seats that are still open, or None when the campaign has no end-date field.
+
+    An open seat is one whose end date is NULL, and asking for that through the
+    ordinary filter syntax does not work on PostgreSQL. Every spelling the query
+    builder offers — ``["in", [None, ""]]``, ``["is", "not set"]`` — renders as a
+    comparison against an empty string, and PostgreSQL refuses to compare a date
+    to ``''`` where MySQL would quietly coerce it. The query fails outright with
+    `invalid input syntax for type date`.
+
+    So the condition is expressed as SQL directly. This is one of the places
+    where the framework's PostgreSQL support diverges from its MySQL behaviour,
+    and it will not be the last: anywhere a Date or Datetime column is tested for
+    emptiness through filters, expect the same failure.
+    """
+    if not campaign.seat_end_date_field:
+        return None
+    table = f'tab{campaign.seat_doctype}'
+    return frappe.db.sql_list(
+        f'select name from "{table}" where "{campaign.seat_subject_field}" = %s '
+        f'and "{campaign.seat_end_date_field}" is null',
+        record,
+    )
 
 
 def _seat_participants(campaign, record: str) -> list[dict]:
@@ -81,7 +107,13 @@ def _seat_participants(campaign, record: str) -> list[dict]:
     fields = [campaign.seat_user_field]
     if campaign.seat_role_field:
         fields.append(campaign.seat_role_field)
-    rows = frappe.get_all(campaign.seat_doctype, filters=seat_query(campaign, record), fields=fields)
+    filters = seat_query(campaign, record)
+    open_seats = _open_seat_names(campaign, record)
+    if open_seats is not None:
+        if not open_seats:
+            return []
+        filters["name"] = ["in", open_seats]
+    rows = frappe.get_all(campaign.seat_doctype, filters=filters, fields=fields)
     seen, out = set(), []
     for row in rows:
         user = row.get(campaign.seat_user_field)

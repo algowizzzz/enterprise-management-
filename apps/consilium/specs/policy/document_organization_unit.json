@@ -1,0 +1,16 @@
+{
+  "name": "Document Organization Unit",
+  "module": "Policy",
+  "description": "A single Organization Unit held in a multi-valued field (02-data-model.md \u00a77 'Multi \u2192 X').",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "organization_unit",
+      "fieldtype": "Link",
+      "label": "Organisation Unit",
+      "options": "Organization Unit",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ]
+}

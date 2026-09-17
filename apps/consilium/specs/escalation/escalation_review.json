@@ -1,0 +1,60 @@
+{
+  "name": "Escalation Review",
+  "module": "Escalation",
+  "description": "One second-line challenge round on a matter (E-9). Effective challenge is a control, not a courtesy.",
+  "istable": 1,
+  "permissions": [],
+  "fields": [
+    {
+      "fieldname": "round",
+      "fieldtype": "Int",
+      "label": "Round",
+      "reqd": 1,
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "reviewer",
+      "fieldtype": "Link",
+      "label": "Reviewer",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "review_line",
+      "fieldtype": "Link",
+      "label": "Line Of Defence",
+      "options": "Line Of Defence"
+    },
+    {
+      "fieldname": "received_on",
+      "fieldtype": "Datetime",
+      "label": "Received On"
+    },
+    {
+      "fieldname": "responded_on",
+      "fieldtype": "Datetime",
+      "label": "Responded On"
+    },
+    {
+      "fieldname": "outcome",
+      "fieldtype": "Select",
+      "label": "Outcome",
+      "options": "\nChallenged\nAccepted\nEscalated\nReturned",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "comments",
+      "fieldtype": "Text",
+      "label": "Comments"
+    },
+    {
+      "fieldname": "sla_clock",
+      "fieldtype": "Link",
+      "label": "SLA Clock",
+      "options": "SLA Clock",
+      "read_only": 1
+    }
+  ]
+}

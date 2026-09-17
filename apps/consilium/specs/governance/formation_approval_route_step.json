@@ -1,0 +1,65 @@
+{
+  "name": "Formation Approval Route Step",
+  "module": "Governance",
+  "description": "One configured step of a formation approval route. Steps are configuration: a step can be added, reordered or made parallel without a deployment (E7-S4).",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "step_title",
+      "fieldtype": "Data",
+      "label": "Step Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "step_sequence",
+      "fieldtype": "Int",
+      "label": "Sequence",
+      "reqd": 1,
+      "default": "1",
+      "in_list_view": 1,
+      "description": "Steps sharing a sequence in Parallel mode are raised together."
+    },
+    {
+      "fieldname": "mode",
+      "fieldtype": "Select",
+      "label": "Mode",
+      "options": "Sequential\nParallel",
+      "reqd": 1,
+      "default": "Sequential",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "required_role",
+      "fieldtype": "Link",
+      "label": "Required Role",
+      "options": "Role",
+      "description": "The access role a decider must hold. Both this and the record's own accountability must hold."
+    },
+    {
+      "fieldname": "assign_to_field",
+      "fieldtype": "Data",
+      "label": "Assign To Field",
+      "description": "A fieldname on the request naming the person this step is assigned to, e.g. delegating_authority. Read as configuration."
+    },
+    {
+      "fieldname": "assign_to_user",
+      "fieldtype": "Link",
+      "label": "Assign To User",
+      "options": "User",
+      "description": "A fixed assignee, where the step is not derived from the request."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1
+    }
+  ],
+  "permissions": [],
+  "istable": 1
+}

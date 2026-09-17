@@ -1,0 +1,21 @@
+{
+  "name": "Forum Governance Responsibility",
+  "module": "Governance",
+  "description": "One governance responsibility a forum holds — oversight, decision making, or both.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "governance_responsibility",
+      "fieldtype": "Link",
+      "label": "Governance Responsibility",
+      "options": "Governance Responsibility",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ],
+  "permissions": [],
+  "istable": 1
+}

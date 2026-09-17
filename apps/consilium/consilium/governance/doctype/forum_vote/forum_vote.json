@@ -1,0 +1,154 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "FVOT-.#####",
+ "creation": "2026-09-17 23:00:00.190867",
+ "description": "One row per entitled voter on a motion. Entitlement is recorded by creating the row, whether or not a vote is cast \u2014 which is what makes 'who was entitled', 'who voted' and 'how' three one-query answers.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "motion",
+  "membership",
+  "voter",
+  "voted_as",
+  "acting_for",
+  "position",
+  "cast_on",
+  "rationale",
+  "weight"
+ ],
+ "fields": [
+  {
+   "fieldname": "motion",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Motion",
+   "options": "Forum Motion",
+   "reqd": 1
+  },
+  {
+   "description": "The seat that conferred entitlement. Checked against the motion's decision date, not today.",
+   "fieldname": "membership",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Membership",
+   "options": "Forum Membership",
+   "reqd": 1
+  },
+  {
+   "description": "Snapshotted from the seat when the motion opened, so a later occupant change does not rewrite who voted.",
+   "fieldname": "voter",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Voter",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "Member",
+   "fieldname": "voted_as",
+   "fieldtype": "Select",
+   "label": "Voted As",
+   "options": "Member\nDelegate",
+   "reqd": 1
+  },
+  {
+   "description": "Set when the vote was cast by a delegate.",
+   "fieldname": "acting_for",
+   "fieldtype": "Link",
+   "label": "Acting For",
+   "options": "User"
+  },
+  {
+   "default": "Not Cast",
+   "description": "A ballot value, not a workflow state: it is counted, and the count is stored on the motion.",
+   "fieldname": "position",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Position",
+   "options": "Not Cast\nFor\nAgainst\nAbstain\nRecused",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cast_on",
+   "fieldtype": "Datetime",
+   "label": "Cast On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rationale",
+   "fieldtype": "Text",
+   "label": "Rationale"
+  },
+  {
+   "default": "1",
+   "description": "For weighted forums.",
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "label": "Weight",
+   "precision": "2"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.190875",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Forum Vote",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Committee Secretary",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Risk Governance Office"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Compliance Reviewer"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Governance Viewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "motion,voter",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

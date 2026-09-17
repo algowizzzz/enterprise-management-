@@ -1,0 +1,63 @@
+{
+  "name": "Approval Route Step",
+  "module": "Policy",
+  "description": "One step of a configured approval path. The assignee is resolved from the record, so a route survives a change of owner.",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "step_sequence",
+      "fieldtype": "Int",
+      "label": "Sequence",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "approval_step",
+      "fieldtype": "Data",
+      "label": "Step",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "required_role",
+      "fieldtype": "Link",
+      "label": "Required Role",
+      "options": "Role",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "assignee_source",
+      "fieldtype": "Select",
+      "label": "Assignee Source",
+      "reqd": 1,
+      "default": "Document Owner",
+      "in_list_view": 1,
+      "options": "Document Owner\nDocument Approver\nDocument Sponsor\nDocument Liaison\nParent Document Owner\nNamed User"
+    },
+    {
+      "fieldname": "assignee",
+      "fieldtype": "Link",
+      "label": "Named Assignee",
+      "options": "User"
+    },
+    {
+      "fieldname": "mode",
+      "fieldtype": "Select",
+      "label": "Mode",
+      "options": "Sequential\nParallel",
+      "default": "Sequential"
+    },
+    {
+      "fieldname": "condition",
+      "fieldtype": "JSON",
+      "label": "Condition",
+      "description": "Optional structured condition over the document's fields, in the same shape the classification engine uses."
+    },
+    {
+      "fieldname": "is_mandatory",
+      "fieldtype": "Check",
+      "label": "Mandatory",
+      "default": "1"
+    }
+  ]
+}

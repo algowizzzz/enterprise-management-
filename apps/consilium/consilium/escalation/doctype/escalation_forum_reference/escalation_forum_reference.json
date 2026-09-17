@@ -1,0 +1,35 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 22:47:49.022973",
+ "description": "One governance forum, held in a Table MultiSelect. The framework's multi-valued reference construct (02-data-model.md \u00a71.3 Multi -> X).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "governance_forum"
+ ],
+ "fields": [
+  {
+   "fieldname": "governance_forum",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Governance Forum",
+   "options": "Governance Forum",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.022980",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Escalation Forum Reference",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,144 @@
+{
+  "name": "Horizon Scan",
+  "module": "Policy",
+  "description": "A periodic obligation on the document owner, not a data feed. It records what the owner reviewed, over what period, and what they concluded. Due dates derive from the document's review cadence.",
+  "autoname": "PHSC-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "document,period_covered",
+  "fields": [
+    {
+      "fieldname": "document",
+      "fieldtype": "Link",
+      "label": "Document",
+      "options": "Governing Document",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "scanned_by",
+      "fieldtype": "Link",
+      "label": "Scanned By",
+      "options": "User",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "scan_date",
+      "fieldtype": "Date",
+      "label": "Scan Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "period_covered",
+      "fieldtype": "Data",
+      "label": "Period Covered",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "due_on",
+      "fieldtype": "Date",
+      "label": "Due On",
+      "read_only": 1,
+      "description": "Derived from the document's review cadence and the previous scan."
+    },
+    {
+      "fieldname": "coverage_areas",
+      "fieldtype": "Table MultiSelect",
+      "label": "Coverage Areas",
+      "options": "Horizon Scan Coverage"
+    },
+    {
+      "fieldname": "sources",
+      "fieldtype": "Table",
+      "label": "Sources Reviewed",
+      "options": "Horizon Scan Source"
+    },
+    {
+      "fieldname": "summary",
+      "fieldtype": "Text",
+      "label": "Summary",
+      "reqd": 1
+    },
+    {
+      "fieldname": "impact_assessment",
+      "fieldtype": "Select",
+      "label": "Impact Assessment",
+      "reqd": 1,
+      "default": "No Change",
+      "in_list_view": 1,
+      "options": "No Change\nReview Triggered\nImmediate Update Required"
+    },
+    {
+      "fieldname": "resulting_review_cycle",
+      "fieldtype": "Link",
+      "label": "Resulting Review Cycle",
+      "options": "Document Review Cycle",
+      "read_only": 1
+    },
+    {
+      "fieldname": "attestation_task",
+      "fieldtype": "Link",
+      "label": "Attestation Task",
+      "options": "Attestation Task"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "PMRS-.#####",
+ "creation": "2026-09-17 23:02:22.320000",
+ "description": "P-11 logging: what was performed, when, by whom, with what outcome and what evidence.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "monitoring_activity",
+  "document",
+  "period_label",
+  "performed_by",
+  "performed_on",
+  "outcome",
+  "findings",
+  "evidence",
+  "resulting_violation"
+ ],
+ "fields": [
+  {
+   "fieldname": "monitoring_activity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Monitoring Activity",
+   "options": "Monitoring Activity",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "monitoring_activity.document",
+   "fieldname": "document",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Document",
+   "options": "Governing Document",
+   "read_only": 1
+  },
+  {
+   "fieldname": "period_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Period",
+   "reqd": 1
+  },
+  {
+   "fieldname": "performed_by",
+   "fieldtype": "Link",
+   "label": "Performed By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "performed_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Performed On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Outcome",
+   "options": "Effective\nPartially Effective\nNot Effective\nNot Performed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "findings",
+   "fieldtype": "Text",
+   "label": "Findings"
+  },
+  {
+   "fieldname": "evidence",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "fieldname": "resulting_violation",
+   "fieldtype": "Link",
+   "label": "Resulting Violation",
+   "options": "Policy Violation"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:02:22.320007",
+ "modified_by": "Administrator",
+ "module": "Policy",
+ "name": "Monitoring Result",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Enterprise Policy Office",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Policy Owner",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Policy Reviewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "monitoring_activity,period_label",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

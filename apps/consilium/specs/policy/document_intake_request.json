@@ -1,0 +1,215 @@
+{
+  "name": "Document Intake Request",
+  "module": "Policy",
+  "description": "P-16 intake. Captures the need, the proposed implementation date and who must be engaged, then is classified by Core's rules engine. The rule-set version that classified it is held on the assessment, so a later rule change cannot rewrite this request's history.",
+  "autoname": "PINT-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "proposed_document_name,requester",
+  "fields": [
+    {
+      "fieldname": "request_type",
+      "fieldtype": "Select",
+      "label": "Request Type",
+      "options": "Create\nChange\nRetire",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_document",
+      "fieldtype": "Link",
+      "label": "Subject Document",
+      "options": "Governing Document",
+      "in_list_view": 1,
+      "description": "The document being changed or retired. Empty for a create request."
+    },
+    {
+      "fieldname": "proposed_document_type",
+      "fieldtype": "Link",
+      "label": "Proposed Document Type",
+      "options": "Governing Document Type"
+    },
+    {
+      "fieldname": "proposed_document_name",
+      "fieldtype": "Data",
+      "label": "Proposed Document Name",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "requester",
+      "fieldtype": "Link",
+      "label": "Requester",
+      "options": "User",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "business_justification",
+      "fieldtype": "Text",
+      "label": "Business Justification",
+      "reqd": 1
+    },
+    {
+      "fieldname": "proposed_effective_date",
+      "fieldtype": "Date",
+      "label": "Proposed Effective Date"
+    },
+    {
+      "fieldname": "parties_to_engage",
+      "fieldtype": "Table MultiSelect",
+      "label": "Parties to Engage",
+      "options": "Intake Party"
+    },
+    {
+      "fieldname": "primary_risk_category",
+      "fieldtype": "Link",
+      "label": "Primary Risk Category",
+      "options": "Risk Category"
+    },
+    {
+      "fieldname": "classification_assessment",
+      "fieldtype": "Link",
+      "label": "Classification Assessment",
+      "options": "Classification Assessment",
+      "read_only": 1
+    },
+    {
+      "fieldname": "change_classification",
+      "fieldtype": "Data",
+      "label": "Change Classification",
+      "read_only": 1,
+      "in_list_view": 1,
+      "description": "Copied from the assessment's effective outcome. Drives routing, approval steps and service levels."
+    },
+    {
+      "fieldname": "classification_challenge",
+      "fieldtype": "Text",
+      "label": "Classification Challenge",
+      "description": "E13-S3: the requester may challenge the outcome, and the challenge is recorded here."
+    },
+    {
+      "fieldname": "challenged_by",
+      "fieldtype": "Link",
+      "label": "Challenged By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "challenged_on",
+      "fieldtype": "Datetime",
+      "label": "Challenged On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "workflow_state",
+      "fieldtype": "Data",
+      "label": "Workflow State",
+      "reqd": 1,
+      "default": "Requested",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag set from the configured state. Logic reads this, never the label."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "created_document",
+      "fieldtype": "Link",
+      "label": "Created Document",
+      "options": "Governing Document",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sla_clock",
+      "fieldtype": "Link",
+      "label": "SLA Clock",
+      "options": "SLA Clock",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "All",
+      "read": 1
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Document Legal Entity",
+  "module": "Policy",
+  "description": "A single Legal Entity held in a multi-valued field (02-data-model.md \u00a77 'Multi \u2192 X').",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "legal_entity",
+      "fieldtype": "Link",
+      "label": "Legal Entity",
+      "options": "Legal Entity",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ]
+}

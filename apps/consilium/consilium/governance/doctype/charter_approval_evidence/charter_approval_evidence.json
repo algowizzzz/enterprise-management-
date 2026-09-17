@@ -1,0 +1,62 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 23:00:00.185519",
+ "description": "Proof that a charter was approved, in one of the forms G-5 accepts.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "evidence_type",
+  "evidence_file",
+  "provided_by",
+  "dated_on",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "evidence_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Evidence Type",
+   "options": "Email\nMeeting Minutes\nSigned Document\nSystem Approval",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evidence_file",
+   "fieldtype": "Attach",
+   "label": "Evidence File"
+  },
+  {
+   "fieldname": "provided_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Provided By",
+   "options": "User"
+  },
+  {
+   "fieldname": "dated_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Dated On"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.185546",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Charter Approval Evidence",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

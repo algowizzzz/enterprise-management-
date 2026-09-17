@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 23:02:22.312504",
+ "description": "One step of a configured approval path. The assignee is resolved from the record, so a route survives a change of owner.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "step_sequence",
+  "approval_step",
+  "required_role",
+  "assignee_source",
+  "assignee",
+  "mode",
+  "condition",
+  "is_mandatory"
+ ],
+ "fields": [
+  {
+   "fieldname": "step_sequence",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sequence",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approval_step",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Step",
+   "reqd": 1
+  },
+  {
+   "fieldname": "required_role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Required Role",
+   "options": "Role"
+  },
+  {
+   "default": "Document Owner",
+   "fieldname": "assignee_source",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Assignee Source",
+   "options": "Document Owner\nDocument Approver\nDocument Sponsor\nDocument Liaison\nParent Document Owner\nNamed User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assignee",
+   "fieldtype": "Link",
+   "label": "Named Assignee",
+   "options": "User"
+  },
+  {
+   "default": "Sequential",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "Sequential\nParallel"
+  },
+  {
+   "description": "Optional structured condition over the document's fields, in the same shape the classification engine uses.",
+   "fieldname": "condition",
+   "fieldtype": "JSON",
+   "label": "Condition"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_mandatory",
+   "fieldtype": "Check",
+   "label": "Mandatory"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 23:02:22.312515",
+ "modified_by": "Administrator",
+ "module": "Policy",
+ "name": "Approval Route Step",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

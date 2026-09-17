@@ -1,0 +1,207 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "ESPS-.#####",
+ "creation": "2026-09-17 22:47:49.026423",
+ "description": "A periodic escalation return, including the nil return that confirms no activity (E-11).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "period_label",
+  "period_start",
+  "period_end",
+  "scope_filter",
+  "submitted_by",
+  "submitted_on",
+  "matter_count",
+  "nil_return",
+  "report_file",
+  "status",
+  "is_editable",
+  "is_active",
+  "is_open",
+  "requires_review",
+  "is_committable",
+  "requires_statement"
+ ],
+ "fields": [
+  {
+   "fieldname": "period_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Period Label",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Period Start",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Period End",
+   "reqd": 1
+  },
+  {
+   "description": "Stored, not recomputed, so the population that was submitted can be reproduced.",
+   "fieldname": "scope_filter",
+   "fieldtype": "JSON",
+   "label": "Scope Filter"
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "label": "Submitted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_on",
+   "fieldtype": "Datetime",
+   "label": "Submitted On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "matter_count",
+   "fieldtype": "Int",
+   "label": "Matter Count",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The positive confirmation that there was no activity in the period.",
+   "fieldname": "nil_return",
+   "fieldtype": "Check",
+   "label": "Nil Return"
+  },
+  {
+   "fieldname": "report_file",
+   "fieldtype": "Attach",
+   "label": "Report File"
+  },
+  {
+   "default": "Draft",
+   "description": "A label. Business logic reads the semantic flags.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nSubmitted\nAccepted",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_committable",
+   "fieldtype": "Check",
+   "label": "Is Committable",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "requires_statement",
+   "fieldtype": "Check",
+   "label": "Requires Statement",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.026432",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Periodic Submission",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Owner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Reviewer",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "period_label",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "period_label",
+ "track_changes": 1
+}

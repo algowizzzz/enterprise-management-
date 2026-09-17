@@ -1,0 +1,41 @@
+{
+  "name": "Forum Meeting",
+  "module": "Governance",
+  "description": "A sitting of a forum. Attendance is snapshotted, and whether the meeting was quorate is stored when it is recorded rather than derived later.",
+  "autoname": "FMTG-.YYYY.-.#####",
+  "naming_rule": "Expression (old style)",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "title_field": "meeting_reference",
+  "search_fields": "forum,meeting_reference",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {"fieldname": "forum", "fieldtype": "Link", "label": "Forum", "options": "Governance Forum", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+    {"fieldname": "meeting_reference", "fieldtype": "Data", "label": "Meeting Reference", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "scheduled_on", "fieldtype": "Datetime", "label": "Scheduled On", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "held_on", "fieldtype": "Datetime", "label": "Held On"},
+    {"fieldname": "location", "fieldtype": "Data", "label": "Location"},
+    {"fieldname": "chaired_by", "fieldtype": "Link", "label": "Chaired By", "options": "User"},
+    {"fieldname": "secretary", "fieldtype": "Link", "label": "Secretary", "options": "User"},
+    {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Scheduled\nHeld\nCancelled\nAdjourned", "reqd": 1, "default": "Scheduled", "in_list_view": 1, "in_standard_filter": 1, "description": "A label. Logic reads the semantic flags."},
+    {"fieldname": "is_open", "fieldtype": "Check", "label": "Is Open", "read_only": 1, "default": "1"},
+    {"fieldname": "is_editable", "fieldtype": "Check", "label": "Is Editable", "read_only": 1, "default": "1"},
+    {"fieldname": "is_active", "fieldtype": "Check", "label": "Is Active", "read_only": 1, "default": "1"},
+    {"fieldname": "is_committable", "fieldtype": "Check", "label": "Is Committable", "read_only": 1, "default": "0", "description": "Semantic flag. True only where the meeting actually sat, which is when attendance and quorum may be recorded."},
+    {"fieldname": "agenda_file", "fieldtype": "Attach", "label": "Agenda"},
+    {"fieldname": "minutes_version", "fieldtype": "Link", "label": "Minutes Version", "options": "Document Version", "read_only": 1},
+    {"fieldname": "attendance", "fieldtype": "Table", "label": "Attendance", "options": "Meeting Attendance"},
+    {"fieldname": "quorum_met", "fieldtype": "Check", "label": "Quorum Met", "read_only": 1, "default": "0", "description": "Stored when attendance is recorded. A later membership change cannot rewrite it."},
+    {"fieldname": "quorum_evaluated_note", "fieldtype": "Text", "label": "Quorum Evaluation Note", "read_only": 1}
+  ],
+  "permissions": [
+    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1, "email": 1},
+    {"role": "Committee Secretary", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1, "print": 1},
+    {"role": "Risk Governance Office", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1, "print": 1},
+    {"role": "Compliance Reviewer", "read": 1, "report": 1, "export": 1},
+    {"role": "Forum Owner", "read": 1, "report": 1, "export": 1},
+    {"role": "Governance Viewer", "read": 1, "report": 1},
+    {"role": "Consilium Audit", "read": 1, "report": 1, "export": 1}
+  ]
+}

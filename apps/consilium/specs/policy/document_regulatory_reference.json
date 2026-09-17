@@ -1,0 +1,43 @@
+{
+  "name": "Document Regulatory Reference",
+  "module": "Policy",
+  "description": "P-6 regulatory capture against the shared Regulatory Requirement library, so a regulatory change is assessed once and fans out to every document that cites it.",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "regulatory_requirement",
+      "fieldtype": "Link",
+      "label": "Regulatory Requirement",
+      "options": "Regulatory Requirement",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "citation",
+      "fieldtype": "Data",
+      "label": "Citation",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "jurisdiction",
+      "fieldtype": "Link",
+      "label": "Jurisdiction",
+      "options": "Jurisdiction"
+    },
+    {
+      "fieldname": "effective_from",
+      "fieldtype": "Date",
+      "label": "Effective From"
+    },
+    {
+      "fieldname": "obligation_summary",
+      "fieldtype": "Text",
+      "label": "Obligation Summary"
+    },
+    {
+      "fieldname": "last_verified_on",
+      "fieldtype": "Date",
+      "label": "Last Verified On"
+    }
+  ]
+}

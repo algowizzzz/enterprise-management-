@@ -1,0 +1,172 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "PHSC-.#####",
+ "creation": "2026-09-17 23:02:22.317238",
+ "description": "A periodic obligation on the document owner, not a data feed. It records what the owner reviewed, over what period, and what they concluded. Due dates derive from the document's review cadence.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "document",
+  "scanned_by",
+  "scan_date",
+  "period_covered",
+  "due_on",
+  "coverage_areas",
+  "sources",
+  "summary",
+  "impact_assessment",
+  "resulting_review_cycle",
+  "attestation_task"
+ ],
+ "fields": [
+  {
+   "fieldname": "document",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Document",
+   "options": "Governing Document",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scanned_by",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Scanned By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scan_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Scan Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_covered",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Period Covered",
+   "reqd": 1
+  },
+  {
+   "description": "Derived from the document's review cadence and the previous scan.",
+   "fieldname": "due_on",
+   "fieldtype": "Date",
+   "label": "Due On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "coverage_areas",
+   "fieldtype": "Table MultiSelect",
+   "label": "Coverage Areas",
+   "options": "Horizon Scan Coverage"
+  },
+  {
+   "fieldname": "sources",
+   "fieldtype": "Table",
+   "label": "Sources Reviewed",
+   "options": "Horizon Scan Source"
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Text",
+   "label": "Summary",
+   "reqd": 1
+  },
+  {
+   "default": "No Change",
+   "fieldname": "impact_assessment",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Impact Assessment",
+   "options": "No Change\nReview Triggered\nImmediate Update Required",
+   "reqd": 1
+  },
+  {
+   "fieldname": "resulting_review_cycle",
+   "fieldtype": "Link",
+   "label": "Resulting Review Cycle",
+   "options": "Document Review Cycle",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attestation_task",
+   "fieldtype": "Link",
+   "label": "Attestation Task",
+   "options": "Attestation Task"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:02:22.317248",
+ "modified_by": "Administrator",
+ "module": "Policy",
+ "name": "Horizon Scan",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Enterprise Policy Office",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Policy Owner",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Policy Reviewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "document,period_covered",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 22:47:49.024520",
+ "description": "One routing rule of an approved escalation matrix (02-data-model.md \u00a78.3). The condition is data, evaluated by consilium.escalation.routing.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_code",
+  "priority",
+  "condition",
+  "resulting_severity",
+  "route_to_role",
+  "sla_definition",
+  "is_active",
+  "rule_description"
+ ],
+ "fields": [
+  {
+   "description": "Stable identifier. Stored on the matter as the trace of which rule fired, and joins the route and notification rows below.",
+   "fieldname": "rule_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rule Code",
+   "reqd": 1
+  },
+  {
+   "default": "100",
+   "description": "Lowest number wins. Rules are evaluated in priority order and the first match fires.",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Priority"
+  },
+  {
+   "description": "Object over escalation_type, tier_1_risk_type, tier_2_risk_type, organizational_level, material_entity_impact and risk_appetite_breach. An absent key means 'any'. A list value means 'one of'.",
+   "fieldname": "condition",
+   "fieldtype": "JSON",
+   "label": "Condition"
+  },
+  {
+   "fieldname": "resulting_severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Resulting Severity",
+   "options": "High\nMedium\nLow",
+   "reqd": 1
+  },
+  {
+   "fieldname": "route_to_role",
+   "fieldtype": "Link",
+   "label": "Route To Role",
+   "options": "Role"
+  },
+  {
+   "description": "The time threshold this rule imposes. Core's SLA clock measures it; breach raises the matter.",
+   "fieldname": "sla_definition",
+   "fieldtype": "Link",
+   "label": "SLA Definition",
+   "options": "SLA Definition"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "fieldname": "rule_description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.024530",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Escalation Matrix Rule",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,102 @@
+{
+  "name": "Escalation Template",
+  "module": "Escalation",
+  "description": "A configurable required-field set for one escalation type and one of the three records the type governs: the escalation, its action plans and its risk acceptances (E16-S1).",
+  "autoname": "field:template_code",
+  "naming_rule": "By fieldname",
+  "allow_rename": 1,
+  "title_field": "title",
+  "search_fields": "title,template_code",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Escalation Owner",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Escalation Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "allow_import": 1,
+  "fields": [
+    {
+      "fieldname": "template_code",
+      "fieldtype": "Data",
+      "label": "Code",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "title",
+      "fieldtype": "Data",
+      "label": "Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "escalation_type",
+      "fieldtype": "Link",
+      "label": "Escalation Type",
+      "options": "Escalation Type",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "template_scope",
+      "fieldtype": "Select",
+      "label": "Scope",
+      "options": "Escalation\nAction Plan\nRisk Acceptance",
+      "reqd": 1,
+      "default": "Escalation",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Which of the three records this template configures. [Inferred \u2014 the model names one template entity; E16-S1 requires three templates per type over a shared set of standard fields.]"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "template_fields",
+      "fieldtype": "Table",
+      "label": "Fields",
+      "options": "Escalation Template Field",
+      "description": "Named template_fields rather than fields: `fields` collides with the document object's own attribute."
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 23:00:00.190694",
+ "description": "One risk type a forum covers. Multi-valued by decision M-3.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "risk_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "risk_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Risk Type",
+   "options": "Risk Type",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.190703",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Forum Risk Type",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

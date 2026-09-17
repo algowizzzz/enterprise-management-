@@ -1,0 +1,31 @@
+{
+  "name": "Forum Vote",
+  "module": "Governance",
+  "description": "One row per entitled voter on a motion. Entitlement is recorded by creating the row, whether or not a vote is cast — which is what makes 'who was entitled', 'who voted' and 'how' three one-query answers.",
+  "autoname": "FVOT-.#####",
+  "naming_rule": "Expression (old style)",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "search_fields": "motion,voter",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {"fieldname": "motion", "fieldtype": "Link", "label": "Motion", "options": "Forum Motion", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+    {"fieldname": "membership", "fieldtype": "Link", "label": "Membership", "options": "Forum Membership", "reqd": 1, "in_list_view": 1, "description": "The seat that conferred entitlement. Checked against the motion's decision date, not today."},
+    {"fieldname": "voter", "fieldtype": "Link", "label": "Voter", "options": "User", "reqd": 1, "in_list_view": 1, "description": "Snapshotted from the seat when the motion opened, so a later occupant change does not rewrite who voted."},
+    {"fieldname": "voted_as", "fieldtype": "Select", "label": "Voted As", "options": "Member\nDelegate", "reqd": 1, "default": "Member"},
+    {"fieldname": "acting_for", "fieldtype": "Link", "label": "Acting For", "options": "User", "description": "Set when the vote was cast by a delegate."},
+    {"fieldname": "position", "fieldtype": "Select", "label": "Position", "options": "Not Cast\nFor\nAgainst\nAbstain\nRecused", "reqd": 1, "default": "Not Cast", "in_list_view": 1, "in_standard_filter": 1, "description": "A ballot value, not a workflow state: it is counted, and the count is stored on the motion."},
+    {"fieldname": "cast_on", "fieldtype": "Datetime", "label": "Cast On", "read_only": 1},
+    {"fieldname": "rationale", "fieldtype": "Text", "label": "Rationale"},
+    {"fieldname": "weight", "fieldtype": "Float", "label": "Weight", "precision": "2", "default": "1", "description": "For weighted forums."}
+  ],
+  "permissions": [
+    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1, "email": 1},
+    {"role": "Committee Secretary", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1, "print": 1},
+    {"role": "Risk Governance Office", "read": 1, "report": 1, "export": 1},
+    {"role": "Compliance Reviewer", "read": 1, "report": 1, "export": 1},
+    {"role": "Governance Viewer", "read": 1, "report": 1},
+    {"role": "Consilium Audit", "read": 1, "report": 1, "export": 1}
+  ]
+}

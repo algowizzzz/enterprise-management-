@@ -1,0 +1,113 @@
+{
+  "name": "Document Lifecycle Gate",
+  "module": "Policy",
+  "description": "A precondition a record must satisfy before it may enter a state. Gates are named, not coded: publication without a complete approval chain is refused because a gate row says so, and the same mechanism covers the other preconditions without a second code path. [Addition \u2014 the data model states the rule but defines no entity to hold it.]",
+  "autoname": "PLGT-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "target_doctype,state_value",
+  "fields": [
+    {
+      "fieldname": "target_doctype",
+      "fieldtype": "Link",
+      "label": "Target DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "default": "Governing Document",
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "state_field",
+      "fieldtype": "Data",
+      "label": "State Field",
+      "reqd": 1,
+      "default": "lifecycle_phase",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "state_value",
+      "fieldtype": "Data",
+      "label": "State Value",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "The state being entered. A label held as data, never compared in code."
+    },
+    {
+      "fieldname": "gate",
+      "fieldtype": "Select",
+      "label": "Gate",
+      "reqd": 1,
+      "in_list_view": 1,
+      "options": "Complete Approval Chain\nCurrent Version Required\nPublication Record Required\nImplementation Plan Required\nRequired Metadata Complete\nApplicability Recorded"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Notes"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Owner",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Policy Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "All",
+      "read": 1
+    }
+  ],
+  "allow_import": 1
+}

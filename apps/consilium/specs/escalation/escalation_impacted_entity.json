@@ -1,0 +1,38 @@
+{
+  "name": "Escalation Impacted Entity",
+  "module": "Escalation",
+  "description": "One impacted entity of an escalation matter. Plural by decision D-4: the template appendix says entities.",
+  "istable": 1,
+  "permissions": [],
+  "fields": [
+    {
+      "fieldname": "entity_type",
+      "fieldtype": "Select",
+      "label": "Entity Type",
+      "options": "Legal Entity\nMaterial Entity\nBusiness Unit\nLine of Business",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "entity_doctype",
+      "fieldtype": "Link",
+      "label": "Entity DocType",
+      "options": "DocType",
+      "read_only": 1,
+      "description": "Resolved from entity_type by the matter controller; the Dynamic Link below needs a Link to DocType to point at."
+    },
+    {
+      "fieldname": "entity_value",
+      "fieldtype": "Dynamic Link",
+      "label": "Entity",
+      "options": "entity_doctype",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "impact_note",
+      "fieldtype": "Text",
+      "label": "Impact Note"
+    }
+  ]
+}

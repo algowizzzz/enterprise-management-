@@ -1,0 +1,244 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 0,
+ "autoname": "ACTP-.#####",
+ "creation": "2026-09-17 22:47:49.021641",
+ "description": "A remediation plan against an escalation matter (E-6, E-8, E16-S3). Standalone because it has its own owner, dates and lifecycle; several per matter.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "escalation_matter",
+  "action_plan_name",
+  "escalation_template",
+  "start_date",
+  "end_date",
+  "accountable_executive",
+  "owner_user",
+  "status",
+  "is_editable",
+  "is_active",
+  "is_open",
+  "requires_review",
+  "is_committable",
+  "requires_statement",
+  "governance_forums",
+  "description",
+  "completion_evidence",
+  "completed_on",
+  "external_reference",
+  "sensitive"
+ ],
+ "fields": [
+  {
+   "fieldname": "escalation_matter",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Escalation Matter",
+   "options": "Escalation Matter",
+   "reqd": 1
+  },
+  {
+   "fieldname": "action_plan_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Action Plan Name",
+   "reqd": 1
+  },
+  {
+   "description": "The Action Plan template of the matter's escalation type.",
+   "fieldname": "escalation_template",
+   "fieldtype": "Link",
+   "label": "Escalation Template",
+   "options": "Escalation Template",
+   "read_only": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "End Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "accountable_executive",
+   "fieldtype": "Link",
+   "label": "Accountable Executive",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "description": "Named owner_user because `owner` is the framework's creator column.",
+   "fieldname": "owner_user",
+   "fieldtype": "Link",
+   "label": "Action Plan Owner",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "Open",
+   "description": "A label. Business logic reads the semantic flags.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nOpen\nIn Progress\nCompleted\nCancelled",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "is_committable",
+   "fieldtype": "Check",
+   "label": "Is Committable",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "fieldname": "requires_statement",
+   "fieldtype": "Check",
+   "label": "Requires Statement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "governance_forums",
+   "fieldtype": "Table MultiSelect",
+   "label": "Governance Forums",
+   "options": "Escalation Forum Reference"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "completion_evidence",
+   "fieldtype": "Attach",
+   "label": "Completion Evidence"
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "label": "Completed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "external_reference",
+   "fieldtype": "Link",
+   "label": "External Reference",
+   "options": "External Reference"
+  },
+  {
+   "default": "0",
+   "description": "Copied from the matter so the restriction holds on this record's read paths too.",
+   "fieldname": "sensitive",
+   "fieldtype": "Check",
+   "label": "Sensitive",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.021674",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Action Plan",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Owner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Reviewer",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "action_plan_name,escalation_matter",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "action_plan_name",
+ "track_changes": 1
+}

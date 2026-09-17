@@ -1,0 +1,192 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "FCR-.YYYY.-.#####",
+ "creation": "2026-09-17 23:00:00.188272",
+ "description": "The compliance decision that moves a forum's status, kept as its own record so that a history of compliance decisions exists (02-data-model.md \u00a76.6). Only a compliance role may create one; recording it is what changes the forum.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "forum",
+  "review_type",
+  "triggered_by_fields",
+  "reviewer",
+  "decision",
+  "is_active",
+  "is_editable",
+  "requires_review",
+  "requires_statement",
+  "resulting_status",
+  "comments",
+  "returned_questions",
+  "decided_on",
+  "attestation_task"
+ ],
+ "fields": [
+  {
+   "fieldname": "forum",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Forum",
+   "options": "Governance Forum",
+   "reqd": 1
+  },
+  {
+   "default": "Initial",
+   "fieldname": "review_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Review Type",
+   "options": "Initial\nTriggered By Change\nAnnual",
+   "reqd": 1
+  },
+  {
+   "description": "The watched fields whose change fired this review, as recorded at the time.",
+   "fieldname": "triggered_by_fields",
+   "fieldtype": "JSON",
+   "label": "Triggered By Fields"
+  },
+  {
+   "fieldname": "reviewer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Reviewer",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "description": "A label. The flags below say what it means; the forum status it produces is a configured mapping, read and written, never compared.",
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Decision",
+   "options": "Compliant\nNon-Compliant\nNot Applicable\nReturned To Creator",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Set by the decision that returns the forum to its creator, which cannot be recorded without questions.",
+   "fieldname": "requires_statement",
+   "fieldtype": "Check",
+   "label": "Requires Statement",
+   "read_only": 1
+  },
+  {
+   "description": "The forum status this decision produced, copied at the time. Stored so the history is readable without re-deriving it.",
+   "fieldname": "resulting_status",
+   "fieldtype": "Data",
+   "label": "Resulting Forum Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "comments",
+   "fieldtype": "Text",
+   "label": "Comments"
+  },
+  {
+   "fieldname": "returned_questions",
+   "fieldtype": "Text",
+   "label": "Questions To Creator"
+  },
+  {
+   "fieldname": "decided_on",
+   "fieldtype": "Datetime",
+   "label": "Decided On",
+   "read_only": 1
+  },
+  {
+   "description": "Set for the annual dual-signed owner and compliance review.",
+   "fieldname": "attestation_task",
+   "fieldtype": "Link",
+   "label": "Attestation Task",
+   "options": "Attestation Task"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.188281",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Forum Compliance Review",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Compliance Reviewer",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Risk Governance Office"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Committee Secretary"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Forum Owner"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Governance Viewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "forum,review_type",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Forum Jurisdiction",
+  "module": "Governance",
+  "description": "One jurisdiction a forum operates in. Multi-valued by decision M-3.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "jurisdiction",
+      "fieldtype": "Link",
+      "label": "Jurisdiction",
+      "options": "Jurisdiction",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ],
+  "permissions": [],
+  "istable": 1
+}

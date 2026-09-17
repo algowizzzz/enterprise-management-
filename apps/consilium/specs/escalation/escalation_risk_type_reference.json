@@ -1,0 +1,17 @@
+{
+  "name": "Escalation Risk Type Reference",
+  "module": "Escalation",
+  "description": "One risk type in an escalation matrix's scope. Multi -> Risk Type.",
+  "istable": 1,
+  "permissions": [],
+  "fields": [
+    {
+      "fieldname": "risk_type",
+      "fieldtype": "Link",
+      "label": "Risk Type",
+      "options": "Risk Type",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ]
+}

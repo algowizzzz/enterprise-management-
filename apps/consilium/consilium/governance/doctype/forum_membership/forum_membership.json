@@ -1,0 +1,228 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 0,
+ "autoname": "FMEM-.#####",
+ "creation": "2026-09-17 23:32:28.212249",
+ "description": "A dated seat on a forum. Standalone, not a child table, by structural decision M-1: membership history survives independently, so the composition of a forum at any past date is a date-range filter rather than a replay of version diffs. Closed by setting an end date, never by deleting the row.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "forum",
+  "seat_type",
+  "member",
+  "position_title",
+  "forum_role",
+  "votes",
+  "counts_toward_quorum",
+  "is_voting_chair",
+  "start_date",
+  "end_date",
+  "end_reason",
+  "delegate",
+  "delegate_from",
+  "delegate_to",
+  "delegate_votes",
+  "authority_delegation",
+  "appointed_by",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "forum",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Forum",
+   "options": "Governance Forum",
+   "reqd": 1
+  },
+  {
+   "default": "Person",
+   "description": "A Position seat survives the person leaving; it may stand vacant.",
+   "fieldname": "seat_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Seat Type",
+   "options": "Person\nPosition",
+   "reqd": 1
+  },
+  {
+   "description": "Empty only where the seat is by position and currently vacant.",
+   "fieldname": "member",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Member",
+   "options": "User"
+  },
+  {
+   "description": "Required when the seat is by position. The seat's identity, independent of its occupant.",
+   "fieldname": "position_title",
+   "fieldtype": "Data",
+   "label": "Position Title"
+  },
+  {
+   "description": "Brings counts_toward_quorum, votes_by_default and can_attest as defaults.",
+   "fieldname": "forum_role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Seat Role",
+   "options": "Governance Forum Role",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Defaults from the role, overridable per seat. This is the field voting entitlement reads.",
+   "fieldname": "votes",
+   "fieldtype": "Check",
+   "label": "Votes"
+  },
+  {
+   "default": "0",
+   "description": "Defaults from the role, overridable per seat.",
+   "fieldname": "counts_toward_quorum",
+   "fieldtype": "Check",
+   "label": "Counts Toward Quorum"
+  },
+  {
+   "default": "0",
+   "description": "Whether the chair holds a casting vote.",
+   "fieldname": "is_voting_chair",
+   "fieldtype": "Check",
+   "label": "Is Voting Chair"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "description": "Empty means current. Closing a seat sets this; it never deletes the row.",
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "End Date"
+  },
+  {
+   "fieldname": "end_reason",
+   "fieldtype": "Select",
+   "label": "End Reason",
+   "options": "\nTerm Ended\nLeft Organisation\nRole Change\nForum Disbanded\nRemoved"
+  },
+  {
+   "description": "The standing delegate for this seat.",
+   "fieldname": "delegate",
+   "fieldtype": "Link",
+   "label": "Delegate",
+   "options": "User"
+  },
+  {
+   "fieldname": "delegate_from",
+   "fieldtype": "Date",
+   "label": "Delegate From"
+  },
+  {
+   "fieldname": "delegate_to",
+   "fieldtype": "Date",
+   "label": "Delegate To"
+  },
+  {
+   "default": "0",
+   "description": "Whether the delegate may vote or only attend. A delegate never inherits a vote the seat does not hold.",
+   "fieldname": "delegate_votes",
+   "fieldtype": "Check",
+   "label": "Delegate Votes"
+  },
+  {
+   "description": "Where the delegation is formal and wider than this seat.",
+   "fieldname": "authority_delegation",
+   "fieldtype": "Link",
+   "label": "Authority Delegation",
+   "options": "Authority Delegation"
+  },
+  {
+   "fieldname": "appointed_by",
+   "fieldtype": "Link",
+   "label": "Appointed By",
+   "options": "User"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:32:28.212280",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Forum Membership",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Committee Secretary",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Risk Governance Office",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Compliance Reviewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Forum Owner"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Governance Viewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "forum,member,forum_role",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

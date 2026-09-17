@@ -1,0 +1,129 @@
+{
+  "name": "Monitoring Result",
+  "module": "Policy",
+  "description": "P-11 logging: what was performed, when, by whom, with what outcome and what evidence.",
+  "autoname": "PMRS-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "monitoring_activity,period_label",
+  "fields": [
+    {
+      "fieldname": "monitoring_activity",
+      "fieldtype": "Link",
+      "label": "Monitoring Activity",
+      "options": "Monitoring Activity",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "document",
+      "fieldtype": "Link",
+      "label": "Document",
+      "options": "Governing Document",
+      "read_only": 1,
+      "in_standard_filter": 1,
+      "fetch_from": "monitoring_activity.document"
+    },
+    {
+      "fieldname": "period_label",
+      "fieldtype": "Data",
+      "label": "Period",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "performed_by",
+      "fieldtype": "Link",
+      "label": "Performed By",
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "performed_on",
+      "fieldtype": "Date",
+      "label": "Performed On",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "outcome",
+      "fieldtype": "Select",
+      "label": "Outcome",
+      "reqd": 1,
+      "in_list_view": 1,
+      "options": "Effective\nPartially Effective\nNot Effective\nNot Performed"
+    },
+    {
+      "fieldname": "findings",
+      "fieldtype": "Text",
+      "label": "Findings"
+    },
+    {
+      "fieldname": "evidence",
+      "fieldtype": "Attach",
+      "label": "Evidence"
+    },
+    {
+      "fieldname": "resulting_violation",
+      "fieldtype": "Link",
+      "label": "Resulting Violation",
+      "options": "Policy Violation"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Policy Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

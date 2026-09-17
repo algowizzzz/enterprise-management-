@@ -1,0 +1,236 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "PVIO-.#####",
+ "creation": "2026-09-17 23:02:22.320236",
+ "description": "P-22. A breach of a governing document, tracked to resolution and optionally escalated.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "document",
+  "violation_type",
+  "severity",
+  "occurred_on",
+  "identified_on",
+  "responsible_party",
+  "business_unit",
+  "description",
+  "corrective_actions",
+  "external_reference",
+  "violation_status",
+  "resolved_on",
+  "resolution_note",
+  "escalation_doctype",
+  "resulting_escalation",
+  "is_editable",
+  "is_active",
+  "requires_review",
+  "is_open"
+ ],
+ "fields": [
+  {
+   "fieldname": "document",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Document",
+   "options": "Governing Document",
+   "reqd": 1
+  },
+  {
+   "default": "Process",
+   "fieldname": "violation_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Process\nControl\nRegulatory\nConduct\nData\nOther",
+   "reqd": 1
+  },
+  {
+   "default": "Medium",
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Severity",
+   "options": "Low\nMedium\nHigh\nCritical",
+   "reqd": 1
+  },
+  {
+   "fieldname": "occurred_on",
+   "fieldtype": "Date",
+   "label": "Occurred On"
+  },
+  {
+   "fieldname": "identified_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Identified On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "responsible_party",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Responsible Party",
+   "options": "User"
+  },
+  {
+   "fieldname": "business_unit",
+   "fieldtype": "Link",
+   "label": "Business Unit",
+   "options": "Organization Unit"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "corrective_actions",
+   "fieldtype": "Text",
+   "label": "Corrective Actions"
+  },
+  {
+   "fieldname": "external_reference",
+   "fieldtype": "Link",
+   "label": "External Reference",
+   "options": "External Reference"
+  },
+  {
+   "default": "Logged",
+   "fieldname": "violation_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Logged\nUnder Investigation\nRemediating\nResolved\nDismissed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "resolved_on",
+   "fieldtype": "Date",
+   "label": "Resolved On"
+  },
+  {
+   "fieldname": "resolution_note",
+   "fieldtype": "Text",
+   "label": "Resolution Note"
+  },
+  {
+   "default": "Escalation Matter",
+   "fieldname": "escalation_doctype",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Escalation DocType",
+   "options": "Escalation Matter",
+   "read_only": 1
+  },
+  {
+   "description": "Held as a dynamic reference so Policy installs independently of the Escalation module.",
+   "fieldname": "resulting_escalation",
+   "fieldtype": "Dynamic Link",
+   "label": "Resulting Escalation",
+   "options": "escalation_doctype"
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag set from the configured state. Logic reads this, never the label.",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:02:22.320244",
+ "modified_by": "Administrator",
+ "module": "Policy",
+ "name": "Policy Violation",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Enterprise Policy Office",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Policy Owner",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Policy Reviewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "document,responsible_party",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

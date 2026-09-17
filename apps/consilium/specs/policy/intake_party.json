@@ -1,0 +1,16 @@
+{
+  "name": "Intake Party",
+  "module": "Policy",
+  "description": "A single User held in a multi-valued field (02-data-model.md \u00a77 'Multi \u2192 X').",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "party",
+      "fieldtype": "Link",
+      "label": "Party to Engage",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ]
+}

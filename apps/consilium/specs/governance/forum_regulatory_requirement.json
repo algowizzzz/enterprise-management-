@@ -1,0 +1,38 @@
+{
+  "name": "Forum Regulatory Requirement",
+  "module": "Governance",
+  "description": "The regulatory detail G-4 requires once a forum is marked regulatory-required. The citation is drawn from Core's shared Regulatory Requirement library so that a regulatory change fans out in one hop.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "regulatory_requirement",
+      "fieldtype": "Link",
+      "label": "Regulatory Requirement",
+      "options": "Regulatory Requirement",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "jurisdiction",
+      "fieldtype": "Link",
+      "label": "Jurisdiction",
+      "options": "Jurisdiction",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "obligation_summary",
+      "fieldtype": "Text",
+      "label": "Obligation Summary"
+    },
+    {
+      "fieldname": "evidence",
+      "fieldtype": "Attach",
+      "label": "Evidence"
+    }
+  ],
+  "permissions": [],
+  "istable": 1
+}

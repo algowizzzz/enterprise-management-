@@ -75,6 +75,14 @@
       "fieldname": "notes",
       "fieldtype": "Text",
       "label": "Notes"
+    },
+    {
+      "fieldname": "is_affirmative",
+      "fieldtype": "Check",
+      "label": "Is Affirmative",
+      "read_only": 1,
+      "default": "0",
+      "description": "Set from the state-flag map. True only for a state that expresses positive consent, so an abstention is not counted as an approval."
     }
   ],
   "permissions": [

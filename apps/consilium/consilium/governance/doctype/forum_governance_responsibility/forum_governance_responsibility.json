@@ -1,0 +1,35 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 23:00:00.188548",
+ "description": "One governance responsibility a forum holds \u2014 oversight, decision making, or both.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "governance_responsibility"
+ ],
+ "fields": [
+  {
+   "fieldname": "governance_responsibility",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Governance Responsibility",
+   "options": "Governance Responsibility",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.188556",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Forum Governance Responsibility",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

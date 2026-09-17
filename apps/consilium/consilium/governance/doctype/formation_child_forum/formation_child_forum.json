@@ -1,0 +1,35 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 23:00:00.187690",
+ "description": "One proposed child forum named on a formation request (G-18). Its own child table rather than Forum Link, because at request time the parent forum does not yet exist.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "child_forum"
+ ],
+ "fields": [
+  {
+   "fieldname": "child_forum",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Child Forum",
+   "options": "Governance Forum",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.187698",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Formation Child Forum",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

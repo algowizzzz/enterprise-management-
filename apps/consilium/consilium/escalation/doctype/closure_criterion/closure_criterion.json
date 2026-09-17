@@ -1,0 +1,55 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 22:47:49.022128",
+ "description": "One criterion a closure must satisfy (E-10). [Inferred \u2014 E-10 requires closure criteria to be enforced but names none, so they are rows rather than code.]",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "criterion",
+  "required",
+  "met",
+  "evidence_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "criterion",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Criterion",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "required",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Required"
+  },
+  {
+   "fieldname": "met",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Met"
+  },
+  {
+   "fieldname": "evidence_note",
+   "fieldtype": "Text",
+   "label": "Evidence Note"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.022139",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Closure Criterion",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

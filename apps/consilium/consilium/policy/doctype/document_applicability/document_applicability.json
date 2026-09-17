@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 23:02:22.312971",
+ "description": "Where a document applies (P-21). Notification of affected parties is derived from these rows; there is no hand-maintained recipient list anywhere in the module.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "scope_type",
+  "scope_value",
+  "scope_label",
+  "applies_from",
+  "applies_to",
+  "notification_group",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "scope_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Scope",
+   "options": "Organization Unit\nLegal Entity\nMaterial Entity\nJurisdiction\nRole\nFunction",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scope_value",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Scope Value",
+   "options": "scope_type"
+  },
+  {
+   "description": "Used where the scope names no record \u2014 a business function.",
+   "fieldname": "scope_label",
+   "fieldtype": "Data",
+   "label": "Scope Label"
+  },
+  {
+   "fieldname": "applies_from",
+   "fieldtype": "Date",
+   "label": "Applies From"
+  },
+  {
+   "fieldname": "applies_to",
+   "fieldtype": "Date",
+   "label": "Applies To"
+  },
+  {
+   "description": "The group notified for this scope. Optional: a Role scope resolves to its holders.",
+   "fieldname": "notification_group",
+   "fieldtype": "Link",
+   "label": "Notification Group",
+   "options": "User Group"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 23:02:22.312979",
+ "modified_by": "Administrator",
+ "module": "Policy",
+ "name": "Document Applicability",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

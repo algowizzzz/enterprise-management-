@@ -1,0 +1,34 @@
+{
+  "name": "Horizon Scan Source",
+  "module": "Policy",
+  "description": "One source a scanner reviewed. This is the whole of the 'feed': a human recording what they read and when.",
+  "istable": 1,
+  "fields": [
+    {
+      "fieldname": "source_type",
+      "fieldtype": "Select",
+      "label": "Source Type",
+      "reqd": 1,
+      "in_list_view": 1,
+      "options": "Regulatory Publication\nConsultation\nIndustry Report\nTechnology\nGeopolitical\nPeer Forum\nSubject Matter Expert"
+    },
+    {
+      "fieldname": "reference",
+      "fieldtype": "Data",
+      "label": "Reference",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "reviewed_on",
+      "fieldtype": "Date",
+      "label": "Reviewed On",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Notes"
+    }
+  ]
+}

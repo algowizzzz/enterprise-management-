@@ -1,0 +1,72 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 22:47:49.026166",
+ "description": "One standard field made required, or optional, by a template (02-data-model.md \u00a78.3, E-5).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "fieldname",
+  "label",
+  "is_required",
+  "required_when_severity",
+  "display_order",
+  "guidance"
+ ],
+ "fields": [
+  {
+   "description": "Must name one of the standard fields for the template's scope; see consilium.escalation.templates.STANDARD_FIELDS.",
+   "fieldname": "fieldname",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Fieldname",
+   "reqd": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_required",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Required"
+  },
+  {
+   "default": "Always",
+   "description": "E-5: the required-field set varies by type and by severity.",
+   "fieldname": "required_when_severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Required When Severity",
+   "options": "Always\nHigh\nHigh Or Medium"
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order"
+  },
+  {
+   "fieldname": "guidance",
+   "fieldtype": "Text",
+   "label": "Guidance"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.026173",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Escalation Template Field",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

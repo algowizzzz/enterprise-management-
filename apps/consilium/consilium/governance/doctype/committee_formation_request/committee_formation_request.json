@@ -1,0 +1,441 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "CFR-.YYYY.-.#####",
+ "creation": "2026-09-17 23:00:00.186215",
+ "description": "The single intake artefact for creating, modifying or retiring a forum (G-17, G-18; conflict D-1 resolved to one entity). Carries the nine-state formation flow; the forum carries the five-state compliance flow (D-3). An approved request creates the forum in draft.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "requester",
+  "request_type",
+  "subject_forum",
+  "is_new_committee",
+  "rationale",
+  "purpose_scope",
+  "proposed_responsibilities",
+  "delegating_authority",
+  "delegating_authority_approved",
+  "proposed_timeline",
+  "first_meeting_date",
+  "forum_name",
+  "forum_id_proposed",
+  "forum_type",
+  "primary_risk_category",
+  "cadence",
+  "jurisdictions",
+  "parent_forum",
+  "child_forums",
+  "owning_operating_group",
+  "owning_line_of_business",
+  "owning_business_units",
+  "forum_sponsor",
+  "evaluations",
+  "completeness_confirmed",
+  "duplicate_check_result",
+  "charter",
+  "approval_route",
+  "workflow_state",
+  "is_editable",
+  "is_active",
+  "is_open",
+  "requires_review",
+  "requires_statement",
+  "is_committable",
+  "return_questions",
+  "returned_on",
+  "returned_by",
+  "originator_response",
+  "exception_raised",
+  "exception_rationale",
+  "exception_resolution",
+  "exception_authorisation",
+  "created_forum",
+  "decided_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "requester",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Requester",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "Create",
+   "fieldname": "request_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Request Type",
+   "options": "Create\nModify\nRetire",
+   "reqd": 1
+  },
+  {
+   "description": "Required for a modify or retire request.",
+   "fieldname": "subject_forum",
+   "fieldtype": "Link",
+   "label": "Subject Forum",
+   "options": "Governance Forum"
+  },
+  {
+   "default": "1",
+   "description": "The G-17 gating question.",
+   "fieldname": "is_new_committee",
+   "fieldtype": "Check",
+   "label": "Is New Committee"
+  },
+  {
+   "fieldname": "rationale",
+   "fieldtype": "Text",
+   "label": "Rationale",
+   "reqd": 1
+  },
+  {
+   "fieldname": "purpose_scope",
+   "fieldtype": "Text",
+   "label": "Purpose and Scope",
+   "reqd": 1
+  },
+  {
+   "fieldname": "proposed_responsibilities",
+   "fieldtype": "Text",
+   "label": "Proposed Responsibilities",
+   "reqd": 1
+  },
+  {
+   "description": "The body or person whose authority the forum would exercise.",
+   "fieldname": "delegating_authority",
+   "fieldtype": "Link",
+   "label": "Delegating Authority",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Explicitly optional at submission.",
+   "fieldname": "delegating_authority_approved",
+   "fieldtype": "Check",
+   "label": "Delegating Authority Approved"
+  },
+  {
+   "fieldname": "proposed_timeline",
+   "fieldtype": "Date",
+   "label": "Proposed Timeline",
+   "reqd": 1
+  },
+  {
+   "fieldname": "first_meeting_date",
+   "fieldtype": "Date",
+   "label": "First Meeting Date"
+  },
+  {
+   "description": "G-18's standardized field list, named committee-centrically by decision D-2.",
+   "fieldname": "forum_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Forum Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "forum_id_proposed",
+   "fieldtype": "Data",
+   "label": "Proposed Forum Identifier"
+  },
+  {
+   "fieldname": "forum_type",
+   "fieldtype": "Link",
+   "label": "Forum Type",
+   "options": "Governance Forum Type",
+   "reqd": 1
+  },
+  {
+   "description": "Carried across to the forum on approval.",
+   "fieldname": "primary_risk_category",
+   "fieldtype": "Link",
+   "label": "Primary Risk Category",
+   "options": "Risk Category"
+  },
+  {
+   "default": "Quarterly",
+   "fieldname": "cadence",
+   "fieldtype": "Select",
+   "label": "Cadence",
+   "options": "Weekly\nBi-Weekly\nMonthly\nBi-Monthly\nQuarterly\nSemi-Annually\nAnnually\nAd Hoc"
+  },
+  {
+   "fieldname": "jurisdictions",
+   "fieldtype": "Table MultiSelect",
+   "label": "Jurisdictions",
+   "options": "Forum Jurisdiction"
+  },
+  {
+   "fieldname": "parent_forum",
+   "fieldtype": "Link",
+   "label": "Parent Forum",
+   "options": "Governance Forum"
+  },
+  {
+   "fieldname": "child_forums",
+   "fieldtype": "Table MultiSelect",
+   "label": "Child Forums",
+   "options": "Formation Child Forum"
+  },
+  {
+   "fieldname": "owning_operating_group",
+   "fieldtype": "Link",
+   "label": "Owning Operating Group",
+   "options": "Organization Unit",
+   "reqd": 1
+  },
+  {
+   "fieldname": "owning_line_of_business",
+   "fieldtype": "Link",
+   "label": "Owning Line of Business",
+   "options": "Organization Unit"
+  },
+  {
+   "fieldname": "owning_business_units",
+   "fieldtype": "Table MultiSelect",
+   "label": "Owning Business Units",
+   "options": "Forum Business Unit"
+  },
+  {
+   "fieldname": "forum_sponsor",
+   "fieldtype": "Link",
+   "label": "Forum Sponsor",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "description": "The five G-5 criteria, each with a finding.",
+   "fieldname": "evaluations",
+   "fieldtype": "Table",
+   "label": "Evaluations",
+   "options": "Formation Evaluation"
+  },
+  {
+   "default": "0",
+   "description": "The G-7 gate on workflow progression.",
+   "fieldname": "completeness_confirmed",
+   "fieldtype": "Check",
+   "label": "Completeness Confirmed"
+  },
+  {
+   "description": "Output of the G-7 overlap check against the inventory.",
+   "fieldname": "duplicate_check_result",
+   "fieldtype": "Text",
+   "label": "Duplicate Check Result"
+  },
+  {
+   "fieldname": "charter",
+   "fieldtype": "Link",
+   "label": "Charter",
+   "options": "Committee Charter",
+   "read_only": 1
+  },
+  {
+   "description": "The configured route the raised approval steps came from.",
+   "fieldname": "approval_route",
+   "fieldtype": "Link",
+   "label": "Approval Route",
+   "options": "Formation Approval Route",
+   "read_only": 1
+  },
+  {
+   "default": "Draft",
+   "description": "The nine-state formation flow. A label: logic reads the semantic flags.",
+   "fieldname": "workflow_state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Workflow State",
+   "options": "Draft\nSubmitted\nUnder Evaluation\nReturned To Originator\nPending Approval\nException Review\nApproved\nRejected\nWithdrawn",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag. Set by states that cannot be entered without a written reason.",
+   "fieldname": "requires_statement",
+   "fieldtype": "Check",
+   "label": "Requires Statement",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Semantic flag. True only in the state from which a forum may be created.",
+   "fieldname": "is_committable",
+   "fieldtype": "Check",
+   "label": "Is Committable",
+   "read_only": 1
+  },
+  {
+   "description": "Preserved on the record when a reviewer returns the request.",
+   "fieldname": "return_questions",
+   "fieldtype": "Text",
+   "label": "Questions To Originator"
+  },
+  {
+   "fieldname": "returned_on",
+   "fieldtype": "Datetime",
+   "label": "Returned On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_by",
+   "fieldtype": "Link",
+   "label": "Returned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "description": "The other half of the exchange, kept on the record rather than in comments.",
+   "fieldname": "originator_response",
+   "fieldtype": "Text",
+   "label": "Originator Response"
+  },
+  {
+   "default": "0",
+   "description": "The Head of Risk Governance path.",
+   "fieldname": "exception_raised",
+   "fieldtype": "Check",
+   "label": "Exception Raised"
+  },
+  {
+   "fieldname": "exception_rationale",
+   "fieldtype": "Text",
+   "label": "Exception Rationale"
+  },
+  {
+   "fieldname": "exception_resolution",
+   "fieldtype": "Text",
+   "label": "Exception Resolution"
+  },
+  {
+   "description": "Core's record of an authorised bypass. Without one, no approval step may be skipped.",
+   "fieldname": "exception_authorisation",
+   "fieldtype": "Link",
+   "label": "Exception Authorisation",
+   "options": "Exception Authorisation",
+   "read_only": 1
+  },
+  {
+   "description": "Set when approval creates the forum. The forum carries the reverse link.",
+   "fieldname": "created_forum",
+   "fieldtype": "Link",
+   "label": "Created Forum",
+   "options": "Governance Forum",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_on",
+   "fieldtype": "Date",
+   "label": "Decided On",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 23:00:00.186227",
+ "modified_by": "Administrator",
+ "module": "Governance",
+ "name": "Committee Formation Request",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Risk Governance Office",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Risk Governance",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Committee Secretary",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Compliance Reviewer"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Governance Viewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "forum_name,request_type,workflow_state",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "forum_name",
+ "track_changes": 1
+}

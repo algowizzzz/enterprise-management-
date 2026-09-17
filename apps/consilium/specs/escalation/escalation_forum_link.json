@@ -1,0 +1,58 @@
+{
+  "name": "Escalation Forum Link",
+  "module": "Escalation",
+  "description": "One governance forum on a matter's escalation pathway (E-7, E17-S1). Plural by decision D-4.",
+  "istable": 1,
+  "permissions": [],
+  "fields": [
+    {
+      "fieldname": "governance_forum",
+      "fieldtype": "Link",
+      "label": "Governance Forum",
+      "options": "Governance Forum",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "role_in_escalation",
+      "fieldtype": "Select",
+      "label": "Role In Escalation",
+      "options": "Decision\nOversight\nInformed",
+      "reqd": 1,
+      "default": "Decision",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "escalation_protocol",
+      "fieldtype": "Small Text",
+      "label": "Escalation Protocol",
+      "read_only": 1,
+      "description": "Shown to the user, copied from the forum at the time the pathway was set (E17-S1)."
+    },
+    {
+      "fieldname": "escalation_threshold",
+      "fieldtype": "Small Text",
+      "label": "Escalation Threshold",
+      "read_only": 1
+    },
+    {
+      "fieldname": "proposed_by_rule",
+      "fieldtype": "Data",
+      "label": "Proposed By Rule",
+      "read_only": 1,
+      "description": "The matrix rule that proposed this destination, empty when a person chose it."
+    },
+    {
+      "fieldname": "notified_on",
+      "fieldtype": "Datetime",
+      "label": "Notified On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "decision_motion",
+      "fieldtype": "Link",
+      "label": "Decision Motion",
+      "options": "Forum Motion"
+    }
+  ]
+}

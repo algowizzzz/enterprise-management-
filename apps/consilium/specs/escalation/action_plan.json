@@ -1,0 +1,207 @@
+{
+  "name": "Action Plan",
+  "module": "Escalation",
+  "description": "A remediation plan against an escalation matter (E-6, E-8, E16-S3). Standalone because it has its own owner, dates and lifecycle; several per matter.",
+  "autoname": "ACTP-.#####",
+  "naming_rule": "Expression (old style)",
+  "title_field": "action_plan_name",
+  "search_fields": "action_plan_name,escalation_matter",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Escalation Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "share": 1,
+      "email": 1
+    },
+    {
+      "role": "Escalation Reviewer",
+      "read": 1,
+      "write": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "allow_import": 1,
+  "fields": [
+    {
+      "fieldname": "escalation_matter",
+      "fieldtype": "Link",
+      "label": "Escalation Matter",
+      "options": "Escalation Matter",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "action_plan_name",
+      "fieldtype": "Data",
+      "label": "Action Plan Name",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "escalation_template",
+      "fieldtype": "Link",
+      "label": "Escalation Template",
+      "options": "Escalation Template",
+      "read_only": 1,
+      "description": "The Action Plan template of the matter's escalation type."
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "label": "Start Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "label": "End Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "accountable_executive",
+      "fieldtype": "Link",
+      "label": "Accountable Executive",
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "owner_user",
+      "fieldtype": "Link",
+      "label": "Action Plan Owner",
+      "options": "User",
+      "reqd": 1,
+      "description": "Named owner_user because `owner` is the framework's creator column."
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Open",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "options": "Draft\nOpen\nIn Progress\nCompleted\nCancelled",
+      "description": "A label. Business logic reads the semantic flags."
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "0",
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+    },
+    {
+      "fieldname": "is_committable",
+      "fieldtype": "Check",
+      "label": "Is Committable",
+      "read_only": 1,
+      "default": "0",
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+    },
+    {
+      "fieldname": "requires_statement",
+      "fieldtype": "Check",
+      "label": "Requires Statement",
+      "read_only": 1,
+      "default": "0",
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+    },
+    {
+      "fieldname": "governance_forums",
+      "fieldtype": "Table MultiSelect",
+      "label": "Governance Forums",
+      "options": "Escalation Forum Reference"
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "completion_evidence",
+      "fieldtype": "Attach",
+      "label": "Completion Evidence"
+    },
+    {
+      "fieldname": "completed_on",
+      "fieldtype": "Datetime",
+      "label": "Completed On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "external_reference",
+      "fieldtype": "Link",
+      "label": "External Reference",
+      "options": "External Reference"
+    },
+    {
+      "fieldname": "sensitive",
+      "fieldtype": "Check",
+      "label": "Sensitive",
+      "read_only": 1,
+      "default": "0",
+      "description": "Copied from the matter so the restriction holds on this record's read paths too."
+    }
+  ]
+}

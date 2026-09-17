@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:matrix_code",
+ "creation": "2026-09-17 22:47:49.023674",
+ "description": "The approved mapping from escalation attributes to severity and pathway (02-data-model.md \u00a78.3, E-4). The routing authority for escalation: pathways are data, not code.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "matrix_code",
+  "title",
+  "scope_risk_types",
+  "scope_legal_entities",
+  "effective_from",
+  "effective_to",
+  "approved_by",
+  "approved_on",
+  "is_active",
+  "rules",
+  "routes",
+  "rule_notifications"
+ ],
+ "fields": [
+  {
+   "fieldname": "matrix_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "description": "Empty means the matrix is in scope for every risk type.",
+   "fieldname": "scope_risk_types",
+   "fieldtype": "Table MultiSelect",
+   "label": "Scope \u2014 Risk Types",
+   "options": "Escalation Risk Type Reference"
+  },
+  {
+   "description": "Empty means the matrix is in scope for every legal entity.",
+   "fieldname": "scope_legal_entities",
+   "fieldtype": "Table MultiSelect",
+   "label": "Scope \u2014 Legal Entities",
+   "options": "Escalation Legal Entity Reference"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Effective From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Date",
+   "label": "Approved On"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "rules",
+   "fieldtype": "Table",
+   "label": "Rules",
+   "options": "Escalation Matrix Rule"
+  },
+  {
+   "fieldname": "routes",
+   "fieldtype": "Table",
+   "label": "Rule Destinations",
+   "options": "Escalation Matrix Route"
+  },
+  {
+   "fieldname": "rule_notifications",
+   "fieldtype": "Table",
+   "label": "Rule Notifications",
+   "options": "Escalation Matrix Notification"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:47:49.023682",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Escalation Matrix",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Owner"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Reviewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "title,matrix_code",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}
