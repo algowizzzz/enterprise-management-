@@ -1,0 +1,54 @@
+{
+  "name": "Classification Rule",
+  "module": "Consilium Core",
+  "description": "One rule. Rules evaluate in priority order and the first match wins; which rule matched is recorded.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "rule_code",
+      "fieldtype": "Data",
+      "label": "Rule Code",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "priority",
+      "fieldtype": "Int",
+      "label": "Priority",
+      "reqd": 1,
+      "default": "100",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "condition",
+      "fieldtype": "JSON",
+      "label": "Condition",
+      "reqd": 1,
+      "description": "A structured expression over question codes and answer codes, so it can be validated, diffed and rendered back to an administrator. Never free-form code."
+    },
+    {
+      "fieldname": "outcome",
+      "fieldtype": "Data",
+      "label": "Outcome",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Free text, not a Select, so a new outcome needs no code change."
+    },
+    {
+      "fieldname": "outcome_rationale",
+      "fieldtype": "Text",
+      "label": "Outcome Rationale"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1"
+    }
+  ],
+  "istable": 1,
+  "permissions": []
+}

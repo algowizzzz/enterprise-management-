@@ -1,0 +1,186 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "IMPB-.#####",
+ "creation": "2026-09-17 22:10:23.318887",
+ "description": "One file, staged, validated and committed. The file is retained exactly as received, with its hash, because the requirement is that integration activity be traceable.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "batch_reference",
+  "source_system",
+  "import_profile",
+  "target_doctype",
+  "source_file",
+  "source_file_sha256",
+  "received_on",
+  "imported_by",
+  "status",
+  "is_editable",
+  "is_open",
+  "row_count",
+  "valid_count",
+  "error_count",
+  "warning_count",
+  "validation_report",
+  "committed_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "batch_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Batch Reference",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_system",
+   "fieldtype": "Link",
+   "label": "Source System",
+   "options": "External System",
+   "reqd": 1
+  },
+  {
+   "fieldname": "import_profile",
+   "fieldtype": "Link",
+   "label": "Import Profile",
+   "options": "Import Profile",
+   "reqd": 1
+  },
+  {
+   "description": "Copied from the profile at validation.",
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "label": "Target DocType",
+   "options": "DocType",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "The file exactly as received.",
+   "fieldname": "source_file",
+   "fieldtype": "Attach",
+   "label": "Source File"
+  },
+  {
+   "fieldname": "source_file_sha256",
+   "fieldtype": "Data",
+   "label": "Source File SHA-256"
+  },
+  {
+   "fieldname": "received_on",
+   "fieldtype": "Datetime",
+   "label": "Received On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "imported_by",
+   "fieldtype": "Link",
+   "label": "Imported By",
+   "options": "User"
+  },
+  {
+   "default": "Uploaded",
+   "description": "A label. Logic reads the semantic flags below.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Uploaded\nValidated\nPartially Committed\nCommitted\nRejected",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "fieldname": "row_count",
+   "fieldtype": "Int",
+   "label": "Rows",
+   "read_only": 1
+  },
+  {
+   "fieldname": "valid_count",
+   "fieldtype": "Int",
+   "label": "Valid",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_count",
+   "fieldtype": "Int",
+   "label": "Errors",
+   "read_only": 1
+  },
+  {
+   "fieldname": "warning_count",
+   "fieldtype": "Int",
+   "label": "Warnings",
+   "read_only": 1
+  },
+  {
+   "fieldname": "validation_report",
+   "fieldtype": "JSON",
+   "label": "Validation Report",
+   "read_only": 1
+  },
+  {
+   "fieldname": "committed_on",
+   "fieldtype": "Datetime",
+   "label": "Committed On",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.318896",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Import Batch",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "batch_reference",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

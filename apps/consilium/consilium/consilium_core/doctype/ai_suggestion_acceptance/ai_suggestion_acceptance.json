@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "AISA-.#####",
+ "creation": "2026-09-17 22:10:23.308257",
+ "description": "Who took responsibility for machine-generated content, against which version (02-data-model.md \u00a75.10). An accountability control, not derivable from the request record. Append-only.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "ai_service_request",
+  "target_fieldname",
+  "suggested_value",
+  "accepted_value",
+  "accepted_by",
+  "accepted_on",
+  "edited_before_accept",
+  "applied_to_version"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Subject Record DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Subject Record",
+   "options": "subject_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ai_service_request",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "AI Service Request",
+   "options": "AI Service Request",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_fieldname",
+   "fieldtype": "Data",
+   "label": "Target Fieldname",
+   "reqd": 1
+  },
+  {
+   "fieldname": "suggested_value",
+   "fieldtype": "Long Text",
+   "label": "Suggested Value"
+  },
+  {
+   "fieldname": "accepted_value",
+   "fieldtype": "Long Text",
+   "label": "Accepted Value"
+  },
+  {
+   "fieldname": "accepted_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Accepted By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "accepted_on",
+   "fieldtype": "Datetime",
+   "label": "Accepted On",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "edited_before_accept",
+   "fieldtype": "Check",
+   "label": "Edited Before Accept"
+  },
+  {
+   "fieldname": "applied_to_version",
+   "fieldtype": "Link",
+   "label": "Applied To Version",
+   "options": "Document Version"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.308270",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "AI Suggestion Acceptance",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

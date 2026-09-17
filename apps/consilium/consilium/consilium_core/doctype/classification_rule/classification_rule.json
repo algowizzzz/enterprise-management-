@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 22:10:23.312630",
+ "description": "One rule. Rules evaluate in priority order and the first match wins; which rule matched is recorded.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_code",
+  "priority",
+  "condition",
+  "outcome",
+  "outcome_rationale",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rule Code",
+   "reqd": 1
+  },
+  {
+   "default": "100",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Priority",
+   "reqd": 1
+  },
+  {
+   "description": "A structured expression over question codes and answer codes, so it can be validated, diffed and rendered back to an administrator. Never free-form code.",
+   "fieldname": "condition",
+   "fieldtype": "JSON",
+   "label": "Condition",
+   "reqd": 1
+  },
+  {
+   "description": "Free text, not a Select, so a new outcome needs no code change.",
+   "fieldname": "outcome",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Outcome",
+   "reqd": 1
+  },
+  {
+   "fieldname": "outcome_rationale",
+   "fieldtype": "Text",
+   "label": "Outcome Rationale"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.312638",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Classification Rule",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

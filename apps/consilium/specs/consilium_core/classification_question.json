@@ -1,0 +1,57 @@
+{
+  "name": "Classification Question",
+  "module": "Consilium Core",
+  "description": "One question in a rule set. Dependent questioning is expressed with depends_on_question / depends_on_answer.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "question_code",
+      "fieldtype": "Data",
+      "label": "Question Code",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "question_text",
+      "fieldtype": "Text",
+      "label": "Question",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "answer_mode",
+      "fieldtype": "Select",
+      "label": "Answer Mode",
+      "reqd": 1,
+      "default": "Single",
+      "options": "Single\nMultiple\nBoolean\nNumeric",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_required",
+      "fieldtype": "Check",
+      "label": "Required",
+      "default": "1"
+    },
+    {
+      "fieldname": "display_order",
+      "fieldtype": "Int",
+      "label": "Display Order"
+    },
+    {
+      "fieldname": "depends_on_question",
+      "fieldtype": "Data",
+      "label": "Depends On Question"
+    },
+    {
+      "fieldname": "depends_on_answer",
+      "fieldtype": "Data",
+      "label": "Depends On Answer"
+    }
+  ],
+  "istable": 1,
+  "permissions": []
+}

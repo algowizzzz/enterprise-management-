@@ -398,9 +398,15 @@
   }
 
   function csrfToken() {
-    if (window.frappe && window.frappe.csrf_token) return window.frappe.csrf_token;
-    var meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? meta.getAttribute("content") : null;
+    // The framework injects `frappe.csrf_token` into the page. On a site with
+    // CSRF disabled it injects the literal "None", which must not be sent.
+    var token = window.frappe && window.frappe.csrf_token;
+    if (!token) {
+      var meta = document.querySelector('meta[name="csrf-token"]');
+      token = meta ? meta.getAttribute("content") : null;
+    }
+    if (!token || token === "None" || token === "null") return null;
+    return token;
   }
 
   function buildQuery(params) {

@@ -1,0 +1,121 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:hold_reference",
+ "creation": "2026-09-17 22:10:23.320691",
+ "description": "A suspension of disposition, placed for litigation, investigation or regulatory reasons. Overrides retention unconditionally; does not suspend retention accrual and does not change the retention class.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "hold_reference",
+  "description",
+  "requested_by",
+  "approved_by",
+  "placed_on",
+  "released_on",
+  "scope_doctype",
+  "scope_filter",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "hold_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Hold Reference",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  },
+  {
+   "fieldname": "placed_on",
+   "fieldtype": "Date",
+   "label": "Placed On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "released_on",
+   "fieldtype": "Date",
+   "label": "Released On"
+  },
+  {
+   "fieldname": "scope_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Scope DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scope_filter",
+   "fieldtype": "JSON",
+   "label": "Scope Filter"
+  },
+  {
+   "default": "1",
+   "description": "Derived from placed_on and released_on on save.",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.320700",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Legal Hold",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Records Manager",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

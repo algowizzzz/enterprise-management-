@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:target_doctype",
+ "creation": "2026-09-17 22:10:23.325883",
+ "description": "The admin-editable list of fields whose modification triggers a compliance re-review (02-data-model.md \u00a75.3). One set per target DocType.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "target_doctype",
+  "is_active",
+  "on_change_action",
+  "reset_to_state",
+  "notify_channel",
+  "fields"
+ ],
+ "fields": [
+  {
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Target DocType",
+   "options": "DocType",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "default": "Raise Review Task",
+   "fieldname": "on_change_action",
+   "fieldtype": "Select",
+   "label": "On Change Action",
+   "options": "Reset Workflow State\nRaise Review Task\nNotify Only",
+   "reqd": 1
+  },
+  {
+   "description": "Configuration only, used by the reset action. Read and written; never compared in logic.",
+   "fieldname": "reset_to_state",
+   "fieldtype": "Data",
+   "label": "Reset To State"
+  },
+  {
+   "fieldname": "notify_channel",
+   "fieldtype": "Link",
+   "label": "Notify Channel",
+   "options": "Notification Channel"
+  },
+  {
+   "fieldname": "fields",
+   "fieldtype": "Table",
+   "label": "Watched Fields",
+   "options": "Watched Field"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.325892",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Watched Field Set",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 22:10:23.312358",
+ "description": "One question in a rule set. Dependent questioning is expressed with depends_on_question / depends_on_answer.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "question_code",
+  "question_text",
+  "answer_mode",
+  "is_required",
+  "display_order",
+  "depends_on_question",
+  "depends_on_answer"
+ ],
+ "fields": [
+  {
+   "fieldname": "question_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Question Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "question_text",
+   "fieldtype": "Text",
+   "in_list_view": 1,
+   "label": "Question",
+   "reqd": 1
+  },
+  {
+   "default": "Single",
+   "fieldname": "answer_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Answer Mode",
+   "options": "Single\nMultiple\nBoolean\nNumeric",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_required",
+   "fieldtype": "Check",
+   "label": "Required"
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order"
+  },
+  {
+   "fieldname": "depends_on_question",
+   "fieldtype": "Data",
+   "label": "Depends On Question"
+  },
+  {
+   "fieldname": "depends_on_answer",
+   "fieldtype": "Data",
+   "label": "Depends On Answer"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.312366",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Classification Question",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

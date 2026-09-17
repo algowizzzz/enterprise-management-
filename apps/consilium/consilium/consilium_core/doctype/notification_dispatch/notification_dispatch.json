@@ -1,0 +1,165 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "NDSP-.#####",
+ "creation": "2026-09-17 22:10:23.321944",
+ "description": "Evidence that a party was notified. Recorded because several requirements need proof of notification, and an email queue that prunes itself is not evidence.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "notification_definition",
+  "channel",
+  "recipient",
+  "rendered_subject",
+  "rendered_body",
+  "queued_on",
+  "sent_on",
+  "status",
+  "is_open",
+  "failure_reason",
+  "retry_count",
+  "fallback_of"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Subject Record DocType",
+   "options": "DocType",
+   "reqd": 0
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Subject Record",
+   "options": "subject_doctype",
+   "reqd": 0
+  },
+  {
+   "fieldname": "notification_definition",
+   "fieldtype": "Link",
+   "label": "Notification Definition",
+   "options": "Notification"
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Channel",
+   "options": "Notification Channel",
+   "reqd": 1
+  },
+  {
+   "fieldname": "recipient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Recipient",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rendered_subject",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Subject"
+  },
+  {
+   "fieldname": "rendered_body",
+   "fieldtype": "Long Text",
+   "label": "Body"
+  },
+  {
+   "fieldname": "queued_on",
+   "fieldtype": "Datetime",
+   "label": "Queued On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sent_on",
+   "fieldtype": "Datetime",
+   "label": "Sent On"
+  },
+  {
+   "default": "Queued",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Queued\nSent\nFailed\nSuppressed",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag derived from Workflow State Flag. Retry reads this, never the status string.",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "fieldname": "failure_reason",
+   "fieldtype": "Text",
+   "label": "Failure Reason"
+  },
+  {
+   "default": "0",
+   "fieldname": "retry_count",
+   "fieldtype": "Int",
+   "label": "Retries"
+  },
+  {
+   "description": "Set on the dispatch raised because this one's predecessor failed.",
+   "fieldname": "fallback_of",
+   "fieldtype": "Link",
+   "label": "Fallback Of",
+   "options": "Notification Dispatch"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.321952",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Notification Dispatch",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

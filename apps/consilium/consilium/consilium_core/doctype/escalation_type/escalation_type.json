@@ -1,8 +1,9 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:escalation_type_code",
- "creation": "2026-09-17 21:54:49.355440",
+ "creation": "2026-09-17 22:10:23.314987",
  "description": "The kinds of matter that can be escalated. Drives which template is used.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -11,7 +12,9 @@
   "escalation_type_code",
   "escalation_type_name",
   "description",
-  "is_active"
+  "is_active",
+  "sort_order",
+  "external_code"
  ],
  "fields": [
   {
@@ -41,11 +44,23 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Active"
+  },
+  {
+   "description": "Presentation order where alphabetical is wrong.",
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
+  },
+  {
+   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]",
+   "fieldname": "external_code",
+   "fieldtype": "Data",
+   "label": "External Code"
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 21:54:49.355470",
+ "modified": "2026-09-17 22:10:23.314996",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Escalation Type",
@@ -70,6 +85,12 @@
    "report": 1,
    "role": "Taxonomy Administrator",
    "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
   },
   {
    "read": 1,

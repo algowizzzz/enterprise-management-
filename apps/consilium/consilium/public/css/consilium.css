@@ -123,6 +123,22 @@ body.cns-portal {
 }
 .cns-portal a:hover { color: var(--cns-text-link-hover); }
 
+/* Navigation, controls and anything button-shaped are not body-copy links,
+   so they opt out of the underline. */
+.cns-portal a.cns-brand,
+.cns-portal a.cns-nav-link,
+.cns-portal a.cns-btn,
+.cns-portal a.cns-skip-link,
+.cns-portal .dropdown-item,
+.cns-portal .cns-breadcrumb a,
+.cns-portal .cns-footer a {
+  text-decoration: none;
+}
+.cns-portal .cns-breadcrumb a:hover,
+.cns-portal .cns-footer a:hover {
+  text-decoration: underline;
+}
+
 .cns-text-muted { color: var(--cns-text-muted) !important; }
 .cns-text-secondary { color: var(--cns-text-secondary) !important; }
 .cns-text-sm { font-size: var(--cns-text-sm); }
@@ -202,6 +218,12 @@ body.cns-portal {
 }
 
 /* Tabs */
+/* The nav wrapper is the flex item; it must be allowed to shrink below its
+   content width so the tab strip scrolls instead of widening the page. */
+.cns-header-nav {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 .cns-nav {
   display: flex;
   align-items: stretch;
@@ -697,9 +719,8 @@ body.cns-portal {
   background: var(--cns-surface);
 }
 .cns-portal table.cns-table > thead > tr > th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  /* Not sticky: the top navigation is already sticky, and a second sticky
+     layer collides with it once the text size grows and the header wraps. */
   background: var(--cns-surface-muted);
   color: var(--cns-text-secondary);
   font-size: var(--cns-text-xs);
@@ -954,7 +975,7 @@ th[aria-sort="descending"] .cns-sort-btn { color: var(--cns-text); }
 
 @media (max-width: 767.98px) {
   .cns-header-inner { padding-block: var(--cns-space-2); }
-  .cns-nav { order: 3; width: 100%; }
+  .cns-header-nav { order: 3; width: 100%; flex-basis: 100%; }
   .cns-controls { margin-left: auto; }
   .cns-fontsize-label { display: none; }
   .cns-dt-toolbar, .cns-dt-footer { flex-direction: column; align-items: stretch; }

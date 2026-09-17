@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "DISP-.#####",
+ "creation": "2026-09-17 22:10:23.313966",
+ "description": "The scheduled, held, approved and executed end of a retention period. Never automatic, and it outlives the record it disposed of.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "archive_record",
+  "due_on",
+  "action",
+  "status",
+  "is_open",
+  "is_editable",
+  "held_by_legal_hold",
+  "approved_by",
+  "executed_on",
+  "evidence"
+ ],
+ "fields": [
+  {
+   "fieldname": "archive_record",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Archive Record",
+   "options": "Archive Record",
+   "reqd": 1
+  },
+  {
+   "fieldname": "due_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due On",
+   "reqd": 1
+  },
+  {
+   "default": "Review",
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "label": "Action",
+   "options": "Destroy\nArchive Permanently\nReview",
+   "reqd": 1
+  },
+  {
+   "default": "Scheduled",
+   "description": "A label. Logic reads the semantic flags below.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Scheduled\nHeld\nApproved\nExecuted\nCancelled",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "held_by_legal_hold",
+   "fieldtype": "Link",
+   "label": "Held By Legal Hold",
+   "options": "Legal Hold",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  },
+  {
+   "fieldname": "executed_on",
+   "fieldtype": "Datetime",
+   "label": "Executed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence",
+   "fieldtype": "JSON",
+   "label": "Evidence"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.313984",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Disposition Event",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Records Manager",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

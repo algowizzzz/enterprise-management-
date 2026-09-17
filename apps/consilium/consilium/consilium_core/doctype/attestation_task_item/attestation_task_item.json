@@ -1,0 +1,57 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 22:10:23.310462",
+ "description": "Line-by-line confirmation where an attestation is over a list. [Inferred \u2014 \u00a711 I-5.]",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_doctype",
+  "item_name",
+  "confirmed",
+  "exception_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "item_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "confirmed",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Confirmed"
+  },
+  {
+   "fieldname": "exception_note",
+   "fieldtype": "Text",
+   "label": "Exception Note"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.310471",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Attestation Task Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,145 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "IMPP-.#####",
+ "creation": "2026-09-17 22:10:23.319541",
+ "description": "The field mapping, validation and handling rules for one file-based import, expressed as configuration (02-data-model.md \u00a75.6).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "profile_title",
+  "source_system",
+  "target_doctype",
+  "key_strategy",
+  "external_key_column",
+  "natural_key_fieldname",
+  "on_missing_required",
+  "on_unknown_taxonomy",
+  "on_duplicate_key",
+  "is_active",
+  "mappings"
+ ],
+ "fields": [
+  {
+   "fieldname": "profile_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_system",
+   "fieldtype": "Link",
+   "label": "Source System",
+   "options": "External System",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "label": "Target DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "default": "External Key",
+   "fieldname": "key_strategy",
+   "fieldtype": "Select",
+   "label": "Key Strategy",
+   "options": "External Key\nNatural Key\nAlways Insert",
+   "reqd": 1
+  },
+  {
+   "description": "The source column holding the foreign identifier, used by the External Key strategy.",
+   "fieldname": "external_key_column",
+   "fieldtype": "Data",
+   "label": "External Key Column"
+  },
+  {
+   "description": "The target fieldname matched by the Natural Key strategy.",
+   "fieldname": "natural_key_fieldname",
+   "fieldtype": "Data",
+   "label": "Natural Key Fieldname"
+  },
+  {
+   "default": "Reject Row",
+   "fieldname": "on_missing_required",
+   "fieldtype": "Select",
+   "label": "On Missing Required",
+   "options": "Reject Row\nReject Batch\nDefault\nWarn And Continue",
+   "reqd": 1
+  },
+  {
+   "default": "Reject Row",
+   "fieldname": "on_unknown_taxonomy",
+   "fieldtype": "Select",
+   "label": "On Unknown Taxonomy",
+   "options": "Reject Row\nCreate Inactive\nMap To Default\nWarn And Continue",
+   "reqd": 1
+  },
+  {
+   "default": "Update",
+   "fieldname": "on_duplicate_key",
+   "fieldtype": "Select",
+   "label": "On Duplicate Key",
+   "options": "Update\nSkip\nReject",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "fieldname": "mappings",
+   "fieldtype": "Table",
+   "label": "Field Mappings",
+   "options": "Import Field Mapping"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.319550",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Import Profile",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "profile_title",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "profile_title",
+ "track_changes": 1
+}

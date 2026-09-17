@@ -1,0 +1,105 @@
+{
+  "name": "Retention Class",
+  "module": "Consilium Core",
+  "description": "How long a record is kept, from what trigger, and what happens at the end (02-data-model.md \u00a75.5).",
+  "allow_rename": 1,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "class_code",
+      "fieldtype": "Data",
+      "label": "Code",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "title",
+      "fieldtype": "Data",
+      "label": "Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "retention_period_months",
+      "fieldtype": "Int",
+      "label": "Retention Period (Months)",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "trigger_event",
+      "fieldtype": "Select",
+      "label": "Trigger Event",
+      "reqd": 1,
+      "default": "Creation",
+      "options": "Creation\nLast Modification\nEffective Date\nRetirement\nClosure\nDisbandment"
+    },
+    {
+      "fieldname": "disposition_action",
+      "fieldtype": "Select",
+      "label": "Disposition Action",
+      "reqd": 1,
+      "default": "Review",
+      "options": "Destroy\nArchive Permanently\nReview"
+    },
+    {
+      "fieldname": "requires_worm",
+      "fieldtype": "Check",
+      "label": "Requires Write-Once Handling",
+      "default": "0",
+      "description": "Records in scope of this class cannot be modified or deleted through the application."
+    },
+    {
+      "fieldname": "legal_basis",
+      "fieldtype": "Text",
+      "label": "Legal Basis"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Records Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "field:class_code",
+  "naming_rule": "By fieldname",
+  "title_field": "title",
+  "search_fields": "title,class_code"
+}

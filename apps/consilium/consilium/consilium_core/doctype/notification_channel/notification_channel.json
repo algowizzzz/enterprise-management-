@@ -1,0 +1,113 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:channel_code",
+ "creation": "2026-09-17 22:10:23.321652",
+ "description": "A delivery channel and its adapter, so a channel can be introduced without touching a notification definition (02-data-model.md \u00a75.7).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "channel_code",
+  "title",
+  "channel_type",
+  "adapter",
+  "configuration",
+  "fallback_channel",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "channel_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "default": "In App",
+   "fieldname": "channel_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Channel Type",
+   "options": "Email\nIn App\nChat\nWebhook\nDigest",
+   "reqd": 1
+  },
+  {
+   "description": "The registered handler name. Resolved from the adapter registry; never imported by path from data.",
+   "fieldname": "adapter",
+   "fieldtype": "Data",
+   "label": "Adapter",
+   "reqd": 1
+  },
+  {
+   "fieldname": "configuration",
+   "fieldtype": "JSON",
+   "label": "Configuration"
+  },
+  {
+   "description": "Used when this channel fails. A chain may not contain a cycle.",
+   "fieldname": "fallback_channel",
+   "fieldtype": "Link",
+   "label": "Fallback Channel",
+   "options": "Notification Channel"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.321661",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Notification Channel",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "title,channel_code",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}

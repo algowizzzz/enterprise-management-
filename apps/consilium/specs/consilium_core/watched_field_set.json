@@ -1,0 +1,84 @@
+{
+  "name": "Watched Field Set",
+  "module": "Consilium Core",
+  "description": "The admin-editable list of fields whose modification triggers a compliance re-review (02-data-model.md \u00a75.3). One set per target DocType.",
+  "allow_rename": 1,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "target_doctype",
+      "fieldtype": "Link",
+      "label": "Target DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "on_change_action",
+      "fieldtype": "Select",
+      "label": "On Change Action",
+      "reqd": 1,
+      "default": "Raise Review Task",
+      "options": "Reset Workflow State\nRaise Review Task\nNotify Only"
+    },
+    {
+      "fieldname": "reset_to_state",
+      "fieldtype": "Data",
+      "label": "Reset To State",
+      "description": "Configuration only, used by the reset action. Read and written; never compared in logic."
+    },
+    {
+      "fieldname": "notify_channel",
+      "fieldtype": "Link",
+      "label": "Notify Channel",
+      "options": "Notification Channel"
+    },
+    {
+      "fieldname": "fields",
+      "fieldtype": "Table",
+      "label": "Watched Fields",
+      "options": "Watched Field"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "field:target_doctype",
+  "naming_rule": "By fieldname"
+}

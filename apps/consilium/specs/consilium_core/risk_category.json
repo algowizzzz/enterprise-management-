@@ -39,6 +39,18 @@
       "description": "Inactive values stay on historical records but are not offered for new ones."
     },
     {
+      "fieldname": "sort_order",
+      "fieldtype": "Int",
+      "label": "Sort Order",
+      "description": "Presentation order where alphabetical is wrong."
+    },
+    {
+      "fieldname": "external_code",
+      "fieldtype": "Data",
+      "label": "External Code",
+      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]"
+    },
+    {
       "fieldname": "parent_risk_category",
       "fieldtype": "Link",
       "label": "Parent",
@@ -99,10 +111,17 @@
       "export": 1
     },
     {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
       "role": "All",
       "read": 1
     }
   ],
   "is_tree": 1,
-  "nsm_parent_field": "parent_risk_category"
+  "nsm_parent_field": "parent_risk_category",
+  "allow_import": 1
 }

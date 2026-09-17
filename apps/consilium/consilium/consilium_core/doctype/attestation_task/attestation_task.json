@@ -1,0 +1,190 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "ATSK-.#####",
+ "creation": "2026-09-17 22:10:23.310074",
+ "description": "One row per campaign, participant and record. Standalone, not a child, so a participant's task list is a first-class query and tasks survive campaign edits (02-data-model.md \u00a75.1).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "campaign",
+  "assigned_to",
+  "assigned_role",
+  "second_signatory",
+  "due_on",
+  "status",
+  "is_open",
+  "is_editable",
+  "requires_review",
+  "responded_on",
+  "response_statement",
+  "second_signed_on",
+  "acting_delegation",
+  "items"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Attested Record DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Attested Record",
+   "options": "subject_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "campaign",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Campaign",
+   "options": "Attestation Campaign",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Assigned To",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "description": "Which seat made this person a participant. Empty for document attestation.",
+   "fieldname": "assigned_role",
+   "fieldtype": "Link",
+   "label": "Assigned Seat Role",
+   "options": "Governance Forum Role"
+  },
+  {
+   "description": "Required when the campaign requires dual signature.",
+   "fieldname": "second_signatory",
+   "fieldtype": "Link",
+   "label": "Second Signatory",
+   "options": "User"
+  },
+  {
+   "description": "Copied from the campaign so that a per-task extension is possible.",
+   "fieldname": "due_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due On",
+   "reqd": 1
+  },
+  {
+   "default": "Pending",
+   "description": "A label. Regeneration and reporting read is_open, never this string.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Pending\nIn Progress\nAttested\nAttested With Exceptions\nDeclined\nExpired",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag derived from Workflow State Flag. An open task is never duplicated by regeneration.",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "fieldname": "responded_on",
+   "fieldtype": "Datetime",
+   "label": "Responded On",
+   "read_only": 1
+  },
+  {
+   "description": "Required when the response is with exceptions or declined.",
+   "fieldname": "response_statement",
+   "fieldtype": "Text",
+   "label": "Response Statement"
+  },
+  {
+   "fieldname": "second_signed_on",
+   "fieldtype": "Datetime",
+   "label": "Second Signed On",
+   "read_only": 1
+  },
+  {
+   "description": "Set when a delegate responded. Preserves who was actually accountable.",
+   "fieldname": "acting_delegation",
+   "fieldtype": "Link",
+   "label": "Acting Delegation",
+   "options": "Authority Delegation"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Attestation Task Item"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.310083",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Attestation Task",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "campaign,assigned_to",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

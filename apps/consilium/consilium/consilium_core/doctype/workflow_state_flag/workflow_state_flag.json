@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "WSFL-.#####",
+ "creation": "2026-09-17 22:10:23.326172",
+ "description": "The configuration that turns a workflow state or status label into semantic flags (02-data-model.md M-4). State names live here, as data. No business logic anywhere compares a state string; it reads the flags this table sets. That is what makes a state rename configuration rather than a rebuild. [Addition \u2014 the model states the rule and names the flags but defines no table to hold the mapping.]",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "target_doctype",
+  "state_field",
+  "state_value",
+  "is_editable",
+  "is_active",
+  "requires_review",
+  "is_open",
+  "is_committable",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Target DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "default": "workflow_state",
+   "description": "The field carrying the state or status label \u2014 workflow_state, or a status field.",
+   "fieldname": "state_field",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "State Field",
+   "reqd": 1
+  },
+  {
+   "fieldname": "state_value",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "State Value",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review"
+  },
+  {
+   "default": "0",
+   "description": "Whether the record is still awaiting action in this state.",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open"
+  },
+  {
+   "default": "0",
+   "description": "Used by the import pipeline; a staged row may be committed from this state.",
+   "fieldname": "is_committable",
+   "fieldtype": "Check",
+   "label": "Is Committable"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.326181",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Workflow State Flag",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "target_doctype,state_value",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

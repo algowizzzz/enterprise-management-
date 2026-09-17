@@ -1,0 +1,167 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "CASS-.#####",
+ "creation": "2026-09-17 22:10:23.311734",
+ "description": "The immutable record of one evaluation: the answers given, the rule that fired, the outcome and the full trace of every rule considered (02-data-model.md \u00a75.2). Append-only.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "rule_set",
+  "rule_set_version_label",
+  "matched_rule_code",
+  "outcome",
+  "outcome_rationale",
+  "evaluation_trace",
+  "evaluated_on",
+  "evaluated_by",
+  "overridden",
+  "override_outcome",
+  "override_justification",
+  "override_approved_by",
+  "answers"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Assessed Record DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Assessed Record",
+   "options": "subject_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rule_set",
+   "fieldtype": "Link",
+   "label": "Rule Set",
+   "options": "Classification Rule Set",
+   "reqd": 1
+  },
+  {
+   "description": "Copied, not joined: the rule set may later be superseded, and a past decision must stay explicable.",
+   "fieldname": "rule_set_version_label",
+   "fieldtype": "Data",
+   "label": "Rule Set Version",
+   "reqd": 1
+  },
+  {
+   "description": "Empty when the default outcome applied.",
+   "fieldname": "matched_rule_code",
+   "fieldtype": "Data",
+   "label": "Matched Rule"
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Outcome",
+   "reqd": 1
+  },
+  {
+   "fieldname": "outcome_rationale",
+   "fieldtype": "Text",
+   "label": "Outcome Rationale",
+   "reqd": 1
+  },
+  {
+   "description": "Every rule considered and why it did or did not match. Stored, never recomputed.",
+   "fieldname": "evaluation_trace",
+   "fieldtype": "JSON",
+   "label": "Evaluation Trace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evaluated_on",
+   "fieldtype": "Datetime",
+   "label": "Evaluated On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evaluated_by",
+   "fieldtype": "Link",
+   "label": "Evaluated By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "overridden",
+   "fieldtype": "Check",
+   "label": "Overridden"
+  },
+  {
+   "depends_on": "overridden",
+   "fieldname": "override_outcome",
+   "fieldtype": "Data",
+   "label": "Override Outcome"
+  },
+  {
+   "depends_on": "overridden",
+   "description": "Required when overridden.",
+   "fieldname": "override_justification",
+   "fieldtype": "Text",
+   "label": "Override Justification"
+  },
+  {
+   "depends_on": "overridden",
+   "fieldname": "override_approved_by",
+   "fieldtype": "Link",
+   "label": "Override Approved By",
+   "options": "User"
+  },
+  {
+   "fieldname": "answers",
+   "fieldtype": "Table",
+   "label": "Answers",
+   "options": "Classification Assessment Answer"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.311743",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Classification Assessment",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

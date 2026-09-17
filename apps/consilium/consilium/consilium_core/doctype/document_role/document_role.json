@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:document_role_code",
+ "creation": "2026-09-17 22:10:23.314329",
+ "description": "Accountability roles recorded on a governing document \u2014 owner, approver, liaison, delegate, sponsor, key contact, monitor, partner (\u00a72.2, \u00a74.2). Distinct from access roles, which live in the permission engine.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "document_role_code",
+  "document_role_name",
+  "description",
+  "is_active",
+  "sort_order",
+  "external_code",
+  "is_accountable",
+  "can_attest",
+  "is_optional"
+ ],
+ "fields": [
+  {
+   "description": "Stable identifier. Used by integrations and imports; do not reuse a retired code.",
+   "fieldname": "document_role_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "document_role_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "default": "1",
+   "description": "Inactive values stay on historical records but are not offered for new ones.",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Active"
+  },
+  {
+   "description": "Presentation order where alphabetical is wrong.",
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
+  },
+  {
+   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]",
+   "fieldname": "external_code",
+   "fieldtype": "Data",
+   "label": "External Code"
+  },
+  {
+   "default": "0",
+   "description": "Whether the holder is accountable for the record rather than consulted on it.",
+   "fieldname": "is_accountable",
+   "fieldtype": "Check",
+   "label": "Accountable Role"
+  },
+  {
+   "default": "0",
+   "description": "Whether the holder receives a document attestation task.",
+   "fieldname": "can_attest",
+   "fieldtype": "Check",
+   "label": "Can Attest"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_optional",
+   "fieldtype": "Check",
+   "label": "Optional Role"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.314338",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Document Role",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Taxonomy Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "search_fields": "document_role_name,document_role_code",
+ "sort_field": "document_role_name",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "document_role_name",
+ "track_changes": 1
+}

@@ -1,0 +1,105 @@
+{
+  "name": "Workflow State Flag",
+  "module": "Consilium Core",
+  "description": "The configuration that turns a workflow state or status label into semantic flags (02-data-model.md M-4). State names live here, as data. No business logic anywhere compares a state string; it reads the flags this table sets. That is what makes a state rename configuration rather than a rebuild. [Addition \u2014 the model states the rule and names the flags but defines no table to hold the mapping.]",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "target_doctype",
+      "fieldtype": "Link",
+      "label": "Target DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "state_field",
+      "fieldtype": "Data",
+      "label": "State Field",
+      "reqd": 1,
+      "default": "workflow_state",
+      "in_list_view": 1,
+      "description": "The field carrying the state or status label \u2014 workflow_state, or a status field."
+    },
+    {
+      "fieldname": "state_value",
+      "fieldtype": "Data",
+      "label": "State Value",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "default": "1"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active",
+      "default": "1"
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "default": "0"
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "default": "0",
+      "description": "Whether the record is still awaiting action in this state."
+    },
+    {
+      "fieldname": "is_committable",
+      "fieldtype": "Check",
+      "label": "Is Committable",
+      "default": "0",
+      "description": "Used by the import pipeline; a staged row may be committed from this state."
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Text",
+      "label": "Notes"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "WSFL-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "target_doctype,state_value"
+}

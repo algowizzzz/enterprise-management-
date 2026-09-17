@@ -1,0 +1,152 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "AIRQ-.#####",
+ "creation": "2026-09-17 22:10:23.307802",
+ "description": "What data left the platform, to which capability, and what came back (02-data-model.md \u00a75.10). A data-boundary control. Append-only.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "request_reference",
+  "capability",
+  "requested_by",
+  "requested_on",
+  "context_sent",
+  "context_classification",
+  "response_received_on",
+  "response_payload",
+  "status",
+  "error_detail",
+  "duration_ms"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Subject Record DocType",
+   "options": "DocType",
+   "reqd": 0
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Subject Record",
+   "options": "subject_doctype",
+   "reqd": 0
+  },
+  {
+   "fieldname": "request_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Request Reference",
+   "reqd": 1
+  },
+  {
+   "description": "The external tool invoked.",
+   "fieldname": "capability",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Capability",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_on",
+   "fieldtype": "Datetime",
+   "label": "Requested On",
+   "reqd": 1
+  },
+  {
+   "description": "Exactly what left the platform.",
+   "fieldname": "context_sent",
+   "fieldtype": "Long Text",
+   "label": "Context Sent"
+  },
+  {
+   "default": "Internal",
+   "description": "The highest classification present in the payload.",
+   "fieldname": "context_classification",
+   "fieldtype": "Select",
+   "label": "Context Classification",
+   "options": "Public\nInternal\nConfidential\nRestricted",
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_received_on",
+   "fieldtype": "Datetime",
+   "label": "Response Received On"
+  },
+  {
+   "fieldname": "response_payload",
+   "fieldtype": "Long Text",
+   "label": "Response Payload"
+  },
+  {
+   "default": "Sent",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Sent\nSucceeded\nFailed\nRefused\nTimed Out",
+   "reqd": 1
+  },
+  {
+   "fieldname": "error_detail",
+   "fieldtype": "Text",
+   "label": "Error Detail"
+  },
+  {
+   "fieldname": "duration_ms",
+   "fieldtype": "Int",
+   "label": "Duration (ms)"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.307832",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "AI Service Request",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

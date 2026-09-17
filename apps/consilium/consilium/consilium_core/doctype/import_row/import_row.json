@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "IMPR-.#####",
+ "creation": "2026-09-17 22:10:23.319847",
+ "description": "One staged record: what arrived, what it mapped to, and what happened to it. High volume, so field-level change history is off \u2014 the row itself is the history.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "import_batch",
+  "row_number",
+  "raw_payload",
+  "mapped_payload",
+  "status",
+  "is_committable",
+  "messages",
+  "target_name",
+  "external_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "import_batch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Import Batch",
+   "options": "Import Batch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "row_number",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Row Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "raw_payload",
+   "fieldtype": "JSON",
+   "label": "Raw Payload"
+  },
+  {
+   "fieldname": "mapped_payload",
+   "fieldtype": "JSON",
+   "label": "Mapped Payload"
+  },
+  {
+   "default": "Valid",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Valid\nWarning\nError\nCommitted\nSkipped",
+   "reqd": 1
+  },
+  {
+   "description": "Semantic flag derived from Workflow State Flag. Commit reads this, never the status string.",
+   "fieldname": "is_committable",
+   "fieldtype": "Check",
+   "label": "Is Committable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "messages",
+   "fieldtype": "JSON",
+   "label": "Messages"
+  },
+  {
+   "fieldname": "target_name",
+   "fieldtype": "Data",
+   "label": "Target Record",
+   "read_only": 1
+  },
+  {
+   "fieldname": "external_key",
+   "fieldtype": "Data",
+   "label": "External Key"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.319855",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Import Row",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

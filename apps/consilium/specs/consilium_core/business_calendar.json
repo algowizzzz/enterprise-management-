@@ -1,0 +1,125 @@
+{
+  "name": "Business Calendar",
+  "module": "Consilium Core",
+  "description": "Working days and hours for business-hours service levels. [Inferred \u2014 \u00a711 I-15. Without it every service level is 24x7 and will misreport.]",
+  "allow_rename": 1,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "calendar_code",
+      "fieldtype": "Data",
+      "label": "Code",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "title",
+      "fieldtype": "Data",
+      "label": "Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "day_start",
+      "fieldtype": "Time",
+      "label": "Day Start",
+      "reqd": 1,
+      "default": "09:00:00"
+    },
+    {
+      "fieldname": "day_end",
+      "fieldtype": "Time",
+      "label": "Day End",
+      "reqd": 1,
+      "default": "17:00:00"
+    },
+    {
+      "fieldname": "works_monday",
+      "fieldtype": "Check",
+      "label": "Monday",
+      "default": "1"
+    },
+    {
+      "fieldname": "works_tuesday",
+      "fieldtype": "Check",
+      "label": "Tuesday",
+      "default": "1"
+    },
+    {
+      "fieldname": "works_wednesday",
+      "fieldtype": "Check",
+      "label": "Wednesday",
+      "default": "1"
+    },
+    {
+      "fieldname": "works_thursday",
+      "fieldtype": "Check",
+      "label": "Thursday",
+      "default": "1"
+    },
+    {
+      "fieldname": "works_friday",
+      "fieldtype": "Check",
+      "label": "Friday",
+      "default": "1"
+    },
+    {
+      "fieldname": "works_saturday",
+      "fieldtype": "Check",
+      "label": "Saturday",
+      "default": "0"
+    },
+    {
+      "fieldname": "works_sunday",
+      "fieldtype": "Check",
+      "label": "Sunday",
+      "default": "0"
+    },
+    {
+      "fieldname": "holidays",
+      "fieldtype": "JSON",
+      "label": "Holidays",
+      "description": "A list of ISO dates that are not worked."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "field:calendar_code",
+  "naming_rule": "By fieldname",
+  "title_field": "title"
+}

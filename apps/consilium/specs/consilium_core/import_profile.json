@@ -1,0 +1,121 @@
+{
+  "name": "Import Profile",
+  "module": "Consilium Core",
+  "description": "The field mapping, validation and handling rules for one file-based import, expressed as configuration (02-data-model.md \u00a75.6).",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "profile_title",
+      "fieldtype": "Data",
+      "label": "Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "source_system",
+      "fieldtype": "Link",
+      "label": "Source System",
+      "options": "External System",
+      "reqd": 1
+    },
+    {
+      "fieldname": "target_doctype",
+      "fieldtype": "Link",
+      "label": "Target DocType",
+      "options": "DocType",
+      "reqd": 1
+    },
+    {
+      "fieldname": "key_strategy",
+      "fieldtype": "Select",
+      "label": "Key Strategy",
+      "reqd": 1,
+      "default": "External Key",
+      "options": "External Key\nNatural Key\nAlways Insert"
+    },
+    {
+      "fieldname": "external_key_column",
+      "fieldtype": "Data",
+      "label": "External Key Column",
+      "description": "The source column holding the foreign identifier, used by the External Key strategy."
+    },
+    {
+      "fieldname": "natural_key_fieldname",
+      "fieldtype": "Data",
+      "label": "Natural Key Fieldname",
+      "description": "The target fieldname matched by the Natural Key strategy."
+    },
+    {
+      "fieldname": "on_missing_required",
+      "fieldtype": "Select",
+      "label": "On Missing Required",
+      "reqd": 1,
+      "default": "Reject Row",
+      "options": "Reject Row\nReject Batch\nDefault\nWarn And Continue"
+    },
+    {
+      "fieldname": "on_unknown_taxonomy",
+      "fieldtype": "Select",
+      "label": "On Unknown Taxonomy",
+      "reqd": 1,
+      "default": "Reject Row",
+      "options": "Reject Row\nCreate Inactive\nMap To Default\nWarn And Continue"
+    },
+    {
+      "fieldname": "on_duplicate_key",
+      "fieldtype": "Select",
+      "label": "On Duplicate Key",
+      "reqd": 1,
+      "default": "Update",
+      "options": "Update\nSkip\nReject"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1"
+    },
+    {
+      "fieldname": "mappings",
+      "fieldtype": "Table",
+      "label": "Field Mappings",
+      "options": "Import Field Mapping"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "IMPP-.#####",
+  "naming_rule": "Expression (old style)",
+  "title_field": "profile_title",
+  "search_fields": "profile_title"
+}

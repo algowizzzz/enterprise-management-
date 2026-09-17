@@ -1,0 +1,156 @@
+{
+  "name": "Import Batch",
+  "module": "Consilium Core",
+  "description": "One file, staged, validated and committed. The file is retained exactly as received, with its hash, because the requirement is that integration activity be traceable.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "batch_reference",
+      "fieldtype": "Data",
+      "label": "Batch Reference",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "source_system",
+      "fieldtype": "Link",
+      "label": "Source System",
+      "options": "External System",
+      "reqd": 1
+    },
+    {
+      "fieldname": "import_profile",
+      "fieldtype": "Link",
+      "label": "Import Profile",
+      "options": "Import Profile",
+      "reqd": 1
+    },
+    {
+      "fieldname": "target_doctype",
+      "fieldtype": "Link",
+      "label": "Target DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "read_only": 1,
+      "description": "Copied from the profile at validation."
+    },
+    {
+      "fieldname": "source_file",
+      "fieldtype": "Attach",
+      "label": "Source File",
+      "description": "The file exactly as received."
+    },
+    {
+      "fieldname": "source_file_sha256",
+      "fieldtype": "Data",
+      "label": "Source File SHA-256"
+    },
+    {
+      "fieldname": "received_on",
+      "fieldtype": "Datetime",
+      "label": "Received On",
+      "reqd": 1
+    },
+    {
+      "fieldname": "imported_by",
+      "fieldtype": "Link",
+      "label": "Imported By",
+      "options": "User"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Uploaded",
+      "in_list_view": 1,
+      "options": "Uploaded\nValidated\nPartially Committed\nCommitted\nRejected",
+      "description": "A label. Logic reads the semantic flags below."
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "row_count",
+      "fieldtype": "Int",
+      "label": "Rows",
+      "read_only": 1
+    },
+    {
+      "fieldname": "valid_count",
+      "fieldtype": "Int",
+      "label": "Valid",
+      "read_only": 1
+    },
+    {
+      "fieldname": "error_count",
+      "fieldtype": "Int",
+      "label": "Errors",
+      "read_only": 1
+    },
+    {
+      "fieldname": "warning_count",
+      "fieldtype": "Int",
+      "label": "Warnings",
+      "read_only": 1
+    },
+    {
+      "fieldname": "validation_report",
+      "fieldtype": "JSON",
+      "label": "Validation Report",
+      "read_only": 1
+    },
+    {
+      "fieldname": "committed_on",
+      "fieldtype": "Datetime",
+      "label": "Committed On",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "IMPB-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "batch_reference"
+}

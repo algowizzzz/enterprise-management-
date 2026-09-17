@@ -1,0 +1,113 @@
+{
+  "name": "Disposition Event",
+  "module": "Consilium Core",
+  "description": "The scheduled, held, approved and executed end of a retention period. Never automatic, and it outlives the record it disposed of.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "archive_record",
+      "fieldtype": "Link",
+      "label": "Archive Record",
+      "options": "Archive Record",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "due_on",
+      "fieldtype": "Date",
+      "label": "Due On",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "action",
+      "fieldtype": "Select",
+      "label": "Action",
+      "reqd": 1,
+      "default": "Review",
+      "options": "Destroy\nArchive Permanently\nReview"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Scheduled",
+      "in_list_view": 1,
+      "options": "Scheduled\nHeld\nApproved\nExecuted\nCancelled",
+      "description": "A label. Logic reads the semantic flags below."
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "held_by_legal_hold",
+      "fieldtype": "Link",
+      "label": "Held By Legal Hold",
+      "options": "Legal Hold",
+      "read_only": 1
+    },
+    {
+      "fieldname": "approved_by",
+      "fieldtype": "Link",
+      "label": "Approved By",
+      "options": "User"
+    },
+    {
+      "fieldname": "executed_on",
+      "fieldtype": "Datetime",
+      "label": "Executed On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "evidence",
+      "fieldtype": "JSON",
+      "label": "Evidence"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Records Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "DISP-.#####",
+  "naming_rule": "Expression (old style)"
+}

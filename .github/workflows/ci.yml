@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  rules:
+    name: Platform rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # No dependencies: these checks read files, so they run first and fail fast.
+      - run: python scripts/check_platform_rules.py
+
+  toolchain:
+    name: Toolchain tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both targets are supported, so both are tested. A change that works on
+        # one and not the other is the failure this matrix exists to catch.
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ./winbench pytest
+      - run: python -m pytest tests/ -q
+
+  application:
+    name: Application tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the framework and the application
+        run: |
+          pip install -r requirements.txt
+          pip install "PyPika @ git+https://github.com/frappe/pypika@2c50e6142b2d61d2d243e466fdd5dc03b3d918f2"
+          pip install git+https://github.com/frappe/frappe@v15.121.0
+          pip install -e ./apps/consilium -e ./winbench
+
+      - name: Create a site
+        run: |
+          mkdir -p bench/sites bench/apps
+          cd bench/sites
+          cat > common_site_config.json <<'JSON'
+          {"db_type":"postgres","db_host":"127.0.0.1","db_port":5432,
+           "redis_cache":"redis://127.0.0.1:6379","redis_queue":"redis://127.0.0.1:6379",
+           "redis_socketio":"redis://127.0.0.1:6379","developer_mode":1}
+          JSON
+          printf 'frappe\nconsilium\n' > apps.txt
+          FRAPPE_BENCH_ROOT=$PWD/.. python -m frappe.utils.bench_helper frappe \
+            new-site ci.local --db-type postgres --db-host 127.0.0.1 --db-port 5432 \
+            --db-name ci --db-root-username postgres --db-root-password postgres \
+            --admin-password admin 2>&1 | grep -v 'Updating DocTypes'
+          FRAPPE_BENCH_ROOT=$PWD/.. python -m frappe.utils.bench_helper frappe \
+            --site ci.local install-app consilium 2>&1 | grep -v 'Updating DocTypes'
+
+      - name: Load reference data
+        run: |
+          cd bench/sites
+          FRAPPE_BENCH_ROOT=$PWD/.. python ../../deploy/seed.py --site ci.local
+
+      - name: Run the application test suite
+        run: |
+          cd bench/sites
+          FRAPPE_BENCH_ROOT=$PWD/.. python -m frappe.utils.bench_helper frappe \
+            --site ci.local run-tests --app consilium
+
+      - name: Health check
+        run: |
+          cd bench/sites
+          FRAPPE_BENCH_ROOT=$PWD/.. python ../../deploy/healthcheck.py --site ci.local

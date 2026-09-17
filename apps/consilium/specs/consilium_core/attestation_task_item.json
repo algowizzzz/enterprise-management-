@@ -1,0 +1,40 @@
+{
+  "name": "Attestation Task Item",
+  "module": "Consilium Core",
+  "description": "Line-by-line confirmation where an attestation is over a list. [Inferred \u2014 \u00a711 I-5.]",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "item_doctype",
+      "fieldtype": "Link",
+      "label": "Item DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "item_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Item",
+      "options": "item_doctype",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "confirmed",
+      "fieldtype": "Check",
+      "label": "Confirmed",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "exception_note",
+      "fieldtype": "Text",
+      "label": "Exception Note"
+    }
+  ],
+  "istable": 1,
+  "permissions": []
+}

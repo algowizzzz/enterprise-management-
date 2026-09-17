@@ -1,0 +1,149 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "SLAC-.#####",
+ "creation": "2026-09-17 22:10:23.324474",
+ "description": "One clock per record per definition.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "sla_definition",
+  "started_on",
+  "paused_seconds",
+  "stopped_on",
+  "elapsed_seconds",
+  "target_on",
+  "status",
+  "is_open",
+  "breached_on",
+  "warning_sent_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Measured Record DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Measured Record",
+   "options": "subject_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sla_definition",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "SLA Definition",
+   "options": "SLA Definition",
+   "reqd": 1
+  },
+  {
+   "fieldname": "started_on",
+   "fieldtype": "Datetime",
+   "label": "Started On",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "paused_seconds",
+   "fieldtype": "Int",
+   "label": "Paused Seconds"
+  },
+  {
+   "fieldname": "stopped_on",
+   "fieldtype": "Datetime",
+   "label": "Stopped On"
+  },
+  {
+   "default": "0",
+   "fieldname": "elapsed_seconds",
+   "fieldtype": "Int",
+   "label": "Elapsed Seconds"
+  },
+  {
+   "fieldname": "target_on",
+   "fieldtype": "Datetime",
+   "label": "Target On",
+   "reqd": 1
+  },
+  {
+   "default": "Running",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Running\nPaused\nMet\nBreached\nCancelled",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag derived from Workflow State Flag. The sweep reads this, never the status string.",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "fieldname": "breached_on",
+   "fieldtype": "Datetime",
+   "label": "Breached On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "warning_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Warning Sent On",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.324483",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "SLA Clock",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

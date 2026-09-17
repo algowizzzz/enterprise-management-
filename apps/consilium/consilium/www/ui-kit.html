@@ -1,0 +1,473 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Interface reference / manual test surface.
+  Renders every shared component. Nothing here is real data: the only live
+  data source is the framework's built-in User DocType, used to exercise the
+  table against a real REST endpoint.
+-#}
+
+{% block page_actions %}
+<button type="button" class="cns-btn cns-btn-secondary" data-cns-theme-toggle
+        aria-pressed="false">
+  <i class="bi bi-moon-stars-fill" data-cns-theme-icon aria-hidden="true"></i>
+  <span data-cns-theme-label>Dark</span>
+</button>
+<button type="button" class="cns-btn cns-btn-primary" id="demo-toast">
+  <i class="bi bi-bell" aria-hidden="true"></i> Show notification
+</button>
+{% endblock %}
+
+{% block page_content %}
+
+<!-- ===================== Typography ===================== -->
+<section class="cns-card" aria-labelledby="sec-type">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="sec-type">Typography</h2>
+      <p class="cns-card-subtitle">The type scale is driven by one variable, so every
+        size below moves together when the text-size control changes.</p>
+    </div>
+    <div class="cns-dt-pagesize">
+      <label for="type-size">Text size</label>
+      <select class="cns-select" id="type-size" data-cns-fontsize-select>
+        {%- for step in font_steps %}
+        <option value="{{ step.id }}">{{ step.label }}</option>
+        {%- endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <p class="cns-eyebrow">Section label</p>
+    <h1>Heading level one</h1>
+    <h2>Heading level two</h2>
+    <h3>Heading level three</h3>
+    <h4>Heading level four</h4>
+    <h5>Heading level five</h5>
+    <h6>Heading level six</h6>
+    <p>Body text at the base size. A paragraph of neutral placeholder copy used to
+      judge line length, leading and contrast in both themes. It should stay
+      comfortable to read at every step of the text-size control.</p>
+    <p class="cns-text-secondary">Secondary text, for supporting detail.</p>
+    <p class="cns-text-muted cns-text-sm">Muted small text, for timestamps and counts.</p>
+    <p class="cns-mono">Monospace: REF-0000-0001</p>
+    <p><a href="#sec-type">An inline link</a> inside a sentence of body text.</p>
+  </div>
+  <div class="cns-card-footer cns-text-muted">
+    Current setting: <strong data-cns-fontsize-label>Default</strong>. The choice is
+    stored per browser and applies to every page.
+  </div>
+</section>
+
+<!-- ===================== Buttons ===================== -->
+<section class="cns-card" aria-labelledby="sec-buttons">
+  <div class="cns-card-header"><h2 class="cns-card-title" id="sec-buttons">Buttons</h2></div>
+  <div class="cns-card-body">
+    <div class="cns-btn-group" style="margin-bottom: var(--cns-space-4);">
+      <button type="button" class="cns-btn cns-btn-primary">Primary</button>
+      <button type="button" class="cns-btn cns-btn-secondary">Secondary</button>
+      <button type="button" class="cns-btn cns-btn-ghost">Ghost</button>
+      <button type="button" class="cns-btn cns-btn-danger">Destructive</button>
+      <button type="button" class="cns-btn cns-btn-secondary" disabled>Disabled</button>
+    </div>
+    <div class="cns-btn-group" style="margin-bottom: var(--cns-space-4);">
+      <button type="button" class="cns-btn cns-btn-primary cns-btn-sm">Small</button>
+      <button type="button" class="cns-btn cns-btn-primary">Default</button>
+      <button type="button" class="cns-btn cns-btn-primary cns-btn-lg">Large</button>
+    </div>
+    <div class="cns-btn-group">
+      <button type="button" class="cns-btn cns-btn-secondary">
+        <i class="bi bi-download" aria-hidden="true"></i> With icon
+      </button>
+      <button type="button" class="cns-btn cns-btn-secondary" aria-label="More actions">
+        <i class="bi bi-three-dots" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Badges and status pills ===================== -->
+<section class="cns-card" aria-labelledby="sec-status">
+  <div class="cns-card-header">
+    <h2 class="cns-card-title" id="sec-status">Badges and status pills</h2>
+  </div>
+  <div class="cns-card-body">
+    <p class="cns-eyebrow">Status pills</p>
+    <p>
+      <span class="cns-pill cns-status-success">Approved</span>
+      <span class="cns-pill cns-status-warning">Pending review</span>
+      <span class="cns-pill cns-status-danger">Overdue</span>
+      <span class="cns-pill cns-status-info">In progress</span>
+      <span class="cns-pill cns-status-neutral">Draft</span>
+      <span class="cns-pill cns-status-primary">Published</span>
+    </p>
+    <p class="cns-eyebrow">Badges</p>
+    <p>
+      <span class="cns-badge cns-status-neutral">Label</span>
+      <span class="cns-badge cns-status-info">Category</span>
+      <span class="cns-badge cns-badge--count">12</span>
+    </p>
+    <p class="cns-eyebrow">Inline messages</p>
+    <div class="cns-alert cns-status-info">
+      <i class="bi bi-info-circle" aria-hidden="true"></i>
+      <div>An informational message with supporting detail.</div>
+    </div>
+    <div class="cns-alert cns-status-warning">
+      <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+      <div>A warning that something needs attention before the next step.</div>
+    </div>
+    <div class="cns-alert cns-status-danger" role="alert">
+      <i class="bi bi-x-octagon" aria-hidden="true"></i>
+      <div>An error that blocked the last action.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Workflow indicator ===================== -->
+<section class="cns-card" aria-labelledby="sec-workflow">
+  <div class="cns-card-header">
+    <h2 class="cns-card-title" id="sec-workflow">Workflow state</h2>
+  </div>
+  <div class="cns-card-body">
+    <ol class="cns-workflow" aria-label="Record workflow state">
+      <li class="cns-workflow-step" data-state="done">
+        <span class="cns-workflow-marker" aria-hidden="true"><i class="bi bi-check"></i></span>
+        Drafted
+      </li>
+      <li class="cns-workflow-step" data-state="done">
+        <span class="cns-workflow-marker" aria-hidden="true"><i class="bi bi-check"></i></span>
+        Reviewed
+      </li>
+      <li class="cns-workflow-step" data-state="current" aria-current="step">
+        <span class="cns-workflow-marker" aria-hidden="true">3</span>
+        Awaiting approval
+      </li>
+      <li class="cns-workflow-step" data-state="pending">
+        <span class="cns-workflow-marker" aria-hidden="true">4</span>
+        Published
+      </li>
+      <li class="cns-workflow-step" data-state="blocked">
+        <span class="cns-workflow-marker" aria-hidden="true"><i class="bi bi-exclamation"></i></span>
+        Escalated
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ===================== Cards and stats ===================== -->
+<section aria-labelledby="sec-cards">
+  <h2 id="sec-cards" class="cns-visually-hidden">Cards</h2>
+  <div class="cns-form-grid">
+    <div class="cns-card">
+      <div class="cns-card-body cns-stat">
+        <span class="cns-stat-value">148</span>
+        <span class="cns-stat-label">Open items</span>
+      </div>
+    </div>
+    <div class="cns-card">
+      <div class="cns-card-body cns-stat">
+        <span class="cns-stat-value">92%</span>
+        <span class="cns-stat-label">Within target</span>
+      </div>
+    </div>
+    <div class="cns-card">
+      <div class="cns-card-body cns-stat">
+        <span class="cns-stat-value">7</span>
+        <span class="cns-stat-label">Escalated</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Forms ===================== -->
+<section class="cns-card" aria-labelledby="sec-forms">
+  <div class="cns-card-header"><h2 class="cns-card-title" id="sec-forms">Form controls</h2></div>
+  <div class="cns-card-body">
+    <form onsubmit="event.preventDefault(); Consilium.toast.success('Form submitted (demonstration only).');">
+      <div class="cns-form-grid">
+        <div class="cns-field">
+          <label class="cns-label" for="f-text">Reference<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" id="f-text" type="text" placeholder="REF-0000-0001" required>
+          <span class="cns-help">Identifier used across the portal.</span>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="f-select">Category</label>
+          <select class="cns-select" id="f-select">
+            <option>Category one</option>
+            <option>Category two</option>
+            <option>Category three</option>
+          </select>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="f-date">Effective date</label>
+          <input class="cns-input" id="f-date" type="date">
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="f-error">Field with an error</label>
+          <input class="cns-input" id="f-error" type="text" value="Not valid"
+                 aria-invalid="true" aria-describedby="f-error-msg">
+          <span class="cns-error-text" id="f-error-msg">This value is not recognised.</span>
+        </div>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-textarea">Summary</label>
+        <textarea class="cns-textarea" id="f-textarea" placeholder="Describe the change"></textarea>
+      </div>
+      <div class="cns-field">
+        <div class="cns-check">
+          <input type="checkbox" id="f-check-1" checked>
+          <label for="f-check-1">Notify reviewers when this changes</label>
+        </div>
+        <div class="cns-check">
+          <input type="checkbox" id="f-check-2">
+          <label for="f-check-2">Require a second approval</label>
+        </div>
+        <div class="cns-check">
+          <input type="checkbox" id="f-check-3" disabled>
+          <label for="f-check-3">Disabled option</label>
+        </div>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-disabled">Disabled input</label>
+        <input class="cns-input" id="f-disabled" type="text" value="Read only" disabled>
+      </div>
+      <div class="cns-btn-group">
+        <button type="submit" class="cns-btn cns-btn-primary">Save</button>
+        <button type="reset" class="cns-btn cns-btn-secondary">Reset</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- ===================== Live table ===================== -->
+<section aria-labelledby="sec-table">
+  <h2 id="sec-table" class="cns-visually-hidden">Live table</h2>
+  <div id="user-table" data-cns-table="userTableConfig"></div>
+  <p class="cns-text-muted cns-text-sm" style="margin-top: var(--cns-space-3);">
+    Live data from the framework's <code class="cns-mono">User</code> DocType over the REST
+    API. Pagination, sorting and search all run on the server; the page size is
+    remembered per browser.
+  </p>
+</section>
+
+<!-- ===================== Static-data table ===================== -->
+<section aria-labelledby="sec-table-static" style="margin-top: var(--cns-space-6);">
+  <h2 id="sec-table-static" class="cns-visually-hidden">Static table</h2>
+  <div id="static-table" data-cns-table="staticTableConfig"></div>
+</section>
+
+<!-- ===================== States ===================== -->
+<section class="cns-card" aria-labelledby="sec-states" style="margin-top: var(--cns-space-6);">
+  <div class="cns-card-header">
+    <h2 class="cns-card-title" id="sec-states">Loading, empty and error states</h2>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-form-grid">
+      <div class="cns-card">
+        <div class="cns-state">
+          <span class="cns-spinner cns-spinner--lg" aria-hidden="true"></span>
+          <p class="cns-state-title">Loading data</p>
+          <p class="cns-state-message">Fetching records from the server.</p>
+        </div>
+      </div>
+      <div class="cns-card">
+        <div class="cns-state">
+          <span class="cns-state-icon"><i class="bi bi-inbox" aria-hidden="true"></i></span>
+          <p class="cns-state-title">Nothing here yet</p>
+          <p class="cns-state-message">There are no records to display.</p>
+          <button type="button" class="cns-btn cns-btn-secondary">Create the first one</button>
+        </div>
+      </div>
+      <div class="cns-card">
+        <div class="cns-state cns-state--error">
+          <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+          <p class="cns-state-title">Could not load data</p>
+          <p class="cns-state-message">The server could not be reached.</p>
+          <button type="button" class="cns-btn cns-btn-secondary">Try again</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="cns-eyebrow" style="margin-top: var(--cns-space-5);">Skeleton rows</p>
+    <div class="cns-card cns-card--flush">
+      <div class="cns-card-body">
+        <div class="cns-skeleton-row"><span class="cns-skeleton"></span><span class="cns-skeleton"></span><span class="cns-skeleton"></span></div>
+        <div class="cns-skeleton-row"><span class="cns-skeleton"></span><span class="cns-skeleton"></span><span class="cns-skeleton"></span></div>
+        <div class="cns-skeleton-row"><span class="cns-skeleton"></span><span class="cns-skeleton"></span><span class="cns-skeleton"></span></div>
+      </div>
+    </div>
+
+    <p class="cns-eyebrow" style="margin-top: var(--cns-space-5);">Notifications</p>
+    <div class="cns-btn-group">
+      <button type="button" class="cns-btn cns-btn-secondary" data-toast="success">Success</button>
+      <button type="button" class="cns-btn cns-btn-secondary" data-toast="info">Info</button>
+      <button type="button" class="cns-btn cns-btn-secondary" data-toast="warning">Warning</button>
+      <button type="button" class="cns-btn cns-btn-secondary" data-toast="danger">Error</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Palette ===================== -->
+<section class="cns-card" aria-labelledby="sec-palette">
+  <div class="cns-card-header">
+    <h2 class="cns-card-title" id="sec-palette">Palette</h2>
+    <p class="cns-card-subtitle">Both themes read the same token names.</p>
+  </div>
+  <div class="cns-card-body">
+    <table class="cns-table cns-table--compact">
+      <caption class="cns-visually-hidden">Colour tokens and their current values</caption>
+      <thead>
+        <tr><th scope="col">Token</th><th scope="col">Swatch</th><th scope="col">Role</th></tr>
+      </thead>
+      <tbody id="palette-rows"></tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ------------------------------------------------------------------
+   Table configuration. A screen author writes this object and nothing
+   else: the element carrying data-cns-table="userTableConfig" is wired
+   up automatically on load.
+   ------------------------------------------------------------------ */
+var f = Consilium.Table.formatters;
+
+var userTableConfig = {
+  doctype: "User",
+  title: "Users",
+  description: "A live table over a real DocType, exercising every table feature.",
+  caption: "Users",
+  storageKey: "ui-kit-users",
+  rowKey: "name",
+  searchPlaceholder: "Search by name or identifier",
+  searchFields: ["name", "full_name"],
+  defaultSort: { field: "modified", order: "desc" },
+  pageSize: 10,
+  striped: true,
+  columns: [
+    { field: "full_name", label: "Name", sortable: true, formatter: f.truncate(48) },
+    { field: "name", label: "Identifier", sortable: true, searchable: true,
+      className: "cns-mono" },
+    { field: "enabled", label: "Status", sortable: true,
+      formatter: function (value) {
+        return value
+          ? '<span class="cns-pill cns-status-success">Enabled</span>'
+          : '<span class="cns-pill cns-status-neutral">Disabled</span>';
+      } },
+    { field: "user_type", label: "Type", sortable: true,
+      formatter: f.status({ "System User": "info", "Website User": "neutral" }) },
+    { field: "creation", label: "Created", sortable: true, formatter: f.date },
+    { field: "modified", label: "Updated", sortable: true, formatter: f.datetime }
+  ]
+};
+
+var staticTableConfig = {
+  title: "In-memory table",
+  description: "The same component driven by an array instead of a DocType.",
+  caption: "Placeholder records",
+  storageKey: "ui-kit-static",
+  rowKey: "reference",
+  pageSize: 10,
+  compact: true,
+  searchFields: ["reference", "subject", "state"],
+  defaultSort: { field: "reference", order: "asc" },
+  columns: [
+    { field: "reference", label: "Reference", sortable: true, className: "cns-mono" },
+    { field: "subject", label: "Subject", sortable: true },
+    { field: "state", label: "State",
+      formatter: f.status({
+        Approved: "success", "Pending review": "warning",
+        Overdue: "danger", "In progress": "info", Draft: "neutral"
+      }) },
+    { field: "items", label: "Items", sortable: true, align: "end", formatter: f.number },
+    { field: "updated", label: "Updated", sortable: true, formatter: f.date }
+  ],
+  data: (function () {
+    var states = ["Draft", "Pending review", "In progress", "Approved", "Overdue"];
+    var rows = [];
+    for (var i = 1; i <= 43; i++) {
+      var d = new Date(2026, (i % 12), ((i * 3) % 27) + 1);
+      rows.push({
+        reference: "REF-" + String(1000 + i),
+        subject: "Placeholder record " + i,
+        state: states[i % states.length],
+        items: (i * 37) % 900,
+        updated: d.toISOString().slice(0, 10)
+      });
+    }
+    return rows;
+  })()
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+  /* Toast demonstrations */
+  document.getElementById("demo-toast").addEventListener("click", function () {
+    Consilium.toast({
+      type: "info",
+      title: "Notification",
+      message: "Transient notifications appear here and are announced to screen readers."
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-toast]"), function (btn) {
+    btn.addEventListener("click", function () {
+      var type = btn.getAttribute("data-toast");
+      Consilium.toast({
+        type: type,
+        title: type.charAt(0).toUpperCase() + type.slice(1),
+        message: "An example " + type + " notification."
+      });
+    });
+  });
+
+  /* Palette specimen, read live from the computed custom properties so it
+     always reflects whichever theme is active. */
+  var tokens = [
+    ["--cns-primary", "Primary action"],
+    ["--cns-surface-page", "Page background"],
+    ["--cns-surface", "Card surface"],
+    ["--cns-border", "Border"],
+    ["--cns-text", "Body text"],
+    ["--cns-text-muted", "Muted text"],
+    ["--cns-success", "Success"],
+    ["--cns-warning", "Warning"],
+    ["--cns-danger", "Danger"],
+    ["--cns-info", "Info"],
+    ["--cns-neutral", "Neutral"]
+  ];
+  var body = document.getElementById("palette-rows");
+
+  function paintPalette() {
+    var styles = getComputedStyle(document.documentElement);
+    body.innerHTML = "";
+    tokens.forEach(function (entry) {
+      var value = styles.getPropertyValue(entry[0]).trim();
+      var tr = document.createElement("tr");
+      var td1 = document.createElement("td");
+      td1.className = "cns-mono";
+      td1.textContent = entry[0];
+      var td2 = document.createElement("td");
+      var swatch = document.createElement("span");
+      swatch.style.cssText =
+        "display:inline-block;width:3rem;height:1.1rem;vertical-align:middle;" +
+        "border:1px solid var(--cns-border);border-radius:var(--cns-radius-xs);" +
+        "background:" + value;
+      td2.appendChild(swatch);
+      var code = document.createElement("span");
+      code.className = "cns-mono cns-text-muted";
+      code.style.marginLeft = "0.5rem";
+      code.textContent = value;
+      td2.appendChild(code);
+      var td3 = document.createElement("td");
+      td3.textContent = entry[1];
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+      body.appendChild(tr);
+    });
+  }
+  paintPalette();
+  document.addEventListener("consilium:themechange", paintPalette);
+});
+</script>
+{% endblock %}

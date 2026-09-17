@@ -1,0 +1,105 @@
+{
+  "name": "Version Revert Log",
+  "module": "Consilium Core",
+  "description": "The audited act of reverting (02-data-model.md \u00a75.4). Records who reverted, when, from and to which version, and \u2014 always \u2014 the new version the revert produced.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Reverted Record DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Reverted Record",
+      "options": "subject_doctype",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "from_version",
+      "fieldtype": "Link",
+      "label": "From Version",
+      "options": "Document Version",
+      "reqd": 1,
+      "description": "The version that was current."
+    },
+    {
+      "fieldname": "target_version",
+      "fieldtype": "Link",
+      "label": "Target Version",
+      "options": "Document Version",
+      "reqd": 1,
+      "description": "The version whose content was restored."
+    },
+    {
+      "fieldname": "resulting_version",
+      "fieldtype": "Link",
+      "label": "Resulting Version",
+      "options": "Document Version",
+      "reqd": 1,
+      "description": "The new version written. Never the target."
+    },
+    {
+      "fieldname": "reverted_by",
+      "fieldtype": "Link",
+      "label": "Reverted By",
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "reverted_on",
+      "fieldtype": "Datetime",
+      "label": "Reverted On",
+      "reqd": 1
+    },
+    {
+      "fieldname": "justification",
+      "fieldtype": "Text",
+      "label": "Justification",
+      "reqd": 1,
+      "description": "Mandatory."
+    },
+    {
+      "fieldname": "approved_by",
+      "fieldtype": "Link",
+      "label": "Approved By",
+      "options": "User",
+      "description": "Where the record's workflow requires approval to revert."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "VREV-.#####",
+  "naming_rule": "Expression (old style)"
+}

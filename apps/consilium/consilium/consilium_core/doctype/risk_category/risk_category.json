@@ -1,8 +1,9 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:risk_category_code",
- "creation": "2026-09-17 21:54:49.357576",
+ "creation": "2026-09-17 22:10:23.323794",
  "description": "The enterprise risk taxonomy. A tree so that tier 1 categories can carry sub-categories.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -12,6 +13,8 @@
   "risk_category_name",
   "description",
   "is_active",
+  "sort_order",
+  "external_code",
   "parent_risk_category",
   "is_group",
   "lft",
@@ -46,6 +49,18 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Active"
+  },
+  {
+   "description": "Presentation order where alphabetical is wrong.",
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
+  },
+  {
+   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]",
+   "fieldname": "external_code",
+   "fieldtype": "Data",
+   "label": "External Code"
   },
   {
    "fieldname": "parent_risk_category",
@@ -89,7 +104,7 @@
  "index_web_pages_for_search": 0,
  "is_tree": 1,
  "links": [],
- "modified": "2026-09-17 21:54:49.357585",
+ "modified": "2026-09-17 22:10:23.323802",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Risk Category",
@@ -115,6 +130,12 @@
    "report": 1,
    "role": "Taxonomy Administrator",
    "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
   },
   {
    "read": 1,

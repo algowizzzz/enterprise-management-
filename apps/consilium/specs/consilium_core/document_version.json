@@ -1,0 +1,157 @@
+{
+  "name": "Document Version",
+  "module": "Consilium Core",
+  "description": "An immutable snapshot in a record's version chain: the body file, its hash and the full field state at that version (02-data-model.md \u00a75.4). Append-only. Revert writes a NEW row; it never mutates one.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Versioned Record DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Versioned Record",
+      "options": "subject_doctype",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "version_number",
+      "fieldtype": "Int",
+      "label": "Version Number",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Monotonic per subject. Gaps are not permitted."
+    },
+    {
+      "fieldname": "version_label",
+      "fieldtype": "Data",
+      "label": "Version Label",
+      "in_list_view": 1,
+      "description": "The business-facing label. Distinct from version_number, which is a counter."
+    },
+    {
+      "fieldname": "body_file",
+      "fieldtype": "Attach",
+      "label": "Body File"
+    },
+    {
+      "fieldname": "body_sha256",
+      "fieldtype": "Data",
+      "label": "Body SHA-256",
+      "description": "Detects a silently swapped file."
+    },
+    {
+      "fieldname": "body_text",
+      "fieldtype": "Long Text",
+      "label": "Body Text",
+      "description": "Extracted plain text. Never authoritative."
+    },
+    {
+      "fieldname": "metadata_snapshot",
+      "fieldtype": "JSON",
+      "label": "Metadata Snapshot",
+      "reqd": 1,
+      "description": "The full field state of the subject at this version. This is what revert restores."
+    },
+    {
+      "fieldname": "change_summary",
+      "fieldtype": "Text",
+      "label": "Change Summary",
+      "reqd": 1
+    },
+    {
+      "fieldname": "change_classification",
+      "fieldtype": "Data",
+      "label": "Change Classification",
+      "description": "Copied from the classification assessment that drove this version."
+    },
+    {
+      "fieldname": "classification_assessment",
+      "fieldtype": "Link",
+      "label": "Classification Assessment",
+      "options": "Classification Assessment"
+    },
+    {
+      "fieldname": "created_from_version",
+      "fieldtype": "Link",
+      "label": "Created From Version",
+      "options": "Document Version",
+      "description": "The parent in the chain."
+    },
+    {
+      "fieldname": "superseded_by",
+      "fieldtype": "Link",
+      "label": "Superseded By",
+      "options": "Document Version",
+      "read_only": 1,
+      "description": "Chain linkage, set when the next version is written. One of the two fields that may change after insert."
+    },
+    {
+      "fieldname": "is_current",
+      "fieldtype": "Check",
+      "label": "Is Current",
+      "read_only": 1,
+      "in_list_view": 1,
+      "description": "Exactly one true per subject. Chain linkage; the only other field that may change after insert."
+    },
+    {
+      "fieldname": "origin",
+      "fieldtype": "Select",
+      "label": "Origin",
+      "reqd": 1,
+      "default": "Authored",
+      "in_list_view": 1,
+      "options": "Authored\nUploaded\nReverted\nImported\nMigrated"
+    },
+    {
+      "fieldname": "published",
+      "fieldtype": "Check",
+      "label": "Published",
+      "default": "0"
+    },
+    {
+      "fieldname": "retention_class",
+      "fieldtype": "Link",
+      "label": "Retention Class",
+      "options": "Retention Class",
+      "description": "Inherited from the subject at creation, then frozen."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "DVER-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "subject_name,version_label"
+}

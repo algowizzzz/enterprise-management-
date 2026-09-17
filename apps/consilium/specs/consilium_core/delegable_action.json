@@ -1,0 +1,95 @@
+{
+  "name": "Delegable Action",
+  "module": "Consilium Core",
+  "description": "The actions an authority delegation may transfer \u2014 approve, review, attest, submit, edit, acknowledge (\u00a74.3). [Inferred \u2014 02-data-model.md \u00a711 I-3. Without it delegation is all-or-nothing, which conflicts with the segregation-of-duties requirement.]",
+  "autoname": "field:delegable_action_code",
+  "allow_rename": 1,
+  "allow_import": 1,
+  "title_field": "delegable_action_name",
+  "search_fields": "delegable_action_name,delegable_action_code",
+  "sort_field": "delegable_action_name",
+  "sort_order": "ASC",
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "delegable_action_code",
+      "fieldtype": "Data",
+      "label": "Code",
+      "reqd": 1,
+      "unique": 1,
+      "description": "Stable identifier. Used by integrations and imports; do not reuse a retired code."
+    },
+    {
+      "fieldname": "delegable_action_name",
+      "fieldtype": "Data",
+      "label": "Name",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Inactive values stay on historical records but are not offered for new ones."
+    },
+    {
+      "fieldname": "sort_order",
+      "fieldtype": "Int",
+      "label": "Sort Order",
+      "description": "Presentation order where alphabetical is wrong."
+    },
+    {
+      "fieldname": "external_code",
+      "fieldtype": "Data",
+      "label": "External Code",
+      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]"
+    },
+    {
+      "fieldname": "is_administrative",
+      "fieldtype": "Check",
+      "label": "Administrative Task",
+      "default": "1",
+      "description": "Delegation is restricted to administrative tasks by default; a non-administrative action must be enabled deliberately."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Taxonomy Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "All",
+      "read": 1
+    }
+  ]
+}

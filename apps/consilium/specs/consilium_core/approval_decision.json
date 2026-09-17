@@ -1,0 +1,155 @@
+{
+  "name": "Approval Decision",
+  "module": "Consilium Core",
+  "description": "An approval's basis, not merely the fact of it: which step, which role, whether a delegate acted, which document version it was given against, and whether an exception authorised a bypass (02-data-model.md \u00a75.9).",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Approved Record DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Approved Record",
+      "options": "subject_doctype",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "approval_step",
+      "fieldtype": "Data",
+      "label": "Approval Step",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "step_sequence",
+      "fieldtype": "Int",
+      "label": "Step Sequence",
+      "reqd": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "mode",
+      "fieldtype": "Select",
+      "label": "Mode",
+      "reqd": 1,
+      "default": "Sequential",
+      "options": "Sequential\nParallel"
+    },
+    {
+      "fieldname": "required_role",
+      "fieldtype": "Link",
+      "label": "Required Role",
+      "options": "Role"
+    },
+    {
+      "fieldname": "assigned_to",
+      "fieldtype": "Link",
+      "label": "Assigned To",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "acting_delegation",
+      "fieldtype": "Link",
+      "label": "Acting Delegation",
+      "options": "Authority Delegation",
+      "description": "Set when a delegate decided. The delegator remains the accountable party."
+    },
+    {
+      "fieldname": "acted_by",
+      "fieldtype": "Link",
+      "label": "Acted By",
+      "options": "User",
+      "read_only": 1,
+      "description": "Who actually recorded the decision, which is the delegate where one acted."
+    },
+    {
+      "fieldname": "decision",
+      "fieldtype": "Select",
+      "label": "Decision",
+      "reqd": 1,
+      "default": "Pending",
+      "in_list_view": 1,
+      "options": "Pending\nApproved\nRejected\nChanges Requested\nAbstained\nBypassed"
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag derived from Workflow State Flag."
+    },
+    {
+      "fieldname": "decided_on",
+      "fieldtype": "Datetime",
+      "label": "Decided On"
+    },
+    {
+      "fieldname": "comments",
+      "fieldtype": "Text",
+      "label": "Comments"
+    },
+    {
+      "fieldname": "classification_at_decision",
+      "fieldtype": "Data",
+      "label": "Classification At Decision",
+      "description": "The classification the approval set was derived from, copied."
+    },
+    {
+      "fieldname": "based_on_version",
+      "fieldtype": "Link",
+      "label": "Based On Version",
+      "options": "Document Version"
+    },
+    {
+      "fieldname": "exception_authorisation",
+      "fieldtype": "Link",
+      "label": "Exception Authorisation",
+      "options": "Exception Authorisation",
+      "description": "Required for a bypassed decision."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "APRD-.#####",
+  "naming_rule": "Expression (old style)"
+}

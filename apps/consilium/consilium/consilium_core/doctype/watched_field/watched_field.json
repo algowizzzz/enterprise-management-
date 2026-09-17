@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-17 22:10:23.325626",
+ "description": "One watched field and the change that counts as a trigger.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "fieldname",
+  "label",
+  "compare_mode",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "fieldname",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Fieldname",
+   "reqd": 1
+  },
+  {
+   "description": "Cached for display.",
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  },
+  {
+   "default": "Any Change",
+   "fieldname": "compare_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Compare Mode",
+   "options": "Any Change\nValue Increase\nSet To Empty\nSet From Empty",
+   "reqd": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.325636",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Watched Field",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

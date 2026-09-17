@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Check that an installation is actually working.
 
+platform-rules: exempt — this file names CDN hosts in order to detect them.
+
 Installing without error is not the same as working. The most expensive failure
 mode this project has already hit was a site that answered every request with
 HTTP 200 while serving a blank page, because the asset bundle had been copied in

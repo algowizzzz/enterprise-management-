@@ -55,7 +55,6 @@ if (-not $SkipPrereqs) {
     $packages = @(
         @{ Id = "Python.Python.3.11";        Check = "python"   },
         @{ Id = "Git.Git";                   Check = "git"      },
-        @{ Id = "OpenJS.NodeJS.LTS";         Check = "node"     },
         @{ Id = "PostgreSQL.PostgreSQL.16";  Check = "psql"     },
         @{ Id = "Memurai.MemuraiDeveloper";  Check = "memurai"  }
     )
@@ -73,8 +72,10 @@ if (-not $SkipPrereqs) {
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
                 [System.Environment]::GetEnvironmentVariable("Path", "User")
 
-    Write-Step "Installing yarn"
-    if (-not (Test-Command yarn)) { npm install -g yarn }
+    # Node and yarn are deliberately absent. Compiling front-end assets is the
+    # only step that would need them, and the built output ships in the
+    # repository instead (see assets/). The runtime never needs node, and on a
+    # locked-down network the npm registry is usually the first thing blocked.
 }
 
 # ---------------------------------------------------------------------------

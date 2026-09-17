@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:slug",
+ "creation": "2026-09-17 22:10:23.318277",
+ "description": "The home-page user guide, editable without a deployment (02-data-model.md \u00a75.11). Files are attached through the framework's own attachment mechanism rather than a field.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "slug",
+  "title",
+  "category",
+  "applies_to_module",
+  "body",
+  "display_order",
+  "is_published"
+ ],
+ "fields": [
+  {
+   "fieldname": "slug",
+   "fieldtype": "Data",
+   "label": "Slug",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "default": "Getting Started",
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "Getting Started\nForum Types\nTemplates\nDecision Authority\nEscalation Protocol\nPolicy Lifecycle",
+   "reqd": 1
+  },
+  {
+   "default": "All",
+   "fieldname": "applies_to_module",
+   "fieldtype": "Select",
+   "label": "Applies To Module",
+   "options": "All\nCore\nGovernance\nPolicy\nEscalation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "body",
+   "fieldtype": "Text Editor",
+   "label": "Body"
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_published",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Published"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.318312",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Guide Article",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "search_fields": "title,slug",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}

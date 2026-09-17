@@ -1,0 +1,124 @@
+{
+  "name": "Classification Rule Set",
+  "module": "Consilium Core",
+  "description": "The versioned, admin-defined questions, answer options and rules that produce a classification outcome (02-data-model.md \u00a75.2). Data, not code. A rule set that has classified anything is locked; a change is a new version.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "rule_set_title",
+      "fieldtype": "Data",
+      "label": "Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "applies_to_doctype",
+      "fieldtype": "Link",
+      "label": "Applies To DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "applies_when",
+      "fieldtype": "JSON",
+      "label": "Applies When",
+      "description": "Optional pre-filter over the subject record."
+    },
+    {
+      "fieldname": "version_label",
+      "fieldtype": "Data",
+      "label": "Version Label",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Rule sets are versioned and never edited in place once used."
+    },
+    {
+      "fieldname": "effective_from",
+      "fieldtype": "Date",
+      "label": "Effective From",
+      "reqd": 1
+    },
+    {
+      "fieldname": "effective_to",
+      "fieldtype": "Date",
+      "label": "Effective To"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_locked",
+      "fieldtype": "Check",
+      "label": "Locked",
+      "read_only": 1,
+      "description": "Set the first time this rule set classifies a record. A locked rule set cannot be edited."
+    },
+    {
+      "fieldname": "default_outcome",
+      "fieldtype": "Data",
+      "label": "Default Outcome",
+      "reqd": 1,
+      "description": "Returned when no rule matches. Must be the conservative outcome."
+    },
+    {
+      "fieldname": "questions",
+      "fieldtype": "Table",
+      "label": "Questions",
+      "options": "Classification Question"
+    },
+    {
+      "fieldname": "answer_options",
+      "fieldtype": "Table",
+      "label": "Answer Options",
+      "options": "Classification Answer Option",
+      "description": "Flattened onto the rule set and keyed by question_code: the framework does not support a table inside a table. See the note in the module README."
+    },
+    {
+      "fieldname": "rules",
+      "fieldtype": "Table",
+      "label": "Rules",
+      "options": "Classification Rule"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "CRS-.#####",
+  "naming_rule": "Expression (old style)",
+  "title_field": "rule_set_title",
+  "search_fields": "rule_set_title,version_label"
+}

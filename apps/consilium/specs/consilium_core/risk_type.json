@@ -1,0 +1,137 @@
+{
+  "name": "Risk Type",
+  "module": "Consilium Core",
+  "description": "The tiered risk taxonomy (02-data-model.md T-7). Tier is carried as a number on a tree so that the two tiers the sources name need only one table.",
+  "autoname": "field:risk_type_code",
+  "allow_rename": 1,
+  "allow_import": 1,
+  "title_field": "risk_type_name",
+  "search_fields": "risk_type_name,risk_type_code",
+  "sort_field": "risk_type_name",
+  "sort_order": "ASC",
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "risk_type_code",
+      "fieldtype": "Data",
+      "label": "Code",
+      "reqd": 1,
+      "unique": 1,
+      "description": "Stable identifier. Used by integrations and imports; do not reuse a retired code."
+    },
+    {
+      "fieldname": "risk_type_name",
+      "fieldtype": "Data",
+      "label": "Name",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Inactive values stay on historical records but are not offered for new ones."
+    },
+    {
+      "fieldname": "sort_order",
+      "fieldtype": "Int",
+      "label": "Sort Order",
+      "description": "Presentation order where alphabetical is wrong."
+    },
+    {
+      "fieldname": "external_code",
+      "fieldtype": "Data",
+      "label": "External Code",
+      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]"
+    },
+    {
+      "fieldname": "parent_risk_type",
+      "fieldtype": "Link",
+      "label": "Parent",
+      "options": "Risk Type",
+      "ignore_user_permissions": 1
+    },
+    {
+      "fieldname": "is_group",
+      "fieldtype": "Check",
+      "label": "Is Group",
+      "default": "0"
+    },
+    {
+      "fieldname": "lft",
+      "fieldtype": "Int",
+      "label": "lft",
+      "hidden": 1,
+      "no_copy": 1,
+      "print_hide": 1
+    },
+    {
+      "fieldname": "rgt",
+      "fieldtype": "Int",
+      "label": "rgt",
+      "hidden": 1,
+      "no_copy": 1,
+      "print_hide": 1
+    },
+    {
+      "fieldname": "old_parent",
+      "fieldtype": "Link",
+      "label": "Old Parent",
+      "options": "Risk Type",
+      "hidden": 1,
+      "no_copy": 1,
+      "print_hide": 1
+    },
+    {
+      "fieldname": "tier",
+      "fieldtype": "Int",
+      "label": "Tier",
+      "reqd": 1,
+      "default": "1",
+      "in_list_view": 1,
+      "description": "1 or 2. Tier 2 values sit under a tier 1 parent."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Taxonomy Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "All",
+      "read": 1
+    }
+  ],
+  "is_tree": 1,
+  "nsm_parent_field": "parent_risk_type"
+}

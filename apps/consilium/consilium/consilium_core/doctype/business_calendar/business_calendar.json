@@ -1,0 +1,151 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:calendar_code",
+ "creation": "2026-09-17 22:10:23.311046",
+ "description": "Working days and hours for business-hours service levels. [Inferred \u2014 \u00a711 I-15. Without it every service level is 24x7 and will misreport.]",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "calendar_code",
+  "title",
+  "day_start",
+  "day_end",
+  "works_monday",
+  "works_tuesday",
+  "works_wednesday",
+  "works_thursday",
+  "works_friday",
+  "works_saturday",
+  "works_sunday",
+  "holidays",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "calendar_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "default": "09:00:00",
+   "fieldname": "day_start",
+   "fieldtype": "Time",
+   "label": "Day Start",
+   "reqd": 1
+  },
+  {
+   "default": "17:00:00",
+   "fieldname": "day_end",
+   "fieldtype": "Time",
+   "label": "Day End",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "works_monday",
+   "fieldtype": "Check",
+   "label": "Monday"
+  },
+  {
+   "default": "1",
+   "fieldname": "works_tuesday",
+   "fieldtype": "Check",
+   "label": "Tuesday"
+  },
+  {
+   "default": "1",
+   "fieldname": "works_wednesday",
+   "fieldtype": "Check",
+   "label": "Wednesday"
+  },
+  {
+   "default": "1",
+   "fieldname": "works_thursday",
+   "fieldtype": "Check",
+   "label": "Thursday"
+  },
+  {
+   "default": "1",
+   "fieldname": "works_friday",
+   "fieldtype": "Check",
+   "label": "Friday"
+  },
+  {
+   "default": "0",
+   "fieldname": "works_saturday",
+   "fieldtype": "Check",
+   "label": "Saturday"
+  },
+  {
+   "default": "0",
+   "fieldname": "works_sunday",
+   "fieldtype": "Check",
+   "label": "Sunday"
+  },
+  {
+   "description": "A list of ISO dates that are not worked.",
+   "fieldname": "holidays",
+   "fieldtype": "JSON",
+   "label": "Holidays"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.311055",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Business Calendar",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}

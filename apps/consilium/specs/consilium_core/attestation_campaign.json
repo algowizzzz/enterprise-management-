@@ -1,0 +1,198 @@
+{
+  "name": "Attestation Campaign",
+  "module": "Consilium Core",
+  "description": "One attestation event. Three campaign types, one engine (02-data-model.md \u00a75.1). The population is derived from live data at generation time; the stored filter is what makes that derivation reproducible.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "campaign_title",
+      "fieldtype": "Data",
+      "label": "Campaign Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "campaign_type",
+      "fieldtype": "Select",
+      "label": "Campaign Type",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "options": "Forum Inventory\nGoverning Document\nForum Owner And Compliance"
+    },
+    {
+      "fieldname": "period_label",
+      "fieldtype": "Data",
+      "label": "Period Label",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Unique with campaign type. The attestation year, normally."
+    },
+    {
+      "fieldname": "target_doctype",
+      "fieldtype": "Link",
+      "label": "Target DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "description": "The record population being attested."
+    },
+    {
+      "fieldname": "population_filter",
+      "fieldtype": "JSON",
+      "label": "Population Filter",
+      "description": "Stored, not recomputed, so the population that was attested can be reproduced. [Inferred \u2014 \u00a711 I-4.]"
+    },
+    {
+      "fieldname": "participant_source",
+      "fieldtype": "Select",
+      "label": "Participant Source",
+      "reqd": 1,
+      "default": "Record Field",
+      "options": "Record Field\nSeat Role",
+      "description": "How the accountable person for each record in the population is resolved. Record Field reads a user field on the record; Seat Role reads a dated seat table. [Inferred \u2014 the model names the populations but not the resolution mechanism.]"
+    },
+    {
+      "fieldname": "participant_field",
+      "fieldtype": "Data",
+      "label": "Participant Field",
+      "depends_on": "eval:doc.participant_source=='Record Field'",
+      "description": "The fieldname on the target record holding the accountable user."
+    },
+    {
+      "fieldname": "second_signatory_field",
+      "fieldtype": "Data",
+      "label": "Second Signatory Field",
+      "description": "The fieldname on the target record holding the second signatory, where dual signature is required."
+    },
+    {
+      "fieldname": "seat_doctype",
+      "fieldtype": "Link",
+      "label": "Seat DocType",
+      "options": "DocType",
+      "depends_on": "eval:doc.participant_source=='Seat Role'",
+      "description": "The dated seat table, e.g. the forum membership record."
+    },
+    {
+      "fieldname": "seat_subject_field",
+      "fieldtype": "Data",
+      "label": "Seat Subject Field",
+      "depends_on": "eval:doc.participant_source=='Seat Role'"
+    },
+    {
+      "fieldname": "seat_user_field",
+      "fieldtype": "Data",
+      "label": "Seat User Field",
+      "depends_on": "eval:doc.participant_source=='Seat Role'"
+    },
+    {
+      "fieldname": "seat_role_field",
+      "fieldtype": "Data",
+      "label": "Seat Role Field",
+      "depends_on": "eval:doc.participant_source=='Seat Role'",
+      "description": "The seat's link to Governance Forum Role. Only roles flagged can_attest are drawn."
+    },
+    {
+      "fieldname": "seat_end_date_field",
+      "fieldtype": "Data",
+      "label": "Seat End Date Field",
+      "depends_on": "eval:doc.participant_source=='Seat Role'",
+      "description": "Seats with an end date on or before the generation date are not drawn."
+    },
+    {
+      "fieldname": "opens_on",
+      "fieldtype": "Date",
+      "label": "Opens On",
+      "reqd": 1
+    },
+    {
+      "fieldname": "due_on",
+      "fieldtype": "Date",
+      "label": "Due On",
+      "reqd": 1
+    },
+    {
+      "fieldname": "requires_dual_signature",
+      "fieldtype": "Check",
+      "label": "Requires Dual Signature",
+      "default": "0"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Draft",
+      "in_list_view": 1,
+      "options": "Draft\nOpen\nClosed\nCancelled",
+      "description": "A label. Business logic reads the semantic flags below, never this string."
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "description": "Semantic flag derived from Workflow State Flag. Tasks are generated only while open."
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1
+    },
+    {
+      "fieldname": "generated_on",
+      "fieldtype": "Datetime",
+      "label": "Tasks Generated On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "reminder_schedule",
+      "fieldtype": "Table",
+      "label": "Reminder Schedule",
+      "options": "Attestation Reminder"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "ACAM-.#####",
+  "naming_rule": "Expression (old style)",
+  "title_field": "campaign_title",
+  "search_fields": "campaign_title,period_label"
+}

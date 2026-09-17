@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "VREV-.#####",
+ "creation": "2026-09-17 22:10:23.325227",
+ "description": "The audited act of reverting (02-data-model.md \u00a75.4). Records who reverted, when, from and to which version, and \u2014 always \u2014 the new version the revert produced.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "from_version",
+  "target_version",
+  "resulting_version",
+  "reverted_by",
+  "reverted_on",
+  "justification",
+  "approved_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Reverted Record DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Reverted Record",
+   "options": "subject_doctype",
+   "reqd": 1
+  },
+  {
+   "description": "The version that was current.",
+   "fieldname": "from_version",
+   "fieldtype": "Link",
+   "label": "From Version",
+   "options": "Document Version",
+   "reqd": 1
+  },
+  {
+   "description": "The version whose content was restored.",
+   "fieldname": "target_version",
+   "fieldtype": "Link",
+   "label": "Target Version",
+   "options": "Document Version",
+   "reqd": 1
+  },
+  {
+   "description": "The new version written. Never the target.",
+   "fieldname": "resulting_version",
+   "fieldtype": "Link",
+   "label": "Resulting Version",
+   "options": "Document Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reverted_by",
+   "fieldtype": "Link",
+   "label": "Reverted By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reverted_on",
+   "fieldtype": "Datetime",
+   "label": "Reverted On",
+   "reqd": 1
+  },
+  {
+   "description": "Mandatory.",
+   "fieldname": "justification",
+   "fieldtype": "Text",
+   "label": "Justification",
+   "reqd": 1
+  },
+  {
+   "description": "Where the record's workflow requires approval to revert.",
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.325236",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Version Revert Log",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

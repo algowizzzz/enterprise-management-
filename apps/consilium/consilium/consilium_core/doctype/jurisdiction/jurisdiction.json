@@ -1,8 +1,9 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:jurisdiction_code",
- "creation": "2026-09-17 21:54:49.356629",
+ "creation": "2026-09-17 22:10:23.320111",
  "description": "Regulatory jurisdictions used for applicability and for tagging.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -12,6 +13,8 @@
   "jurisdiction_name",
   "description",
   "is_active",
+  "sort_order",
+  "external_code",
   "parent_jurisdiction",
   "is_group",
   "lft",
@@ -47,6 +50,18 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Active"
+  },
+  {
+   "description": "Presentation order where alphabetical is wrong.",
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
+  },
+  {
+   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]",
+   "fieldname": "external_code",
+   "fieldtype": "Data",
+   "label": "External Code"
   },
   {
    "fieldname": "parent_jurisdiction",
@@ -97,7 +112,7 @@
  "index_web_pages_for_search": 0,
  "is_tree": 1,
  "links": [],
- "modified": "2026-09-17 21:54:49.356637",
+ "modified": "2026-09-17 22:10:23.320119",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Jurisdiction",
@@ -123,6 +138,12 @@
    "report": 1,
    "role": "Taxonomy Administrator",
    "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
   },
   {
    "read": 1,

@@ -1,0 +1,128 @@
+{
+  "name": "AI Service Request",
+  "module": "Consilium Core",
+  "description": "What data left the platform, to which capability, and what came back (02-data-model.md \u00a75.10). A data-boundary control. Append-only. Write access exists only so the response can be recorded once; the controller freezes every request field and refuses a second response.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Subject Record DocType",
+      "options": "DocType",
+      "reqd": 0,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Subject Record",
+      "options": "subject_doctype",
+      "reqd": 0,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "request_reference",
+      "fieldtype": "Data",
+      "label": "Request Reference",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "capability",
+      "fieldtype": "Data",
+      "label": "Capability",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "The external tool invoked."
+    },
+    {
+      "fieldname": "requested_by",
+      "fieldtype": "Link",
+      "label": "Requested By",
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "requested_on",
+      "fieldtype": "Datetime",
+      "label": "Requested On",
+      "reqd": 1
+    },
+    {
+      "fieldname": "context_sent",
+      "fieldtype": "Long Text",
+      "label": "Context Sent",
+      "description": "Exactly what left the platform."
+    },
+    {
+      "fieldname": "context_classification",
+      "fieldtype": "Select",
+      "label": "Context Classification",
+      "reqd": 1,
+      "default": "Internal",
+      "options": "Public\nInternal\nConfidential\nRestricted",
+      "description": "The highest classification present in the payload."
+    },
+    {
+      "fieldname": "response_received_on",
+      "fieldtype": "Datetime",
+      "label": "Response Received On"
+    },
+    {
+      "fieldname": "response_payload",
+      "fieldtype": "Long Text",
+      "label": "Response Payload"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Sent",
+      "in_list_view": 1,
+      "options": "Sent\nSucceeded\nFailed\nRefused\nTimed Out"
+    },
+    {
+      "fieldname": "error_detail",
+      "fieldtype": "Text",
+      "label": "Error Detail"
+    },
+    {
+      "fieldname": "duration_ms",
+      "fieldtype": "Int",
+      "label": "Duration (ms)"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "AIRQ-.#####",
+  "naming_rule": "Expression (old style)"
+}

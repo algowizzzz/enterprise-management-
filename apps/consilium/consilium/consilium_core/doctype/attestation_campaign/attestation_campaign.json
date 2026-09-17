@@ -1,0 +1,233 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "ACAM-.#####",
+ "creation": "2026-09-17 22:10:23.309356",
+ "description": "One attestation event. Three campaign types, one engine (02-data-model.md \u00a75.1). The population is derived from live data at generation time; the stored filter is what makes that derivation reproducible.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "campaign_title",
+  "campaign_type",
+  "period_label",
+  "target_doctype",
+  "population_filter",
+  "participant_source",
+  "participant_field",
+  "second_signatory_field",
+  "seat_doctype",
+  "seat_subject_field",
+  "seat_user_field",
+  "seat_role_field",
+  "seat_end_date_field",
+  "opens_on",
+  "due_on",
+  "requires_dual_signature",
+  "status",
+  "is_open",
+  "is_editable",
+  "requires_review",
+  "generated_on",
+  "reminder_schedule"
+ ],
+ "fields": [
+  {
+   "fieldname": "campaign_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Campaign Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "campaign_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Campaign Type",
+   "options": "Forum Inventory\nGoverning Document\nForum Owner And Compliance",
+   "reqd": 1
+  },
+  {
+   "description": "Unique with campaign type. The attestation year, normally.",
+   "fieldname": "period_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Period Label",
+   "reqd": 1
+  },
+  {
+   "description": "The record population being attested.",
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "label": "Target DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "description": "Stored, not recomputed, so the population that was attested can be reproduced. [Inferred \u2014 \u00a711 I-4.]",
+   "fieldname": "population_filter",
+   "fieldtype": "JSON",
+   "label": "Population Filter"
+  },
+  {
+   "default": "Record Field",
+   "description": "How the accountable person for each record in the population is resolved. Record Field reads a user field on the record; Seat Role reads a dated seat table. [Inferred \u2014 the model names the populations but not the resolution mechanism.]",
+   "fieldname": "participant_source",
+   "fieldtype": "Select",
+   "label": "Participant Source",
+   "options": "Record Field\nSeat Role",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.participant_source=='Record Field'",
+   "description": "The fieldname on the target record holding the accountable user.",
+   "fieldname": "participant_field",
+   "fieldtype": "Data",
+   "label": "Participant Field"
+  },
+  {
+   "description": "The fieldname on the target record holding the second signatory, where dual signature is required.",
+   "fieldname": "second_signatory_field",
+   "fieldtype": "Data",
+   "label": "Second Signatory Field"
+  },
+  {
+   "depends_on": "eval:doc.participant_source=='Seat Role'",
+   "description": "The dated seat table, e.g. the forum membership record.",
+   "fieldname": "seat_doctype",
+   "fieldtype": "Link",
+   "label": "Seat DocType",
+   "options": "DocType"
+  },
+  {
+   "depends_on": "eval:doc.participant_source=='Seat Role'",
+   "fieldname": "seat_subject_field",
+   "fieldtype": "Data",
+   "label": "Seat Subject Field"
+  },
+  {
+   "depends_on": "eval:doc.participant_source=='Seat Role'",
+   "fieldname": "seat_user_field",
+   "fieldtype": "Data",
+   "label": "Seat User Field"
+  },
+  {
+   "depends_on": "eval:doc.participant_source=='Seat Role'",
+   "description": "The seat's link to Governance Forum Role. Only roles flagged can_attest are drawn.",
+   "fieldname": "seat_role_field",
+   "fieldtype": "Data",
+   "label": "Seat Role Field"
+  },
+  {
+   "depends_on": "eval:doc.participant_source=='Seat Role'",
+   "description": "Seats with an end date on or before the generation date are not drawn.",
+   "fieldname": "seat_end_date_field",
+   "fieldtype": "Data",
+   "label": "Seat End Date Field"
+  },
+  {
+   "fieldname": "opens_on",
+   "fieldtype": "Date",
+   "label": "Opens On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "due_on",
+   "fieldtype": "Date",
+   "label": "Due On",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_dual_signature",
+   "fieldtype": "Check",
+   "label": "Requires Dual Signature"
+  },
+  {
+   "default": "Draft",
+   "description": "A label. Business logic reads the semantic flags below, never this string.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nOpen\nClosed\nCancelled",
+   "reqd": 1
+  },
+  {
+   "description": "Semantic flag derived from Workflow State Flag. Tasks are generated only while open.",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_editable",
+   "fieldtype": "Check",
+   "label": "Is Editable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requires_review",
+   "fieldtype": "Check",
+   "label": "Requires Review",
+   "read_only": 1
+  },
+  {
+   "fieldname": "generated_on",
+   "fieldtype": "Datetime",
+   "label": "Tasks Generated On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reminder_schedule",
+   "fieldtype": "Table",
+   "label": "Reminder Schedule",
+   "options": "Attestation Reminder"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.309366",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Attestation Campaign",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "campaign_title,period_label",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "campaign_title",
+ "track_changes": 1
+}

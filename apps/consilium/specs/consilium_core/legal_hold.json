@@ -1,0 +1,99 @@
+{
+  "name": "Legal Hold",
+  "module": "Consilium Core",
+  "description": "A suspension of disposition, placed for litigation, investigation or regulatory reasons. Overrides retention unconditionally; does not suspend retention accrual and does not change the retention class.",
+  "allow_rename": 1,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "hold_reference",
+      "fieldtype": "Data",
+      "label": "Hold Reference",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "requested_by",
+      "fieldtype": "Link",
+      "label": "Requested By",
+      "options": "User"
+    },
+    {
+      "fieldname": "approved_by",
+      "fieldtype": "Link",
+      "label": "Approved By",
+      "options": "User"
+    },
+    {
+      "fieldname": "placed_on",
+      "fieldtype": "Date",
+      "label": "Placed On",
+      "reqd": 1
+    },
+    {
+      "fieldname": "released_on",
+      "fieldtype": "Date",
+      "label": "Released On"
+    },
+    {
+      "fieldname": "scope_doctype",
+      "fieldtype": "Link",
+      "label": "Scope DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "scope_filter",
+      "fieldtype": "JSON",
+      "label": "Scope Filter"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1,
+      "description": "Derived from placed_on and released_on on save."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Records Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "field:hold_reference",
+  "naming_rule": "By fieldname"
+}

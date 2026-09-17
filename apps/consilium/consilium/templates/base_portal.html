@@ -1,0 +1,209 @@
+{#-
+  Base portal layout
+  ---------------------------------------------------------------------------
+  Every custom portal page extends this template:
+
+      {% extends "consilium/templates/base_portal.html" %}
+      {% set active_nav = "policies" %}
+      {% block page_content %} ... {% endblock %}
+
+  Context variables this template understands (all optional):
+      page_title        <h1> and document title
+      page_description  short line under the title
+      active_nav        id of the active top-level tab
+      breadcrumbs       list of {"label": ..., "url": ...}; the last entry is
+                        rendered as the current page
+      nav_items         override the default tab list
+      user_display      name shown in the user menu
+
+  Assets: only files vendored under /assets/consilium/vendor are referenced.
+  Nothing is fetched from a CDN at build or run time.
+-#}
+{%- set _nav_items = nav_items or [
+  {"id": "home",        "label": "Home",        "url": "/",            "icon": "bi-house"},
+  {"id": "forums",      "label": "Forums",      "url": "/forums",      "icon": "bi-chat-square-text"},
+  {"id": "policies",    "label": "Policies",    "url": "/policies",    "icon": "bi-file-earmark-text"},
+  {"id": "escalations", "label": "Escalations", "url": "/escalations", "icon": "bi-exclamation-diamond"},
+  {"id": "reports",     "label": "Reports",     "url": "/reports",     "icon": "bi-bar-chart"},
+  {"id": "admin",       "label": "Admin",       "url": "/admin",       "icon": "bi-sliders"}
+] -%}
+<!DOCTYPE html>
+<html lang="{{ frappe.local.lang or 'en' }}" class="cns-root" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="same-origin">
+<title>{% block title %}{{ page_title or title or "Portal" }}{% endblock %}</title>
+
+<script>
+/* Pre-paint bootstrap.
+   Applies the stored theme and font size to <html> before any content is
+   painted, so a returning user never sees a flash of the wrong theme.
+   Deliberately duplicated (and tiny) because it must run before the main
+   script file is fetched. The full controllers live in consilium.js. */
+(function () {
+  try {
+    var read = function (key, fallback) {
+      try { var v = localStorage.getItem("cns:" + key); return v === null ? fallback : v; }
+      catch (e) { return fallback; }
+    };
+    var theme = read("theme", null);
+    if (theme !== "light" && theme !== "dark") {
+      theme = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)
+        ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", theme);
+
+    var sizes = { xs: 13, sm: 15, md: 16, lg: 18, xl: 20, xxl: 22 };
+    var size = read("fontsize", "md");
+    if (!sizes[size]) size = "md";
+    document.documentElement.setAttribute("data-font-size", size);
+    document.documentElement.style.setProperty("--cns-font-root", sizes[size] + "px");
+  } catch (e) { /* defaults in tokens.css already apply */ }
+})();
+window.frappe = window.frappe || {};
+</script>
+<!-- csrf_token -->
+
+<link rel="stylesheet" href="/assets/consilium/vendor/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="/assets/consilium/vendor/bootstrap-icons/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="/assets/consilium/css/tokens.css">
+<link rel="stylesheet" href="/assets/consilium/css/consilium.css">
+{% block head_extra %}{% endblock %}
+</head>
+
+<body class="cns-portal">
+<a class="cns-skip-link" href="#cns-main">Skip to main content</a>
+
+{% block header %}
+<header class="cns-header">
+  <div class="cns-container cns-header-inner">
+    <a class="cns-brand" href="/">
+      <span class="cns-brand-mark" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
+      <span>{{ portal_name or "Governance Portal" }}</span>
+    </a>
+
+    <nav class="cns-header-nav" aria-label="Primary">
+      <ul class="cns-nav">
+        {%- for item in _nav_items %}
+        <li>
+          <a class="cns-nav-link" href="{{ item.url }}"
+             {% if active_nav == item.id %}aria-current="page"{% endif %}>
+            <i class="bi {{ item.icon }}" aria-hidden="true"></i>
+            <span>{{ item.label }}</span>
+          </a>
+        </li>
+        {%- endfor %}
+      </ul>
+    </nav>
+
+    <div class="cns-controls">
+      {# --- Font size ------------------------------------------------- #}
+      <div class="cns-fontsize" role="group" aria-label="Text size">
+        <button type="button" data-cns-fontsize="decrease"
+                aria-label="Decrease text size" title="Decrease text size">
+          <span aria-hidden="true">A&minus;</span>
+        </button>
+        <span class="cns-fontsize-label" data-cns-fontsize-value role="status"
+              aria-live="polite">
+          <span data-cns-fontsize-label>Default</span>
+        </span>
+        <button type="button" data-cns-fontsize="increase"
+                aria-label="Increase text size" title="Increase text size">
+          <span aria-hidden="true">A+</span>
+        </button>
+        <button type="button" data-cns-fontsize="reset"
+                aria-label="Reset text size" title="Reset text size">
+          <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      {# --- Theme ------------------------------------------------------ #}
+      <button type="button" class="cns-control-btn" data-cns-theme-toggle
+              aria-pressed="false" aria-label="Switch to dark theme"
+              title="Switch to dark theme">
+        <i class="bi bi-moon-stars-fill" data-cns-theme-icon aria-hidden="true"></i>
+        <span class="cns-visually-hidden" data-cns-theme-label>Dark</span>
+      </button>
+
+      {# --- User menu -------------------------------------------------- #}
+      <div class="dropdown">
+        <button class="cns-control-btn" type="button" id="cns-user-menu"
+                data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-person-circle" aria-hidden="true"></i>
+          <span>{{ user_display or frappe.session.user or "Account" }}</span>
+          <i class="bi bi-chevron-down" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cns-user-menu">
+          {% block user_menu_items %}
+          <li><h6 class="dropdown-header">Signed in</h6></li>
+          <li><a class="dropdown-item" href="/me">Profile</a></li>
+          <li><a class="dropdown-item" href="/ui-kit">Interface reference</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="/?cmd=web_logout">Sign out</a></li>
+          {% endblock %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>
+{% endblock %}
+
+{% block breadcrumbs %}
+{%- if breadcrumbs %}
+<div class="cns-breadcrumb-bar">
+  <div class="cns-container">
+    <nav aria-label="Breadcrumb">
+      <ol class="cns-breadcrumb">
+        {%- for crumb in breadcrumbs %}
+        {%- if loop.last %}
+        <li><span aria-current="page">{{ crumb.label }}</span></li>
+        {%- else %}
+        <li><a href="{{ crumb.url or '#' }}">{{ crumb.label }}</a></li>
+        {%- endif %}
+        {%- endfor %}
+      </ol>
+    </nav>
+  </div>
+</div>
+{%- endif %}
+{% endblock %}
+
+<main id="cns-main" class="cns-main" tabindex="-1">
+  <div class="cns-container">
+    {% block page_header %}
+    {%- if page_title %}
+    <div class="cns-page-header">
+      <div>
+        <h1 class="cns-page-title">{{ page_title }}</h1>
+        {%- if page_description %}
+        <p class="cns-page-description">{{ page_description }}</p>
+        {%- endif %}
+      </div>
+      <div class="cns-page-actions">{% block page_actions %}{% endblock %}</div>
+    </div>
+    {%- endif %}
+    {% endblock %}
+
+    {% block page_content %}{% endblock %}
+  </div>
+</main>
+
+{% block footer %}
+<footer class="cns-footer">
+  <div class="cns-container cns-footer-inner">
+    <span>{% block footer_text %}Governance, risk and policy portal{% endblock %}</span>
+    <span>
+      <a href="/ui-kit">Interface reference</a>
+    </span>
+  </div>
+</footer>
+{% endblock %}
+
+<script src="/assets/consilium/vendor/jquery/jquery.min.js"></script>
+<script src="/assets/consilium/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/consilium/js/consilium.js"></script>
+<script src="/assets/consilium/js/consilium-table.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,187 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "DVER-.#####",
+ "creation": "2026-09-17 22:10:23.314657",
+ "description": "An immutable snapshot in a record's version chain: the body file, its hash and the full field state at that version (02-data-model.md \u00a75.4). Append-only. Revert writes a NEW row; it never mutates one.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "version_number",
+  "version_label",
+  "body_file",
+  "body_sha256",
+  "body_text",
+  "metadata_snapshot",
+  "change_summary",
+  "change_classification",
+  "classification_assessment",
+  "created_from_version",
+  "superseded_by",
+  "is_current",
+  "origin",
+  "published",
+  "retention_class"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Versioned Record DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Versioned Record",
+   "options": "subject_doctype",
+   "reqd": 1
+  },
+  {
+   "description": "Monotonic per subject. Gaps are not permitted.",
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Version Number",
+   "reqd": 1
+  },
+  {
+   "description": "The business-facing label. Distinct from version_number, which is a counter.",
+   "fieldname": "version_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Version Label"
+  },
+  {
+   "fieldname": "body_file",
+   "fieldtype": "Attach",
+   "label": "Body File"
+  },
+  {
+   "description": "Detects a silently swapped file.",
+   "fieldname": "body_sha256",
+   "fieldtype": "Data",
+   "label": "Body SHA-256"
+  },
+  {
+   "description": "Extracted plain text. Never authoritative.",
+   "fieldname": "body_text",
+   "fieldtype": "Long Text",
+   "label": "Body Text"
+  },
+  {
+   "description": "The full field state of the subject at this version. This is what revert restores.",
+   "fieldname": "metadata_snapshot",
+   "fieldtype": "JSON",
+   "label": "Metadata Snapshot",
+   "reqd": 1
+  },
+  {
+   "fieldname": "change_summary",
+   "fieldtype": "Text",
+   "label": "Change Summary",
+   "reqd": 1
+  },
+  {
+   "description": "Copied from the classification assessment that drove this version.",
+   "fieldname": "change_classification",
+   "fieldtype": "Data",
+   "label": "Change Classification"
+  },
+  {
+   "fieldname": "classification_assessment",
+   "fieldtype": "Link",
+   "label": "Classification Assessment",
+   "options": "Classification Assessment"
+  },
+  {
+   "description": "The parent in the chain.",
+   "fieldname": "created_from_version",
+   "fieldtype": "Link",
+   "label": "Created From Version",
+   "options": "Document Version"
+  },
+  {
+   "description": "Chain linkage, set when the next version is written. One of the two fields that may change after insert.",
+   "fieldname": "superseded_by",
+   "fieldtype": "Link",
+   "label": "Superseded By",
+   "options": "Document Version",
+   "read_only": 1
+  },
+  {
+   "description": "Exactly one true per subject. Chain linkage; the only other field that may change after insert.",
+   "fieldname": "is_current",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Current",
+   "read_only": 1
+  },
+  {
+   "default": "Authored",
+   "fieldname": "origin",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Origin",
+   "options": "Authored\nUploaded\nReverted\nImported\nMigrated",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "published",
+   "fieldtype": "Check",
+   "label": "Published"
+  },
+  {
+   "description": "Inherited from the subject at creation, then frozen.",
+   "fieldname": "retention_class",
+   "fieldtype": "Link",
+   "label": "Retention Class",
+   "options": "Retention Class"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.314666",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Document Version",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "subject_name,version_label",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

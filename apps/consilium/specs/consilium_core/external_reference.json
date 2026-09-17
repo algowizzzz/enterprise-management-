@@ -1,0 +1,102 @@
+{
+  "name": "External Reference",
+  "module": "Consilium Core",
+  "description": "A recorded, reportable foreign identifier with a known provenance batch, standing where a live connector would otherwise be (02-data-model.md \u00a75.6). When a connector is eventually built it populates these same rows.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Referencing Record DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Referencing Record",
+      "options": "subject_doctype",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "external_system",
+      "fieldtype": "Link",
+      "label": "External System",
+      "options": "External System",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "external_key",
+      "fieldtype": "Data",
+      "label": "External Key",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "external_type",
+      "fieldtype": "Data",
+      "label": "External Type",
+      "description": "What the key identifies in that system."
+    },
+    {
+      "fieldname": "label",
+      "fieldtype": "Data",
+      "label": "Label"
+    },
+    {
+      "fieldname": "last_seen_on",
+      "fieldtype": "Date",
+      "label": "Last Seen On"
+    },
+    {
+      "fieldname": "source_import_batch",
+      "fieldtype": "Link",
+      "label": "Source Import Batch",
+      "options": "Import Batch"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Text",
+      "label": "Notes"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "EXTR-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "external_key,label"
+}

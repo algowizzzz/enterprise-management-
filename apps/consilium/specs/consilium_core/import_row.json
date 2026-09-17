@@ -1,0 +1,100 @@
+{
+  "name": "Import Row",
+  "module": "Consilium Core",
+  "description": "One staged record: what arrived, what it mapped to, and what happened to it. High volume, so field-level change history is off \u2014 the row itself is the history.",
+  "allow_rename": 0,
+  "track_changes": 0,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "import_batch",
+      "fieldtype": "Link",
+      "label": "Import Batch",
+      "options": "Import Batch",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "row_number",
+      "fieldtype": "Int",
+      "label": "Row Number",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "raw_payload",
+      "fieldtype": "JSON",
+      "label": "Raw Payload"
+    },
+    {
+      "fieldname": "mapped_payload",
+      "fieldtype": "JSON",
+      "label": "Mapped Payload"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "reqd": 1,
+      "default": "Valid",
+      "in_list_view": 1,
+      "options": "Valid\nWarning\nError\nCommitted\nSkipped"
+    },
+    {
+      "fieldname": "is_committable",
+      "fieldtype": "Check",
+      "label": "Is Committable",
+      "read_only": 1,
+      "description": "Semantic flag derived from Workflow State Flag. Commit reads this, never the status string."
+    },
+    {
+      "fieldname": "messages",
+      "fieldtype": "JSON",
+      "label": "Messages"
+    },
+    {
+      "fieldname": "target_name",
+      "fieldtype": "Data",
+      "label": "Target Record",
+      "read_only": 1
+    },
+    {
+      "fieldname": "external_key",
+      "fieldtype": "Data",
+      "label": "External Key"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "IMPR-.#####",
+  "naming_rule": "Expression (old style)"
+}

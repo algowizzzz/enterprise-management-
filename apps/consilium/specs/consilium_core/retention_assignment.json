@@ -1,0 +1,86 @@
+{
+  "name": "Retention Assignment",
+  "module": "Consilium Core",
+  "description": "Binds a retention class to a record population, so that adding a class does not require editing every record. The most specific active assignment wins.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "assignment_title",
+      "fieldtype": "Data",
+      "label": "Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "target_doctype",
+      "fieldtype": "Link",
+      "label": "Target DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "record_filter",
+      "fieldtype": "JSON",
+      "label": "Record Filter",
+      "description": "Named record_filter rather than the model's `filter`: FILTER is a PostgreSQL keyword and a bare column of that name is a hazard in hand-written SQL."
+    },
+    {
+      "fieldname": "retention_class",
+      "fieldtype": "Link",
+      "label": "Retention Class",
+      "options": "Retention Class",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "priority",
+      "fieldtype": "Int",
+      "label": "Priority",
+      "default": "100",
+      "description": "Higher priority wins where two assignments match."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Records Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "RASG-.#####",
+  "naming_rule": "Expression (old style)",
+  "title_field": "assignment_title"
+}

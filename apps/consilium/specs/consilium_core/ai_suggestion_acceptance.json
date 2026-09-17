@@ -1,0 +1,104 @@
+{
+  "name": "AI Suggestion Acceptance",
+  "module": "Consilium Core",
+  "description": "Who took responsibility for machine-generated content, against which version (02-data-model.md \u00a75.10). An accountability control, not derivable from the request record. Append-only.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Subject Record DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Subject Record",
+      "options": "subject_doctype",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "ai_service_request",
+      "fieldtype": "Link",
+      "label": "AI Service Request",
+      "options": "AI Service Request",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "target_fieldname",
+      "fieldtype": "Data",
+      "label": "Target Fieldname",
+      "reqd": 1
+    },
+    {
+      "fieldname": "suggested_value",
+      "fieldtype": "Long Text",
+      "label": "Suggested Value"
+    },
+    {
+      "fieldname": "accepted_value",
+      "fieldtype": "Long Text",
+      "label": "Accepted Value"
+    },
+    {
+      "fieldname": "accepted_by",
+      "fieldtype": "Link",
+      "label": "Accepted By",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "accepted_on",
+      "fieldtype": "Datetime",
+      "label": "Accepted On",
+      "reqd": 1
+    },
+    {
+      "fieldname": "edited_before_accept",
+      "fieldtype": "Check",
+      "label": "Edited Before Accept",
+      "default": "0"
+    },
+    {
+      "fieldname": "applied_to_version",
+      "fieldtype": "Link",
+      "label": "Applied To Version",
+      "options": "Document Version"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "AISA-.#####",
+  "naming_rule": "Expression (old style)"
+}

@@ -88,6 +88,12 @@ def validate_spec(spec: dict, path: Path) -> list[str]:
             problems.append(f"{fieldname}: missing fieldtype")
         if field.get("fieldtype") in ("Link", "Table", "Table MultiSelect") and not field.get("options"):
             problems.append(f"{fieldname}: {field['fieldtype']} needs `options` naming the target DocType")
+        if spec.get("istable") and field.get("fieldtype") in ("Table", "Table MultiSelect"):
+            problems.append(
+                f"{fieldname}: a child DocType cannot hold a table field — "
+                "the framework does not support nested child tables. Flatten it "
+                "onto the parent and key the rows with a code column."
+            )
 
     autoname = spec.get("autoname", "")
     if autoname.startswith("field:"):
@@ -127,6 +133,11 @@ def build_doctype(spec: dict) -> dict:
         "autoname", "naming_rule", "title_field", "search_fields", "is_submittable",
         "istable", "is_tree", "quick_entry", "track_seen", "description",
         "default_sort_field", "show_title_field_in_link", "nsm_parent_field",
+        # Added for Core: taxonomies ship with CSV import enabled (02-data-model
+        # §3.1), append-only artefacts forbid copying, and several entities want
+        # an explicit document_type for reporting.
+        "allow_import", "allow_copy", "document_type", "max_attachments",
+        "allow_events_in_timeline", "read_only",
     ):
         if key in spec:
             doc[key] = spec[key]

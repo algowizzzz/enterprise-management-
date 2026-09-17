@@ -1,0 +1,137 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "GREF-.#####",
+ "creation": "2026-09-17 22:10:23.317200",
+ "description": "Every refusal a Core control issued: what was attempted, on which record, why it was refused, by whom and when. Written on an out-of-band connection so that the refusal survives the rollback of the operation it refused. Append-only. [Addition \u2014 the model requires refusals to be audited but names no artefact.]",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "attempted_action",
+  "control",
+  "refusal_reason",
+  "refused_on",
+  "refused_for",
+  "retention_class",
+  "legal_hold",
+  "context"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Refused Record DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Refused Record",
+   "options": "subject_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "attempted_action",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Attempted Action",
+   "options": "Modify\nDelete\nDispose\nRevert\nOther",
+   "reqd": 1
+  },
+  {
+   "description": "Which Core control refused: retention, legal hold, append-only, rule set lock.",
+   "fieldname": "control",
+   "fieldtype": "Data",
+   "label": "Control",
+   "reqd": 1
+  },
+  {
+   "fieldname": "refusal_reason",
+   "fieldtype": "Text",
+   "label": "Refusal Reason",
+   "reqd": 1
+  },
+  {
+   "fieldname": "refused_on",
+   "fieldtype": "Datetime",
+   "label": "Refused On",
+   "reqd": 1
+  },
+  {
+   "description": "The user whose action was refused.",
+   "fieldname": "refused_for",
+   "fieldtype": "Link",
+   "label": "Refused For",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "retention_class",
+   "fieldtype": "Link",
+   "label": "Retention Class",
+   "options": "Retention Class"
+  },
+  {
+   "fieldname": "legal_hold",
+   "fieldtype": "Link",
+   "label": "Legal Hold",
+   "options": "Legal Hold"
+  },
+  {
+   "fieldname": "context",
+   "fieldtype": "JSON",
+   "label": "Context"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.317209",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Governance Refusal Log",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Records Manager"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

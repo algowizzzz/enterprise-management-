@@ -1,0 +1,184 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "APRD-.#####",
+ "creation": "2026-09-17 22:10:23.308630",
+ "description": "An approval's basis, not merely the fact of it: which step, which role, whether a delegate acted, which document version it was given against, and whether an exception authorised a bypass (02-data-model.md \u00a75.9).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "approval_step",
+  "step_sequence",
+  "mode",
+  "required_role",
+  "assigned_to",
+  "acting_delegation",
+  "acted_by",
+  "decision",
+  "is_open",
+  "decided_on",
+  "comments",
+  "classification_at_decision",
+  "based_on_version",
+  "exception_authorisation"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Approved Record DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Approved Record",
+   "options": "subject_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approval_step",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Approval Step",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "step_sequence",
+   "fieldtype": "Int",
+   "label": "Step Sequence",
+   "reqd": 1
+  },
+  {
+   "default": "Sequential",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "Sequential\nParallel",
+   "reqd": 1
+  },
+  {
+   "fieldname": "required_role",
+   "fieldtype": "Link",
+   "label": "Required Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assigned To",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "description": "Set when a delegate decided. The delegator remains the accountable party.",
+   "fieldname": "acting_delegation",
+   "fieldtype": "Link",
+   "label": "Acting Delegation",
+   "options": "Authority Delegation"
+  },
+  {
+   "description": "Who actually recorded the decision, which is the delegate where one acted.",
+   "fieldname": "acted_by",
+   "fieldtype": "Link",
+   "label": "Acted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Decision",
+   "options": "Pending\nApproved\nRejected\nChanges Requested\nAbstained\nBypassed",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Semantic flag derived from Workflow State Flag.",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_on",
+   "fieldtype": "Datetime",
+   "label": "Decided On"
+  },
+  {
+   "fieldname": "comments",
+   "fieldtype": "Text",
+   "label": "Comments"
+  },
+  {
+   "description": "The classification the approval set was derived from, copied.",
+   "fieldname": "classification_at_decision",
+   "fieldtype": "Data",
+   "label": "Classification At Decision"
+  },
+  {
+   "fieldname": "based_on_version",
+   "fieldtype": "Link",
+   "label": "Based On Version",
+   "options": "Document Version"
+  },
+  {
+   "description": "Required for a bypassed decision.",
+   "fieldname": "exception_authorisation",
+   "fieldtype": "Link",
+   "label": "Exception Authorisation",
+   "options": "Exception Authorisation"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.308640",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Approval Decision",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

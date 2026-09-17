@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:sla_code",
+ "creation": "2026-09-17 22:10:23.324848",
+ "description": "An agreed time target for a workflow step, a status duration or total time open, with a warning threshold (02-data-model.md \u00a75.8). The framework supplies none of this.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sla_code",
+  "title",
+  "target_doctype",
+  "applies_when",
+  "measure",
+  "state_field",
+  "state_value",
+  "target_hours",
+  "warning_threshold_pct",
+  "calendar",
+  "business_calendar",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "sla_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Target DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "applies_when",
+   "fieldtype": "JSON",
+   "label": "Applies When"
+  },
+  {
+   "default": "Total Open Time",
+   "fieldname": "measure",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Measure",
+   "options": "Time In State\nTime To First Action\nTotal Open Time\nTime To Close",
+   "reqd": 1
+  },
+  {
+   "description": "Configuration for the Time In State measure. The value below is compared against this field's contents; neither is a literal in code.",
+   "fieldname": "state_field",
+   "fieldtype": "Data",
+   "label": "State Field"
+  },
+  {
+   "fieldname": "state_value",
+   "fieldtype": "Data",
+   "label": "State Value"
+  },
+  {
+   "fieldname": "target_hours",
+   "fieldtype": "Float",
+   "label": "Target Hours",
+   "reqd": 1
+  },
+  {
+   "default": "80",
+   "fieldname": "warning_threshold_pct",
+   "fieldtype": "Int",
+   "label": "Warning Threshold %"
+  },
+  {
+   "default": "24x7",
+   "fieldname": "calendar",
+   "fieldtype": "Select",
+   "label": "Calendar",
+   "options": "24x7\nBusiness Hours",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.calendar=='Business Hours'",
+   "fieldname": "business_calendar",
+   "fieldtype": "Link",
+   "label": "Business Calendar",
+   "options": "Business Calendar"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.324857",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "SLA Definition",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "title,sla_code",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}

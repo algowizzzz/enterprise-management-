@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "EXCA-.#####",
+ "creation": "2026-09-17 22:10:23.315339",
+ "description": "The documented authorisation without which an approval step may not be bypassed. [Inferred \u2014 \u00a711 I-6.]",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject_doctype",
+  "subject_name",
+  "exception_type",
+  "justification",
+  "requested_by",
+  "approved_by",
+  "approved_on",
+  "valid_to",
+  "conditions"
+ ],
+ "fields": [
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Subject Record DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Subject Record",
+   "options": "subject_doctype",
+   "reqd": 1
+  },
+  {
+   "default": "Approval Bypass",
+   "fieldname": "exception_type",
+   "fieldtype": "Select",
+   "label": "Exception Type",
+   "options": "Approval Bypass\nSequence Change\nThreshold Waiver\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "justification",
+   "fieldtype": "Text",
+   "label": "Justification",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On"
+  },
+  {
+   "fieldname": "valid_to",
+   "fieldtype": "Date",
+   "label": "Valid To"
+  },
+  {
+   "fieldname": "conditions",
+   "fieldtype": "Text",
+   "label": "Conditions"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.315348",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Exception Authorisation",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,141 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "ADEL-.#####",
+ "creation": "2026-09-17 22:10:23.310733",
+ "description": "A time-bounded transfer of specified actions from an accountable person to another, recorded so that 'who was acting for whom, when' is answerable (02-data-model.md \u00a74.3). It grants no framework permission: it is evaluated by application logic at the point of action and recorded on the resulting decision or task.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "delegator",
+  "delegate",
+  "scope_type",
+  "scope_doctype",
+  "scope_record",
+  "valid_from",
+  "valid_to",
+  "reason",
+  "is_active",
+  "delegated_actions"
+ ],
+ "fields": [
+  {
+   "fieldname": "delegator",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Delegator",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delegate",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Delegate",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "DocType",
+   "fieldname": "scope_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Scope Type",
+   "options": "All\nDocType\nRecord\nForum",
+   "reqd": 1
+  },
+  {
+   "description": "Required for the DocType, Record and Forum scopes. A Forum scope names the forum DocType here; the model's separate scope_forum column is not built, because Core cannot link to a module entity.",
+   "fieldname": "scope_doctype",
+   "fieldtype": "Link",
+   "label": "Scope DocType",
+   "options": "DocType"
+  },
+  {
+   "description": "Required for the Record and Forum scopes.",
+   "fieldname": "scope_record",
+   "fieldtype": "Dynamic Link",
+   "label": "Scope Record",
+   "options": "scope_doctype"
+  },
+  {
+   "fieldname": "valid_from",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Valid From",
+   "reqd": 1
+  },
+  {
+   "description": "An open-ended delegation is permitted; a closed one is preferred.",
+   "fieldname": "valid_to",
+   "fieldtype": "Date",
+   "label": "Valid To"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Text",
+   "label": "Reason"
+  },
+  {
+   "description": "Derived from the dates on save and by the daily sweep; stored so queries need not compute it.",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active",
+   "read_only": 1
+  },
+  {
+   "description": "Which actions transfer. Administrative actions only, unless a non-administrative action is deliberately enabled on the taxonomy row.",
+   "fieldname": "delegated_actions",
+   "fieldtype": "Table MultiSelect",
+   "label": "Delegated Actions",
+   "options": "Delegated Action Item",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-17 22:10:23.310741",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Authority Delegation",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "delegator,delegate",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

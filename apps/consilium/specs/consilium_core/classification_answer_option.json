@@ -1,0 +1,44 @@
+{
+  "name": "Classification Answer Option",
+  "module": "Consilium Core",
+  "description": "One answer option. Carries question_code because the framework has no nested child tables.",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "question_code",
+      "fieldtype": "Data",
+      "label": "Question Code",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "option_code",
+      "fieldtype": "Data",
+      "label": "Option Code",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "option_text",
+      "fieldtype": "Data",
+      "label": "Option Text",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "weight",
+      "fieldtype": "Float",
+      "label": "Weight",
+      "description": "For scored rule sets."
+    },
+    {
+      "fieldname": "display_order",
+      "fieldtype": "Int",
+      "label": "Display Order"
+    }
+  ],
+  "istable": 1,
+  "permissions": []
+}

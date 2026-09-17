@@ -1,0 +1,127 @@
+{
+  "name": "Archive Record",
+  "module": "Consilium Core",
+  "description": "The write-once retention artefact: record fields, body, attachments and audit trail, hashed and chained. Immutability here is three mechanisms \u2014 no application path that mutates, the hash chain, and immutable storage for the payload. The third is an infrastructure obligation (07-assumptions-and-gaps.md A-1).",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Archived Record DocType",
+      "options": "DocType",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Archived Record",
+      "options": "subject_doctype",
+      "reqd": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "document_version",
+      "fieldtype": "Link",
+      "label": "Document Version",
+      "options": "Document Version",
+      "description": "Empty where the subject has no body."
+    },
+    {
+      "fieldname": "archived_on",
+      "fieldtype": "Datetime",
+      "label": "Archived On",
+      "reqd": 1
+    },
+    {
+      "fieldname": "retention_class",
+      "fieldtype": "Link",
+      "label": "Retention Class",
+      "options": "Retention Class",
+      "reqd": 1,
+      "description": "Frozen at archive time."
+    },
+    {
+      "fieldname": "disposition_due_on",
+      "fieldtype": "Date",
+      "label": "Disposition Due On",
+      "reqd": 1,
+      "description": "Computed from the class and its trigger event."
+    },
+    {
+      "fieldname": "payload_file",
+      "fieldtype": "Attach",
+      "label": "Payload File"
+    },
+    {
+      "fieldname": "payload_sha256",
+      "fieldtype": "Data",
+      "label": "Payload SHA-256",
+      "reqd": 1
+    },
+    {
+      "fieldname": "manifest",
+      "fieldtype": "JSON",
+      "label": "Manifest",
+      "description": "Inventory of what the payload contains."
+    },
+    {
+      "fieldname": "previous_archive_hash",
+      "fieldtype": "Data",
+      "label": "Previous Archive Hash",
+      "read_only": 1
+    },
+    {
+      "fieldname": "chain_hash",
+      "fieldtype": "Data",
+      "label": "Chain Hash",
+      "read_only": 1,
+      "description": "Hash over this record plus previous_archive_hash."
+    },
+    {
+      "fieldname": "verified_on",
+      "fieldtype": "Datetime",
+      "label": "Verified On",
+      "read_only": 1,
+      "description": "Set by the integrity sweep. One of the two fields the sweep may write after insert."
+    },
+    {
+      "fieldname": "verification_result",
+      "fieldtype": "Select",
+      "label": "Verification Result",
+      "read_only": 1,
+      "default": "Not Verified",
+      "options": "Not Verified\nVerified\nFailed"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Records Manager",
+      "read": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "ARCH-.#####",
+  "naming_rule": "Expression (old style)"
+}
