@@ -1,7 +1,7 @@
 {
   "name": "Document Version",
   "module": "Consilium Core",
-  "description": "An immutable snapshot in a record's version chain: the body file, its hash and the full field state at that version (02-data-model.md \u00a75.4). Append-only. Revert writes a NEW row; it never mutates one.",
+  "description": "An immutable snapshot in a record's version chain: the body file, its hash and the full field state at that version. Append-only. Revert writes a NEW row; it never mutates one.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -153,5 +153,6 @@
   ],
   "autoname": "DVER-.#####",
   "naming_rule": "Expression (old style)",
-  "search_fields": "subject_name,version_label"
+  "search_fields": "subject_name,version_label",
+  "provenance": "02-data-model.md \u00a75.4"
 }

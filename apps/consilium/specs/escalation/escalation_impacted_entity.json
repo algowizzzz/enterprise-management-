@@ -1,7 +1,7 @@
 {
   "name": "Escalation Impacted Entity",
   "module": "Escalation",
-  "description": "One impacted entity of an escalation matter. Plural by decision D-4: the template appendix says entities.",
+  "description": "One impacted entity of an escalation matter. Plural by decision : the template appendix says entities.",
   "istable": 1,
   "permissions": [],
   "fields": [
@@ -34,5 +34,6 @@
       "fieldtype": "Text",
       "label": "Impact Note"
     }
-  ]
+  ],
+  "provenance": "D-4"
 }

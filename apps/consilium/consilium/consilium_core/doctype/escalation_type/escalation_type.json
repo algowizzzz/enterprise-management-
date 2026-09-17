@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:escalation_type_code",
- "creation": "2026-09-17 22:10:23.314987",
+ "creation": "2026-09-17 23:50:00.707808",
  "description": "The kinds of matter that can be escalated. Drives which template is used.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -52,7 +52,7 @@
    "label": "Sort Order"
   },
   {
-   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]",
+   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014",
    "fieldname": "external_code",
    "fieldtype": "Data",
    "label": "External Code"
@@ -60,7 +60,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 22:10:23.314996",
+ "modified": "2026-09-17 23:50:00.707817",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Escalation Type",

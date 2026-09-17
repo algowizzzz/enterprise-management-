@@ -1,7 +1,7 @@
 {
   "name": "Escalation Matter",
   "module": "Escalation",
-  "description": "A specific issue raised through the escalation process for decision at a defined authority level (02-data-model.md \u00a78.2). The field set is the source template appendix, verbatim and therefore authoritative.",
+  "description": "A specific issue raised through the escalation process for decision at a defined authority level. The field set is the source template appendix, verbatim and therefore authoritative.",
   "autoname": "ESC-.YYYY.-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "escalation_title",
@@ -179,7 +179,8 @@
       "options": "Matrix\nManual Override",
       "reqd": 1,
       "default": "Matrix",
-      "description": "[Inferred \u2014 \u00a711.] Manual Override keeps a person's severity; Matrix lets the matrix resolve it."
+      "description": "[Inferred \u2014 ] Manual Override keeps a person's severity; Matrix lets the matrix resolve it.",
+      "provenance": "\u00a711."
     },
     {
       "fieldname": "escalation_matrix",
@@ -262,7 +263,8 @@
       "label": "Is Editable",
       "read_only": 1,
       "default": "1",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "is_active",
@@ -270,7 +272,8 @@
       "label": "Is Active",
       "read_only": 1,
       "default": "1",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "is_open",
@@ -278,7 +281,8 @@
       "label": "Is Open",
       "read_only": 1,
       "default": "1",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "requires_review",
@@ -286,7 +290,8 @@
       "label": "Requires Review",
       "read_only": 1,
       "default": "0",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "is_committable",
@@ -294,7 +299,8 @@
       "label": "Is Committable",
       "read_only": 1,
       "default": "0",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "requires_statement",
@@ -302,7 +308,8 @@
       "label": "Requires Statement",
       "read_only": 1,
       "default": "0",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "external_reference",
@@ -386,5 +393,6 @@
       "label": "Reviews",
       "options": "Escalation Review"
     }
-  ]
+  ],
+  "provenance": "02-data-model.md \u00a78.2"
 }

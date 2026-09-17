@@ -1,7 +1,7 @@
 {
   "name": "Formation Approval Route",
   "module": "Governance",
-  "description": "The configurable multi-step approval a committee formation request follows (E7-S4). Not named in 02-data-model.md §6; added because the acceptance criterion requires the steps to be configuration rather than code. One active route per request type wins, most recently modified first.",
+  "description": "The configurable multi-step approval a committee formation request follows (E7-S4). Not named in",
   "autoname": "field:route_title",
   "allow_rename": 1,
   "track_changes": 1,
@@ -48,9 +48,39 @@
     }
   ],
   "permissions": [
-    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1, "email": 1},
-    {"role": "Consilium Administrator", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1, "print": 1},
-    {"role": "Risk Governance Office", "read": 1, "report": 1, "export": 1},
-    {"role": "Consilium Audit", "read": 1, "report": 1, "export": 1}
-  ]
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Risk Governance Office",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "provenance": "02-data-model.md \u00a76; added because the acceptance criterion requires the steps to be configuration rather than code. One active route per request type wins, most recently modified first."
 }

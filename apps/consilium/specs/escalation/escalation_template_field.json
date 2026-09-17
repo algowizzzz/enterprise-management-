@@ -1,7 +1,7 @@
 {
   "name": "Escalation Template Field",
   "module": "Escalation",
-  "description": "One standard field made required, or optional, by a template (02-data-model.md \u00a78.3, E-5).",
+  "description": "One standard field made required, or optional, by a template.",
   "istable": 1,
   "permissions": [],
   "fields": [
@@ -45,5 +45,6 @@
       "fieldtype": "Text",
       "label": "Guidance"
     }
-  ]
+  ],
+  "provenance": "02-data-model.md \u00a78.3, E-5"
 }

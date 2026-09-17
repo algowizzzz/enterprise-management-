@@ -1,7 +1,7 @@
 {
   "name": "Authority Delegation",
   "module": "Consilium Core",
-  "description": "A time-bounded transfer of specified actions from an accountable person to another, recorded so that 'who was acting for whom, when' is answerable (02-data-model.md \u00a74.3). It grants no framework permission: it is evaluated by application logic at the point of action and recorded on the resulting decision or task.",
+  "description": "A time-bounded transfer of specified actions from an accountable person to another, recorded so that 'who was acting for whom, when' is answerable. It grants no framework permission: it is evaluated by application logic at the point of action and recorded on the resulting decision or task.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -114,5 +114,6 @@
   ],
   "autoname": "ADEL-.#####",
   "naming_rule": "Expression (old style)",
-  "search_fields": "delegator,delegate"
+  "search_fields": "delegator,delegate",
+  "provenance": "02-data-model.md \u00a74.3"
 }

@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 0,
- "creation": "2026-09-17 23:00:00.191569",
+ "creation": "2026-09-17 23:50:00.734611",
  "description": "Who was present at a meeting. counts_toward_quorum is snapshotted from the seat at the time attendance was taken, so a later seat-role change cannot rewrite whether the meeting was quorate.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -57,7 +57,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-09-17 23:00:00.191578",
+ "modified": "2026-09-17 23:50:00.734620",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Meeting Attendance",

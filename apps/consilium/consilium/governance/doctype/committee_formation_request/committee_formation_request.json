@@ -2,8 +2,8 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "CFR-.YYYY.-.#####",
- "creation": "2026-09-17 23:00:00.186215",
- "description": "The single intake artefact for creating, modifying or retiring a forum (G-17, G-18; conflict D-1 resolved to one entity). Carries the nine-state formation flow; the forum carries the five-state compliance flow (D-3). An approved request creates the forum in draft.",
+ "creation": "2026-09-17 23:50:00.727597",
+ "description": "The single intake artefact for creating, modifying or retiring a forum (G-17, G-18; conflict resolved to one entity). Carries the nine-state formation flow; the forum carries the five-state compliance flow. An approved request creates the forum in draft.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -134,7 +134,7 @@
    "label": "First Meeting Date"
   },
   {
-   "description": "G-18's standardized field list, named committee-centrically by decision D-2.",
+   "description": "G-18's standardized field list, named committee-centrically by decision.",
    "fieldname": "forum_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -368,7 +368,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:00:00.186227",
+ "modified": "2026-09-17 23:50:00.727612",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Committee Formation Request",

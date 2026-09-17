@@ -1,7 +1,7 @@
 {
   "name": "Attestation Campaign",
   "module": "Consilium Core",
-  "description": "One attestation event. Three campaign types, one engine (02-data-model.md \u00a75.1). The population is derived from live data at generation time; the stored filter is what makes that derivation reproducible.",
+  "description": "One attestation event. Three campaign types, one engine. The population is derived from live data at generation time; the stored filter is what makes that derivation reproducible.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -43,7 +43,8 @@
       "fieldname": "population_filter",
       "fieldtype": "JSON",
       "label": "Population Filter",
-      "description": "Stored, not recomputed, so the population that was attested can be reproduced. [Inferred \u2014 \u00a711 I-4.]"
+      "description": "Stored, not recomputed, so the population that was attested can be reproduced. [Inferred \u2014.]",
+      "provenance": "\u00a711; I-4"
     },
     {
       "fieldname": "participant_source",
@@ -194,5 +195,6 @@
   "autoname": "ACAM-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "campaign_title",
-  "search_fields": "campaign_title,period_label"
+  "search_fields": "campaign_title,period_label",
+  "provenance": "02-data-model.md \u00a75.1"
 }

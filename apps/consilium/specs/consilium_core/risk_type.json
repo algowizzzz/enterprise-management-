@@ -1,7 +1,7 @@
 {
   "name": "Risk Type",
   "module": "Consilium Core",
-  "description": "The tiered risk taxonomy (02-data-model.md T-7). Tier is carried as a number on a tree so that the two tiers the sources name need only one table.",
+  "description": "The tiered risk taxonomy. Tier is carried as a number on a tree so that the two tiers the sources name need only one table.",
   "autoname": "field:risk_type_code",
   "allow_rename": 1,
   "allow_import": 1,
@@ -50,7 +50,8 @@
       "fieldname": "external_code",
       "fieldtype": "Data",
       "label": "External Code",
-      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]"
+      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014",
+      "provenance": "02-data-model.md \u00a711 I-2.]"
     },
     {
       "fieldname": "parent_risk_type",
@@ -133,5 +134,6 @@
     }
   ],
   "is_tree": 1,
-  "nsm_parent_field": "parent_risk_type"
+  "nsm_parent_field": "parent_risk_type",
+  "provenance": "02-data-model.md T-7"
 }

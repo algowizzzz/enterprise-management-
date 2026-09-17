@@ -1,7 +1,7 @@
 {
   "name": "Governance Forum",
   "module": "Governance",
-  "description": "The forum inventory (02-data-model.md §6.2). The master record every other module links to rather than copies. Its workflow state is compliance_status; all logic reads the semantic flags below, never the label.",
+  "description": "The forum inventory. The master record every other module links to rather than copies. Its workflow state is compliance_status; all logic reads the semantic flags below, never the label.",
   "autoname": "FRM-.YYYY.-.#####",
   "naming_rule": "Expression (old style)",
   "allow_rename": 0,
@@ -12,63 +12,354 @@
   "sort_field": "modified",
   "sort_order": "DESC",
   "fields": [
-    {"fieldname": "forum_name", "fieldtype": "Data", "label": "Forum Name", "reqd": 1, "in_list_view": 1, "description": "The forum's business name. Its identifier is the record key, a naming series — the forum_id of the data model."},
-    {"fieldname": "forum_type", "fieldtype": "Link", "label": "Forum Type", "options": "Governance Forum Type", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
-    {"fieldname": "description", "fieldtype": "Text", "label": "Mandate", "reqd": 1, "description": "The forum's mandate. A watched field: changing it sends the forum back for compliance review."},
-    {"fieldname": "cadence", "fieldtype": "Select", "label": "Cadence", "options": "Weekly\nBi-Weekly\nMonthly\nBi-Monthly\nQuarterly\nSemi-Annually\nAnnually\nAd Hoc", "reqd": 1, "default": "Quarterly", "in_standard_filter": 1},
-
-    {"fieldname": "committee_chair", "fieldtype": "Link", "label": "Committee Chair", "options": "User", "read_only": 1, "in_list_view": 1, "in_standard_filter": 1, "description": "Derived from the active chair membership. The membership record is authoritative; this field is maintained by one code path and is never edited directly."},
-    {"fieldname": "secretary", "fieldtype": "Link", "label": "Secretary", "options": "User", "read_only": 1, "description": "Derived from the active secretary membership."},
-    {"fieldname": "forum_owner", "fieldtype": "Link", "label": "Forum Owner", "options": "User", "read_only": 1, "in_standard_filter": 1, "description": "Derived from the active owner membership. Accountable for accuracy and attestation, distinct from the chair."},
-    {"fieldname": "sponsor", "fieldtype": "Link", "label": "Sponsor", "options": "User"},
-    {"fieldname": "compliance_contact", "fieldtype": "Link", "label": "Compliance Contact", "options": "User", "description": "The compliance counter-signatory for the annual dual-signed owner and compliance review. Not in 02-data-model.md \u00a76.2; the dual signature has no second signatory without it."},
-
-    {"fieldname": "primary_risk_category", "fieldtype": "Link", "label": "Primary Risk Category", "options": "Risk Category", "reqd": 1, "in_standard_filter": 1, "description": "Single by definition — primary is singular."},
-    {"fieldname": "owning_operating_group", "fieldtype": "Link", "label": "Owning Operating Group", "options": "Organization Unit", "reqd": 1, "in_standard_filter": 1, "description": "Single: organisational ownership is one accountable line. Core models the hierarchy as one Organization Unit tree; this must be a node at operating-group or corporate-support level."},
-    {"fieldname": "owning_line_of_business", "fieldtype": "Link", "label": "Owning Line of Business", "options": "Organization Unit", "description": "Single, same reason. Must sit under the owning operating group."},
-
-    {"fieldname": "business_units", "fieldtype": "Table MultiSelect", "label": "Business Units", "options": "Forum Business Unit"},
-    {"fieldname": "risk_types", "fieldtype": "Table MultiSelect", "label": "Risk Types", "options": "Forum Risk Type"},
-    {"fieldname": "legal_entities", "fieldtype": "Table MultiSelect", "label": "Legal Entities", "options": "Forum Legal Entity"},
-    {"fieldname": "jurisdictions", "fieldtype": "Table MultiSelect", "label": "Jurisdictions", "options": "Forum Jurisdiction"},
-    {"fieldname": "governance_responsibilities", "fieldtype": "Table MultiSelect", "label": "Governance Responsibilities", "options": "Forum Governance Responsibility"},
-
-    {"fieldname": "regulatory_required", "fieldtype": "Check", "label": "Regulatory Required", "default": "0", "in_standard_filter": 1},
-    {"fieldname": "regulatory_requirements", "fieldtype": "Table", "label": "Regulatory Requirements", "options": "Forum Regulatory Requirement", "depends_on": "regulatory_required", "description": "Required when the forum is regulatory-required (G-4)."},
-    {"fieldname": "risk_references", "fieldtype": "Table", "label": "Risk References", "options": "Forum Risk Reference"},
-
-    {"fieldname": "parent_forum", "fieldtype": "Link", "label": "Parent Forum", "options": "Governance Forum", "description": "The single parent, for the hierarchy view. Distinct from the many-to-many forum links. A forum cannot be its own ancestor."},
-    {"fieldname": "upstream_links", "fieldtype": "Table", "label": "Upstream Links", "options": "Forum Link"},
-    {"fieldname": "downstream_links", "fieldtype": "Table", "label": "Downstream Links", "options": "Forum Link"},
-
-    {"fieldname": "escalation_protocol", "fieldtype": "Text", "label": "Escalation Protocol"},
-    {"fieldname": "escalation_threshold", "fieldtype": "Text", "label": "Escalation Threshold"},
-
-    {"fieldname": "quorum_rule_type", "fieldtype": "Select", "label": "Quorum Rule", "options": "Count\nPercentage\nAll Voting Members\nChair Plus Count", "reqd": 1, "default": "Count"},
-    {"fieldname": "quorum_value", "fieldtype": "Float", "label": "Quorum Value", "precision": "2", "description": "The count, or the percentage of entitled voters. Required for the count and percentage rules."},
-    {"fieldname": "quorum_requires_chair", "fieldtype": "Check", "label": "Quorum Requires Chair", "default": "0"},
-
-    {"fieldname": "compliance_status", "fieldtype": "Select", "label": "Compliance Status", "options": "Draft\nPending\nCompliant\nNon-Compliant\nNot Applicable\nDisbanded", "reqd": 1, "default": "Draft", "in_list_view": 1, "in_standard_filter": 1, "description": "The forum's workflow state. A label: every piece of logic reads the semantic flags below instead. Disbanded is the terminal state a controlled disbandment leaves behind — see the module README."},
-    {"fieldname": "is_editable", "fieldtype": "Check", "label": "Is Editable", "read_only": 1, "default": "1", "description": "Semantic flag derived from Workflow State Flag."},
-    {"fieldname": "is_active", "fieldtype": "Check", "label": "Is Active", "read_only": 1, "default": "1", "description": "Semantic flag. False once disbanded; the record is never deleted."},
-    {"fieldname": "requires_review", "fieldtype": "Check", "label": "Requires Review", "read_only": 1, "default": "1", "description": "Semantic flag. Set by the state map and by the watched-field hook."},
-
-    {"fieldname": "formation_request", "fieldtype": "Link", "label": "Formation Request", "options": "Committee Formation Request", "read_only": 1, "description": "Back-link to intake. Empty for forums loaded by migration."},
-    {"fieldname": "established_on", "fieldtype": "Date", "label": "Established On"},
-    {"fieldname": "disbanded_on", "fieldtype": "Date", "label": "Disbanded On", "read_only": 1},
-    {"fieldname": "disbandment_plan", "fieldtype": "Link", "label": "Disbandment Plan", "options": "Disbandment Plan", "read_only": 1},
-    {"fieldname": "next_review_on", "fieldtype": "Date", "label": "Next Review On", "description": "The annual review due date (G-10)."},
-    {"fieldname": "last_attested_on", "fieldtype": "Date", "label": "Last Attested On", "read_only": 1, "description": "Denormalised from the latest completed attestation task."},
-    {"fieldname": "retention_class", "fieldtype": "Link", "label": "Retention Class", "options": "Retention Class", "description": "Resolved from Retention Assignment; stored for reporting."},
-    {"fieldname": "confidential", "fieldtype": "Check", "label": "Confidential", "default": "0", "description": "Drives restricted handling. [Inferred — 02-data-model.md §6.2.]"}
+    {
+      "fieldname": "forum_name",
+      "fieldtype": "Data",
+      "label": "Forum Name",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "The forum's business name. Its identifier is the record key, a naming series \u2014 the forum_id of the data model."
+    },
+    {
+      "fieldname": "forum_type",
+      "fieldtype": "Link",
+      "label": "Forum Type",
+      "options": "Governance Forum Type",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Text",
+      "label": "Mandate",
+      "reqd": 1,
+      "description": "The forum's mandate. A watched field: changing it sends the forum back for compliance review."
+    },
+    {
+      "fieldname": "cadence",
+      "fieldtype": "Select",
+      "label": "Cadence",
+      "options": "Weekly\nBi-Weekly\nMonthly\nBi-Monthly\nQuarterly\nSemi-Annually\nAnnually\nAd Hoc",
+      "reqd": 1,
+      "default": "Quarterly",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "committee_chair",
+      "fieldtype": "Link",
+      "label": "Committee Chair",
+      "options": "User",
+      "read_only": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Derived from the active chair membership. The membership record is authoritative; this field is maintained by one code path and is never edited directly."
+    },
+    {
+      "fieldname": "secretary",
+      "fieldtype": "Link",
+      "label": "Secretary",
+      "options": "User",
+      "read_only": 1,
+      "description": "Derived from the active secretary membership."
+    },
+    {
+      "fieldname": "forum_owner",
+      "fieldtype": "Link",
+      "label": "Forum Owner",
+      "options": "User",
+      "read_only": 1,
+      "in_standard_filter": 1,
+      "description": "Derived from the active owner membership. Accountable for accuracy and attestation, distinct from the chair."
+    },
+    {
+      "fieldname": "sponsor",
+      "fieldtype": "Link",
+      "label": "Sponsor",
+      "options": "User"
+    },
+    {
+      "fieldname": "compliance_contact",
+      "fieldtype": "Link",
+      "label": "Compliance Contact",
+      "options": "User",
+      "description": "The compliance counter-signatory for the annual dual-signed owner and compliance review. Not in",
+      "provenance": "02-data-model.md \u00a76.2; the dual signature has no second signatory without it."
+    },
+    {
+      "fieldname": "primary_risk_category",
+      "fieldtype": "Link",
+      "label": "Primary Risk Category",
+      "options": "Risk Category",
+      "reqd": 1,
+      "in_standard_filter": 1,
+      "description": "Single by definition \u2014 primary is singular."
+    },
+    {
+      "fieldname": "owning_operating_group",
+      "fieldtype": "Link",
+      "label": "Owning Operating Group",
+      "options": "Organization Unit",
+      "reqd": 1,
+      "in_standard_filter": 1,
+      "description": "Single: organisational ownership is one accountable line. Core models the hierarchy as one Organization Unit tree; this must be a node at operating-group or corporate-support level."
+    },
+    {
+      "fieldname": "owning_line_of_business",
+      "fieldtype": "Link",
+      "label": "Owning Line of Business",
+      "options": "Organization Unit",
+      "description": "Single, same reason. Must sit under the owning operating group."
+    },
+    {
+      "fieldname": "business_units",
+      "fieldtype": "Table MultiSelect",
+      "label": "Business Units",
+      "options": "Forum Business Unit"
+    },
+    {
+      "fieldname": "risk_types",
+      "fieldtype": "Table MultiSelect",
+      "label": "Risk Types",
+      "options": "Forum Risk Type"
+    },
+    {
+      "fieldname": "legal_entities",
+      "fieldtype": "Table MultiSelect",
+      "label": "Legal Entities",
+      "options": "Forum Legal Entity"
+    },
+    {
+      "fieldname": "jurisdictions",
+      "fieldtype": "Table MultiSelect",
+      "label": "Jurisdictions",
+      "options": "Forum Jurisdiction"
+    },
+    {
+      "fieldname": "governance_responsibilities",
+      "fieldtype": "Table MultiSelect",
+      "label": "Governance Responsibilities",
+      "options": "Forum Governance Responsibility"
+    },
+    {
+      "fieldname": "regulatory_required",
+      "fieldtype": "Check",
+      "label": "Regulatory Required",
+      "default": "0",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "regulatory_requirements",
+      "fieldtype": "Table",
+      "label": "Regulatory Requirements",
+      "options": "Forum Regulatory Requirement",
+      "depends_on": "regulatory_required",
+      "description": "Required when the forum is regulatory-required (G-4)."
+    },
+    {
+      "fieldname": "risk_references",
+      "fieldtype": "Table",
+      "label": "Risk References",
+      "options": "Forum Risk Reference"
+    },
+    {
+      "fieldname": "parent_forum",
+      "fieldtype": "Link",
+      "label": "Parent Forum",
+      "options": "Governance Forum",
+      "description": "The single parent, for the hierarchy view. Distinct from the many-to-many forum links. A forum cannot be its own ancestor."
+    },
+    {
+      "fieldname": "upstream_links",
+      "fieldtype": "Table",
+      "label": "Upstream Links",
+      "options": "Forum Link"
+    },
+    {
+      "fieldname": "downstream_links",
+      "fieldtype": "Table",
+      "label": "Downstream Links",
+      "options": "Forum Link"
+    },
+    {
+      "fieldname": "escalation_protocol",
+      "fieldtype": "Text",
+      "label": "Escalation Protocol"
+    },
+    {
+      "fieldname": "escalation_threshold",
+      "fieldtype": "Text",
+      "label": "Escalation Threshold"
+    },
+    {
+      "fieldname": "quorum_rule_type",
+      "fieldtype": "Select",
+      "label": "Quorum Rule",
+      "options": "Count\nPercentage\nAll Voting Members\nChair Plus Count",
+      "reqd": 1,
+      "default": "Count"
+    },
+    {
+      "fieldname": "quorum_value",
+      "fieldtype": "Float",
+      "label": "Quorum Value",
+      "precision": "2",
+      "description": "The count, or the percentage of entitled voters. Required for the count and percentage rules."
+    },
+    {
+      "fieldname": "quorum_requires_chair",
+      "fieldtype": "Check",
+      "label": "Quorum Requires Chair",
+      "default": "0"
+    },
+    {
+      "fieldname": "compliance_status",
+      "fieldtype": "Select",
+      "label": "Compliance Status",
+      "options": "Draft\nPending\nCompliant\nNon-Compliant\nNot Applicable\nDisbanded",
+      "reqd": 1,
+      "default": "Draft",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "The forum's workflow state. A label: every piece of logic reads the semantic flags below instead. Disbanded is the terminal state a controlled disbandment leaves behind \u2014 see the module README."
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag derived from Workflow State Flag."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag. False once disbanded; the record is never deleted."
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag. Set by the state map and by the watched-field hook."
+    },
+    {
+      "fieldname": "formation_request",
+      "fieldtype": "Link",
+      "label": "Formation Request",
+      "options": "Committee Formation Request",
+      "read_only": 1,
+      "description": "Back-link to intake. Empty for forums loaded by migration."
+    },
+    {
+      "fieldname": "established_on",
+      "fieldtype": "Date",
+      "label": "Established On"
+    },
+    {
+      "fieldname": "disbanded_on",
+      "fieldtype": "Date",
+      "label": "Disbanded On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "disbandment_plan",
+      "fieldtype": "Link",
+      "label": "Disbandment Plan",
+      "options": "Disbandment Plan",
+      "read_only": 1
+    },
+    {
+      "fieldname": "next_review_on",
+      "fieldtype": "Date",
+      "label": "Next Review On",
+      "description": "The annual review due date (G-10)."
+    },
+    {
+      "fieldname": "last_attested_on",
+      "fieldtype": "Date",
+      "label": "Last Attested On",
+      "read_only": 1,
+      "description": "Denormalised from the latest completed attestation task."
+    },
+    {
+      "fieldname": "retention_class",
+      "fieldtype": "Link",
+      "label": "Retention Class",
+      "options": "Retention Class",
+      "description": "Resolved from Retention Assignment; stored for reporting."
+    },
+    {
+      "fieldname": "confidential",
+      "fieldtype": "Check",
+      "label": "Confidential",
+      "default": "0",
+      "description": "Drives restricted handling. [Inferred \u2014",
+      "provenance": "02-data-model.md \u00a76.2.]"
+    }
   ],
   "permissions": [
-    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1, "email": 1},
-    {"role": "Risk Governance Office", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1, "print": 1, "share": 1},
-    {"role": "Compliance Reviewer", "read": 1, "write": 1, "report": 1, "export": 1, "print": 1},
-    {"role": "Committee Secretary", "read": 1, "write": 1, "report": 1, "export": 1, "print": 1},
-    {"role": "Forum Owner", "read": 1, "write": 1, "report": 1, "export": 1, "print": 1},
-    {"role": "Governance Viewer", "read": 1, "report": 1},
-    {"role": "Consilium Audit", "read": 1, "report": 1, "export": 1}
-  ]
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Risk Governance Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "share": 1
+    },
+    {
+      "role": "Compliance Reviewer",
+      "read": 1,
+      "write": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Committee Secretary",
+      "read": 1,
+      "write": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Forum Owner",
+      "read": 1,
+      "write": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Governance Viewer",
+      "read": 1,
+      "report": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "provenance": "02-data-model.md \u00a76.2"
 }

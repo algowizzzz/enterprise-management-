@@ -1,7 +1,7 @@
 {
   "name": "Document Role",
   "module": "Consilium Core",
-  "description": "Accountability roles recorded on a governing document \u2014 owner, approver, liaison, delegate, sponsor, key contact, monitor, partner (\u00a72.2, \u00a74.2). Distinct from access roles, which live in the permission engine.",
+  "description": "Accountability roles recorded on a governing document \u2014 owner, approver, liaison, delegate, sponsor, key contact, monitor, partner,. Distinct from access roles, which live in the permission engine.",
   "autoname": "field:document_role_code",
   "allow_rename": 1,
   "allow_import": 1,
@@ -50,7 +50,8 @@
       "fieldname": "external_code",
       "fieldtype": "Data",
       "label": "External Code",
-      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]"
+      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014",
+      "provenance": "02-data-model.md \u00a711 I-2.]"
     },
     {
       "fieldname": "is_accountable",
@@ -104,5 +105,6 @@
       "role": "All",
       "read": 1
     }
-  ]
+  ],
+  "provenance": "\u00a72.2; \u00a74.2"
 }

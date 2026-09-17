@@ -1,7 +1,7 @@
 {
   "name": "Organizational Level",
   "module": "Consilium Core",
-  "description": "The authority level at which an escalation sits (T-10). A tree, so that levels nest.",
+  "description": "The authority level at which an escalation sits. A tree, so that levels nest.",
   "autoname": "field:organizational_level_code",
   "allow_rename": 1,
   "allow_import": 1,
@@ -50,7 +50,8 @@
       "fieldname": "external_code",
       "fieldtype": "Data",
       "label": "External Code",
-      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]"
+      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014",
+      "provenance": "02-data-model.md \u00a711 I-2.]"
     },
     {
       "fieldname": "parent_organizational_level",
@@ -133,5 +134,6 @@
     }
   ],
   "is_tree": 1,
-  "nsm_parent_field": "parent_organizational_level"
+  "nsm_parent_field": "parent_organizational_level",
+  "provenance": "T-10"
 }

@@ -1,7 +1,7 @@
 {
   "name": "Escalation Matrix",
   "module": "Escalation",
-  "description": "The approved mapping from escalation attributes to severity and pathway (02-data-model.md \u00a78.3, E-4). The routing authority for escalation: pathways are data, not code.",
+  "description": "The approved mapping from escalation attributes to severity and pathway. The routing authority for escalation: pathways are data, not code.",
   "autoname": "field:matrix_code",
   "naming_rule": "By fieldname",
   "allow_rename": 1,
@@ -126,5 +126,6 @@
       "label": "Rule Notifications",
       "options": "Escalation Matrix Notification"
     }
-  ]
+  ],
+  "provenance": "02-data-model.md \u00a78.3, E-4"
 }

@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 0,
- "creation": "2026-09-17 22:10:23.312358",
+ "creation": "2026-09-17 23:50:00.705186",
  "description": "One question in a rule set. Dependent questioning is expressed with depends_on_question / depends_on_answer.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -64,7 +64,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-09-17 22:10:23.312366",
+ "modified": "2026-09-17 23:50:00.705222",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Classification Question",

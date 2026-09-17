@@ -1,7 +1,7 @@
 {
   "name": "Classification Rule Set",
   "module": "Consilium Core",
-  "description": "The versioned, admin-defined questions, answer options and rules that produce a classification outcome (02-data-model.md \u00a75.2). Data, not code. A rule set that has classified anything is locked; a change is a new version.",
+  "description": "The versioned, admin-defined questions, answer options and rules that produce a classification outcome. Data, not code. A rule set that has classified anything is locked; a change is a new version.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -120,5 +120,6 @@
   "autoname": "CRS-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "rule_set_title",
-  "search_fields": "rule_set_title,version_label"
+  "search_fields": "rule_set_title,version_label",
+  "provenance": "02-data-model.md \u00a75.2"
 }

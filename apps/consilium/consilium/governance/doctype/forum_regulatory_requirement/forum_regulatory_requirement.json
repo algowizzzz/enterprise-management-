@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 0,
- "creation": "2026-09-17 23:00:00.190280",
+ "creation": "2026-09-17 23:50:00.732921",
  "description": "The regulatory detail G-4 requires once a forum is marked regulatory-required. The citation is drawn from Core's shared Regulatory Requirement library so that a regulatory change fans out in one hop.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -42,7 +42,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-09-17 23:00:00.190289",
+ "modified": "2026-09-17 23:50:00.732930",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Forum Regulatory Requirement",

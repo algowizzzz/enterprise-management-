@@ -1,7 +1,7 @@
 {
   "name": "Business Calendar",
   "module": "Consilium Core",
-  "description": "Working days and hours for business-hours service levels. [Inferred \u2014 \u00a711 I-15. Without it every service level is 24x7 and will misreport.]",
+  "description": "Working days and hours for business-hours service levels. [Inferred \u2014. Without it every service level is 24x7 and will misreport.]",
   "allow_rename": 1,
   "track_changes": 1,
   "sort_field": "modified",
@@ -121,5 +121,6 @@
   ],
   "autoname": "field:calendar_code",
   "naming_rule": "By fieldname",
-  "title_field": "title"
+  "title_field": "title",
+  "provenance": "\u00a711; I-15"
 }

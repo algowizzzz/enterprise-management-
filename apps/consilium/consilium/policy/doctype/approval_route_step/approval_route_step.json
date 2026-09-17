@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 0,
- "creation": "2026-09-17 23:02:22.312504",
+ "creation": "2026-09-17 23:50:00.735607",
  "description": "One step of a configured approval path. The assignee is resolved from the record, so a route survives a change of owner.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -76,7 +76,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-09-17 23:02:22.312515",
+ "modified": "2026-09-17 23:50:00.735615",
  "modified_by": "Administrator",
  "module": "Policy",
  "name": "Approval Route Step",

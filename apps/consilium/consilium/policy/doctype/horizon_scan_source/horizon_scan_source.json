@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 0,
- "creation": "2026-09-17 23:02:22.318229",
+ "creation": "2026-09-17 23:50:00.743048",
  "description": "One source a scanner reviewed. This is the whole of the 'feed': a human recording what they read and when.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -43,7 +43,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-09-17 23:02:22.318237",
+ "modified": "2026-09-17 23:50:00.743057",
  "modified_by": "Administrator",
  "module": "Policy",
  "name": "Horizon Scan Source",

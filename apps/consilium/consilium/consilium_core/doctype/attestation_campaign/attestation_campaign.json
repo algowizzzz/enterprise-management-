@@ -2,8 +2,8 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "ACAM-.#####",
- "creation": "2026-09-17 22:10:23.309356",
- "description": "One attestation event. Three campaign types, one engine (02-data-model.md \u00a75.1). The population is derived from live data at generation time; the stored filter is what makes that derivation reproducible.",
+ "creation": "2026-09-17 23:50:00.702000",
+ "description": "One attestation event. Three campaign types, one engine. The population is derived from live data at generation time; the stored filter is what makes that derivation reproducible.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -65,7 +65,7 @@
    "reqd": 1
   },
   {
-   "description": "Stored, not recomputed, so the population that was attested can be reproduced. [Inferred \u2014 \u00a711 I-4.]",
+   "description": "Stored, not recomputed, so the population that was attested can be reproduced. [Inferred \u2014.]",
    "fieldname": "population_filter",
    "fieldtype": "JSON",
    "label": "Population Filter"
@@ -189,7 +189,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 22:10:23.309366",
+ "modified": "2026-09-17 23:50:00.702010",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Attestation Campaign",

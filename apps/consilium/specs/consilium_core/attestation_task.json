@@ -1,7 +1,7 @@
 {
   "name": "Attestation Task",
   "module": "Consilium Core",
-  "description": "One row per campaign, participant and record. Standalone, not a child, so a participant's task list is a first-class query and tasks survive campaign edits (02-data-model.md \u00a75.1).",
+  "description": "One row per campaign, participant and record. Standalone, not a child, so a participant's task list is a first-class query and tasks survive campaign edits.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -164,5 +164,6 @@
   ],
   "autoname": "ATSK-.#####",
   "naming_rule": "Expression (old style)",
-  "search_fields": "campaign,assigned_to"
+  "search_fields": "campaign,assigned_to",
+  "provenance": "02-data-model.md \u00a75.1"
 }

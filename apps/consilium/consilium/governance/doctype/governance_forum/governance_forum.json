@@ -3,8 +3,8 @@
  "allow_import": 1,
  "allow_rename": 0,
  "autoname": "FRM-.YYYY.-.#####",
- "creation": "2026-09-17 23:00:00.191150",
- "description": "The forum inventory (02-data-model.md \u00a76.2). The master record every other module links to rather than copies. Its workflow state is compliance_status; all logic reads the semantic flags below, never the label.",
+ "creation": "2026-09-17 23:50:00.734101",
+ "description": "The forum inventory. The master record every other module links to rather than copies. Its workflow state is compliance_status; all logic reads the semantic flags below, never the label.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -118,7 +118,7 @@
    "options": "User"
   },
   {
-   "description": "The compliance counter-signatory for the annual dual-signed owner and compliance review. Not in 02-data-model.md \u00a76.2; the dual signature has no second signatory without it.",
+   "description": "The compliance counter-signatory for the annual dual-signed owner and compliance review. Not in",
    "fieldname": "compliance_contact",
    "fieldtype": "Link",
    "label": "Compliance Contact",
@@ -333,7 +333,7 @@
   },
   {
    "default": "0",
-   "description": "Drives restricted handling. [Inferred \u2014 02-data-model.md \u00a76.2.]",
+   "description": "Drives restricted handling. [Inferred \u2014",
    "fieldname": "confidential",
    "fieldtype": "Check",
    "label": "Confidential"
@@ -341,7 +341,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:00:00.191159",
+ "modified": "2026-09-17 23:50:00.734111",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Governance Forum",

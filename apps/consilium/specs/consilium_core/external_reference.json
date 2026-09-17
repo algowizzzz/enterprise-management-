@@ -1,7 +1,7 @@
 {
   "name": "External Reference",
   "module": "Consilium Core",
-  "description": "A recorded, reportable foreign identifier with a known provenance batch, standing where a live connector would otherwise be (02-data-model.md \u00a75.6). When a connector is eventually built it populates these same rows.",
+  "description": "A recorded, reportable foreign identifier with a known provenance batch, standing where a live connector would otherwise be. When a connector is eventually built it populates these same rows.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -98,5 +98,6 @@
   ],
   "autoname": "EXTR-.#####",
   "naming_rule": "Expression (old style)",
-  "search_fields": "external_key,label"
+  "search_fields": "external_key,label",
+  "provenance": "02-data-model.md \u00a75.6"
 }

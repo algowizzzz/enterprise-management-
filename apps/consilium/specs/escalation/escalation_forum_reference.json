@@ -1,7 +1,7 @@
 {
   "name": "Escalation Forum Reference",
   "module": "Escalation",
-  "description": "One governance forum, held in a Table MultiSelect. The framework's multi-valued reference construct (02-data-model.md \u00a71.3 Multi -> X).",
+  "description": "One governance forum, held in a Table MultiSelect. The framework's multi-valued reference construct.",
   "istable": 1,
   "permissions": [],
   "fields": [
@@ -13,5 +13,6 @@
       "reqd": 1,
       "in_list_view": 1
     }
-  ]
+  ],
+  "provenance": "02-data-model.md \u00a71.3 Multi -> X"
 }

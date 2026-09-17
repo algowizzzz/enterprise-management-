@@ -1,7 +1,7 @@
 {
   "name": "AI Service Request",
   "module": "Consilium Core",
-  "description": "What data left the platform, to which capability, and what came back (02-data-model.md \u00a75.10). A data-boundary control. Append-only. Write access exists only so the response can be recorded once; the controller freezes every request field and refuses a second response.",
+  "description": "What data left the platform, to which capability, and what came back. A data-boundary control. Append-only. Write access exists only so the response can be recorded once; the controller freezes every request field and refuses a second response.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -124,5 +124,6 @@
     }
   ],
   "autoname": "AIRQ-.#####",
-  "naming_rule": "Expression (old style)"
+  "naming_rule": "Expression (old style)",
+  "provenance": "02-data-model.md \u00a75.10"
 }

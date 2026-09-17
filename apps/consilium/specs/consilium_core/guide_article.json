@@ -1,7 +1,7 @@
 {
   "name": "Guide Article",
   "module": "Consilium Core",
-  "description": "The home-page user guide, editable without a deployment (02-data-model.md \u00a75.11). Files are attached through the framework's own attachment mechanism rather than a field.",
+  "description": "The home-page user guide, editable without a deployment. Files are attached through the framework's own attachment mechanism rather than a field.",
   "allow_rename": 1,
   "track_changes": 1,
   "sort_field": "modified",
@@ -92,5 +92,6 @@
   "autoname": "field:slug",
   "naming_rule": "By fieldname",
   "title_field": "title",
-  "search_fields": "title,slug"
+  "search_fields": "title,slug",
+  "provenance": "02-data-model.md \u00a75.11"
 }

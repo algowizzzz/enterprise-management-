@@ -11,40 +11,239 @@
   "sort_field": "modified",
   "sort_order": "DESC",
   "fields": [
-    {"fieldname": "forum", "fieldtype": "Link", "label": "Forum", "options": "Governance Forum", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
-    {"fieldname": "meeting", "fieldtype": "Link", "label": "Meeting", "options": "Forum Meeting", "in_standard_filter": 1, "description": "Empty where the motion was resolved outside a meeting."},
-    {"fieldname": "motion_reference", "fieldtype": "Data", "label": "Motion Reference", "reqd": 1, "in_list_view": 1},
-    {"fieldname": "motion_text", "fieldtype": "Text", "label": "Motion Text", "reqd": 1},
-    {"fieldname": "decision_date", "fieldtype": "Date", "label": "Decision Date", "reqd": 1, "in_list_view": 1, "description": "The date entitlement is assessed against. Not in 02-data-model.md §6.7 as a field; added because E10-S2 requires entitlement as at the decision date and the open/close timestamps are not that date."},
-    {"fieldname": "subject_doctype", "fieldtype": "Link", "label": "Subject DocType", "options": "DocType", "description": "The governing document, charter or escalation being voted on."},
-    {"fieldname": "subject_name", "fieldtype": "Dynamic Link", "label": "Subject", "options": "subject_doctype"},
-    {"fieldname": "based_on_version", "fieldtype": "Link", "label": "Based On Version", "options": "Document Version"},
-    {"fieldname": "proposed_by", "fieldtype": "Link", "label": "Proposed By", "options": "User"},
-    {"fieldname": "seconded_by", "fieldtype": "Link", "label": "Seconded By", "options": "User"},
-    {"fieldname": "voting_mode", "fieldtype": "Select", "label": "Voting Mode", "options": "In Meeting\nWritten Resolution\nElectronic", "reqd": 1, "default": "In Meeting"},
-    {"fieldname": "opened_on", "fieldtype": "Datetime", "label": "Opened On", "read_only": 1},
-    {"fieldname": "closed_on", "fieldtype": "Datetime", "label": "Closed On", "read_only": 1},
-    {"fieldname": "eligible_voter_count", "fieldtype": "Int", "label": "Eligible Voters", "read_only": 1, "description": "Snapshotted at the time the outcome was recorded."},
-    {"fieldname": "votes_cast", "fieldtype": "Int", "label": "Votes Cast", "read_only": 1},
-    {"fieldname": "votes_for", "fieldtype": "Int", "label": "Votes For", "read_only": 1},
-    {"fieldname": "votes_against", "fieldtype": "Int", "label": "Votes Against", "read_only": 1},
-    {"fieldname": "abstentions", "fieldtype": "Int", "label": "Abstentions", "read_only": 1},
-    {"fieldname": "quorum_required", "fieldtype": "Float", "label": "Quorum Required", "precision": "2", "read_only": 1, "description": "The number of quorum-counting seats the forum's rule required, resolved as at the decision date and then frozen."},
-    {"fieldname": "quorum_met", "fieldtype": "Check", "label": "Quorum Met", "read_only": 1, "default": "0", "description": "Calculated and stored when the outcome is recorded. Never recomputed."},
-    {"fieldname": "quorum_basis", "fieldtype": "Text", "label": "Quorum Basis", "read_only": 1, "description": "How quorum was evaluated, in words, at the time."},
-    {"fieldname": "outcome", "fieldtype": "Select", "label": "Outcome", "options": "\nCarried\nNot Carried\nDeferred\nWithdrawn\nInquorate", "in_list_view": 1, "in_standard_filter": 1, "description": "Empty while the motion is open. A label: the flags say whether the motion is still open and whether its votes may still change."},
-    {"fieldname": "is_open", "fieldtype": "Check", "label": "Is Open", "read_only": 1, "default": "1"},
-    {"fieldname": "is_editable", "fieldtype": "Check", "label": "Is Editable", "read_only": 1, "default": "1", "description": "Semantic flag. False once an outcome is recorded, which is what freezes the votes."},
-    {"fieldname": "outcome_recorded_by", "fieldtype": "Link", "label": "Outcome Recorded By", "options": "User", "read_only": 1},
-    {"fieldname": "chair_casting_vote_used", "fieldtype": "Check", "label": "Chair Casting Vote Used", "read_only": 1, "default": "0"}
+    {
+      "fieldname": "forum",
+      "fieldtype": "Link",
+      "label": "Forum",
+      "options": "Governance Forum",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "meeting",
+      "fieldtype": "Link",
+      "label": "Meeting",
+      "options": "Forum Meeting",
+      "in_standard_filter": 1,
+      "description": "Empty where the motion was resolved outside a meeting."
+    },
+    {
+      "fieldname": "motion_reference",
+      "fieldtype": "Data",
+      "label": "Motion Reference",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "motion_text",
+      "fieldtype": "Text",
+      "label": "Motion Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "decision_date",
+      "fieldtype": "Date",
+      "label": "Decision Date",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "The date entitlement is assessed against. Not in",
+      "provenance": "02-data-model.md \u00a76.7 as a field; added because E10-S2 requires entitlement as at the decision date and the open/close timestamps are not that date."
+    },
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Subject DocType",
+      "options": "DocType",
+      "description": "The governing document, charter or escalation being voted on."
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Subject",
+      "options": "subject_doctype"
+    },
+    {
+      "fieldname": "based_on_version",
+      "fieldtype": "Link",
+      "label": "Based On Version",
+      "options": "Document Version"
+    },
+    {
+      "fieldname": "proposed_by",
+      "fieldtype": "Link",
+      "label": "Proposed By",
+      "options": "User"
+    },
+    {
+      "fieldname": "seconded_by",
+      "fieldtype": "Link",
+      "label": "Seconded By",
+      "options": "User"
+    },
+    {
+      "fieldname": "voting_mode",
+      "fieldtype": "Select",
+      "label": "Voting Mode",
+      "options": "In Meeting\nWritten Resolution\nElectronic",
+      "reqd": 1,
+      "default": "In Meeting"
+    },
+    {
+      "fieldname": "opened_on",
+      "fieldtype": "Datetime",
+      "label": "Opened On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "closed_on",
+      "fieldtype": "Datetime",
+      "label": "Closed On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "eligible_voter_count",
+      "fieldtype": "Int",
+      "label": "Eligible Voters",
+      "read_only": 1,
+      "description": "Snapshotted at the time the outcome was recorded."
+    },
+    {
+      "fieldname": "votes_cast",
+      "fieldtype": "Int",
+      "label": "Votes Cast",
+      "read_only": 1
+    },
+    {
+      "fieldname": "votes_for",
+      "fieldtype": "Int",
+      "label": "Votes For",
+      "read_only": 1
+    },
+    {
+      "fieldname": "votes_against",
+      "fieldtype": "Int",
+      "label": "Votes Against",
+      "read_only": 1
+    },
+    {
+      "fieldname": "abstentions",
+      "fieldtype": "Int",
+      "label": "Abstentions",
+      "read_only": 1
+    },
+    {
+      "fieldname": "quorum_required",
+      "fieldtype": "Float",
+      "label": "Quorum Required",
+      "precision": "2",
+      "read_only": 1,
+      "description": "The number of quorum-counting seats the forum's rule required, resolved as at the decision date and then frozen."
+    },
+    {
+      "fieldname": "quorum_met",
+      "fieldtype": "Check",
+      "label": "Quorum Met",
+      "read_only": 1,
+      "default": "0",
+      "description": "Calculated and stored when the outcome is recorded. Never recomputed."
+    },
+    {
+      "fieldname": "quorum_basis",
+      "fieldtype": "Text",
+      "label": "Quorum Basis",
+      "read_only": 1,
+      "description": "How quorum was evaluated, in words, at the time."
+    },
+    {
+      "fieldname": "outcome",
+      "fieldtype": "Select",
+      "label": "Outcome",
+      "options": "\nCarried\nNot Carried\nDeferred\nWithdrawn\nInquorate",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Empty while the motion is open. A label: the flags say whether the motion is still open and whether its votes may still change."
+    },
+    {
+      "fieldname": "is_open",
+      "fieldtype": "Check",
+      "label": "Is Open",
+      "read_only": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1",
+      "description": "Semantic flag. False once an outcome is recorded, which is what freezes the votes."
+    },
+    {
+      "fieldname": "outcome_recorded_by",
+      "fieldtype": "Link",
+      "label": "Outcome Recorded By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "chair_casting_vote_used",
+      "fieldtype": "Check",
+      "label": "Chair Casting Vote Used",
+      "read_only": 1,
+      "default": "0"
+    }
   ],
   "permissions": [
-    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1, "email": 1},
-    {"role": "Committee Secretary", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1, "print": 1},
-    {"role": "Risk Governance Office", "read": 1, "report": 1, "export": 1},
-    {"role": "Compliance Reviewer", "read": 1, "report": 1, "export": 1},
-    {"role": "Forum Owner", "read": 1, "report": 1, "export": 1},
-    {"role": "Governance Viewer", "read": 1, "report": 1},
-    {"role": "Consilium Audit", "read": 1, "report": 1, "export": 1}
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Committee Secretary",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Risk Governance Office",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Compliance Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Forum Owner",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Governance Viewer",
+      "read": 1,
+      "report": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
   ]
 }

@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:risk_category_code",
- "creation": "2026-09-17 22:10:23.323794",
+ "creation": "2026-09-17 23:50:00.718082",
  "description": "The enterprise risk taxonomy. A tree so that tier 1 categories can carry sub-categories.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -57,7 +57,7 @@
    "label": "Sort Order"
   },
   {
-   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]",
+   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014",
    "fieldname": "external_code",
    "fieldtype": "Data",
    "label": "External Code"
@@ -104,7 +104,7 @@
  "index_web_pages_for_search": 0,
  "is_tree": 1,
  "links": [],
- "modified": "2026-09-17 22:10:23.323802",
+ "modified": "2026-09-17 23:50:00.718091",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Risk Category",

@@ -1,7 +1,7 @@
 {
   "name": "Forum Compliance Review",
   "module": "Governance",
-  "description": "The compliance decision that moves a forum's status, kept as its own record so that a history of compliance decisions exists (02-data-model.md §6.6). Only a compliance role may create one; recording it is what changes the forum.",
+  "description": "The compliance decision that moves a forum's status, kept as its own record so that a history of compliance decisions exists. Only a compliance role may create one; recording it is what changes the forum.",
   "autoname": "FCR-.YYYY.-.#####",
   "naming_rule": "Expression (old style)",
   "allow_rename": 0,
@@ -10,28 +10,157 @@
   "sort_field": "modified",
   "sort_order": "DESC",
   "fields": [
-    {"fieldname": "forum", "fieldtype": "Link", "label": "Forum", "options": "Governance Forum", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
-    {"fieldname": "review_type", "fieldtype": "Select", "label": "Review Type", "options": "Initial\nTriggered By Change\nAnnual", "reqd": 1, "default": "Initial", "in_list_view": 1, "in_standard_filter": 1},
-    {"fieldname": "triggered_by_fields", "fieldtype": "JSON", "label": "Triggered By Fields", "description": "The watched fields whose change fired this review, as recorded at the time."},
-    {"fieldname": "reviewer", "fieldtype": "Link", "label": "Reviewer", "options": "User", "reqd": 1, "in_list_view": 1},
-    {"fieldname": "decision", "fieldtype": "Select", "label": "Decision", "options": "Compliant\nNon-Compliant\nNot Applicable\nReturned To Creator", "reqd": 1, "in_list_view": 1, "description": "A label. The flags below say what it means; the forum status it produces is a configured mapping, read and written, never compared."},
-    {"fieldname": "is_active", "fieldtype": "Check", "label": "Is Active", "read_only": 1, "default": "1"},
-    {"fieldname": "is_editable", "fieldtype": "Check", "label": "Is Editable", "read_only": 1, "default": "0"},
-    {"fieldname": "requires_review", "fieldtype": "Check", "label": "Requires Review", "read_only": 1, "default": "0"},
-    {"fieldname": "requires_statement", "fieldtype": "Check", "label": "Requires Statement", "read_only": 1, "default": "0", "description": "Set by the decision that returns the forum to its creator, which cannot be recorded without questions."},
-    {"fieldname": "resulting_status", "fieldtype": "Data", "label": "Resulting Forum Status", "read_only": 1, "description": "The forum status this decision produced, copied at the time. Stored so the history is readable without re-deriving it."},
-    {"fieldname": "comments", "fieldtype": "Text", "label": "Comments"},
-    {"fieldname": "returned_questions", "fieldtype": "Text", "label": "Questions To Creator"},
-    {"fieldname": "decided_on", "fieldtype": "Datetime", "label": "Decided On", "read_only": 1},
-    {"fieldname": "attestation_task", "fieldtype": "Link", "label": "Attestation Task", "options": "Attestation Task", "description": "Set for the annual dual-signed owner and compliance review."}
+    {
+      "fieldname": "forum",
+      "fieldtype": "Link",
+      "label": "Forum",
+      "options": "Governance Forum",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "review_type",
+      "fieldtype": "Select",
+      "label": "Review Type",
+      "options": "Initial\nTriggered By Change\nAnnual",
+      "reqd": 1,
+      "default": "Initial",
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "triggered_by_fields",
+      "fieldtype": "JSON",
+      "label": "Triggered By Fields",
+      "description": "The watched fields whose change fired this review, as recorded at the time."
+    },
+    {
+      "fieldname": "reviewer",
+      "fieldtype": "Link",
+      "label": "Reviewer",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "decision",
+      "fieldtype": "Select",
+      "label": "Decision",
+      "options": "Compliant\nNon-Compliant\nNot Applicable\nReturned To Creator",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "A label. The flags below say what it means; the forum status it produces is a configured mapping, read and written, never compared."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active",
+      "read_only": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "requires_statement",
+      "fieldtype": "Check",
+      "label": "Requires Statement",
+      "read_only": 1,
+      "default": "0",
+      "description": "Set by the decision that returns the forum to its creator, which cannot be recorded without questions."
+    },
+    {
+      "fieldname": "resulting_status",
+      "fieldtype": "Data",
+      "label": "Resulting Forum Status",
+      "read_only": 1,
+      "description": "The forum status this decision produced, copied at the time. Stored so the history is readable without re-deriving it."
+    },
+    {
+      "fieldname": "comments",
+      "fieldtype": "Text",
+      "label": "Comments"
+    },
+    {
+      "fieldname": "returned_questions",
+      "fieldtype": "Text",
+      "label": "Questions To Creator"
+    },
+    {
+      "fieldname": "decided_on",
+      "fieldtype": "Datetime",
+      "label": "Decided On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "attestation_task",
+      "fieldtype": "Link",
+      "label": "Attestation Task",
+      "options": "Attestation Task",
+      "description": "Set for the annual dual-signed owner and compliance review."
+    }
   ],
   "permissions": [
-    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1, "email": 1},
-    {"role": "Compliance Reviewer", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1, "print": 1},
-    {"role": "Risk Governance Office", "read": 1, "report": 1, "export": 1},
-    {"role": "Committee Secretary", "read": 1, "report": 1},
-    {"role": "Forum Owner", "read": 1, "report": 1},
-    {"role": "Governance Viewer", "read": 1, "report": 1},
-    {"role": "Consilium Audit", "read": 1, "report": 1, "export": 1}
-  ]
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Compliance Reviewer",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Risk Governance Office",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Committee Secretary",
+      "read": 1,
+      "report": 1
+    },
+    {
+      "role": "Forum Owner",
+      "read": 1,
+      "report": 1
+    },
+    {
+      "role": "Governance Viewer",
+      "read": 1,
+      "report": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "provenance": "02-data-model.md \u00a76.6"
 }

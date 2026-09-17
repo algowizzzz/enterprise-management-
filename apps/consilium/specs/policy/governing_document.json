@@ -1,7 +1,7 @@
 {
   "name": "Governing Document",
   "module": "Policy",
-  "description": "The policy repository record (02-data-model.md \u00a77.2). Named Governing Document because it covers Frameworks, Policies, Standards, Procedures and Supporting Documents. The authoritative body and its version chain are held by Core's versioning engine; this record carries the metadata, the lineage and the lifecycle.",
+  "description": "The policy repository record. Named Governing Document because it covers Frameworks, Policies, Standards, Procedures and Supporting Documents. The authoritative body and its version chain are held by Core's versioning engine; this record carries the metadata, the lineage and the lifecycle.",
   "autoname": "GDOC-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "document_name",
@@ -468,5 +468,6 @@
       "report": 1,
       "export": 1
     }
-  ]
+  ],
+  "provenance": "02-data-model.md \u00a77.2"
 }

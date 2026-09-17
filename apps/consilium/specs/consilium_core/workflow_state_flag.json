@@ -1,7 +1,7 @@
 {
   "name": "Workflow State Flag",
   "module": "Consilium Core",
-  "description": "The configuration that turns a workflow state or status label into semantic flags (02-data-model.md M-4). State names live here, as data. No business logic anywhere compares a state string; it reads the flags this table sets. That is what makes a state rename configuration rather than a rebuild. [Addition \u2014 the model states the rule and names the flags but defines no table to hold the mapping.]",
+  "description": "The configuration that turns a workflow state or status label into semantic flags. State names live here, as data. No business logic anywhere compares a state string; it reads the flags this table sets. That is what makes a state rename configuration rather than a rebuild. [Addition \u2014 the model states the rule and names the flags but defines no table to hold the mapping.]",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -116,5 +116,6 @@
   ],
   "autoname": "WSFL-.#####",
   "naming_rule": "Expression (old style)",
-  "search_fields": "target_doctype,state_value"
+  "search_fields": "target_doctype,state_value",
+  "provenance": "02-data-model.md M-4"
 }

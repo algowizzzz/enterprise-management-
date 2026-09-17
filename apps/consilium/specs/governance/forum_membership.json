@@ -1,7 +1,7 @@
 {
   "name": "Forum Membership",
   "module": "Governance",
-  "description": "A dated seat on a forum. Standalone, not a child table, by structural decision M-1: membership history survives independently, so the composition of a forum at any past date is a date-range filter rather than a replay of version diffs. Closed by setting an end date, never by deleting the row.",
+  "description": "A dated seat on a forum. Standalone, not a child table, by structural decision : membership history survives independently, so the composition of a forum at any past date is a date-range filter rather than a replay of version diffs. Closed by setting an end date, never by deleting the row.",
   "autoname": "FMEM-.#####",
   "naming_rule": "Expression (old style)",
   "allow_rename": 0,
@@ -193,5 +193,6 @@
       "report": 1,
       "export": 1
     }
-  ]
+  ],
+  "provenance": "M-1"
 }

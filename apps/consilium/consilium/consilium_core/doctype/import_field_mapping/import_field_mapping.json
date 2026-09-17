@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 0,
- "creation": "2026-09-17 22:10:23.319238",
+ "creation": "2026-09-17 23:50:00.712189",
  "description": "One source column mapped onto one target field, with its transform and its handling.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -66,7 +66,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-09-17 22:10:23.319247",
+ "modified": "2026-09-17 23:50:00.712224",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Import Field Mapping",

@@ -1,7 +1,7 @@
 {
   "name": "Classification Assessment",
   "module": "Consilium Core",
-  "description": "The immutable record of one evaluation: the answers given, the rule that fired, the outcome and the full trace of every rule considered (02-data-model.md \u00a75.2). Append-only.",
+  "description": "The immutable record of one evaluation: the answers given, the rule that fired, the outcome and the full trace of every rule considered. Append-only.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -135,5 +135,6 @@
     }
   ],
   "autoname": "CASS-.#####",
-  "naming_rule": "Expression (old style)"
+  "naming_rule": "Expression (old style)",
+  "provenance": "02-data-model.md \u00a75.2"
 }

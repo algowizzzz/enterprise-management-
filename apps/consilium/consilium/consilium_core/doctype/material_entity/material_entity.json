@@ -3,8 +3,8 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:material_entity_code",
- "creation": "2026-09-17 22:10:23.321287",
- "description": "Entities designated material for regulatory or resolution purposes (T-8). Referenced as a link and read as a derived flag.",
+ "creation": "2026-09-17 23:50:00.715301",
+ "description": "Entities designated material for regulatory or resolution purposes. Referenced as a link and read as a derived flag.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -56,7 +56,7 @@
    "label": "Sort Order"
   },
   {
-   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]",
+   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014",
    "fieldname": "external_code",
    "fieldtype": "Data",
    "label": "External Code"
@@ -81,7 +81,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 22:10:23.321320",
+ "modified": "2026-09-17 23:50:00.715311",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Material Entity",

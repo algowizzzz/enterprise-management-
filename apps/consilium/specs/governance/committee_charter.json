@@ -1,7 +1,7 @@
 {
   "name": "Committee Charter",
   "module": "Governance",
-  "description": "The document establishing a forum. Its body is not held here: it lives in Core's Document Version chain (02-data-model.md §5.4), so that what the charter said on a given date has exactly one answer.",
+  "description": "The document establishing a forum. Its body is not held here: it lives in Core's Document Version chain, so that what the charter said on a given date has exactly one answer.",
   "autoname": "CHT-.YYYY.-.#####",
   "naming_rule": "Expression (old style)",
   "allow_rename": 0,
@@ -10,28 +10,156 @@
   "sort_field": "modified",
   "sort_order": "DESC",
   "fields": [
-    {"fieldname": "charter_title", "fieldtype": "Data", "label": "Charter Title", "reqd": 1, "in_list_view": 1},
-    {"fieldname": "forum", "fieldtype": "Link", "label": "Forum", "options": "Governance Forum", "in_list_view": 1, "in_standard_filter": 1, "description": "Empty while the forum does not yet exist."},
-    {"fieldname": "formation_request", "fieldtype": "Link", "label": "Formation Request", "options": "Committee Formation Request"},
-    {"fieldname": "current_version", "fieldtype": "Link", "label": "Current Version", "options": "Document Version", "read_only": 1, "description": "Maintained by Core's versioning engine."},
-    {"fieldname": "rgo_challenge_status", "fieldtype": "Select", "label": "RGO Challenge Status", "options": "Not Reviewed\nChanges Requested\nCleared", "reqd": 1, "default": "Not Reviewed", "in_list_view": 1, "description": "A label. The effective-challenge gate reads the semantic flags."},
-    {"fieldname": "is_editable", "fieldtype": "Check", "label": "Is Editable", "read_only": 1, "default": "1"},
-    {"fieldname": "requires_review", "fieldtype": "Check", "label": "Requires Review", "read_only": 1, "default": "1"},
-    {"fieldname": "requires_statement", "fieldtype": "Check", "label": "Requires Statement", "read_only": 1, "default": "0"},
-    {"fieldname": "rgo_challenge_comments", "fieldtype": "Text", "label": "RGO Challenge Comments"},
-    {"fieldname": "rgo_reviewed_by", "fieldtype": "Link", "label": "RGO Reviewed By", "options": "User", "read_only": 1},
-    {"fieldname": "rgo_reviewed_on", "fieldtype": "Datetime", "label": "RGO Reviewed On", "read_only": 1},
-    {"fieldname": "approval_evidence", "fieldtype": "Table", "label": "Approval Evidence", "options": "Charter Approval Evidence"},
-    {"fieldname": "effective_from", "fieldtype": "Date", "label": "Effective From"},
-    {"fieldname": "effective_to", "fieldtype": "Date", "label": "Effective To"},
-    {"fieldname": "next_charter_review_on", "fieldtype": "Date", "label": "Next Charter Review On"}
+    {
+      "fieldname": "charter_title",
+      "fieldtype": "Data",
+      "label": "Charter Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "forum",
+      "fieldtype": "Link",
+      "label": "Forum",
+      "options": "Governance Forum",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Empty while the forum does not yet exist."
+    },
+    {
+      "fieldname": "formation_request",
+      "fieldtype": "Link",
+      "label": "Formation Request",
+      "options": "Committee Formation Request"
+    },
+    {
+      "fieldname": "current_version",
+      "fieldtype": "Link",
+      "label": "Current Version",
+      "options": "Document Version",
+      "read_only": 1,
+      "description": "Maintained by Core's versioning engine."
+    },
+    {
+      "fieldname": "rgo_challenge_status",
+      "fieldtype": "Select",
+      "label": "RGO Challenge Status",
+      "options": "Not Reviewed\nChanges Requested\nCleared",
+      "reqd": 1,
+      "default": "Not Reviewed",
+      "in_list_view": 1,
+      "description": "A label. The effective-challenge gate reads the semantic flags."
+    },
+    {
+      "fieldname": "is_editable",
+      "fieldtype": "Check",
+      "label": "Is Editable",
+      "read_only": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "requires_review",
+      "fieldtype": "Check",
+      "label": "Requires Review",
+      "read_only": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "requires_statement",
+      "fieldtype": "Check",
+      "label": "Requires Statement",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "rgo_challenge_comments",
+      "fieldtype": "Text",
+      "label": "RGO Challenge Comments"
+    },
+    {
+      "fieldname": "rgo_reviewed_by",
+      "fieldtype": "Link",
+      "label": "RGO Reviewed By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "rgo_reviewed_on",
+      "fieldtype": "Datetime",
+      "label": "RGO Reviewed On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "approval_evidence",
+      "fieldtype": "Table",
+      "label": "Approval Evidence",
+      "options": "Charter Approval Evidence"
+    },
+    {
+      "fieldname": "effective_from",
+      "fieldtype": "Date",
+      "label": "Effective From"
+    },
+    {
+      "fieldname": "effective_to",
+      "fieldtype": "Date",
+      "label": "Effective To"
+    },
+    {
+      "fieldname": "next_charter_review_on",
+      "fieldtype": "Date",
+      "label": "Next Charter Review On"
+    }
   ],
   "permissions": [
-    {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1, "share": 1, "print": 1, "email": 1},
-    {"role": "Risk Governance Office", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1, "print": 1, "share": 1},
-    {"role": "Committee Secretary", "read": 1, "write": 1, "create": 1, "report": 1, "export": 1, "print": 1},
-    {"role": "Compliance Reviewer", "read": 1, "report": 1, "export": 1},
-    {"role": "Governance Viewer", "read": 1, "report": 1},
-    {"role": "Consilium Audit", "read": 1, "report": 1, "export": 1}
-  ]
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Risk Governance Office",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "share": 1
+    },
+    {
+      "role": "Committee Secretary",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Compliance Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Governance Viewer",
+      "read": 1,
+      "report": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "provenance": "02-data-model.md \u00a75.4"
 }

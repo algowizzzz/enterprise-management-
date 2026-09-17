@@ -104,8 +104,14 @@ def validate_spec(spec: dict, path: Path) -> list[str]:
     return [f"{path.name}: {p}" for p in problems]
 
 
+# Keys a spec may carry for us that the framework must never see. `description`
+# is shown to the person using the screen — a reference to an internal design
+# document belongs in the controller, not in a tooltip.
+SPEC_ONLY_KEYS = ("provenance",)
+
+
 def build_doctype(spec: dict) -> dict:
-    fields = [dict(f) for f in spec["fields"]]
+    fields = [{k: v for k, v in f.items() if k not in SPEC_ONLY_KEYS} for f in spec["fields"]]
     doc = {
         "actions": [],
         "allow_rename": spec.get("allow_rename", 0),
@@ -147,7 +153,7 @@ def build_doctype(spec: dict) -> dict:
 
 CONTROLLER_TEMPLATE = '''"""{name} — controller.
 
-{description}
+{description}{provenance}
 """
 
 from frappe.model.document import Document
@@ -167,6 +173,26 @@ class Test{klass}(FrappeTestCase):
     def test_placeholder(self):
         self.assertTrue(True)
 '''
+
+
+def _provenance_note(spec: dict) -> str:
+    """Where this entity and its fields came from, for the controller docstring.
+
+    Kept out of `description`, which the framework shows to whoever is using the
+    screen. "The forum inventory (02-data-model.md §6.2)" is useful to us and
+    noise to them.
+    """
+    lines = []
+    if spec.get("provenance"):
+        lines.append(f"    Specified by: {spec['provenance']}.")
+    field_notes = [
+        f"      {f['fieldname']}: {f['provenance']}"
+        for f in spec.get("fields", []) if f.get("provenance")
+    ]
+    if field_notes:
+        lines.append("    Field provenance:")
+        lines.extend(field_notes)
+    return ("\n\n" + "\n".join(lines)) if lines else ""
 
 
 def write_doctype(spec: dict) -> list[Path]:
@@ -194,6 +220,7 @@ def write_doctype(spec: dict) -> list[Path]:
                 name=spec["name"],
                 klass=klass,
                 description=spec.get("description", "Generated from a spec; see scripts/make_doctype.py."),
+                provenance=_provenance_note(spec),
             )
         )
         written.append(controller)

@@ -3,8 +3,8 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:legal_entity_code",
- "creation": "2026-09-17 22:34:41.972487",
- "description": "Legal entities within the group. A tree, because entities sit under one another (02-data-model.md T-1 marks it hierarchical).",
+ "creation": "2026-09-17 23:50:00.714318",
+ "description": "Legal entities within the group. A tree, because entities sit under one another.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -58,7 +58,7 @@
    "label": "Sort Order"
   },
   {
-   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]",
+   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014",
    "fieldname": "external_code",
    "fieldtype": "Data",
    "label": "External Code"
@@ -111,7 +111,7 @@
  "index_web_pages_for_search": 0,
  "is_tree": 1,
  "links": [],
- "modified": "2026-09-17 22:34:41.972519",
+ "modified": "2026-09-17 23:50:00.714329",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Legal Entity",

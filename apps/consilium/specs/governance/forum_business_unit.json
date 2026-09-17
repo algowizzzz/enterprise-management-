@@ -1,7 +1,7 @@
 {
   "name": "Forum Business Unit",
   "module": "Governance",
-  "description": "One business unit a forum is tagged against. Multi-valued by decision M-3 (02-data-model.md §6.8): four child tables rather than four Link columns, because multi-to-single is a presentation change and single-to-multi is a data migration.",
+  "description": "One business unit a forum is tagged against. Multi-valued by decision : four child tables rather than four Link columns, because multi-to-single is a presentation change and single-to-multi is a data migration.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -18,5 +18,6 @@
     }
   ],
   "permissions": [],
-  "istable": 1
+  "istable": 1,
+  "provenance": "M-3; 02-data-model.md \u00a76.8"
 }

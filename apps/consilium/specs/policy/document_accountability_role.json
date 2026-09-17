@@ -1,7 +1,7 @@
 {
   "name": "Document Accountability Role",
   "module": "Policy",
-  "description": "A many-per-document accountability role \u2014 Monitor, Partner, Reviewer and the rest \u2014 which cannot be a single field on the document (02-data-model.md \u00a77.4).",
+  "description": "A many-per-document accountability role \u2014 Monitor, Partner, Reviewer and the rest \u2014 which cannot be a single field on the document.",
   "istable": 1,
   "fields": [
     {
@@ -42,5 +42,6 @@
       "label": "Primary Holder",
       "default": "0"
     }
-  ]
+  ],
+  "provenance": "02-data-model.md \u00a77.4"
 }

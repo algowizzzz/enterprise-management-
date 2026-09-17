@@ -1,7 +1,7 @@
 {
   "name": "Escalation Forum Link",
   "module": "Escalation",
-  "description": "One governance forum on a matter's escalation pathway (E-7, E17-S1). Plural by decision D-4.",
+  "description": "One governance forum on a matter's escalation pathway (E-7, E17-S1). Plural by decision.",
   "istable": 1,
   "permissions": [],
   "fields": [
@@ -54,5 +54,6 @@
       "label": "Decision Motion",
       "options": "Forum Motion"
     }
-  ]
+  ],
+  "provenance": "D-4"
 }

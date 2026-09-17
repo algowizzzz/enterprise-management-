@@ -125,7 +125,8 @@
       "label": "Is Editable",
       "read_only": 1,
       "default": "1",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "is_active",
@@ -133,7 +134,8 @@
       "label": "Is Active",
       "read_only": 1,
       "default": "1",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "is_open",
@@ -141,7 +143,8 @@
       "label": "Is Open",
       "read_only": 1,
       "default": "1",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "requires_review",
@@ -149,7 +152,8 @@
       "label": "Requires Review",
       "read_only": 1,
       "default": "0",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "is_committable",
@@ -157,7 +161,8 @@
       "label": "Is Committable",
       "read_only": 1,
       "default": "0",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "requires_statement",
@@ -165,7 +170,8 @@
       "label": "Requires Statement",
       "read_only": 1,
       "default": "0",
-      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4)."
+      "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+      "provenance": "02-data-model.md M-4"
     },
     {
       "fieldname": "governance_forums",

@@ -1,7 +1,7 @@
 {
   "name": "Document Material Entity",
   "module": "Policy",
-  "description": "A single Material Entity held in a multi-valued field (02-data-model.md \u00a77 'Multi \u2192 X').",
+  "description": "A single Material Entity held in a multi-valued field.",
   "istable": 1,
   "fields": [
     {
@@ -12,5 +12,6 @@
       "reqd": 1,
       "in_list_view": 1
     }
-  ]
+  ],
+  "provenance": "02-data-model.md \u00a77 'Multi \u2192 X'"
 }

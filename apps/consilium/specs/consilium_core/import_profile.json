@@ -1,7 +1,7 @@
 {
   "name": "Import Profile",
   "module": "Consilium Core",
-  "description": "The field mapping, validation and handling rules for one file-based import, expressed as configuration (02-data-model.md \u00a75.6).",
+  "description": "The field mapping, validation and handling rules for one file-based import, expressed as configuration.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -117,5 +117,6 @@
   "autoname": "IMPP-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "profile_title",
-  "search_fields": "profile_title"
+  "search_fields": "profile_title",
+  "provenance": "02-data-model.md \u00a75.6"
 }

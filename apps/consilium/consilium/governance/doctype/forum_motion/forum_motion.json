@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "FMOT-.YYYY.-.#####",
- "creation": "2026-09-17 23:00:00.189940",
+ "creation": "2026-09-17 23:50:00.732512",
  "description": "A matter put to a forum for decision (E10-S1). Entitlement to vote is drawn from membership as at decision_date, not as at today, and the quorum counters are stored when the outcome is recorded so that a later membership change cannot rewrite a past decision.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -67,7 +67,7 @@
    "reqd": 1
   },
   {
-   "description": "The date entitlement is assessed against. Not in 02-data-model.md \u00a76.7 as a field; added because E10-S2 requires entitlement as at the decision date and the open/close timestamps are not that date.",
+   "description": "The date entitlement is assessed against. Not in",
    "fieldname": "decision_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -220,7 +220,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:00:00.189952",
+ "modified": "2026-09-17 23:50:00.732523",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Forum Motion",

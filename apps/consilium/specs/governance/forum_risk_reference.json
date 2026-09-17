@@ -1,7 +1,7 @@
 {
   "name": "Forum Risk Reference",
   "module": "Governance",
-  "description": "A link from a forum to a risk held in the external risk register. The identifier is an External Reference, which is what stands where a connector would otherwise be (02-data-model.md §5.6).",
+  "description": "A link from a forum to a risk held in the external risk register. The identifier is an External Reference, which is what stands where a connector would otherwise be.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -34,5 +34,6 @@
     }
   ],
   "permissions": [],
-  "istable": 1
+  "istable": 1,
+  "provenance": "02-data-model.md \u00a75.6"
 }

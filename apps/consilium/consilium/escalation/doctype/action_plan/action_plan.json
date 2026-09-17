@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 0,
  "autoname": "ACTP-.#####",
- "creation": "2026-09-17 22:47:49.021641",
+ "creation": "2026-09-17 23:50:00.720620",
  "description": "A remediation plan against an escalation matter (E-6, E-8, E16-S3). Standalone because it has its own owner, dates and lifecycle; several per matter.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -97,7 +97,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
    "fieldname": "is_editable",
    "fieldtype": "Check",
    "label": "Is Editable",
@@ -105,7 +105,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
    "fieldname": "is_active",
    "fieldtype": "Check",
    "label": "Is Active",
@@ -113,7 +113,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
    "fieldname": "is_open",
    "fieldtype": "Check",
    "label": "Is Open",
@@ -121,7 +121,7 @@
   },
   {
    "default": "0",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
    "fieldname": "requires_review",
    "fieldtype": "Check",
    "label": "Requires Review",
@@ -129,7 +129,7 @@
   },
   {
    "default": "0",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
    "fieldname": "is_committable",
    "fieldtype": "Check",
    "label": "Is Committable",
@@ -137,7 +137,7 @@
   },
   {
    "default": "0",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label (02-data-model.md M-4).",
+   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
    "fieldname": "requires_statement",
    "fieldtype": "Check",
    "label": "Requires Statement",
@@ -182,7 +182,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 22:47:49.021674",
+ "modified": "2026-09-17 23:50:00.720629",
  "modified_by": "Administrator",
  "module": "Escalation",
  "name": "Action Plan",

@@ -1,7 +1,7 @@
 {
   "name": "Forum Link",
   "module": "Governance",
-  "description": "An upstream or downstream relationship between two forums (G-4 mapping, and the interconnectivity view). One child table used by two parent fields, which is why the parent index is composite — see 03-schema.md §7.1.",
+  "description": "An upstream or downstream relationship between two forums (G-4 mapping, and the interconnectivity view). One child table used by two parent fields, which is why the parent index is composite \u2014",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -41,5 +41,6 @@
     }
   ],
   "permissions": [],
-  "istable": 1
+  "istable": 1,
+  "provenance": "see 03-schema.md \u00a77.1."
 }
