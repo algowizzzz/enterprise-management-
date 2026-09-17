@@ -1,0 +1,38 @@
+{
+  "doctype": "Horizon Scanning Coverage Area",
+  "key_field": "coverage_area_code",
+  "records": [
+    {
+      "coverage_area_code": "REG_CHANGE",
+      "coverage_area_name": "Regulatory Change"
+    },
+    {
+      "coverage_area_code": "CYBER",
+      "coverage_area_name": "Cybersecurity Threats"
+    },
+    {
+      "coverage_area_code": "AI_GOV",
+      "coverage_area_name": "Artificial Intelligence Governance"
+    },
+    {
+      "coverage_area_code": "PRIVACY",
+      "coverage_area_name": "Privacy Requirements"
+    },
+    {
+      "coverage_area_code": "OP_RESIL",
+      "coverage_area_name": "Operational Resilience"
+    },
+    {
+      "coverage_area_code": "THIRD_PARTY",
+      "coverage_area_name": "Third-Party Risk"
+    },
+    {
+      "coverage_area_code": "ESG",
+      "coverage_area_name": "Environmental, Social and Governance Expectations"
+    },
+    {
+      "coverage_area_code": "GEOPOLITICAL",
+      "coverage_area_name": "Geopolitical Developments"
+    }
+  ]
+}

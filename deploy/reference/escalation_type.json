@@ -1,0 +1,46 @@
+{
+  "doctype": "Escalation Type",
+  "key_field": "escalation_type_code",
+  "records": [
+    {
+      "escalation_type_code": "LIMIT_BREACH",
+      "escalation_type_name": "Limit or Threshold Breach",
+      "description": "A measured value has moved outside an approved limit."
+    },
+    {
+      "escalation_type_code": "POLICY_BREACH",
+      "escalation_type_name": "Policy Breach",
+      "description": "An activity has departed from a governing document."
+    },
+    {
+      "escalation_type_code": "CONTROL_FAIL",
+      "escalation_type_name": "Control Failure",
+      "description": "A control did not operate as designed."
+    },
+    {
+      "escalation_type_code": "EMERGING_RISK",
+      "escalation_type_name": "Emerging Risk",
+      "description": "A risk that is developing and may require a response."
+    },
+    {
+      "escalation_type_code": "INCIDENT",
+      "escalation_type_name": "Incident",
+      "description": "An event that has already caused loss, disruption or exposure."
+    },
+    {
+      "escalation_type_code": "REG_MATTER",
+      "escalation_type_name": "Regulatory Matter",
+      "description": "A matter raised by, or requiring notification to, a regulator."
+    },
+    {
+      "escalation_type_code": "AUDIT_FIND",
+      "escalation_type_name": "Audit Finding",
+      "description": "A finding raised by internal or external audit."
+    },
+    {
+      "escalation_type_code": "DECISION_REQ",
+      "escalation_type_name": "Decision Required",
+      "description": "A matter requiring a decision above the raiser's authority."
+    }
+  ]
+}

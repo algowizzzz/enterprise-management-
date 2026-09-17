@@ -1,0 +1,41 @@
+{
+  "doctype": "Governing Document Type",
+  "key_field": "document_type_code",
+  "records": [
+    {
+      "document_type_code": "POLICY",
+      "document_type_name": "Policy",
+      "requires_committee_approval": 1
+    },
+    {
+      "document_type_code": "STANDARD",
+      "document_type_name": "Standard",
+      "requires_committee_approval": 1
+    },
+    {
+      "document_type_code": "PROCEDURE",
+      "document_type_name": "Procedure",
+      "requires_committee_approval": 0
+    },
+    {
+      "document_type_code": "GUIDELINE",
+      "document_type_name": "Guideline",
+      "requires_committee_approval": 0
+    },
+    {
+      "document_type_code": "FRAMEWORK",
+      "document_type_name": "Framework",
+      "requires_committee_approval": 1
+    },
+    {
+      "document_type_code": "CHARTER",
+      "document_type_name": "Charter",
+      "requires_committee_approval": 1
+    },
+    {
+      "document_type_code": "TERMS_REF",
+      "document_type_name": "Terms of Reference",
+      "requires_committee_approval": 1
+    }
+  ]
+}

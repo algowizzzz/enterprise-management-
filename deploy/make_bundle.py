@@ -70,11 +70,17 @@ def sha256(path: Path) -> str:
 def collect_wheels(wheelhouse: Path, frappe_src: Path, python: str) -> None:
     wheelhouse.mkdir(parents=True, exist_ok=True)
 
-    print("\n[1/4] Downloading dependency wheels")
-    run([python, "-m", "pip", "download",
+    print("\n[1/4] Building dependency wheels")
+    # `pip wheel` rather than `pip download --only-binary`, because a handful of
+    # the pinned dependencies publish no wheel for the pinned version — the
+    # framework pins cairocffi to a version that exists only as an sdist, for
+    # one. Those are pure Python, so building a wheel here needs no compiler and
+    # leaves the target with a wheelhouse it can install from directly. If this
+    # step ever fails for want of a compiler, that is a dependency that must not
+    # ship: the target cannot build it either.
+    run([python, "-m", "pip", "wheel",
          "-r", str(REPO / "requirements.txt"),
-         "-d", str(wheelhouse),
-         "--only-binary", ":all:"],
+         "-w", str(wheelhouse)],
         stdout=subprocess.DEVNULL)
 
     print("\n[2/4] Building the framework fork of PyPika")

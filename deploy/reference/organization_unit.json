@@ -1,0 +1,40 @@
+{
+  "doctype": "Organization Unit",
+  "key_field": "org_unit_code",
+  "records": [
+    {
+      "org_unit_code": "ENTERPRISE",
+      "org_unit_name": "Enterprise",
+      "unit_level": "Operating Group",
+      "is_group": 1
+    },
+    {
+      "org_unit_code": "RISK",
+      "org_unit_name": "Risk Management",
+      "unit_level": "Corporate Support",
+      "parent_organization_unit": "ENTERPRISE",
+      "is_group": 1
+    },
+    {
+      "org_unit_code": "COMPLIANCE",
+      "org_unit_name": "Compliance",
+      "unit_level": "Corporate Support",
+      "parent_organization_unit": "ENTERPRISE",
+      "is_group": 1
+    },
+    {
+      "org_unit_code": "AUDIT",
+      "org_unit_name": "Internal Audit",
+      "unit_level": "Corporate Support",
+      "parent_organization_unit": "ENTERPRISE",
+      "is_group": 1
+    },
+    {
+      "org_unit_code": "TECH",
+      "org_unit_name": "Technology and Operations",
+      "unit_level": "Corporate Support",
+      "parent_organization_unit": "ENTERPRISE",
+      "is_group": 1
+    }
+  ]
+}

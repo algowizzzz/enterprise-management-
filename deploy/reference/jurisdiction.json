@@ -1,0 +1,24 @@
+{
+  "doctype": "Jurisdiction",
+  "key_field": "jurisdiction_code",
+  "records": [
+    {
+      "jurisdiction_code": "GLOBAL",
+      "jurisdiction_name": "Global",
+      "jurisdiction_level": "International",
+      "is_group": 1
+    },
+    {
+      "jurisdiction_code": "NATIONAL",
+      "jurisdiction_name": "National",
+      "jurisdiction_level": "Federal",
+      "is_group": 1
+    },
+    {
+      "jurisdiction_code": "REGIONAL",
+      "jurisdiction_name": "Regional",
+      "jurisdiction_level": "Provincial or State",
+      "is_group": 1
+    }
+  ]
+}

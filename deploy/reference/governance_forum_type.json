@@ -1,0 +1,46 @@
+{
+  "doctype": "Governance Forum Type",
+  "key_field": "forum_type_code",
+  "records": [
+    {
+      "forum_type_code": "BOARD",
+      "forum_type_name": "Board",
+      "definition": "The highest governing body. Holds ultimate accountability and delegates authority downward."
+    },
+    {
+      "forum_type_code": "BOARD_CTTE",
+      "forum_type_name": "Board Committee",
+      "definition": "A committee of the board, constituted by the board and reporting directly to it."
+    },
+    {
+      "forum_type_code": "EXEC_CTTE",
+      "forum_type_name": "Executive Committee",
+      "definition": "A committee of senior management with delegated decision-making authority."
+    },
+    {
+      "forum_type_code": "MGMT_CTTE",
+      "forum_type_name": "Management Committee",
+      "definition": "A committee taking decisions within an operating group or business."
+    },
+    {
+      "forum_type_code": "COUNCIL",
+      "forum_type_name": "Council",
+      "definition": "A standing body that coordinates across areas. Usually advisory rather than decision-making."
+    },
+    {
+      "forum_type_code": "OVERSIGHT",
+      "forum_type_name": "Oversight Body",
+      "definition": "A body that monitors and challenges an activity without owning it."
+    },
+    {
+      "forum_type_code": "WORKING_GRP",
+      "forum_type_name": "Working Group",
+      "definition": "A time-limited group formed to deliver a specific outcome, then disbanded."
+    },
+    {
+      "forum_type_code": "ADVISORY",
+      "forum_type_name": "Advisory Forum",
+      "definition": "A body that provides expertise and recommendations but holds no decision rights."
+    }
+  ]
+}

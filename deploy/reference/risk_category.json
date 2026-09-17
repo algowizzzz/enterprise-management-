@@ -1,0 +1,96 @@
+{
+  "doctype": "Risk Category",
+  "key_field": "risk_category_code",
+  "records": [
+    {
+      "risk_category_code": "CREDIT",
+      "risk_category_name": "Credit Risk",
+      "is_group": 1,
+      "description": "Loss arising from a counterparty failing to meet its obligations."
+    },
+    {
+      "risk_category_code": "MARKET",
+      "risk_category_name": "Market Risk",
+      "is_group": 1,
+      "description": "Loss arising from movements in market prices."
+    },
+    {
+      "risk_category_code": "OPERATIONAL",
+      "risk_category_name": "Operational Risk",
+      "is_group": 1,
+      "description": "Loss arising from inadequate or failed processes, people and systems, or from external events."
+    },
+    {
+      "risk_category_code": "LIQUIDITY",
+      "risk_category_name": "Liquidity Risk",
+      "is_group": 1,
+      "description": "Inability to meet obligations as they fall due without incurring unacceptable loss."
+    },
+    {
+      "risk_category_code": "COMPLIANCE",
+      "risk_category_name": "Regulatory and Compliance Risk",
+      "is_group": 1,
+      "description": "Loss arising from failure to comply with laws, regulations or internal standards."
+    },
+    {
+      "risk_category_code": "STRATEGIC",
+      "risk_category_name": "Strategic Risk",
+      "is_group": 1,
+      "description": "Loss arising from adverse business decisions or failure to respond to change."
+    },
+    {
+      "risk_category_code": "REPUTATION",
+      "risk_category_name": "Reputation Risk",
+      "is_group": 1,
+      "description": "Loss arising from damage to standing with customers, counterparties or the public."
+    },
+    {
+      "risk_category_code": "TECHNOLOGY",
+      "risk_category_name": "Technology Risk",
+      "parent_risk_category": "OPERATIONAL",
+      "description": "Failure, disruption or obsolescence of technology."
+    },
+    {
+      "risk_category_code": "CYBER",
+      "risk_category_name": "Cyber Risk",
+      "parent_risk_category": "OPERATIONAL",
+      "description": "Loss arising from malicious activity against systems or data."
+    },
+    {
+      "risk_category_code": "THIRDPARTY",
+      "risk_category_name": "Third-Party Risk",
+      "parent_risk_category": "OPERATIONAL",
+      "description": "Loss arising from reliance on external suppliers and service providers."
+    },
+    {
+      "risk_category_code": "DATA",
+      "risk_category_name": "Data and Privacy Risk",
+      "parent_risk_category": "OPERATIONAL",
+      "description": "Loss arising from mishandling of data, including personal information."
+    },
+    {
+      "risk_category_code": "MODEL",
+      "risk_category_name": "Model Risk",
+      "parent_risk_category": "OPERATIONAL",
+      "description": "Loss arising from errors in the design, implementation or use of models."
+    },
+    {
+      "risk_category_code": "CONDUCT",
+      "risk_category_name": "Conduct Risk",
+      "parent_risk_category": "COMPLIANCE",
+      "description": "Loss arising from behaviour that harms clients or market integrity."
+    },
+    {
+      "risk_category_code": "FINCRIME",
+      "risk_category_name": "Financial Crime Risk",
+      "parent_risk_category": "COMPLIANCE",
+      "description": "Loss arising from money laundering, sanctions breaches, fraud or bribery."
+    },
+    {
+      "risk_category_code": "CLIMATE",
+      "risk_category_name": "Climate and Environmental Risk",
+      "parent_risk_category": "STRATEGIC",
+      "description": "Loss arising from physical and transition effects of climate change."
+    }
+  ]
+}

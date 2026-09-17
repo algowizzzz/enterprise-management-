@@ -1,0 +1,11 @@
+{
+  "doctype": "Legal Entity",
+  "key_field": "legal_entity_code",
+  "records": [
+    {
+      "legal_entity_code": "PARENT",
+      "legal_entity_name": "Parent Entity",
+      "is_material_entity": 1
+    }
+  ]
+}
