@@ -373,3 +373,33 @@ Trace: the phase 2 success criterion.
 | E26-S3 | As an engineer, the main journeys are covered end to end in a browser. **AC:** forum creation through to approval, policy drafting through to publication, escalation raising through to closure. | L |
 | E26-S4 | As an engineer, automated checks enforce the platform rules. **AC:** checks fail the build on a CDN reference, a network fetch at run time, a compiler-requiring dependency, or client-identifying content. | M |
 | E26-S5 | As an engineer, the system is exercised with realistic data volumes. **AC:** seeded with a volume representative of the real inventory; list, search and dashboard response times recorded. | M |
+
+---
+
+# Status
+
+Updated as work lands. A story is **done** only under the definition of done at
+the top of this document — which includes having been exercised against a running
+system, not only unit tested.
+
+| Epic | State | Evidence |
+|---|---|---|
+| E1 Platform foundation | **done** | App installs; entities generated from specs; assets vendored and checksummed; one command verifies an installation |
+| E2 Identity, roles, access | **partial** | Roles and server-side permissions throughout, tested by attempting actions as roles that should not have them. Single sign-on is configuration, not yet enabled — and SAML is not available in this framework at all |
+| E3 Taxonomy and reference data | **done** | Admin-maintained, tree taxonomies, CSV import, 55 records seeded on install |
+| E4 Audit, evidence, history | **done** | Change history on every governed entity; revert writes a new version and is itself audited |
+| E5 Documents, versioning, retention | **done** | Version chain, retention classes, legal hold, disposal with a certificate |
+| E6–E10 Governance | **done** | 24 entities: inventory, formation, lifecycle, membership with history, meetings, motions and votes |
+| E11–E15 Policy | **done** | 37 entities: repository, lineage, applicability, lifecycle, classification, horizon scanning, monitoring, glossary |
+| E16–E17 Escalation | **done** | 18 entities: matters, templates, action plans, risk acceptances, routing, resolution |
+| E18 Attestation | **done** | One engine, three campaign types, population derived live |
+| E19 Notifications | **done** | Templates as data, pluggable channels, delivery recorded |
+| E20 Reporting and dashboards | **partial** | The framework's report builder covers most of it; the governance-gap and interconnectivity views are screen work |
+| E21 Import and export | **done** | Governed pipeline with per-row errors, no partial application, and provenance |
+| E22 AI assistance | **partial** | The adapter and the provenance records exist; the service endpoint is not yet configured |
+| E23 Interface shell | **done** | Tokens, both themes, text-size control, and one table component doing paging, sorting and search in the database |
+| E24 Screens | **in progress** | |
+| E25 Installation and operations | **mostly done** | Offline install proven with the network broken; restore rehearsed; upgrade path not yet rehearsed |
+| E26 Quality | **partial** | 722 tests against a real database, and the platform rules enforced by a check. No load rehearsal, no measured contrast audit |
+
+**722 automated tests pass** against PostgreSQL with all four modules on one site.
