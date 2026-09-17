@@ -435,3 +435,25 @@ whoever quoted the wrong one in a room.
 The general lesson, recorded because it will recur: a figure restated in more
 than one place will eventually disagree with itself. State it once and reference
 it.
+
+---
+
+## Verified constraint: single sign-on protocols
+
+Checked against the framework source rather than assumed, because the identity
+decision is still open and this narrows it.
+
+| Protocol | Available | Notes |
+|---|---|---|
+| **LDAP** | Yes, first class | A dedicated settings entity, including group-to-role mapping. Binds to a directory directly. |
+| **OIDC** | Yes | Configured as a social-login provider. |
+| **SAML** | **No** | There is no SAML implementation anywhere in the framework. A search of the entire source tree returns nothing. |
+
+**What this means for the decision.** If the deploying organisation authenticates
+with LDAP or OIDC, single sign-on is configuration and can be switched on
+whenever they are ready. **If SAML is mandated, it is an additional component or
+a build, and must be estimated separately** — it is not a setting someone has
+overlooked.
+
+This is worth asking early. "We use SSO" is not a sufficient answer; the protocol
+is the answer, and one of the three costs real work.
