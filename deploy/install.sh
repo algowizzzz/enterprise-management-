@@ -186,13 +186,25 @@ say "Installing the application"
 
 # ---------------------------------------------------------------------- assets
 say "Installing front-end assets"
+# Two separate things have to happen here and only one of them is unpacking an
+# archive. The framework's compiled bundles come out of the archive; the
+# application's own stylesheets and scripts live in its package and have to be
+# published into the site's asset directory as well. Unpacking alone leaves the
+# application's assets unserved, and the interface then renders with the
+# framework's styling and none of ours — which looks plausible enough at a glance
+# to be missed.
+#
+# `winbench assets --import` does both, and `--copy` copies rather than links,
+# because a link needs a privilege the installer may not hold on Windows.
 ASSET_BUNDLE=$(find "$BUNDLE_ROOT/assets" -name 'frappe-assets-*.tar.gz' 2>/dev/null | head -1)
 if [[ -n "$ASSET_BUNDLE" ]]; then
-    mkdir -p "$TARGET/sites/assets"
-    tar xzf "$ASSET_BUNDLE" -C "$TARGET/sites/assets" --strip-components=1
-    echo "  unpacked $(basename "$ASSET_BUNDLE")"
+    "$PY" -m pip install --quiet --no-index --find-links "$WHEELHOUSE" winbench 2>/dev/null \
+        || "$PY" -m pip install --quiet "$BUNDLE_ROOT/winbench" 2>/dev/null || true
+    ( cd "$TARGET" && "$PY" -m winbench.cli assets --import "$ASSET_BUNDLE" --copy ) \
+        || fail "could not install front-end assets"
+    echo "  installed from $(basename "$ASSET_BUNDLE")"
 else
-    echo "  no prebuilt asset bundle found; the interface will not render correctly"
+    fail "no prebuilt asset bundle in the bundle; the interface would render blank"
 fi
 
 # ------------------------------------------------------------------- reference

@@ -93,7 +93,7 @@ def collect_wheels(wheelhouse: Path, frappe_src: Path, python: str) -> None:
         stray.unlink()
 
     print("\n[3/4] Building the framework and the application")
-    for source in (frappe_src, REPO / "apps" / "consilium"):
+    for source in (frappe_src, REPO / "apps" / "consilium", REPO / "winbench"):
         if not source.exists():
             raise SystemExit(f"cannot build a wheel: {source} does not exist")
         run([python, "-m", "pip", "wheel", "--no-deps", "-w", str(wheelhouse), str(source)],
@@ -175,6 +175,19 @@ def main() -> int:
         candidate = REPO / "deploy" / name
         if candidate.exists():
             shutil.copy2(candidate, install_dir / name)
+
+    # The seed script is useless without the data it loads, and the failure is
+    # quiet: it finds no files, loads nothing, and the installation completes
+    # with an empty system that looks fine until someone tries to create a
+    # record and finds every dropdown empty.
+    reference_src = REPO / "deploy" / "reference"
+    if not reference_src.is_dir():
+        raise SystemExit("deploy/reference is missing; the bundle would install an empty system")
+    shutil.copytree(reference_src, install_dir / "reference")
+    loaded = len(list((install_dir / "reference").glob("*.json")))
+    if not loaded:
+        raise SystemExit("deploy/reference contains no data files")
+    print(f"  bundled {loaded} reference data files")
     if (REPO / "winbench").exists():
         shutil.copytree(REPO / "winbench", staging / "winbench")
 

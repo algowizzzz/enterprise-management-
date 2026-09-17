@@ -114,7 +114,10 @@ def main() -> int:
     if args.only:
         files = [f for f in files if f.name == args.only]
     if not files:
-        print("no reference files found")
+        print(f"\n  No reference data found in {REFERENCE_DIR}.\n"
+              f"  The system would be left with empty taxonomies, and every\n"
+              f"  dropdown in the interface would be empty. This is a packaging\n"
+              f"  fault, not a configuration choice.\n", file=sys.stderr)
         return 1
 
     total_created = total_skipped = total_missing = 0
