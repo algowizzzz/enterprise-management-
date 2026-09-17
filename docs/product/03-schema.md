@@ -540,12 +540,12 @@ platform's default behaviour is a sequential scan.
 -- (a) every child table: the join back to its parent
 CREATE INDEX IF NOT EXISTS "ix_forum_regulatory_requirement__parent"
     ON "tabForum Regulatory Requirement" ("parent", "parenttype", "parentfield");
--- ... repeated for all 31 child tables in the model
+-- ... repeated for every child table in the model (see 02-data-model.md §2.2)
 
 -- (b) every parent table: the default list sort
 CREATE INDEX IF NOT EXISTS "ix_governance_forum__modified"
     ON "tabGovernance Forum" ("modified" DESC);
--- ... repeated for all 72 standalone tables
+-- ... repeated for every standalone table (see 02-data-model.md §2.2)
 ```
 
 The composite `(parent, parenttype, parentfield)` is preferred over MariaDB's

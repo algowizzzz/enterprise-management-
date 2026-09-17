@@ -1210,7 +1210,7 @@ that a reviewer does not look for them above and conclude they were missed.
 
 ## 10. Entity-relationship diagrams
 
-Five diagrams rather than one. A single diagram over 103 entities is not a
+Five diagrams rather than one. A single diagram over every entity in this model is not a
 review artefact.
 
 ### 10.1 Cross-module overview

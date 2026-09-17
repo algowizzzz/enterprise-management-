@@ -5,6 +5,12 @@
 
 ---
 
+> **On counts.** Where this document and `01-requirements-baseline.md` both
+> state how many requirements were materially changed or clarified, the
+> requirement tables in `01` are authoritative — they carry the markers, and this
+> summary was written from an earlier pass over them. The two disagree by one or
+> two either way. Recount from `01` before quoting a figure externally.
+
 ## 1. Keys used in this document
 
 ### 1.1 UI surfaces

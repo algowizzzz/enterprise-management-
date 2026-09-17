@@ -402,3 +402,36 @@ For completeness. Each of these was an open question and has been answered.
 | Are the seven supplementary deck items in scope? | **Yes.** |
 | Field-name convention on the committee intake form | **Committee-centric.** |
 | Undefined abbreviations | Expanded in `05-glossary.md` §B. One — the forum-owner abbreviation — remains inferred. |
+
+---
+
+## Known inconsistencies in this document set
+
+Found by building a presentation from these documents and checking every figure
+against its source. None changes a design decision; all of them would embarrass
+whoever quoted the wrong one in a room.
+
+1. **Entity totals were stated three different ways.** §2.2 of the data model
+   computes 78 standalone + 36 child = 114. Two other passages restated a
+   different total from an earlier draft. The restatements have been removed
+   rather than corrected, so §2.2 is now the only place the number is stated.
+   **§2.2 is authoritative.**
+
+2. **The count of materially changed requirements disagrees between documents.**
+   The traceability summary and the requirement tables differ by one or two in
+   each direction. The **requirement tables carry the markers and are
+   authoritative**; the summary was written from an earlier pass. Recount before
+   quoting a figure.
+
+3. **"Requirements with no user-interface surface: 0"** in the traceability
+   summary sits alongside rows whose only surface is a background job, which is
+   explicitly not a user interface. The rows are right; the summary line is
+   loose.
+
+4. **Some delivery trace tags reference decisions that do not exist here.** The
+   epic list cites decision identifiers from a separate log. They are real
+   decisions, but they cannot be resolved from this document set alone.
+
+The general lesson, recorded because it will recur: a figure restated in more
+than one place will eventually disagree with itself. State it once and reference
+it.
