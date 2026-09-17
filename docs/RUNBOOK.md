@@ -128,6 +128,31 @@ winbench build --production
 winbench start
 ```
 
+> ### ⚠️ If `winbench build` / yarn fails, you are not blocked
+>
+> **This is the step most likely to fail on a corporate network**, and it is the
+> only step that needs node and yarn. Assets are static build output — compile
+> them once anywhere, and move them. **The runtime never needs node or yarn.**
+>
+> ```powershell
+> # on any machine that has working node + yarn
+> winbench build --production
+> winbench assets --export frappe-assets.tar.gz     # ~15 MB
+>
+> # on the locked-down laptop -- no node, no yarn, no node_modules
+> winbench assets --import frappe-assets.tar.gz --copy
+> ```
+>
+> Verified: a bench with `node_modules` absent and node removed from `PATH`
+> entirely serves the full Desk this way and passes all 8 smoke checks.
+>
+> Use `--copy` on Windows: it copies the files instead of symlinking, which
+> needs no Developer Mode and no admin rights.
+>
+> Common yarn failures and fixes are in
+> [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md#build); if you want to fix yarn
+> rather than route around it, start there.
+
 `winbench start` runs the web server, background workers and scheduler under one
 supervisor. Ctrl+C stops the whole tree.
 
@@ -236,6 +261,9 @@ You have a genuine choice here:
 | Check services + patches | `winbench doctor` |
 | Apply schema changes | `winbench migrate` |
 | Rebuild assets | `winbench build --production` |
+| Export assets for another machine | `winbench assets --export <file>.tar.gz` |
+| Install assets without node | `winbench assets --import <file>.tar.gz --copy` |
+| Relink assets (no build) | `winbench assets --copy` |
 | Backup (db + files) | `winbench backup` |
 | Python REPL on a site | `winbench console` |
 | List sites | `winbench list-sites` |

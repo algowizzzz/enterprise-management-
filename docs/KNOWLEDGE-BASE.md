@@ -117,13 +117,29 @@ Frappe's scheduler does not elect a leader. Two scheduler processes means every
 scheduled job fires twice — every escalation, every SLA notification. On AWS run
 it as a single-replica task and start everything else with `--no-scheduler`.
 
-### 2.8 🟡 A non-editable install breaks `winbench build`
+### 2.8 🟠 `sites/assets/<app>` is a symlink — never hand-copy it between machines
+
+The built bytes live in `apps/<app>/<app>/public/dist/`. `sites/assets/<app>` is
+only a link to it. So copying `sites/assets/` to another machine — or tarring it
+without dereferencing — produces a bundle that points at a path which does not
+exist on the target. It looks like it worked and serves nothing.
+
+`winbench assets --export` tars with `dereference=True` and carries the real
+`dist/` directories; `--import` unpacks them and recreates the links locally.
+Use `--copy` on Windows so assets are copied rather than linked, which needs no
+Developer Mode.
+
+This is also the **yarn escape hatch**: node and yarn are needed only to compile
+assets, never at runtime. Verified end to end with `node_modules` absent and node
+removed from `PATH` — full Desk, 8/8 smoke checks.
+
+### 2.9 🟡 A non-editable install breaks `winbench build`
 
 `pip install ./frappe` copies the package into `site-packages`, which has no
 `package.json`, so esbuild can't find its config. Always install **editable**
 (`pip install -e apps/frappe`). `winbench init` does this.
 
-### 2.9 🟡 A `.git`-less install loses branch/commit display
+### 2.10 🟡 A `.git`-less install loses branch/commit display
 
 `frappe.utils.change_log` shells out to `git` for the About dialog. Install from
 a zip and branch/commit show as empty strings. The version number is still

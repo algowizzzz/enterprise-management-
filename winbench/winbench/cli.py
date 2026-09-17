@@ -404,6 +404,162 @@ def scheduler(site):
 
 
 @main.command()
+@click.option("--export", "export_to", type=click.Path(), default=None,
+              help="Write the built assets to a portable .tar.gz for another machine.")
+@click.option("--import", "import_from", type=click.Path(), default=None,
+              help="Unpack an assets bundle produced by --export, then relink.")
+@click.option("--copy", "use_copy", is_flag=True,
+              help="Copy assets into sites/assets instead of linking. Safer on Windows.")
+def assets(export_to, import_from, use_copy):
+	"""Link, export or import built assets -- without running node.
+
+	`winbench build` needs node and yarn. On a locked-down laptop yarn is often
+	the first thing that fails: the npm registry is blocked, the corporate proxy
+	breaks TLS, or `air-datepicker` (the one frappe dependency served from
+	GitHub rather than the npm registry) is refused.
+
+	None of that has to block you. Assets are static build output -- compile them
+	once on any machine that has node, and move them. The runtime never needs
+	node or yarn.
+
+	    # on a machine with node
+	    winbench build --production
+	    winbench assets --export frappe-assets.tar.gz
+
+	    # on the locked-down laptop -- no node required
+	    winbench assets --import frappe-assets.tar.gz --copy
+
+	Bundles are ~5 MB gzipped.
+	"""
+	from winbench.compat import install as install_compat
+
+	bench = _bench_or_exit()
+	os.chdir(bench.sites_dir)
+	os.environ.setdefault("FRAPPE_BENCH_ROOT", str(bench.root))
+	install_compat()
+
+	import frappe
+
+	frappe.init("")
+
+	if import_from:
+		_import_assets(bench, Path(import_from))
+	if export_to:
+		_export_assets(bench, Path(export_to))
+		return
+
+	_relink_assets(use_copy)
+
+
+# The build output each app keeps, relative to the app's package directory.
+# `sites/assets/<app>` is only a link to this -- the real bytes live here.
+_ASSET_SUBDIR = "public"
+
+
+def _app_public_dir(bench: Bench, app: str) -> Path:
+	return bench.apps_dir / app / app / _ASSET_SUBDIR
+
+
+def _relink_assets(use_copy: bool) -> None:
+	"""Recreate sites/assets/<app> from the local apps directory.
+
+	This is what `winbench build` does after compiling -- pulled out so it can
+	run on its own, with no node involved.
+	"""
+	import frappe.build
+
+	frappe.build.setup()
+	frappe.build.make_asset_dirs(hard_link=use_copy)
+
+
+def _export_assets(bench: Bench, destination: Path) -> None:
+	"""Bundle built assets into a portable archive.
+
+	Symlinks are *dereferenced* deliberately. `sites/assets/<app>` points into
+	this bench's `apps/` directory, so an archive that preserved the link would
+	arrive on the target machine pointing at a path that does not exist there --
+	a bundle that looks fine and serves nothing.
+	"""
+	import tarfile
+
+	destination = destination.expanduser().resolve()
+	destination.parent.mkdir(parents=True, exist_ok=True)
+
+	members: list[tuple[Path, str]] = []
+	for app in bench.apps():
+		dist = _app_public_dir(bench, app) / "dist"
+		if dist.is_dir():
+			members.append((dist, f"apps/{app}/dist"))
+		else:
+			click.echo(f"  note: {app} has no built dist/ -- run `winbench build --production` first")
+
+	# The manifests and the shared css/js/locale trees live under sites/assets.
+	for name in ("assets.json", "assets-rtl.json", "css", "js", "locale"):
+		path = bench.sites_dir / "assets" / name
+		if path.exists():
+			members.append((path, f"sites/{name}"))
+
+	if not members:
+		raise click.ClickException("Nothing to export -- run `winbench build --production` first.")
+
+	with tarfile.open(destination, "w:gz", dereference=True) as archive:
+		for source, arcname in members:
+			archive.add(str(source), arcname=arcname)
+
+	size_mb = destination.stat().st_size / (1024 * 1024)
+	click.echo(f"Wrote {destination} ({size_mb:.1f} MB)")
+	click.echo("On the target machine: winbench assets --import <this file> --copy")
+
+
+def _import_assets(bench: Bench, archive_path: Path) -> None:
+	import shutil
+	import tarfile
+	import tempfile
+
+	archive_path = archive_path.expanduser().resolve()
+	if not archive_path.exists():
+		raise click.ClickException(f"No such bundle: {archive_path}")
+
+	click.echo(f"Unpacking {archive_path.name}")
+	with tempfile.TemporaryDirectory() as staging:
+		with tarfile.open(archive_path, "r:gz") as archive:
+			for member in archive.getmembers():
+				_assert_safe_member(member.name)
+				archive.extract(member, path=staging)
+
+		staged = Path(staging)
+
+		for app_dir in (staged / "apps").iterdir() if (staged / "apps").is_dir() else []:
+			target = _app_public_dir(bench, app_dir.name) / "dist"
+			if not target.parent.is_dir():
+				click.echo(f"  skipping {app_dir.name}: not installed in this bench")
+				continue
+			if target.exists():
+				shutil.rmtree(target)
+			shutil.copytree(app_dir / "dist" if (app_dir / "dist").is_dir() else app_dir, target)
+			click.echo(f"  {app_dir.name} -> {target}")
+
+		sites_assets = bench.sites_dir / "assets"
+		sites_assets.mkdir(parents=True, exist_ok=True)
+		for item in (staged / "sites").iterdir() if (staged / "sites").is_dir() else []:
+			target = sites_assets / item.name
+			if target.is_dir() and not target.is_symlink():
+				shutil.rmtree(target)
+			elif target.exists() or target.is_symlink():
+				target.unlink()
+			if item.is_dir():
+				shutil.copytree(item, target)
+			else:
+				shutil.copy2(item, target)
+			click.echo(f"  {item.name} -> {target}")
+
+
+def _assert_safe_member(name: str) -> None:
+	if name.startswith("/") or ".." in Path(name).parts:
+		raise click.ClickException(f"Refusing to extract unsafe path from bundle: {name!r}")
+
+
+@main.command()
 @click.option("--site", default=None)
 @click.option("--web-workers", default=None, type=int)
 @click.option("--background-workers", default=None, type=int)

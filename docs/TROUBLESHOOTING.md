@@ -117,10 +117,40 @@ pip uninstall -y frappe
 pip install -e <bench>/apps/frappe --no-deps --no-build-isolation
 ```
 
+### yarn fails at all, in any way — the escape hatch first
+
+**You do not need yarn.** It is required only to *compile* assets, and assets are
+static build output. Compile once on any machine that has working node, then:
+
+```powershell
+winbench assets --export frappe-assets.tar.gz     # machine with node, ~15 MB
+winbench assets --import frappe-assets.tar.gz --copy   # locked-down laptop
+```
+
+Verified with `node_modules` absent and node off `PATH` entirely: full Desk,
+8/8 smoke checks. Use `--copy` on Windows — it copies rather than symlinks, so
+it needs no Developer Mode or admin rights.
+
+Do **not** hand-copy `sites/assets/` between machines. `sites/assets/<app>` is a
+symlink into *that* bench's `apps/` directory, so a plain copy or tarball arrives
+pointing at a path that does not exist on the target — it looks fine and serves
+nothing. `--export` dereferences the links; that is the whole reason it exists.
+
+If you would rather fix yarn than route around it, the usual corporate causes:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `ENOTFOUND` / `ETIMEDOUT` on registry.yarnpkg.com | npm registry blocked | Point at your internal mirror: `yarn config set registry https://<artifactory>/api/npm/npm-remote/` |
+| `SELF_SIGNED_CERT_IN_CHAIN`, `UNABLE_TO_VERIFY_LEAF_SIGNATURE` | TLS interception by the corporate proxy | `setx NODE_EXTRA_CA_CERTS C:\path\to\corp-root-ca.pem` (prefer this over `yarn config set strict-ssl false`) |
+| Hangs, then `ESOCKETTIMEDOUT` | proxy not configured for yarn | `yarn config set proxy http://<proxy>:<port>` and `yarn config set https-proxy ...`; add `--network-timeout 600000` |
+| `403 Forbidden` on `codeload.github.com/frappe/air-datepicker` | **the one npm dependency served from GitHub, not the registry** | Allowlist it, or use the `--export`/`--import` route above |
+| Install crawls for 20+ minutes | AV scanning `node_modules` (hundreds of thousands of small files) | Exclude the bench directory from real-time scanning, or use the export/import route |
+
 ### `Cannot find module 'fast-glob'` (or any node module)
-`yarn install` didn't complete. Re-run it in `apps/frappe`. If it fails fetching
-`air-datepicker` from GitHub, that's the one npm package not on the registry —
-build assets on a connected machine and copy `sites/assets/` over.
+`yarn install` didn't complete — this is a *partial* install, which is worse than
+a failed one because it looks like it worked. Re-run `yarn install` in
+`apps/frappe` and read the tail of its output for the real error, then see the
+table above.
 
 ### `os.symlink` / "A required privilege is not held by the client"
 Windows needs Developer Mode or admin for symlinks. Patch #5 uses directory
