@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check whether this machine can obtain everything Frappe needs.
 
-Run this on the locked-down box (BMO laptop, on-prem server, build agent). It
+Run this on the locked-down box (managed laptop, on-prem server, build agent). It
 reports what is reachable and what is blocked, so you can hand a specific list
 to your network team instead of "pip didn't work".
 
@@ -12,8 +12,8 @@ to your network team instead of "pip didn't work".
 Nothing is installed and nothing is written outside a temp directory.
 Exit code 0 if every REQUIRED item is available, 1 otherwise.
 
-It deliberately uses whatever pip is configured to use, so an internal
-Artifactory/Nexus mirror is exercised exactly as a real install would be.
+It deliberately uses whatever pip is configured to use, so an internal package
+mirror is exercised exactly as a real install would be.
 """
 
 import argparse

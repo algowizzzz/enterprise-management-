@@ -14,14 +14,14 @@ Read [`../HANDOVER.md`](../HANDOVER.md) first if you haven't.
 outside a temp directory.
 
 ```bash
-git clone https://github.com/algowizzzz/enterprise-management-.git
-cd enterprise-management-
+git clone <this-repository-url>
+cd consilium
 python scripts/check_availability.py --target-windows
 ```
 
 The script drives pip against **whatever index you have configured**, so an
-internal Artifactory/Nexus mirror is exercised exactly as a real install would
-exercise it.
+internal package mirror is exercised exactly as a real install would exercise
+it.
 
 ### Reading the output
 
@@ -49,8 +49,9 @@ Three options, in order of preference:
 1. **Ask for an allowlist exception** for `github.com/frappe/*`, ideally scoped
    to one build machine. Narrow, auditable, and keeps `git pull` working for
    security updates. *This is the recommended route.*
-2. **Vendor into Artifactory.** Publish `frappe` and the PyPika fork as internal
-   packages. Your enterprise probably already has this pattern.
+2. **Vendor into your internal package repository.** Publish `frappe` and the
+   PyPika fork as internal packages. Most enterprises already have this
+   pattern.
 3. **Manual download + offline wheelhouse** (Phase 1b). Works today with no
    network exception at all, but you own patching.
 
@@ -59,7 +60,7 @@ The two URLs, and what to do with each, are in
 
 ---
 
-## Phase 1 — A running site on a Windows laptop
+## Phase 1 — A running site on a managed Windows workstation
 
 ### Prerequisites
 
@@ -82,7 +83,7 @@ corrupt builds. `C:\frappe` is a good choice.
 ### 1a — Normal install (network reachable)
 
 ```powershell
-cd enterprise-management-
+cd consilium
 .\scripts\bootstrap.ps1 -BenchPath C:\frappe -SiteName win.localhost
 ```
 
@@ -163,7 +164,7 @@ supervisor. Ctrl+C stops the whole tree.
 
 ### Checkpoint 1
 ```powershell
-python C:\path\to\enterprise-management-\scripts\smoke_test.py --site win.localhost --port 8000
+python C:\path\to\consilium\scripts\smoke_test.py --site win.localhost --port 8000
 ```
 > ✅ `8 passed, 0 failed`, **and** you can open <http://127.0.0.1:8000> in a
 > browser and log in as `Administrator`.
@@ -195,14 +196,16 @@ In the Desk UI:
 > **Version** row records the change.
 
 That is the audit trail a governance platform lives on. If this works, the
-platform can do what we need.
+platform can carry Consilium's approval and audit requirements.
 
 ---
 
-## Phase 3 — On-prem Linux server
+## Phase 3 — Air-gapped Linux server
 
 Same repo, same commands. The compatibility patches are no-ops on POSIX, so you
-are running stock Frappe with a different launcher.
+are running stock Frappe with a different launcher. If the server has no
+internet access, transfer the same bundle as in 1b (`wheelhouse/`, the Frappe
+archive, this repo) and add `--find-links` to `winbench init`.
 
 ```bash
 pip install -e winbench/
@@ -227,20 +230,23 @@ You have a genuine choice here:
 
 ---
 
-## Phase 4 — AWS
+## Phase 4 — Managed cloud infrastructure (optional)
 
-- **RDS PostgreSQL** — set `db_host` / `db_port` in
+Using AWS names as an example:
+
+- **Managed PostgreSQL (e.g. RDS)** — set `db_host` / `db_port` in
   `sites/common_site_config.json`. Site creation needs `CREATE DATABASE`, so use
-  the RDS master user for `winbench new-site`, then switch to a restricted role.
-- **ElastiCache Redis** — set `redis_cache` and `redis_queue`. With TLS or auth,
-  use `rediss://` and put credentials in the URL.
-- **Behind an ALB or CloudFront:**
+  the master user for `winbench new-site`, then switch to a restricted role.
+- **Managed Redis (e.g. ElastiCache)** — set `redis_cache` and `redis_queue`.
+  With TLS or auth, use `rediss://` and put credentials in the URL.
+- **Behind a load balancer or CDN:**
   ```bash
   winbench serve --proxy --no-statics
   ```
   `--proxy` trusts `X-Forwarded-*` so Frappe builds correct URLs.
-  `--no-statics` hands `/assets` to CloudFront or S3 instead of the app process.
-- **ECS/Fargate or EC2** — containerise or run under systemd. Prefer one process
+  `--no-statics` hands `/assets` to the CDN or object store instead of the app
+  process.
+- **Containers or VMs** — containerise or run under systemd. Prefer one process
   type per task.
 
 > ⚠️ **Run exactly one scheduler process across the entire deployment.** Frappe's

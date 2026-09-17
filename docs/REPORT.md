@@ -21,7 +21,7 @@ A full Frappe stack was brought up and exercised end to end:
 | Site creation on PostgreSQL 16 | ✅ | 238 tables created in `_22fd61719430b332` |
 | ORM + query builder | ✅ | insert/read/`frappe.qb` round-trips |
 | WSGI app (waitress, no gunicorn) | ✅ | `/api/method/ping` → `{"message":"pong"}` |
-| Login + Desk UI | ✅ | screenshots captured; all 10 referenced JS/CSS bundles load |
+| Login + Desk UI | ✅ | verified in a browser; all 10 referenced JS/CSS bundles load |
 | Frontend asset build (esbuild) | ✅ | `winbench build --production` clean |
 | Background jobs **without `os.fork()`** | ✅ | job status `finished`, result `pong` |
 | Scheduler | ✅ | `frappe.tests.test_scheduler` 4/4 |
@@ -106,8 +106,8 @@ None of it is needed to *run* Frappe.
 
 `winbench` replaces it in ~700 lines of cross-platform Python:
 
-- **`gunicorn` → `waitress`.** Per your steer, this was never a real obstacle:
-  gunicorn's pre-fork model is a scaling choice, and Frappe is a plain WSGI app.
+- **`gunicorn` → `waitress`.** This was never a real obstacle: gunicorn's
+  pre-fork model is a scaling choice, and Frappe is a plain WSGI app.
   Waitress is a pure-Python, Windows-native WSGI server. Verified serving the
   Desk UI over real HTTP.
 - **supervisord → `winbench.procs.Supervisor`.** Children are spawned with
@@ -151,7 +151,8 @@ notifications this is fine. For long CPU-bound report generation, watch it.
 The single genuine `test_db` failure is exactly this: `test_is` expects
 `coalesce("name", ...)` in generated SQL and Postgres doesn't emit it. Harmless
 in isolation, but it signals that Postgres paths in v15 get no upstream fixes.
-**Recommendation: rebase onto `develop` (v16) before building your modules.**
+**Recommendation: rebase onto `develop` (v16) before building the application
+modules.**
 Everything in this port is version-agnostic — the audit and patches target call
 sites that exist in both.
 
@@ -201,8 +202,8 @@ failure rather than a stack trace from three layers down.
 ## 6. Linux, and the enterprise rollout
 
 Everything above ran **on Linux** — the compat patches are no-ops on POSIX, so
-one codebase covers the BMO laptop, the on-prem server and AWS. The dependency
-review (151 pinned packages, Windows wheel availability, the GitHub-sourced
+one codebase covers the managed Windows workstation, the air-gapped Linux server
+and managed cloud infrastructure. The dependency review (151 pinned packages, Windows wheel availability, the GitHub-sourced
 artifacts, and a verified offline-wheelhouse install) is in
 [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
@@ -216,16 +217,16 @@ The experiment succeeded, and the risk profile is better than expected: the
 framework needed 8 small patches and no fork, while the replaceable part
 (`bench`) was fully replaced.
 
-Before you send the module list, two decisions:
+Two decisions remain before building out the application modules:
 
-1. **Base version — I'd rebase onto `develop` (v16)** for supported Postgres.
+1. **Base version — rebase onto `develop` (v16)** for supported Postgres.
    The porting work carries over unchanged.
-2. **Worker robustness.** If your governance modules do heavy scheduled
+2. **Worker robustness.** If the governance modules do heavy scheduled
    processing (bulk escalations, large report runs), plan for multiple
    supervised workers and per-job timeouts from day one, because the fork-based
    safety net is gone.
 
-The governance primitives you named are all present and passing on Postgres:
-Workflow, Workflow State/Action (with audit trail), Assignment Rule, Role &
-Permission, Notification, Document Naming Rule, Server Script, Web Form, Report
-and Dashboard. Send the module list whenever you're ready.
+The governance primitives the platform needs are all present and passing on
+Postgres: Workflow, Workflow State/Action (with audit trail), Assignment Rule,
+Role & Permission, Notification, Document Naming Rule, Server Script, Web Form,
+Report and Dashboard.

@@ -13,7 +13,7 @@ Frappe names things unusually. You need these five to read anything else:
 |---|---|
 | **bench** | A *directory*, not a program: `apps/`, `sites/`, `env/`. Confusingly, upstream's CLI is also called `bench`. When we say "a bench" we mean the directory. |
 | **site** | One tenant: one database + one folder under `sites/`. A bench can host several. Sites are addressed by hostname, which is why you need a `hosts` entry. |
-| **app** | A Python package under `apps/` that adds DocTypes and logic. `frappe` is itself an app. Your governance modules will be an app. |
+| **app** | A Python package under `apps/` that adds DocTypes and logic. `frappe` is itself an app. Consilium is such an app. |
 | **DocType** | A model definition — table, form, permissions and validation in one. Created through the UI; Frappe generates the table. This is the core idea of the framework. |
 | **Desk** | The admin SPA at `/app`. What users log into. |
 

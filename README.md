@@ -1,21 +1,44 @@
-# Enterprise Management Platform — Frappe on Windows + PostgreSQL
+# Consilium — Enterprise Governance, Risk & Policy
 
-The foundation for an enterprise governance platform — policy management,
-escalation, committee workflow, approvals — built on the
-[Frappe framework](https://github.com/frappe/frappe), the open-source platform
-ERPNext is built on and a credible ServiceNow alternative.
+**Consilium** is an enterprise Governance, Risk & Policy platform. Three modules
+under one platform, sharing one data model, one permission model and one audit
+trail:
 
-This repository is the **platform port**: Frappe running **natively on Windows,
-on PostgreSQL**, with no WSL, no Docker, no supervisor, no nginx and no
-gunicorn. The same tree runs unchanged on Linux and AWS.
+| Module | What it covers |
+|---|---|
+| **Governance** | Governance forum and committee lifecycle — membership, agendas, meetings, decisions, minutes, follow-up actions |
+| **Policy** | Policy lifecycle from intake through drafting, review, approval, publication, attestation and retirement |
+| **Escalation** | Escalation intake, routing, ownership, SLA tracking and resolution |
 
-Built because Frappe's official install path does not survive an enterprise
-network: it is Linux-only, MariaDB-first, and **Frappe is not on PyPI** (the
-published package is a 0.0.1 placeholder), so a PyPI mirror does not solve it.
+Consilium is built on the [Frappe framework](https://github.com/frappe/frappe)
+with **PostgreSQL**, and is designed for environments where installation happens
+**without internet access**. It deploys to an **air-gapped Linux server** and to
+**Windows**, from the same tree, with the same commands.
+
+The application itself lives in [`apps/consilium/`](apps/consilium/). Every
+front-end asset it uses is vendored and checksummed — there is no CDN reference,
+no npm or yarn step, and no dependency that needs a compiler.
+
+---
+
+## The deployment foundation
+
+Consilium ships on a deployment toolchain that is part of this repository. That
+toolchain is what makes an offline, Windows-and-Linux install possible at all,
+and the rest of this README describes it.
+
+The problem it solves: Frappe's official install path does not survive a
+locked-down enterprise network. It is Linux-only, MariaDB-first, assumes
+`git clone` from GitHub, and **Frappe is not on PyPI** (the published package is
+a 0.0.1 placeholder), so a PyPI mirror does not solve it either.
+
+So this repository also contains the **platform port**: Frappe running
+**natively on Windows, on PostgreSQL**, with no WSL, no Docker, no supervisor,
+no nginx and no gunicorn. The same tree runs unchanged on Linux.
 
 **Status: working, and never yet run on a real Windows machine.** Everything was
 verified on Linux; Windows paths are covered by tests that simulate Windows.
-Running it on a real laptop is the first job. See
+Running it on a managed corporate Windows laptop is the first job. See
 [`HANDOVER.md`](HANDOVER.md) §4.
 
 ---
@@ -24,30 +47,32 @@ Running it on a real laptop is the first job. See
 
 | # | Document | Why |
 |---|---|---|
-| 1 | **[`HANDOVER.md`](HANDOVER.md)** | Objective, what we built, what's proven, **what success means**. ~10 min. |
+| 1 | **[`HANDOVER.md`](HANDOVER.md)** | Objective, what was built, what's proven, **what success means**. ~10 min. |
 | 2 | **[`docs/RUNBOOK.md`](docs/RUNBOOK.md)** | Step by step, phase by phase, with checkpoints. |
 | 3 | **[`docs/KNOWLEDGE-BASE.md`](docs/KNOWLEDGE-BASE.md)** | Glossary, the landmines, why each decision was made. |
 | 4 | **[`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md)** | Symptom → cause → fix. |
-| — | [`docs/REPORT.md`](docs/REPORT.md) | The original findings, with evidence. |
-| — | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Linux / on-prem / AWS + dependency review. |
-| — | [`CLAUDE.md`](CLAUDE.md) | Context for AI agents working in this repo. |
+| — | [`docs/REPORT.md`](docs/REPORT.md) | The original porting findings, with evidence. |
+| — | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Deploying to Windows, an air-gapped Linux server and cloud, plus the dependency review. |
+| — | [`docs/product/`](docs/product/) | The product documentation: requirements, data model, schema, architecture, glossary. |
+| — | [`docs/delivery/EPICS.md`](docs/delivery/EPICS.md) | The delivery backlog: epics and stories with acceptance criteria. |
+| — | [`CLAUDE.md`](CLAUDE.md) | The binding engineering principles for this repository. |
 
-**AI agents: start at [`CLAUDE.md`](CLAUDE.md).**
+**Working in this repo, human or AI: start at [`CLAUDE.md`](CLAUDE.md).**
 
 ---
 
-## The 60-second version
+## The 60-second version of the port
 
 Frappe's *framework* is far more portable than its *deployment story*. A static
 audit of all of `frappe/` found **only 10 Windows blockers, 6 of them in test
 code**. Almost everything Linux-specific lives in `bench`, its CLI.
 
-So we did two things:
+So the port does two things:
 
-1. **Replaced `bench`** with `winbench` — a cross-platform CLI: waitress instead
+1. **Replaces `bench`** with `winbench` — a cross-platform CLI: waitress instead
    of gunicorn, a Windows Job Object supervisor instead of supervisord, nothing
    instead of nginx, and a fork-free background worker.
-2. **Patched the 8 remaining incompatibilities at runtime**, before
+2. **Patches the 8 remaining incompatibilities at runtime**, before
    `import frappe`. Each is a no-op on POSIX.
 
 **Frappe itself is not forked**, so `git pull` on upstream keeps working.
@@ -59,8 +84,8 @@ So we did two things:
 
 ### Windows
 ```powershell
-git clone https://github.com/algowizzzz/enterprise-management-.git
-cd enterprise-management-
+git clone <this-repository-url>
+cd consilium
 .\scripts\bootstrap.ps1 -BenchPath C:\frappe -SiteName win.localhost
 cd C:\frappe
 winbench start
@@ -122,10 +147,11 @@ an asset regression leaves a blank page while every API check still returns 200.
 
 - **Python 3.11**, **PostgreSQL 16**, and a Redis-compatible server
   (**Memurai** on Windows — Redis has no official Windows build).
-- Node 22 + yarn for asset builds only — **and a prebuilt bundle is committed in
-  [`assets/`](assets/)**, so you can skip node entirely:
+- Node 22 + yarn for Frappe's own asset builds only — **and a prebuilt bundle is
+  committed in [`assets/`](assets/)**, so you can skip node entirely:
   `winbench assets --import assets/frappe-assets-v15.121.0.tar.gz --copy`.
-  Verified with node absent from `PATH` and `node_modules` deleted.
+  Verified with node absent from `PATH` and `node_modules` deleted. The
+  Consilium app itself has no build step at all.
 - 150 pinned Python packages in [`requirements.txt`](requirements.txt) — all
   resolve from PyPI, and **none needs a C compiler on Windows**.
 - Two GitHub URLs that cannot come from PyPI:

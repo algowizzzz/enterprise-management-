@@ -1,8 +1,9 @@
 # Deployment & dependency review
 
-For the three targets you named: a **BMO Windows laptop** (dev), an **on-prem
-Linux server** (staging/prod), and **AWS** (cloud). Plus what your security team
-will need to approve.
+A generic deployment guide for three targets: a **managed corporate Windows
+workstation** (development, and small single-machine deployments), an
+**air-gapped Linux server** (staging/production), and **managed cloud
+infrastructure** (optional). Plus everything a security review will ask for.
 
 ---
 
@@ -25,40 +26,39 @@ package:
 `winbench doctor` prints which patches are live. On Linux it prints
 `(none needed on this platform)`.
 
-**So: develop on the BMO laptop, deploy the identical tree to Linux.** That was
-the design goal, and it's the part that most de-risks your enterprise rollout —
-you are not maintaining a Windows fork.
+**So: develop on the Windows workstation, deploy the identical tree to Linux.**
+That was the design goal, and it is the part that most de-risks an enterprise
+rollout — you are not maintaining a Windows fork.
 
 One caveat worth stating: the reverse is also true of the *limitations*. The
-worker downgrade is Windows-only. On your Linux server and on AWS you get the
-full fork-based worker with hard job timeouts.
+worker downgrade is Windows-only. On a Linux server, and in the cloud, you get
+the full fork-based worker with hard job timeouts.
 
 ---
 
 ## 2. Viewing the UI
 
-Screenshots of this exact running instance are in the conversation: login, Desk
-workspace, ToDo list, the ToDo Approval workflow, and the Role list.
+The instance a developer runs binds to `127.0.0.1`; there is no shared demo
+environment. To bring one up yourself, that is what `scripts/bootstrap.ps1`
+(Windows) and `winbench init` (Linux) are for. Open
+<http://127.0.0.1:8000> and log in as `Administrator`.
 
-**You cannot reach this instance directly** — it's bound to `127.0.0.1` inside an
-ephemeral sandbox container that gets reclaimed. To run it yourself, that's what
-`scripts/bootstrap.ps1` is for.
-
-> A bug was found *because* of this request. `winbench serve` was handing
-> waitress the bare WSGI app, so the Desk loaded its HTML and then 404'd on
-> every JS/CSS bundle — a blank white page. On a normal bench, nginx serves
-> `/assets`; with nginx removed, nothing did. Fixed by using Frappe's own
-> `application_with_statics()`. This is exactly the class of bug an API smoke
-> test misses and a screenshot catches.
+> **Look at the UI with your own eyes, not just the API.** An early bug had
+> `winbench serve` handing waitress the bare WSGI app, so the Desk loaded its
+> HTML and then 404'd on every JS/CSS bundle — a blank white page. On a normal
+> bench, nginx serves `/assets`; with nginx removed, nothing did. Fixed by using
+> Frappe's own `application_with_statics()`. This is exactly the class of bug an
+> API smoke test misses and a browser catches, which is why
+> `scripts/smoke_test.py` now fetches every referenced asset.
 
 ---
 
 ## 3. The dependency list
 
-**Take `requirements.txt` to your enterprise and run:**
+**Take `requirements.txt` to the target network and run:**
 
 ```bash
-# does my network have everything?           (nothing is installed)
+# does this network have everything?          (nothing is installed)
 python scripts/check_availability.py --target-windows      # ~25 seconds
 
 # or just the pip half, by hand -- note --no-deps:
@@ -78,9 +78,9 @@ complete flattened set, and without it pip chases transitive dependencies — so
 pure-Python sdists.
 
 `check_availability.py` uses whatever index pip is configured with, so an
-internal Artifactory/Nexus mirror is exercised exactly as a real install would
-be. It then checks the GitHub artifacts and the external programs, and prints a
-specific blocked-item list. Exit 1 if anything required is missing.
+internal package mirror is exercised exactly as a real install would be. It then
+checks the GitHub artifacts and the external programs, and prints a specific
+blocked-item list. Exit 1 if anything required is missing.
 
 | File | Contents |
 |---|---|
@@ -103,8 +103,9 @@ would let a well-meaning mirror hand you the wrong one. It lives in
 | Has a `win_amd64` wheel | 17 |
 | Source-only (`sdist`) | 7 |
 
-I inspected all 7 sdists for C extensions (`ext_modules`, `cffi_modules`, `.c`
-files). **All 7 are pure Python** — pip builds a wheel locally with no compiler:
+All 7 sdists were inspected for C extensions (`ext_modules`, `cffi_modules`,
+`.c` files). **All 7 are pure Python** — pip builds a wheel locally with no
+compiler:
 
 ```
 cairocffi, docopt, maxminddb-geolite2, PyQRCode, rauth,
@@ -121,17 +122,17 @@ loads them.
 
 ---
 
-## 4. ⚠️ The finding that matters most for BMO
+## 4. ⚠️ The finding that matters most
 
-**You cannot get Frappe from PyPI.** I checked:
+**You cannot get Frappe from PyPI:**
 
 ```
 pypi.org/project/frappe  ->  version 0.0.1, "Frappe placeholder package"
 ```
 
 The real framework is **not published to PyPI**. It is distributed only as a Git
-repository. So if your Artifactory/Nexus mirrors PyPI, `pip install frappe` gets
-you a stub, not the framework.
+repository. So if an internal mirror proxies PyPI, `pip install frappe` gets you
+a stub, not the framework.
 
 There are exactly **three** things that must come from GitHub:
 
@@ -140,14 +141,14 @@ There are exactly **three** things that must come from GitHub:
 | `frappe` framework itself | `github.com/frappe/frappe` | **Yes** — no alternative |
 | `PyPika` (frappe's fork) | `git+https://github.com/frappe/pypika@2c50e61` | **Yes** — 27 imports; the PyPI PyPika (0.51.1) is upstream, not the fork |
 | `gunicorn` (frappe's fork) | `git+https://github.com/frappe/gunicorn@bb55405` | **No — dropped** |
-| `air-datepicker` (npm) | `codeload.github.com/frappe/air-datepicker` | Yes, for asset build only |
+| `air-datepicker` (npm) | `codeload.github.com/frappe/air-datepicker` | Yes, for Frappe's asset build only |
 
 All of these can be fetched as **archive downloads** rather than git clones — see
 below.
 
-**We already removed one of them.** `grep -rn "import gunicorn" frappe/` returns
-nothing — it is a deploy-only dependency, and we replaced it with waitress. So
-your workaround already cuts the GitHub surface from 3 to 2 (plus 1 npm).
+**One of them is already gone.** `grep -rn "import gunicorn" frappe/` returns
+nothing — it is a deploy-only dependency, replaced here with waitress. That cuts
+the GitHub surface from 3 to 2 (plus 1 npm, needed only if you rebuild assets).
 
 ### Yes — you can download it from a GitHub URL. Verified.
 
@@ -161,7 +162,7 @@ https://github.com/frappe/frappe/archive/refs/tags/v15.x.x.tar.gz      <- a pinn
 ```
 
 In many locked-down enterprises a browser download through the corporate proxy is
-allowed where the git CLI is not, which makes this the practical path for BMO.
+allowed where the git CLI is not, which usually makes this the practical path.
 `winbench` supports it directly:
 
 ```powershell
@@ -196,7 +197,9 @@ winbench init C:\frappe --from-archive frappe-version-15.zip --find-links wheelh
 ```
 
 Verified: `init` completes with **zero** GitHub contacts, the fork lands, and the
-resulting bench serves the Desk and passes all 8 smoke checks.
+resulting bench serves the Desk and passes all 8 smoke checks. This is the path
+for an air-gapped server: the transfer bundle is `wheelhouse/`, the Frappe
+archive, and this repository.
 
 #### ⚠️ The trap: PyPika
 
@@ -215,19 +218,21 @@ get a quietly different query builder.
 the wheelhouse first, then frappe with `--no-deps`, so pip never sees the direct
 references. `requirements/frappe-full.txt` carries the warning inline.
 
-For npm: 415 packages, **exactly one** (`air-datepicker`) from GitHub. It is
-needed only for `winbench build`. Build assets once on a connected box and ship
-`sites/assets/` — the runtime never needs npm or node.
+For npm: Frappe's own build pulls 415 packages, **exactly one**
+(`air-datepicker`) from GitHub. It is needed only for `winbench build`. Build
+assets once on a connected box and ship `sites/assets/` — or just use the bundle
+committed in `assets/`. The runtime never needs npm or node, and the Consilium
+app has no front-end build step at all.
 
 ---
 
 ## 5. Non-pip components
 
-| Component | Windows (BMO) | Linux / AWS | Required? |
+| Component | Managed Windows workstation | Linux server / cloud | Required? |
 |---|---|---|---|
 | Python 3.11 | winget / MSI | distro or pyenv | **Yes** |
-| PostgreSQL 16 | EDB installer | apt/yum, or **RDS** | **Yes** |
-| Redis | **Memurai** (no official Windows Redis) | redis-server, or **ElastiCache** | **Yes** |
+| PostgreSQL 16 | EDB installer | distro package, or a managed service | **Yes** |
+| Redis | **Memurai** (no official Windows Redis) | redis-server, or a managed service | **Yes** |
 | Node 22 + yarn | winget | distro | Build only — not at runtime |
 | wkhtmltopdf | official Windows build | distro | Only for PDF print formats |
 | GTK3 runtime | separate installer | usually present | Only for WeasyPrint PDFs |
@@ -239,39 +244,46 @@ works, but flushing the cache would also drop queued jobs.
 
 ## 6. The three targets
 
-### BMO Windows laptop — development
-The intended path. `bootstrap.ps1` does it in one command.
+### Managed corporate Windows workstation — development
+The intended development path. `bootstrap.ps1` does it in one command.
 
-**Watch for:** corporate AV scanning `node_modules` makes asset builds slow;
-keep the bench off OneDrive (file-locking sync corrupts builds); Memurai may need
-a software request; the fork-free worker is a real downgrade (see `REPORT.md`).
-Everything installs per-user — no admin rights needed except for the Postgres
-and Memurai services.
+**Watch for:** corporate AV scanning `node_modules` makes asset builds slow (use
+the committed bundle and skip them); keep the bench off any file-sync client
+such as OneDrive (file-locking sync corrupts builds); a Redis-compatible service
+such as Memurai may need a software request; the fork-free worker is a real
+downgrade (see `REPORT.md`). Everything installs per-user — no admin rights
+needed except for the PostgreSQL and Redis-compatible services.
 
-### On-prem Linux server — staging/production
-Stock Frappe territory; the compat layer is inert. You have a genuine choice:
+### Air-gapped Linux server — staging/production
+Stock Frappe territory; the compat layer is inert. Install from the offline
+transfer bundle described in §4. You have a genuine choice of launcher:
 
 - **Use `winbench`** for one toolchain across both environments, no supervisor,
-  no nginx config generation. Simple, and what I'd suggest for a first rollout.
+  no nginx config generation. Simple, and the recommended option for a first
+  rollout.
 - **Use upstream `bench`** for the battle-tested production topology
   (supervisor + nginx + gunicorn). The sites directory `winbench` creates is
   byte-compatible with `bench` — it's the same layout — so you can switch later
   without migrating anything.
 
-### AWS — cloud
-Nothing here is cloud-hostile:
+Put a reverse proxy in front for TLS if the server is reachable by more than
+localhost.
 
-- **RDS PostgreSQL** — it's a plain TCP connection; set `db_host` in
-  `common_site_config.json`. Frappe needs the `CREATE DATABASE` privilege at
-  site-creation time, so use the RDS master user for `winbench new-site`, then a
+### Managed cloud infrastructure — optional
+Nothing here is cloud-hostile. Using AWS names as an example:
+
+- **Managed PostgreSQL (e.g. RDS)** — it's a plain TCP connection; set `db_host`
+  in `common_site_config.json`. Frappe needs the `CREATE DATABASE` privilege at
+  site-creation time, so use the master user for `winbench new-site`, then a
   restricted role afterwards.
-- **ElastiCache Redis** — set `redis_cache` / `redis_queue` URLs. If you enable
-  TLS or auth, use `rediss://` and pass credentials in the URL.
-- **ALB/CloudFront in front** — run `winbench serve --proxy --no-statics`.
-  `--proxy` trusts `X-Forwarded-*` so Frappe builds correct URLs; `--no-statics`
-  hands `/assets` to CloudFront or S3 instead of the app process.
-- **ECS/Fargate or EC2** — containerise or run under systemd. `winbench start`
-  works under both; on ECS prefer one process per task and let the scheduler run
+- **Managed Redis (e.g. ElastiCache)** — set `redis_cache` / `redis_queue` URLs.
+  If you enable TLS or auth, use `rediss://` and pass credentials in the URL.
+- **A load balancer or CDN in front** — run `winbench serve --proxy
+  --no-statics`. `--proxy` trusts `X-Forwarded-*` so Frappe builds correct URLs;
+  `--no-statics` hands `/assets` to the CDN or object store instead of the app
+  process.
+- **Containers or VMs** — containerise or run under systemd. `winbench start`
+  works under both; prefer one process type per task and let the scheduler run
   as its own task so you don't get duplicate scheduled jobs across replicas.
 
 **Run exactly one scheduler process** across the whole deployment. Frappe's
@@ -280,11 +292,15 @@ fires twice.
 
 ---
 
-## 7. Summary for your security review
+## 7. Summary for a security review
 
 - 151 Python packages, all pinned, all from PyPI, none needing a compiler.
 - 4 artifacts must come from GitHub: `frappe`, the PyPika fork, and (npm)
-  `air-datepicker`; the `gunicorn` fork has been dropped.
-- Offline install from a wheelhouse is verified working.
+  `air-datepicker`; the `gunicorn` fork has been dropped. All are archive
+  downloads, and the offline path needs none of them at install time.
+- Offline install from a wheelhouse is verified working, with zero network
+  contacts.
+- All front-end assets used by the application are vendored in-repo and
+  checksummed; nothing is fetched from a CDN at build or run time.
 - Runtime services: PostgreSQL and Redis. Nothing else listens on a port.
 - No `sudo`, no system-wide install, no kernel modules, no WSL, no Docker.
