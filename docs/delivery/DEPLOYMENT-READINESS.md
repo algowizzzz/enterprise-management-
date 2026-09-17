@@ -45,7 +45,7 @@ Status: **✅ done and verified** · **◑ partial** · **○ not started**
 | ✅ | The blank-interface failure is caught | A dangling asset link serves an empty interface while returning HTTP 200 for everything. Explicitly detected. |
 | ✅ | Stale served assets are caught | A copied asset directory goes stale silently. The check compares served bytes against source bytes. |
 | ✅ | Continuous integration | Platform rules, toolchain tests on Linux and Windows, application tests against a real database, then the health check. |
-| ○ | Load rehearsal at realistic volume | Response times under a representative inventory are unmeasured. |
+| ○ | Load rehearsal at realistic volume | Response times under a representative inventory are unmeasured. Paging and search happen in the database rather than the browser, so the design is sound, but there are no numbers. |
 | ○ | Migration rehearsal on the target | The framework's support for this database is second-class in this major version, and three divergences are already known. A rehearsal on the target is the only thing that settles whether there are more. |
 
 ## 4. Running it
@@ -56,6 +56,18 @@ Status: **✅ done and verified** · **◑ partial** · **○ not started**
 | ✅ | Backup and restore | Rehearsed end to end: backup taken, restored into a **different, empty** database, verified by row count and by the health check on the restored site. Procedure in `docs/OPERATIONS.md`. Scheduling it is still the operator's job. |
 | ◑ | Log and metric guidance | `docs/OPERATIONS.md` says what to watch; nothing collects or alerts on it yet. |
 | ○ | Certificate, port and service-account guidance | Deferred by direction. Must be closed before go-live. |
+
+## 4a. The application
+
+| | Item | Notes |
+|---|---|---|
+| ✅ | Four modules on one site | Core 57 entities, Governance 24, Policy 37, Escalation 18 — 136 entities, 371 tables. |
+| ✅ | Automated tests | 722, all passing against a real PostgreSQL database. |
+| ✅ | Migration is idempotent | Running it twice changes nothing the second time. |
+| ✅ | Module setup runs on install and migrate | Discovered rather than listed, so a module that is absent contributes nothing. |
+| ✅ | Restricted records enforced on every read path | List, report, search and the REST API, not only the interface. |
+| ✅ | No logic branches on a workflow state name | Enforced by a checker over 82 state names across all modules. |
+| ◑ | Screens | The interface foundation is built and verified. The module screens are not. |
 
 ## 5. Understanding it
 
