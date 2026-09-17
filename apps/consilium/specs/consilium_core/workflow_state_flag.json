@@ -65,6 +65,13 @@
       "description": "Used by the import pipeline; a staged row may be committed from this state."
     },
     {
+      "fieldname": "requires_statement",
+      "fieldtype": "Check",
+      "label": "Requires Statement",
+      "default": "0",
+      "description": "Whether a record in this state must carry a written statement \u2014 an attestation exception or a declination."
+    },
+    {
       "fieldname": "notes",
       "fieldtype": "Text",
       "label": "Notes"

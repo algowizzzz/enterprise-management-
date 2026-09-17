@@ -1,11 +1,17 @@
 """Governance Refusal Log — controller.
 
-Every refusal a Core control issued: what was attempted, on which record, why it was refused, by whom and when. Written on an out-of-band connection so that the refusal survives the rollback of the operation it refused. Append-only. [Addition — the model requires refusals to be audited but names no artefact.]
+Written out of band by :mod:`consilium.consilium_core.audit`. Nothing edits or
+deletes a refusal record through the application.
 """
 
 from frappe.model.document import Document
 
+from consilium.consilium_core import append_only
+
 
 class GovernanceRefusalLog(Document):
     def validate(self):
-        pass
+        append_only.guard_update(self, control="refusal log append-only")
+
+    def on_trash(self):
+        append_only.guard_delete(self, control="refusal log append-only")

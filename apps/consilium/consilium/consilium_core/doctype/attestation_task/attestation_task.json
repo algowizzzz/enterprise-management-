@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "ATSK-.#####",
- "creation": "2026-09-17 22:10:23.310074",
+ "creation": "2026-09-17 22:22:19.589026",
  "description": "One row per campaign, participant and record. Standalone, not a child, so a participant's task list is a first-class query and tasks survive campaign edits (02-data-model.md \u00a75.1).",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -19,6 +19,7 @@
   "is_open",
   "is_editable",
   "requires_review",
+  "requires_statement",
   "responded_on",
   "response_statement",
   "second_signed_on",
@@ -114,6 +115,13 @@
    "read_only": 1
   },
   {
+   "description": "Semantic flag derived from Workflow State Flag. Validation reads this, never the status label.",
+   "fieldname": "requires_statement",
+   "fieldtype": "Check",
+   "label": "Requires Statement",
+   "read_only": 1
+  },
+  {
    "fieldname": "responded_on",
    "fieldtype": "Datetime",
    "label": "Responded On",
@@ -147,7 +155,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 22:10:23.310083",
+ "modified": "2026-09-17 22:22:19.589039",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Attestation Task",

@@ -1,11 +1,10 @@
-"""Import Row — controller.
-
-One staged record: what arrived, what it mapped to, and what happened to it. High volume, so field-level change history is off — the row itself is the history.
-"""
+"""ImportRow — controller. Semantic flags are derived from the state label."""
 
 from frappe.model.document import Document
+
+from consilium.consilium_core.state_flags import apply_state_flags
 
 
 class ImportRow(Document):
     def validate(self):
-        pass
+        apply_state_flags(self)

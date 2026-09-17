@@ -3,8 +3,8 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:legal_entity_code",
- "creation": "2026-09-17 22:10:23.320403",
- "description": "Legal entities that governance forums, policies and escalations can be attributed to.",
+ "creation": "2026-09-17 22:34:41.972487",
+ "description": "Legal entities within the group. A tree, because entities sit under one another (02-data-model.md T-1 marks it hierarchical).",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -15,6 +15,11 @@
   "is_active",
   "sort_order",
   "external_code",
+  "parent_legal_entity",
+  "is_group",
+  "lft",
+  "rgt",
+  "old_parent",
   "is_material_entity"
  ],
  "fields": [
@@ -59,6 +64,44 @@
    "label": "External Code"
   },
   {
+   "fieldname": "parent_legal_entity",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Parent",
+   "options": "Legal Entity"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "lft",
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "rgt",
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Old Parent",
+   "no_copy": 1,
+   "options": "Legal Entity",
+   "print_hide": 1
+  },
+  {
    "default": "0",
    "fieldname": "is_material_entity",
    "fieldtype": "Check",
@@ -66,11 +109,13 @@
   }
  ],
  "index_web_pages_for_search": 0,
+ "is_tree": 1,
  "links": [],
- "modified": "2026-09-17 22:10:23.320412",
+ "modified": "2026-09-17 22:34:41.972519",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Legal Entity",
+ "nsm_parent_field": "parent_legal_entity",
  "owner": "Administrator",
  "permissions": [
   {

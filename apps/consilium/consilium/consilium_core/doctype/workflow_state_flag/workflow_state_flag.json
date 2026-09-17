@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "WSFL-.#####",
- "creation": "2026-09-17 22:10:23.326172",
+ "creation": "2026-09-17 22:22:19.588565",
  "description": "The configuration that turns a workflow state or status label into semantic flags (02-data-model.md M-4). State names live here, as data. No business logic anywhere compares a state string; it reads the flags this table sets. That is what makes a state rename configuration rather than a rebuild. [Addition \u2014 the model states the rule and names the flags but defines no table to hold the mapping.]",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -16,6 +16,7 @@
   "requires_review",
   "is_open",
   "is_committable",
+  "requires_statement",
   "notes"
  ],
  "fields": [
@@ -77,6 +78,13 @@
    "label": "Is Committable"
   },
   {
+   "default": "0",
+   "description": "Whether a record in this state must carry a written statement \u2014 an attestation exception or a declination.",
+   "fieldname": "requires_statement",
+   "fieldtype": "Check",
+   "label": "Requires Statement"
+  },
+  {
    "fieldname": "notes",
    "fieldtype": "Text",
    "label": "Notes"
@@ -84,7 +92,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 22:10:23.326181",
+ "modified": "2026-09-17 22:22:19.588598",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Workflow State Flag",

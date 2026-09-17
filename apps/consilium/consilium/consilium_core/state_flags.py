@@ -18,7 +18,14 @@ import frappe
 from frappe import _
 
 #: The flags a state may set. A record receives only the ones it declares.
-FLAG_FIELDS = ("is_editable", "is_active", "requires_review", "is_open", "is_committable")
+FLAG_FIELDS = (
+    "is_editable",
+    "is_active",
+    "requires_review",
+    "is_open",
+    "is_committable",
+    "requires_statement",
+)
 
 CACHE_PREFIX = "consilium_core:state_flags"
 

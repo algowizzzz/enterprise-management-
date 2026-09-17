@@ -1,11 +1,10 @@
-"""Notification Dispatch — controller.
-
-Evidence that a party was notified. Recorded because several requirements need proof of notification, and an email queue that prunes itself is not evidence.
-"""
+"""NotificationDispatch — controller. Semantic flags are derived from the state label."""
 
 from frappe.model.document import Document
+
+from consilium.consilium_core.state_flags import apply_state_flags
 
 
 class NotificationDispatch(Document):
     def validate(self):
-        pass
+        apply_state_flags(self)

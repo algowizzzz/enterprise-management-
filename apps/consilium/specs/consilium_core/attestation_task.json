@@ -95,6 +95,13 @@
       "read_only": 1
     },
     {
+      "fieldname": "requires_statement",
+      "fieldtype": "Check",
+      "label": "Requires Statement",
+      "read_only": 1,
+      "description": "Semantic flag derived from Workflow State Flag. Validation reads this, never the status label."
+    },
+    {
       "fieldname": "responded_on",
       "fieldtype": "Datetime",
       "label": "Responded On",

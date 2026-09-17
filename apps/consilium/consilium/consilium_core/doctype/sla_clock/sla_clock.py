@@ -1,11 +1,10 @@
-"""SLA Clock — controller.
-
-One clock per record per definition.
-"""
+"""SLAClock — controller. Semantic flags are derived from the state label."""
 
 from frappe.model.document import Document
+
+from consilium.consilium_core.state_flags import apply_state_flags
 
 
 class SLAClock(Document):
     def validate(self):
-        pass
+        apply_state_flags(self)

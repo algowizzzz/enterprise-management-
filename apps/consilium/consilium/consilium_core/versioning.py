@@ -29,6 +29,15 @@ from consilium.consilium_core import audit
 _SNAPSHOT_SKIP = {"modified", "modified_by", "creation", "owner", "docstatus", "idx", "doctype"}
 
 
+def as_dict(value) -> dict:
+    """A JSON column comes back parsed on one path and raw on another."""
+    if not value:
+        return {}
+    if isinstance(value, dict):
+        return value
+    return json.loads(value)
+
+
 def snapshot_of(doc) -> dict:
     data = doc.as_dict(convert_dates_to_str=True, no_nulls=False)
     return {k: v for k, v in data.items() if not k.startswith("_") and k not in _SNAPSHOT_SKIP}
@@ -67,10 +76,16 @@ def _next_version_number(subject_doctype: str, subject_name: str) -> int:
     return int(highest) + 1
 
 
-def _link_chain(previous, new_version_name: str) -> None:
-    """Close the previous version. The only mutation this module performs."""
+def _stand_down(previous) -> None:
+    """Take the head out of currency, before its successor claims it."""
     previous.flags.consilium_chain_update = True
     previous.is_current = 0
+    previous.save(ignore_permissions=True)
+
+
+def _link_chain(previous, new_version_name: str) -> None:
+    """Point the old head at its successor. The only other mutation made here."""
+    previous.flags.consilium_chain_update = True
     previous.superseded_by = new_version_name
     previous.save(ignore_permissions=True)
 
@@ -97,6 +112,11 @@ def create_version(
 
     previous = current_version(subject.doctype, subject.name)
     snapshot = metadata_snapshot if metadata_snapshot is not None else snapshot_of(subject)
+
+    if previous:
+        # Exactly one version is current per subject, and a partial unique index
+        # enforces it, so the head stands down before its successor is written.
+        _stand_down(previous)
 
     version = frappe.get_doc(
         {
@@ -161,7 +181,7 @@ def revert_to_version(
     if head.name == target.name:
         frappe.throw(_("Version {0} is already current; there is nothing to revert to.").format(target_version))
 
-    snapshot = json.loads(target.metadata_snapshot or "{}")
+    snapshot = as_dict(target.metadata_snapshot)
 
     subject = frappe.get_doc(subject_doctype, subject_name)
     if apply_to_subject:

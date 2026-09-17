@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "CRS-.#####",
- "creation": "2026-09-17 22:10:23.312894",
+ "creation": "2026-09-17 22:35:57.317749",
  "description": "The versioned, admin-defined questions, answer options and rules that produce a classification outcome (02-data-model.md \u00a75.2). Data, not code. A rule set that has classified anything is locked; a change is a new version.",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -15,7 +15,7 @@
   "effective_from",
   "effective_to",
   "is_active",
-  "is_locked",
+  "is_sealed",
   "default_outcome",
   "questions",
   "answer_options",
@@ -70,10 +70,10 @@
    "label": "Active"
   },
   {
-   "description": "Set the first time this rule set classifies a record. A locked rule set cannot be edited.",
-   "fieldname": "is_locked",
+   "description": "Set the first time this rule set classifies a record. A sealed rule set cannot be edited; a change is a new version. (Named is_sealed, not is_locked: the framework's Document class already has an is_locked property and it would shadow the field.)",
+   "fieldname": "is_sealed",
    "fieldtype": "Check",
-   "label": "Locked",
+   "label": "Sealed",
    "read_only": 1
   },
   {
@@ -90,7 +90,7 @@
    "options": "Classification Question"
   },
   {
-   "description": "Flattened onto the rule set and keyed by question_code: the framework does not support a table inside a table. See the note in the module README.",
+   "description": "Flattened onto the rule set and keyed by question_code: the framework does not support a table inside a table, so the model's nesting of options under questions is expressed with a key column instead.",
    "fieldname": "answer_options",
    "fieldtype": "Table",
    "label": "Answer Options",
@@ -105,7 +105,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 22:10:23.312902",
+ "modified": "2026-09-17 22:35:57.317779",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Classification Rule Set",

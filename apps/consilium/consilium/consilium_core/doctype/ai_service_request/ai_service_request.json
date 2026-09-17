@@ -2,8 +2,8 @@
  "actions": [],
  "allow_rename": 0,
  "autoname": "AIRQ-.#####",
- "creation": "2026-09-17 22:10:23.307802",
- "description": "What data left the platform, to which capability, and what came back (02-data-model.md \u00a75.10). A data-boundary control. Append-only.",
+ "creation": "2026-09-17 22:22:19.589363",
+ "description": "What data left the platform, to which capability, and what came back (02-data-model.md \u00a75.10). A data-boundary control. Append-only. Write access exists only so the response can be recorded once; the controller freezes every request field and refuses a second response.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -114,7 +114,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 22:10:23.307832",
+ "modified": "2026-09-17 22:22:19.589373",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "AI Service Request",
@@ -128,7 +128,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager"
+   "role": "System Manager",
+   "write": 1
   },
   {
    "create": 1,
@@ -136,7 +137,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Consilium Administrator"
+   "role": "Consilium Administrator",
+   "write": 1
   },
   {
    "export": 1,

@@ -1,7 +1,7 @@
 {
   "name": "Legal Entity",
   "module": "Consilium Core",
-  "description": "Legal entities that governance forums, policies and escalations can be attributed to.",
+  "description": "Legal entities within the group. A tree, because entities sit under one another (02-data-model.md T-1 marks it hierarchical).",
   "autoname": "field:legal_entity_code",
   "allow_rename": 1,
   "title_field": "legal_entity_name",
@@ -51,6 +51,44 @@
       "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014 02-data-model.md \u00a711 I-2.]"
     },
     {
+      "fieldname": "parent_legal_entity",
+      "fieldtype": "Link",
+      "label": "Parent",
+      "options": "Legal Entity",
+      "ignore_user_permissions": 1
+    },
+    {
+      "fieldname": "is_group",
+      "fieldtype": "Check",
+      "label": "Is Group",
+      "default": "0"
+    },
+    {
+      "fieldname": "lft",
+      "fieldtype": "Int",
+      "label": "lft",
+      "hidden": 1,
+      "no_copy": 1,
+      "print_hide": 1
+    },
+    {
+      "fieldname": "rgt",
+      "fieldtype": "Int",
+      "label": "rgt",
+      "hidden": 1,
+      "no_copy": 1,
+      "print_hide": 1
+    },
+    {
+      "fieldname": "old_parent",
+      "fieldtype": "Link",
+      "label": "Old Parent",
+      "options": "Legal Entity",
+      "hidden": 1,
+      "no_copy": 1,
+      "print_hide": 1
+    },
+    {
       "fieldname": "is_material_entity",
       "fieldtype": "Check",
       "label": "Material Entity",
@@ -89,5 +127,7 @@
       "read": 1
     }
   ],
-  "allow_import": 1
+  "allow_import": 1,
+  "is_tree": 1,
+  "nsm_parent_field": "parent_legal_entity"
 }

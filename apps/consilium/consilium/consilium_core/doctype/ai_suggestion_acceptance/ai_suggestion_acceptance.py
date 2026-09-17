@@ -1,11 +1,13 @@
-"""AI Suggestion Acceptance — controller.
-
-Who took responsibility for machine-generated content, against which version (02-data-model.md §5.10). An accountability control, not derivable from the request record. Append-only.
-"""
+"""AI Suggestion Acceptance — controller. Append-only."""
 
 from frappe.model.document import Document
+
+from consilium.consilium_core import append_only
 
 
 class AISuggestionAcceptance(Document):
     def validate(self):
-        pass
+        append_only.guard_update(self, control="ai acceptance append-only")
+
+    def on_trash(self):
+        append_only.guard_delete(self, control="ai acceptance append-only")

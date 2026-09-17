@@ -1,11 +1,10 @@
-"""Import Batch — controller.
-
-One file, staged, validated and committed. The file is retained exactly as received, with its hash, because the requirement is that integration activity be traceable.
-"""
+"""ImportBatch — controller. Semantic flags are derived from the state label."""
 
 from frappe.model.document import Document
+
+from consilium.consilium_core.state_flags import apply_state_flags
 
 
 class ImportBatch(Document):
     def validate(self):
-        pass
+        apply_state_flags(self)
