@@ -159,6 +159,40 @@ def main() -> int:
         assert js and css, f"found {len(js)} scripts and {len(css)} stylesheets; expected many of each"
         return f"{len(js)} scripts, {len(css)} stylesheets"
 
+    @check("Served assets match the application source")
+    def _():
+        # Assets reach the web server either by a link to the application's
+        # public directory or by a copy of it. A copy is the safer choice on
+        # Windows, where links need a privilege the installer may not hold — but
+        # a copy goes stale the moment the application changes, and a stale copy
+        # fails silently: the page loads, the old stylesheet applies, and nothing
+        # anywhere reports a problem. So compare the two.
+        import consilium
+        source = Path(consilium.__file__).parent / "public"
+        served = sites_path / "assets" / "consilium"
+        assert served.exists(), (
+            f"{served} does not exist. The application's assets are not being served. "
+            f"Run the asset install step."
+        )
+        if served.is_symlink():
+            return "served by link; always current"
+
+        stale = []
+        for path in source.rglob("*"):
+            if not path.is_file() or "__pycache__" in path.parts:
+                continue
+            counterpart = served / path.relative_to(source)
+            if not counterpart.exists():
+                stale.append(f"{path.relative_to(source)} is not served")
+            elif counterpart.read_bytes() != path.read_bytes():
+                stale.append(f"{path.relative_to(source)} differs from source")
+        assert not stale, (
+            f"the served copy is out of date: {stale[:5]}. "
+            f"Re-run the asset install step. A stale copy serves the old files "
+            f"without reporting any error."
+        )
+        return f"served by copy; {sum(1 for p in source.rglob('*') if p.is_file())} files current"
+
     @check("Vendored libraries are present and unmodified")
     def _():
         import hashlib
