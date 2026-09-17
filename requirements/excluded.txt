@@ -1,0 +1,7 @@
+# Declared by frappe's pyproject.toml, NOT required by a winbench deployment.
+# Listed here so your security review knows what we deliberately do not install.
+
+gunicorn      # deploy-only; zero `import gunicorn` anywhere in frappe. Replaced by waitress.
+              # IMPORTANT: frappe pins it to a GitHub fork
+              #   gunicorn @ git+https://github.com/frappe/gunicorn@bb554053...
+              # so dropping it removes one hard GitHub dependency from the install.

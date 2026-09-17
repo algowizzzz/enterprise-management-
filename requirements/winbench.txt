@@ -1,0 +1,8 @@
+# winbench's own dependencies (on top of frappe's).
+# All pure-Python or have Windows wheels; none needs a compiler.
+click>=8.1
+waitress>=3.0          # replaces gunicorn -- pure Python WSGI server, Windows-native
+psycopg2-binary>=2.9   # PostgreSQL driver; ships a win_amd64 wheel
+redis>=4.5,<5
+rq>=1.15,<2
+psutil>=5.9            # process priority + the `resource` stub's peak-RSS

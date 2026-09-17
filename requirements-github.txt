@@ -1,0 +1,48 @@
+# ============================================================================
+# The artifacts that CANNOT come from PyPI or npm.
+# This is the list to take to your network/security team.
+#
+# All are plain ARCHIVE DOWNLOADS -- git is NOT required. A browser download
+# through the corporate proxy is enough. Two URL forms are given for each,
+# because enterprises block github.com and codeload.github.com differently;
+# the first redirects to the second, so if one is blocked try the other.
+#
+# Versions below are the exact ones verified working together.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# 1. REQUIRED -- the Frappe framework itself (v15.121.0, ~40 MB)
+#    PyPI's "frappe" package is a 0.0.1 placeholder, not the framework.
+# ----------------------------------------------------------------------------
+https://github.com/frappe/frappe/archive/refs/tags/v15.121.0.zip
+https://codeload.github.com/frappe/frappe/zip/refs/tags/v15.121.0
+#    Then:  winbench init C:\frappe --from-archive <downloaded>.zip
+
+# ----------------------------------------------------------------------------
+# 2. REQUIRED -- frappe's PyPika fork
+#    Pinned commit 2c50e6142b2d61d2d243e466fdd5dc03b3d918f2 (from frappe's
+#    pyproject.toml). Do NOT substitute PyPI's PyPika: both report version
+#    0.48.9, but the fork rewrites ~850 lines across terms.py / queries.py /
+#    dialects.py / functions.py -- the modules frappe imports most. The wrong
+#    one installs cleanly and runs basic queries, so the failure is silent.
+# ----------------------------------------------------------------------------
+https://github.com/frappe/pypika/archive/2c50e6142b2d61d2d243e466fdd5dc03b3d918f2.zip
+https://codeload.github.com/frappe/pypika/zip/2c50e6142b2d61d2d243e466fdd5dc03b3d918f2
+#    Then:  pip install --no-deps <extracted-pypika-dir>
+#    Or build it into an offline wheelhouse on a connected machine:
+#      pip wheel --no-deps -w wheelhouse \
+#        "PyPika @ git+https://github.com/frappe/pypika@2c50e6142b2d61d2d243e466fdd5dc03b3d918f2"
+#      rm wheelhouse/PyPika-*.tar.gz    # drop the upstream sdist pip also pulls
+
+# ----------------------------------------------------------------------------
+# 3. OPTIONAL -- air-datepicker (npm), build-time only
+#    Needed only by `winbench build`. Build assets once on a connected machine
+#    and copy sites/assets/ across -- the runtime never needs npm or node.
+# ----------------------------------------------------------------------------
+https://codeload.github.com/frappe/air-datepicker/tar.gz/ed37b94d95c68d8544357e330be0c89d044a3eea
+
+# ----------------------------------------------------------------------------
+# NOT required -- deliberately dropped, which removes a GitHub dependency:
+#   https://github.com/frappe/gunicorn   (zero `import gunicorn` in frappe;
+#                                         winbench uses waitress from PyPI)
+# ----------------------------------------------------------------------------
