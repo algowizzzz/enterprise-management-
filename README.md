@@ -108,7 +108,7 @@ an asset regression leaves a blank page while every API check still returns 200.
 | `bench new-site` | `winbench new-site` | PostgreSQL only |
 | `bench --site X migrate` | `winbench migrate` | unchanged |
 | `bench build` | `winbench build` | symlinks → junctions |
-| *(none)* | `winbench assets` | export/import built assets — **no node needed** |
+| *(none)* | `winbench assets` | import the committed prebuilt bundle — **no node needed** |
 | `bench start` | `winbench start` | own supervisor, no Procfile |
 | `bench serve` | `winbench serve` | waitress; `--proxy`, `--no-statics` |
 | `bench worker` | `winbench worker` | no `os.fork()` |
@@ -122,9 +122,10 @@ an asset regression leaves a blank page while every API check still returns 200.
 
 - **Python 3.11**, **PostgreSQL 16**, and a Redis-compatible server
   (**Memurai** on Windows — Redis has no official Windows build).
-- Node 22 + yarn for asset builds only; **the runtime needs neither**, and
-  `winbench assets --export/--import` moves a prebuilt bundle to a machine where
-  yarn does not work. Verified with node absent entirely.
+- Node 22 + yarn for asset builds only — **and a prebuilt bundle is committed in
+  [`assets/`](assets/)**, so you can skip node entirely:
+  `winbench assets --import assets/frappe-assets-v15.121.0.tar.gz --copy`.
+  Verified with node absent from `PATH` and `node_modules` deleted.
 - 150 pinned Python packages in [`requirements.txt`](requirements.txt) — all
   resolve from PyPI, and **none needs a C compiler on Windows**.
 - Two GitHub URLs that cannot come from PyPI:

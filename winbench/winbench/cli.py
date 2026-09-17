@@ -410,7 +410,10 @@ def scheduler(site):
               help="Unpack an assets bundle produced by --export, then relink.")
 @click.option("--copy", "use_copy", is_flag=True,
               help="Copy assets into sites/assets instead of linking. Safer on Windows.")
-def assets(export_to, import_from, use_copy):
+@click.option("--with-sourcemaps", is_flag=True,
+              help="Include .js.map files in an export. They are ~75%% of the bytes and "
+                   "are only read by browser devtools, so they are excluded by default.")
+def assets(export_to, import_from, use_copy, with_sourcemaps):
 	"""Link, export or import built assets -- without running node.
 
 	`winbench build` needs node and yarn. On a locked-down laptop yarn is often
@@ -445,7 +448,7 @@ def assets(export_to, import_from, use_copy):
 	if import_from:
 		_import_assets(bench, Path(import_from))
 	if export_to:
-		_export_assets(bench, Path(export_to))
+		_export_assets(bench, Path(export_to), with_sourcemaps=with_sourcemaps)
 		return
 
 	_relink_assets(use_copy)
@@ -472,13 +475,17 @@ def _relink_assets(use_copy: bool) -> None:
 	frappe.build.make_asset_dirs(hard_link=use_copy)
 
 
-def _export_assets(bench: Bench, destination: Path) -> None:
+def _export_assets(bench: Bench, destination: Path, with_sourcemaps: bool = False) -> None:
 	"""Bundle built assets into a portable archive.
 
 	Symlinks are *dereferenced* deliberately. `sites/assets/<app>` points into
 	this bench's `apps/` directory, so an archive that preserved the link would
 	arrive on the target machine pointing at a path that does not exist there --
 	a bundle that looks fine and serves nothing.
+
+	Source maps are excluded unless asked for: they are roughly three quarters of
+	the bytes and are only ever fetched by browser devtools, never by the running
+	application.
 	"""
 	import tarfile
 
@@ -502,12 +509,18 @@ def _export_assets(bench: Bench, destination: Path) -> None:
 	if not members:
 		raise click.ClickException("Nothing to export -- run `winbench build --production` first.")
 
+	def _keep(info: "tarfile.TarInfo"):
+		if not with_sourcemaps and info.name.endswith(".map"):
+			return None
+		return info
+
 	with tarfile.open(destination, "w:gz", dereference=True) as archive:
 		for source, arcname in members:
-			archive.add(str(source), arcname=arcname)
+			archive.add(str(source), arcname=arcname, filter=_keep)
 
 	size_mb = destination.stat().st_size / (1024 * 1024)
-	click.echo(f"Wrote {destination} ({size_mb:.1f} MB)")
+	maps = "with" if with_sourcemaps else "without"
+	click.echo(f"Wrote {destination} ({size_mb:.1f} MB, {maps} source maps)")
 	click.echo("On the target machine: winbench assets --import <this file> --copy")
 
 

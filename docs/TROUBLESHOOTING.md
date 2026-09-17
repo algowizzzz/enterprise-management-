@@ -123,9 +123,13 @@ pip install -e <bench>/apps/frappe --no-deps --no-build-isolation
 static build output. Compile once on any machine that has working node, then:
 
 ```powershell
-winbench assets --export frappe-assets.tar.gz     # machine with node, ~15 MB
-winbench assets --import frappe-assets.tar.gz --copy   # locked-down laptop
+winbench assets --import assets/frappe-assets-v15.121.0.tar.gz --copy
 ```
+
+The bundle is committed in this repo (`assets/`), so `git pull` is all you need —
+no machine with node required. To rebuild it for another Frappe version, run
+`winbench build --production && winbench assets --export <file>` anywhere node
+works.
 
 Verified with `node_modules` absent and node off `PATH` entirely: full Desk,
 8/8 smoke checks. Use `--copy` on Windows — it copies rather than symlinks, so

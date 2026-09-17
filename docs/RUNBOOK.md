@@ -134,13 +134,18 @@ winbench start
 > only step that needs node and yarn. Assets are static build output — compile
 > them once anywhere, and move them. **The runtime never needs node or yarn.**
 >
-> ```powershell
-> # on any machine that has working node + yarn
-> winbench build --production
-> winbench assets --export frappe-assets.tar.gz     # ~15 MB
+> **A prebuilt bundle for v15.121.0 is committed to this repo**, so you do not
+> need a machine with node at all:
 >
-> # on the locked-down laptop -- no node, no yarn, no node_modules
-> winbench assets --import frappe-assets.tar.gz --copy
+> ```powershell
+> winbench assets --import assets/frappe-assets-v15.121.0.tar.gz --copy
+> ```
+>
+> To regenerate it for a different Frappe version, on any machine with node:
+>
+> ```powershell
+> winbench build --production
+> winbench assets --export assets/frappe-assets-<version>.tar.gz
 > ```
 >
 > Verified: a bench with `node_modules` absent and node removed from `PATH`
