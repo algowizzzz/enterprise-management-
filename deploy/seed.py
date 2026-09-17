@@ -52,6 +52,47 @@ def load_file(frappe, path: Path) -> tuple[int, int, int]:
     return created, skipped, 0
 
 
+def complete_setup(frappe) -> str:
+    """Mark the site's first-run setup as done.
+
+    A freshly created site sends every user to the setup wizard and refuses to
+    show anything else until it is finished. The wizard asks for a company name,
+    a fiscal year and similar details that mean nothing here — this product
+    configures itself through its own reference data, not through that wizard.
+
+    Left alone it is a hard block on an unattended installation: the installer
+    finishes, the health check passes, and the first person to open the system
+    is trapped on a form they cannot meaningfully answer.
+
+    Completion is tracked per application on `Installed Application`, not in
+    System Settings, which is the non-obvious part.
+    """
+    if frappe.is_setup_complete():
+        return "already complete"
+
+    frappe.db.set_value("Installed Application", {"app_name": "frappe"},
+                        "is_setup_complete", 1)
+    settings = frappe.get_single("System Settings")
+    if not settings.time_zone:
+        settings.time_zone = "UTC"
+        settings.flags.ignore_mandatory = True
+        settings.save(ignore_permissions=True)
+    frappe.db.commit()
+    frappe.clear_cache()
+
+    # Verify against the database rather than through `frappe.is_setup_complete()`.
+    # That helper reads through the query cache, which within the same process
+    # still holds the pre-write value and reports failure for a write that in
+    # fact succeeded.
+    remaining = frappe.db.sql(
+        """select count(*) from "tabInstalled Application"
+           where app_name in ('frappe', 'erpnext') and coalesce(is_setup_complete, 0) = 0"""
+    )[0][0]
+    if remaining:
+        return "FAILED — the site will show the setup wizard to every user"
+    return "completed"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -66,6 +107,9 @@ def main() -> int:
     frappe.connect()
     frappe.set_user("Administrator")
 
+    print(f"\nPreparing {args.site}\n")
+    print(f"  first-run setup{'':<22} {complete_setup(frappe)}")
+
     files = sorted(REFERENCE_DIR.glob("*.json"))
     if args.only:
         files = [f for f in files if f.name == args.only]
@@ -74,7 +118,7 @@ def main() -> int:
         return 1
 
     total_created = total_skipped = total_missing = 0
-    print(f"\nLoading reference data into {args.site}\n")
+    print()
     for path in files:
         created, skipped, missing = load_file(frappe, path)
         total_created += created
