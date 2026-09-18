@@ -83,6 +83,11 @@ run, not reasoned about.
 
 ---
 
+> **Picking this up for the first time, human or otherwise? Read
+> [`START-HERE.md`](START-HERE.md).** It covers what this is, what is done, what
+> is not, the rules that are enforced rather than encouraged, and the one known
+> defect worth fixing first.
+
 ## New here? Read in this order
 
 | # | Document | Why |
