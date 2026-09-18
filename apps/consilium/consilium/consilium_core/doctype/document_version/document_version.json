@@ -52,7 +52,7 @@
    "reqd": 1
   },
   {
-   "description": "The business-facing label. Distinct from version_number, which is a counter.",
+   "description": "The version as people refer to it, such as 2.1. The version number is a separate counter.",
    "fieldname": "version_label",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -148,7 +148,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.707468",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Document Version",

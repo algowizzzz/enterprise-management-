@@ -194,10 +194,11 @@
    "label": "Footer Text"
   }
  ],
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-18 03:36:53.130570",
+ "modified": "2026-09-18 15:23:13.276071",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Portal Branding",

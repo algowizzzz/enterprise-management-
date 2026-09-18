@@ -21,7 +21,8 @@
     <h1 class="cns-hero-title" id="hero-heading">{{ brand.hero_title | e }}</h1>
     <p class="cns-hero-text">{{ brand.hero_text | e }}</p>
     <div class="cns-hero-actions">
-      {%- if brand.hero_primary_label and brand.hero_primary_url %}
+      {%- if brand.hero_primary_label and brand.hero_primary_url
+            and (brand.hero_primary_url != "/forums" or cns_can_read("Governance Forum")) %}
       <a class="cns-hero-btn cns-hero-btn-primary" href="{{ brand.hero_primary_url | e }}">
         {{ brand.hero_primary_label | e }} <i class="bi bi-arrow-right" aria-hidden="true"></i>
       </a>
@@ -37,11 +38,13 @@
 </section>
 
 <nav class="cns-quick-grid" aria-label="Where to go next">
+  {%- if cns_can_read("Governance Forum") %}
   <a class="cns-quick-tile" href="/forums">
     <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-people"></i></span>
-    <span><span class="cns-quick-title">Forums</span>
+    <span><span class="cns-quick-title">Governance</span>
       <span class="cns-quick-note">Committees, their members, meetings and decisions</span></span>
   </a>
+  {%- endif %}
   {%- if cns_can_read("Governing Document") %}
   <a class="cns-quick-tile" href="/policies">
     <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
@@ -58,7 +61,7 @@
   {%- endif %}
   <a class="cns-quick-tile" href="/reports">
     <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-bar-chart"></i></span>
-    <span><span class="cns-quick-title">Reports</span>
+    <span><span class="cns-quick-title">Insights</span>
       <span class="cns-quick-note">The picture across all three, for management</span></span>
   </a>
 </nav>
@@ -67,6 +70,10 @@
 {% block page_content %}
 
 <!-- =============== Where the inventory stands =============== -->
+{#- The dashboard and the map count forums. Someone whose roles do not read
+    forums (the policy office, for one) was shown a page of "unavailable"
+    boxes here; the section is left out for them instead. #}
+{%- if cns_can_read("Governance Forum") %}
 <section aria-labelledby="dash-heading">
   <h2 id="dash-heading" class="cns-eyebrow">Where the inventory stands</h2>
 
@@ -181,6 +188,7 @@
     </div>
   </section>
 </section>
+{%- endif %}
 
 <!-- =============== Using the system =============== -->
 <section aria-labelledby="guide-heading" style="margin-top: var(--cns-space-6);">
@@ -392,7 +400,10 @@
 
   var typeLabels = {};
 
-  var forumsPromise = Consilium.api.list("Governance Forum", {
+  /* Present only for a viewer who may read forums (see the template). */
+  var FORUMS = !!document.getElementById("metric-strip");
+
+  var forumsPromise = !FORUMS ? Promise.resolve([]) : Consilium.api.list("Governance Forum", {
     fields: ["name", "forum_name", "forum_type", "primary_risk_category", "compliance_status",
              "quorum_rule_type", "requires_review", "is_active", "next_review_on", "modified"],
     order_by: "modified desc",
@@ -446,13 +457,14 @@
       body.innerHTML = types.map(function (t) {
         return "<tr><th scope=\"row\">" + escapeHtml(t.forum_type_name || t.name) + "</th>" +
           "<td>" + escapeHtml(t.definition || "No definition recorded.") + "</td>" +
-          '<td class="cns-num">' + (perType[t.name] || 0) + "</td></tr>";
+          '<td class="cns-num">' + (FORUMS ? (perType[t.name] || 0) : "—") + "</td></tr>";
       }).join("") ||
         '<tr><td colspan="3" class="cns-text-muted">No forum types are configured.</td></tr>';
 
       /* Recent changes. */
       var recent = rows.slice(0, 6);
       var list = document.getElementById("recent-changes");
+      if (!list) return;
       list.innerHTML = recent.map(function (r) {
         var tone = STATUS_TONES[r.compliance_status] || "neutral";
         return "<li><a href=\"/forum?name=" + escapeAttr(encodeURIComponent(r.name)) + "\">" +
@@ -465,6 +477,7 @@
     })
     .catch(function (error) {
       var strip = document.getElementById("metric-strip");
+      if (!strip) return;
       strip.innerHTML = '<div class="cns-alert cns-status-danger" role="alert">' +
         '<i class="bi bi-x-octagon" aria-hidden="true"></i><div>' +
         escapeHtml(error.message || "The inventory could not be read.") + "</div></div>";
@@ -478,7 +491,7 @@
         '<tr><td colspan="3" class="cns-text-muted">Unavailable.</td></tr>';
     });
 
-  Consilium.api
+  if (FORUMS) Consilium.api
     .count("Committee Formation Request", { filters: [["is_open", "=", 1]] })
     .then(function (n) { setMetric("requests", n); })
     .catch(function () { setMetric("requests", "—"); });
@@ -593,7 +606,7 @@
     document.getElementById("forum-map-list").innerHTML = list;
   }
 
-  Promise.all([Consilium.api.call("consilium.governance.inventory.forum_map", {}), typesPromise.catch(function () { return []; })])
+  if (FORUMS) Promise.all([Consilium.api.call("consilium.governance.inventory.forum_map", {}), typesPromise.catch(function () { return []; })])
     .then(function (results) { drawForumMap(results[0]); })
     .catch(function (error) {
       document.getElementById("forum-map").innerHTML =
@@ -616,35 +629,40 @@
       });
   }
 
+  /* Templates name their type by code ("FRAMEWORK"); show the type's name. */
+  var refs = Consilium.reference.load(["Governing Document Type", "Escalation Type"]).catch(function () {});
+
   renderTemplates(
     "doc-templates",
-    Consilium.api.list("Document Template", {
+    refs.then(function () { return Consilium.api.list("Document Template", {
       fields: ["name", "template_title", "document_type", "action"],
       filters: [["is_active", "=", 1]],
       order_by: "template_title asc",
       limit_page_length: 20
-    }),
+    }); }),
     function (row) {
       return "<li>" + escapeHtml(row.template_title || row.name) +
         ' <span class="cns-badge cns-status-neutral">' + escapeHtml(row.action || "") + "</span>" +
         '<br><span class="cns-text-muted cns-text-xs">For ' +
-        escapeHtml(row.document_type || "any document type") + "</span></li>";
+        escapeHtml(row.document_type ? Consilium.reference.label("Governing Document Type", row.document_type)
+          : "any document type") + "</span></li>";
     }
   );
 
   renderTemplates(
     "esc-templates",
-    Consilium.api.list("Escalation Template", {
+    refs.then(function () { return Consilium.api.list("Escalation Template", {
       fields: ["name", "title", "escalation_type", "template_scope"],
       filters: [["is_active", "=", 1]],
       order_by: "title asc",
       limit_page_length: 20
-    }),
+    }); }),
     function (row) {
       return "<li>" + escapeHtml(row.title || row.name) +
         ' <span class="cns-badge cns-status-neutral">' + escapeHtml(row.template_scope || "") + "</span>" +
         '<br><span class="cns-text-muted cns-text-xs">Escalation type ' +
-        escapeHtml(row.escalation_type || "any") + "</span></li>";
+        escapeHtml(row.escalation_type ? Consilium.reference.label("Escalation Type", row.escalation_type) : "any") +
+        "</span></li>";
     }
   );
 

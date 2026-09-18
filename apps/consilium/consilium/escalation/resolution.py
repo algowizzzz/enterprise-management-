@@ -517,6 +517,14 @@ def workbench(escalation_matter: str) -> dict:
     if closure_name:
         closure_doc = frappe.get_doc("Escalation Closure", closure_name[0])
         closure = closure_doc.as_dict(convert_dates_to_str=True)
+    # Closing needs a recorded closure (``close_matter`` refuses without one), so
+    # "Close the matter" is offered only once there is one; before that the
+    # screen offers "Record the closure" alone. Offering both sent people to a
+    # button whose only answer was "record the closure first".
+    actions["close"] = actions["close"] and bool(closure)
+    labels = dict(ACTION_LABELS)
+    if closure:
+        labels["record_closure"] = _("Revise the closure")
 
     acting = any(actions.values())
     severity = matter.severity
@@ -539,7 +547,7 @@ def workbench(escalation_matter: str) -> dict:
             "waiting_for_owner": assignment.is_waiting(matter),
         },
         "actions": actions,
-        "action_labels": ACTION_LABELS,
+        "action_labels": labels,
         "status_targets": status_targets(matter) if actions["move_status"] else [],
         "closing_states": closing_states() if actions["close"] else [],
         "plans": plans,

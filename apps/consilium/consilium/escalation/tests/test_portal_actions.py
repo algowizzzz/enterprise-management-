@@ -74,8 +74,9 @@ class TestWorkbench(PortalTestCase):
         with as_user(self.owner):
             wb = resolution.get_matter_workbench(self.matter.name)
         on = {k for k, v in wb["actions"].items() if v}
-        self.assertTrue({"move_status", "add_action_plan", "add_risk_acceptance", "record_closure", "close",
+        self.assertTrue({"move_status", "add_action_plan", "add_risk_acceptance", "record_closure",
                          "change_pathway"} <= on)
+        self.assertNotIn("close", on, "nothing to close against until a closure is recorded")
         self.assertNotIn("record_review", on)
         self.assertNotIn("update_action_plan", on, "no plan exists to update")
         self.assertTrue(wb["people"])
@@ -362,6 +363,26 @@ class TestClosure(PortalTestCase):
         closure = frappe.get_doc("Escalation Closure", resolution.closure_of(matter.name))
         self.assertEqual(closure.approved_by, self.owner)
         self.assertEqual(len(closure.criteria_met), 2)
+
+    def test_close_is_offered_only_once_a_closure_is_recorded(self):
+        """Record the closure first; only then Close the matter (and the first
+        becomes a revision). Offering "Close the matter" earlier led straight to
+        "record the closure first"."""
+        with as_user(self.owner):
+            before = resolution.get_matter_workbench(self.matter.name)
+            self.assertTrue(before["actions"]["record_closure"])
+            self.assertFalse(before["actions"]["close"])
+            self.assertEqual(before["closing_states"], [])
+            self.assertEqual(before["action_labels"]["record_closure"], "Record the closure")
+
+            resolution.record_matter_closure(self.matter.name, "Resolved", "Done.", self.criteria())
+            after = resolution.get_matter_workbench(self.matter.name)
+        self.assertTrue(after["actions"]["close"])
+        self.assertTrue(after["closing_states"])
+        self.assertTrue(after["actions"]["record_closure"], "a recorded closure can still be revised")
+        self.assertEqual(after["action_labels"]["record_closure"], "Revise the closure")
+        self.assertEqual(resolution.ACTION_LABELS["record_closure"], "Record the closure",
+                         "the per-matter wording must not change the shared labels")
 
     def test_a_closure_is_revised_not_duplicated(self):
         with as_user(self.owner):

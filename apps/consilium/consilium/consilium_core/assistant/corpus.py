@@ -15,6 +15,9 @@ Sources, and who may see each:
 * ``docs/ADMIN-GUIDE.md`` — administrators only. It describes configuration and
   operations that an ordinary user can do nothing with, and some of it is
   better not spelled out to everyone (how impersonation works, for example).
+* ``docs/guides/NN-*.md`` — the illustrated onboarding guide, the
+  screen-by-screen walkthroughs. Everyone, except chapter 9 (administration),
+  which is for administrators.
 * ``docs/product/05-glossary.md`` — everyone; each table row is also a glossary
   entry for "what does X mean".
 * Published ``Guide Article`` records — the governance office's own guidance.
@@ -50,6 +53,12 @@ from consilium.consilium_core.assistant import pages as page_map
 USER_GUIDE = "USER-GUIDE.md"
 ADMIN_GUIDE = "ADMIN-GUIDE.md"
 GLOSSARY = os.path.join("product", "05-glossary.md")
+GUIDES = "guides"
+#: Onboarding-guide chapters only administrators can act on: chapter 9,
+#: "Administration without code" (docs/guides/09-administration.md). Every other
+#: chapter, including the glossary (11-) and questions and answers (10-), is for
+#: everyone.
+ADMIN_CHAPTERS = ("09-",)
 
 #: BM25's two constants, at their customary values. k1 limits how much a word
 #: repeated in one section counts; b how much a long section is discounted.
@@ -166,6 +175,8 @@ def docs_dir() -> Path | None:
 #: Order matters: the first match wins.
 _SECTION_ROUTES = (
 	("governance office", "/formation-requests"),
+	("my work", "/tasks"),
+	("insight", "/reports"),
 	("forum", "/forums"),
 	("polic", "/policies"),
 	("escalation", "/escalations"),
@@ -382,7 +393,7 @@ class Index:
 def _fingerprint(directory: Path | None) -> tuple:
 	parts: list = [str(directory)]
 	if directory:
-		for name in (USER_GUIDE, ADMIN_GUIDE, GLOSSARY):
+		for name in (USER_GUIDE, ADMIN_GUIDE, GLOSSARY, *_guide_chapters(directory)):
 			path = directory / name
 			try:
 				stat = path.stat()
@@ -394,6 +405,14 @@ def _fingerprint(directory: Path | None) -> tuple:
 			row = frappe.get_all(doctype, fields=["count(name) as n", "max(modified) as m"], order_by="")[0]
 			parts.append((doctype, row.n, str(row.m)))
 	return tuple(parts)
+
+
+def _guide_chapters(directory: Path) -> list[str]:
+	"""The numbered chapters of the illustrated guides, in order."""
+	folder = directory / GUIDES
+	if not folder.is_dir():
+		return []
+	return [os.path.join(GUIDES, p.name) for p in sorted(folder.glob("[0-9][0-9]-*.md"))]
 
 
 def build(directory: Path | None) -> Index:
@@ -418,6 +437,16 @@ def build(directory: Path | None) -> Index:
 				continue
 			chunks.extend(chunk_markdown(text, source=source, label=label, audience=audience,
 			                             default_route=route))
+		for name in _guide_chapters(directory):
+			admin = Path(name).name.startswith(ADMIN_CHAPTERS)
+			# Pictures are for readers; their alt text and paths would only
+			# add noise words to the index.
+			text = "\n".join(line for line in (directory / name).read_text(encoding="utf-8").splitlines()
+			                 if not line.lstrip().startswith("!["))
+			chunks.extend(chunk_markdown(
+				text, source=f"guide-{Path(name).stem}", label="Illustrated guide",
+				audience="admin" if admin else "all", default_route="/admin" if admin else None,
+			))
 	record_chunks, record_entries = _record_sources()
 	chunks.extend(record_chunks)
 	chunks.extend(_page_chunks())

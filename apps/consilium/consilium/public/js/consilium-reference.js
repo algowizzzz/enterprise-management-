@@ -140,22 +140,25 @@
     });
   }
 
-  /* The inbox tab carries a count of what waits on the viewer, overdue first.
-     Read once per page; the inbox itself is the source of truth. */
-  var badge = document.querySelector("[data-cns-inbox-badge]");
-  if (badge && !document.body.classList.contains("cns-guest")) {
+  /* The "My work" menu carries a count of what waits on the viewer, overdue
+     first. Read once per page; the inbox itself is the source of truth. Every
+     badge on the page is filled (the menu button, and any copy a page adds). */
+  var badges = document.querySelectorAll("[data-cns-inbox-badge]");
+  if (badges.length && !document.body.classList.contains("cns-guest")) {
     NS.api.call("consilium.consilium_core.inbox.my_task_count", {}, { trackLoading: false })
       .then(function (r) {
         if (!r || !r.count) return;
-        badge.textContent = r.count > 99 ? "99+" : String(r.count);
-        if (r.overdue) {
-          badge.setAttribute("data-overdue", "");
-          badge.title = r.overdue + " overdue";
-        }
-        badge.setAttribute("aria-label", r.count + " waiting" + (r.overdue ? ", " + r.overdue + " overdue" : ""));
-        badge.hidden = false;
+        Array.prototype.forEach.call(badges, function (badge) {
+          badge.textContent = r.count > 99 ? "99+" : String(r.count);
+          if (r.overdue) {
+            badge.setAttribute("data-overdue", "");
+            badge.title = r.overdue + " overdue";
+          }
+          badge.setAttribute("aria-label", r.count + " waiting" + (r.overdue ? ", " + r.overdue + " overdue" : ""));
+          badge.hidden = false;
+        });
       })
-      .catch(function () { /* the tab still works without its count */ });
+      .catch(function () { /* the menu still works without its count */ });
   }
 
   if (document.querySelector('meta[name="cns-time-zone"]') && !document.body.classList.contains("cns-guest")) {

@@ -70,7 +70,7 @@
    "label": "Active"
   },
   {
-   "description": "Set the first time this rule set classifies a record. A sealed rule set cannot be edited; a change is a new version. (Named is_sealed, not is_locked: the framework's Document class already has an is_locked property and it would shadow the field.) Never copied: a duplicate is a new rule set that has classified nothing, so it starts unsealed.",
+   "description": "Set the first time this rule set classifies a record. A sealed rule set cannot be edited; a change is a new version. A copy of a rule set starts unsealed, because it has classified nothing.",
    "fieldname": "is_sealed",
    "fieldtype": "Check",
    "label": "Sealed",
@@ -91,7 +91,7 @@
    "options": "Classification Question"
   },
   {
-   "description": "Flattened onto the rule set and keyed by question_code: the framework does not support a table inside a table, so the model's nesting of options under questions is expressed with a key column instead.",
+   "description": "The answers each question offers. Each row names the question it belongs to by its code.",
    "fieldname": "answer_options",
    "fieldtype": "Table",
    "label": "Answer Options",
@@ -106,7 +106,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 07:27:38.346519",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Classification Rule Set",

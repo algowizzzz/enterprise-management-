@@ -96,7 +96,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag derived from Workflow State Flag. Retry reads this, never the status string.",
+   "description": "Set automatically from the status: ticked while the notification may still be retried.",
    "fieldname": "is_open",
    "fieldtype": "Check",
    "label": "Is Open",
@@ -123,7 +123,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.715919",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Notification Dispatch",

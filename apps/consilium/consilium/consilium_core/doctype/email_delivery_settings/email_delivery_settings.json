@@ -1,0 +1,119 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-18 15:23:13.277209",
+ "description": "How the platform's notification email leaves the server: through the framework's mail queue and the site's outgoing Email Account over SMTP (the default), or through Microsoft Graph for an organisation that does not allow SMTP. Either way every notification is recorded as a Notification Dispatch and a failed one is retried.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "route_section",
+  "delivery_route",
+  "graph_section",
+  "graph_tenant_id",
+  "graph_client_id",
+  "graph_client_secret",
+  "graph_sender",
+  "graph_col",
+  "graph_authority_url",
+  "graph_api_url",
+  "graph_timeout_seconds"
+ ],
+ "fields": [
+  {
+   "fieldname": "route_section",
+   "fieldtype": "Section Break",
+   "label": "Route"
+  },
+  {
+   "default": "SMTP (framework mail queue)",
+   "description": "Your organisation's mail server (SMTP) uses the outgoing Email Account. Microsoft Graph uses the application registration below; choosing it is what switches it on. Mail the platform sends itself (password resets, for example) always uses the Email Account.",
+   "fieldname": "delivery_route",
+   "fieldtype": "Select",
+   "label": "Send Notification Email Through",
+   "options": "SMTP (framework mail queue)\nMicrosoft Graph",
+   "reqd": 1
+  },
+  {
+   "description": "An application registration in the organisation's directory with the Mail.Send application permission, limited to the sender mailbox by an application access policy.",
+   "fieldname": "graph_section",
+   "fieldtype": "Section Break",
+   "label": "Microsoft Graph"
+  },
+  {
+   "fieldname": "graph_tenant_id",
+   "fieldtype": "Data",
+   "label": "Directory (Tenant) ID"
+  },
+  {
+   "fieldname": "graph_client_id",
+   "fieldtype": "Data",
+   "label": "Application (Client) ID"
+  },
+  {
+   "description": "Stored encrypted and never shown again. The deployment kit can set it from a secret file.",
+   "fieldname": "graph_client_secret",
+   "fieldtype": "Password",
+   "label": "Client Secret"
+  },
+  {
+   "description": "The mailbox the mail is sent as: its user principal name (for example governance@example.internal) or its object ID.",
+   "fieldname": "graph_sender",
+   "fieldtype": "Data",
+   "label": "Sender Mailbox"
+  },
+  {
+   "fieldname": "graph_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "https://login.microsoftonline.com",
+   "description": "Where the access token is requested. Change only for a national cloud.",
+   "fieldname": "graph_authority_url",
+   "fieldtype": "Data",
+   "label": "Sign-in Base Address"
+  },
+  {
+   "default": "https://graph.microsoft.com",
+   "description": "Where mail is sent. Change only for a national cloud. The token's scope is this address followed by /.default.",
+   "fieldname": "graph_api_url",
+   "fieldtype": "Data",
+   "label": "Graph Base Address"
+  },
+  {
+   "default": "20",
+   "description": "For each request. Between 1 and 120.",
+   "fieldname": "graph_timeout_seconds",
+   "fieldtype": "Int",
+   "label": "Timeout (seconds)",
+   "reqd": 1
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-18 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Email Delivery Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

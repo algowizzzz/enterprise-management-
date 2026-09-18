@@ -476,7 +476,7 @@
             }).join("") + "</ul>" +
             (missing.length ? '<div class="cns-alert cns-status-warning"><i class="bi bi-exclamation-circle" aria-hidden="true"></i><div>' +
               "This form does not collect " + escapeHtml(missing.map(function (r) { return r.label; }).join(", ")) +
-              ". Raise the matter in the workspace instead, where every field is available.</div></div>" : "")
+              ". Raise the matter here, then ask the risk governance office to add those details to it.</div></div>" : "")
           : '<p class="cns-text-muted">The template adds nothing at this severity.</p>';
       })
       .catch(function () { $("template-body").innerHTML = ""; });

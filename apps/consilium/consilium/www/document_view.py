@@ -40,7 +40,7 @@ def _crumbs(extra):
 	# before it gets there.
 	return [
 		{"label": "Home", "url": "/"},
-		{"label": "Policy inventory", "url": "/policies"},
+		{"label": "Policy library", "url": "/policies"},
 	] + extra
 
 

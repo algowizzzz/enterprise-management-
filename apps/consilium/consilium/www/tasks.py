@@ -16,14 +16,14 @@ no_cache = 1
 
 def get_context(context):
 	context.no_cache = 1
-	context.page_title = "Inbox"
+	context.page_title = "My work"
 	context.page_description = (
 		"Everything waiting on you, across forums, policies and escalations. "
 		"Attestations are answered here; everything else opens on its own screen."
 	)
-	context.active_nav = "inbox"
+	context.active_nav = "mywork"
 	context.user_display = frappe.session.user
-	context.breadcrumbs = [{"label": "Home", "url": "/"}, {"label": "Inbox"}]
+	context.breadcrumbs = [{"label": "Home", "url": "/"}, {"label": "My work"}]
 	signed_in = frappe.session.user != "Guest"
 	context.may_run_campaigns = signed_in and (
 		reviews.may_run_forum_campaigns() or frappe.has_permission("Attestation Campaign", "read")

@@ -18,9 +18,9 @@ operator's procedure is [`docs/RUNBOOK.md`](../RUNBOOK.md). The evidence below
 is unchanged from that rehearsal.
 
 The application those checks ran against has since been finished and measured
-on a clean site: **1372 tests, OK** (0 failures, 0 errors, 1248 s). Other
-results: `pytest tests/` 51 passed; interface sweep 274 passed, 0 failed;
-browser journeys 8/8; platform rules 6/6. The demonstration site is rebuilt
+on a clean site: **1453 tests, OK** (0 failures, 0 errors). Other results:
+`pytest tests/` 57 passed, including the kit's Microsoft Graph checks;
+interface sweep 302 passed, 0 failed; browser journeys 11/11; platform rules 6/6. The demonstration site is rebuilt
 from scratch in about 27 s with no failed section. Feature status is in
 [`REQUIREMENTS-COVERAGE.md`](REQUIREMENTS-COVERAGE.md) and
 [`EPICS.md`](EPICS.md).
@@ -40,7 +40,7 @@ the real deployment.
 | ○ | A real Windows run | No Windows machine was available. The installer and service scripts are written; the acceptance script is in RUNBOOK |
 | ○ | RHEL 8 and Ubuntu 22.04 rehearsals | Only Rocky Linux 9 was run (disk on the build machine) |
 | ◑ | Platform pins | **Python 3.11 on x86_64 is required.** The framework's `hiredis==2.2.3` pin has no Python 3.12 wheel; `psutil==5.9.8` has no ARM (aarch64) wheel |
-| ○ | Real certificates, identity provider, SMTP | Need the organisation's CA, IdP registration and mail relay. OIDC was proven end to end against a mock provider; LDAP is configured but unexercised |
+| ○ | Real certificates, identity provider, mail route | Need the organisation's CA, IdP registration, and an SMTP relay or a Microsoft Graph app registration (see "What the organisation provides"). OIDC was proven end to end against a mock provider; LDAP is configured but unexercised; Graph is tested against a local stand-in |
 | ○ | Load testing on real hardware | The numbers in §7 are indicative only (a laptop, under emulation) |
 | ○ | Bundle from the final commit | See above |
 
@@ -90,6 +90,24 @@ container runtime**.
 > **Docker was used only on the build machine**, as a test harness, to
 > simulate a clean, network-less Linux host for the rehearsal below. The
 > product does not use, mention or need Docker, and the server needs none.
+
+---
+
+## What the organisation provides
+
+The kit needs these from the organisation's own teams. Each goes into
+`/etc/consilium/consilium.conf`, with secrets in root-only files named by
+`*_file` keys, or into Admin → Integrations after install.
+
+| From | What | Where it goes |
+|---|---|---|
+| Infrastructure | An x86_64 server with Python 3.11, PostgreSQL 16 and Redis, and the host prerequisites above | Server build |
+| Certificate authority | A TLS certificate and key for the host name people will use | `[tls]` |
+| Mail, **either** | An SMTP relay that accepts mail from the server, and a sender address | `[email]` SMTP keys |
+| Mail, **or** | A **Microsoft Graph** app registration: tenant ID, application (client) ID, a client secret, and a sender mailbox. The application needs the **Mail.Send** application permission, restricted to that one mailbox by an **application access policy**. No redirect URL is needed, because the server signs in as the application (client credentials). Notifications then go through Graph. The framework's own mail (password reset) still needs SMTP, so either keep an SMTP account for it or rely on single sign-on | `[email] graph_enabled = yes`, `graph_tenant_id`, `graph_client_id`, `graph_client_secret_file`, `graph_sender` (plus `graph_authority_url` and `graph_api_url` for a national cloud). Then Admin → Integrations → *Send a test email to me* |
+| Identity team, if SSO is in scope | An OIDC client (issuer, client ID, secret) or LDAP details, and the redirect URI registered on their side | `[sso]`. The redirect URI to register is shown, with a copy button, on Admin → Integrations → Single sign-on |
+| AI owner, if AI is approved | An approved endpoint that speaks the OpenAI-compatible API, a model name, a key, the classification ceiling and a data-sharing decision | Endpoint and model in `[assistant]` (optional); the key only in Admin → Integrations → AI assistant and analysis, then *Test connection*. Off until set |
+| Document and horizon-scanning tool owners, optional | The address (template) of the document editor and of the horizon-scanning platform, and which roles may use them | Admin → Integrations → Doc AI, Horizon scanning. Until set, the buttons explain "not connected yet" |
 
 ---
 
@@ -211,7 +229,51 @@ escalation lists) — and are reported separately, not as errors.
 | ✅ | OpenID Connect, end to end, offline | `scripts/mock_oidc_provider.py` (standard library; test tool only) on 127.0.0.1; `[sso] mode = oidc` in the configuration; `install.sh` re-run configured a "Custom" Social Login Key with sign-ups **denied**. A browser-like client (`tests/linux_harness/sso_demo.py`) took the button from the sign-in page over HTTPS, went through authorize → code → token → userinfo, and was **signed in as the existing account**: same user id, same creation time, a `corporate_sso` social-login row added, no new user. A person the provider vouched for but with no account was **refused (403, "Signup is Disabled")** and not created. [`41-sso-oidc-demo.txt`](evidence/linux-rehearsal/41-sso-oidc-demo.txt) |
 | ✅ | Off by default | `mode = none` in the example; setting it back and re-running disabled the provider ("off (provider 'corporate_sso' disabled)") |
 | ◑ | LDAP / Active Directory | `[sso] mode = ldap` fills the framework's LDAP Settings (StartTLS or LDAPS, trusted CA required, no account creation unless `allow_signup`). `ldap3` 2.9.1 and `pyasn1` are **pure-Python wheels** (`py2.py3-none-any`), already in the requirement set — allowed under the no-compiler rule. Not exercised against a directory |
+| ✅ | Redirect URI shown to the administrator | Admin → Integrations → Single sign-on shows the mode and the redirect URI with a copy button (read-only; SSO is switched in `consilium.conf`). `test_integrations.TestIntegrationsPage.test_the_single_sign_on_card_shows_the_redirect_address` |
 | ○ | Real identity provider | Redirect URI registration, claims, group mapping |
+
+## 8a. Email through Microsoft Graph (optional)
+
+For an organisation that does not allow a server to speak SMTP to its mail
+service. Notifications are then sent through the Graph API as one mailbox,
+signed in as an application; everything else about notifications is
+unchanged — every notification is still a Notification Dispatch row saying
+whether it was sent, and a failed one is still retried hourly, up to three
+times.
+
+**What the organisation must provide** (its directory administrator):
+
+1. **An app registration** for the portal, and its **directory (tenant) ID**
+   and **application (client) ID**. No redirect URL: the server signs in as the
+   application (the OAuth 2.0 client-credentials flow), so nobody signs in
+   interactively.
+2. **A client secret** for that registration, and a date to rotate it.
+3. The **`Mail.Send` application permission**, with admin consent, **limited
+   to the sender mailbox by an application access policy**. Without the policy
+   the registration could send as any mailbox in the organisation.
+4. **The sender mailbox**: its user principal name (or object ID).
+5. **Outbound HTTPS** from the server to the sign-in service and to Graph
+   (through the corporate proxy if there is one: the standard `HTTPS_PROXY`
+   settings apply), or the national-cloud equivalents.
+
+**Configuration**: `[email] graph_enabled = yes`, `graph_tenant_id`,
+`graph_client_id`, `graph_client_secret_file` (or `_env`), `graph_sender`, and
+`graph_authority_url` / `graph_api_url` for a national cloud only. The kit
+refuses a literal secret, a tenant or sender that could change the request path,
+and a non-https base address. An administrator can also set or change all of it
+in **Admin → Integrations → Email**, which never shows the saved secret, and
+send a test email to themselves from there.
+
+| | Item | Evidence |
+|---|---|---|
+| ✅ | Token, send, cached token, 401 → new token once, 429/503 waited out (Retry-After, capped), stall → timeout recorded, refused application | `consilium_core/tests/test_graph_mail.py`, **20 passed**, against a stand-in on 127.0.0.1 |
+| ✅ | The dispatch row records the outcome; the hourly retry sends a failed one | same module: a 500 leaves the dispatch Failed and open, `retry_failed` then sends it (Sent, retry count 1) |
+| ✅ | Configuration checks and the apply step | `tests/test_kit.py` (graph keys, literal secret refused, path-bending values refused, apply step writes the route and reads the secret from its reference) |
+| ○ | A real tenant | Needs the organisation's registration and mailbox. The first real send is the confirmation: use "Send a test email to me" |
+
+**Limit to know**: the framework's own mail (password resets, for example)
+still uses the SMTP Email Account. With single sign-on that mail is rarely
+needed; without SMTP and without SSO, password resets cannot be emailed.
 
 ## 9. Windows
 
@@ -226,9 +288,11 @@ escalation lists) — and are reported separately, not as errors.
 Unchanged by this work; see the application team's status. On an installed
 system: 143 entities, all with tables; 11 scheduled jobs; UI sweep clean.
 
-Final application status (2026-09-18, release 1.0.0): full suite **1372 tests,
-OK** on a clean site; interface sweep **274 passed, 0 failed** on the final
-demonstration site; browser journeys **8/8**; platform rules **6/6**. Measured
+Final application status (2026-09-18, release 1.0.0): full suite **1453
+tests, OK** on a clean site; interface sweep **302 passed, 0 failed** on the final demonstration site; browser journeys
+**11/11**; platform rules **6/6**. Administrators connect AI, Doc AI, horizon
+scanning and e-mail in **Admin → Integrations** (`/integrations`), which also
+shows the single sign-on redirect URI. Measured
 coverage: [`REQUIREMENTS-COVERAGE.md`](REQUIREMENTS-COVERAGE.md); story status:
 [`EPICS.md`](EPICS.md).
 
@@ -305,8 +369,11 @@ In `deploy/`, `winbench/`, `scripts/`:
 - Real certificates from the organisation's CA, and the names people will use.
 - The real identity provider (OIDC or LDAP), including redirect-URI
   registration and claims.
-- Real SMTP: the kit tests the connection when it saves the mail account; it
-  was left off here.
+- Real mail delivery: the kit tests an SMTP connection when it saves the mail
+  account (left off here). For Microsoft Graph, *Send a test email to me* on
+  Admin → Integrations proves the tenant, permission and access policy. Or, where SMTP is not allowed, a real Microsoft Graph
+  tenant (§8a): the app registration, its application access policy and the
+  sender mailbox.
 - Real hardware load numbers, with several web processes.
 - The target's own PostgreSQL (and, if managed, the `provisioned` model).
 - RHEL 8, RHEL 9 proper, Ubuntu 22.04 (only Rocky 9 was run), and the PDF

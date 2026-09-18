@@ -51,7 +51,7 @@
     <div class="cns-card-header">
       <div>
         <h3 class="cns-card-title" id="coverage-gaps-title">Coverage: risk categories with no forum</h3>
-        <p class="cns-card-subtitle">For each risk category, the operating groups no active forum covers. The full matrix, with counts, is on <a href="/reports#coverage">Reports</a>.</p>
+        <p class="cns-card-subtitle">For each risk category, the operating groups no active forum covers. The full matrix, with counts, is on <a href="/reports#coverage">Management reporting</a>.</p>
       </div>
     </div>
     <div class="cns-card-body"><div class="cns-table-wrap" id="coverage-list"></div></div>
@@ -66,7 +66,10 @@
     <div class="cns-card-header">
       <div>
         <h3 class="cns-card-title">Rules-based risk score</h3>
-        <p class="cns-card-subtitle" id="risk-method">&nbsp;</p>
+        <p class="cns-card-subtitle">Every forum and policy you may read, scored from what is on record. The higher the
+          score, the sooner it needs attention.</p>
+        <details class="cns-disclosure cns-text-sm"><summary>How is this worked out?</summary>
+          <p id="risk-method">&nbsp;</p></details>
       </div>
     </div>
     <div class="cns-card-body">
@@ -177,8 +180,12 @@
 
   /* ---------------------------------------------------------- scores */
 
+  /* How a factor counts, in words. The factor kinds are the scoring rule's own
+     vocabulary ("flag", "count", "share"); a reader wants what they mean. */
+  var KIND_WORDS = { flag: "Yes or no", count: "Per item", share: "In proportion" };
+
   function factorTable(s) {
-    return '<table class="cns-table cns-table--compact cns-ai-factors"><thead><tr><th scope="col">Factor</th><th scope="col">Evidence</th><th scope="col" class="cns-num">Weight</th><th scope="col" class="cns-num">Cap</th><th scope="col" class="cns-num">Points</th></tr></thead><tbody>' +
+    return '<table class="cns-table cns-table--compact cns-ai-factors"><thead><tr><th scope="col">Factor</th><th scope="col">Evidence</th><th scope="col" class="cns-num">Weight</th><th scope="col" class="cns-num">Most points</th><th scope="col" class="cns-num">Points</th></tr></thead><tbody>' +
       s.factors.map(function (f) {
         var evidence;
         if (!f.available) evidence = '<span class="cns-text-muted">unavailable to your role</span>';
@@ -186,7 +193,7 @@
         else if (f.kind === "share") evidence = Math.round((f.evidence || 0) * 100) + "%";
         else evidence = String(f.evidence);
         if (f.detail) evidence += ' <span class="cns-text-muted">(' + esc(f.detail) + ")</span>";
-        var weight = f.kind === "count" ? f.weight + " each" : f.kind === "share" ? f.weight + " × share" : String(f.weight);
+        var weight = f.kind === "count" ? f.weight + " each" : f.kind === "share" ? f.weight + " × proportion" : String(f.weight);
         return "<tr><td>" + esc(f.label) + "</td><td>" + evidence + '</td><td class="cns-num">' + esc(weight) + '</td><td class="cns-num">' +
           (f.cap == null ? "—" : esc(f.cap)) + '</td><td class="cns-num">' + esc(f.points) + "</td></tr>";
       }).join("") + '</tbody><tfoot><tr><th scope="row" colspan="4">Score</th><td class="cns-num"><strong>' + esc(s.score) + "</strong></td></tr></tfoot></table>";
@@ -202,7 +209,7 @@
         var href = ai.safeHref(s.href);
         return "<tr><td>" + (href ? '<a href="' + esc(href) + '">' + esc(s.title || s.name) + "</a>" : esc(s.title || s.name)) +
           '</td><td class="cns-num"><strong>' + esc(s.score) + "</strong></td><td>" + ai.severity(s.band) + "</td><td>" + drivers +
-          '<details class="cns-ai-details"><summary>How this was computed</summary>' + factorTable(s) + "</details></td></tr>";
+          '<details class="cns-ai-details"><summary>How is this worked out?</summary>' + factorTable(s) + "</details></td></tr>";
       }).join("") + "</tbody></table>";
   }
 
@@ -214,14 +221,15 @@
     }
     ["forum", "policy"].forEach(function (subject) {
       html += '<h4 class="cns-card-title" style="margin-top: var(--cns-space-3);">' + (subject === "forum" ? "Forums" : "Policies") + "</h4>";
-      html += '<table class="cns-table cns-table--compact"><thead><tr><th scope="col">Factor</th><th scope="col">Key</th><th scope="col">Kind</th><th scope="col" class="cns-num">Weight</th><th scope="col" class="cns-num">Cap</th></tr></thead><tbody>' +
+      html += '<table class="cns-table cns-table--compact"><thead><tr><th scope="col">Factor</th><th scope="col">Counts as</th><th scope="col" class="cns-num">Points</th><th scope="col" class="cns-num">Most points</th></tr></thead><tbody>' +
         Object.keys(data.weights[subject]).map(function (key) {
           var f = data.weights[subject][key];
-          return "<tr><td>" + esc(f.label) + "</td><td><code>" + esc(key) + "</code></td><td>" + esc(f.kind) + '</td><td class="cns-num">' + esc(f.weight) +
+          return "<tr><td>" + esc(f.label) + "</td><td>" + esc(KIND_WORDS[f.kind] || f.kind) + '</td><td class="cns-num">' +
+            esc(f.weight) + (f.kind === "count" ? " each" : "") +
             '</td><td class="cns-num">' + (f.cap == null ? "—" : esc(f.cap)) + "</td></tr>";
         }).join("") + "</tbody></table>";
     });
-    html += '<p class="cns-text-sm cns-text-muted">An administrator changes these in Assistant Settings, under Governance Risk Score Weights, as JSON — for example <code>{"policy": {"open_violations": {"weight": 10}}}</code>.</p>';
+    html += '<p class="cns-text-sm cns-text-muted">The weights are set by an administrator, in the settings for AI and analysis.</p>';
     $("scores-weights").innerHTML = html;
   }
 

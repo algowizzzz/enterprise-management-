@@ -170,6 +170,31 @@ def cns_can_read(doctype: str) -> bool:
     return bool(frappe.has_permission(doctype, "read"))
 
 
+#: Who is offered the "Advanced view" — the full record in the configuration
+#: workspace. Same pair the Admin menu is shown to (navigation.ADMIN_ROLES).
+ADVANCED_VIEW_ROLES = ("System Manager", "Consilium Administrator")
+
+
+def cns_advanced_view() -> bool:
+    """Whether to offer this viewer the "Advanced view" link on a business page.
+
+    Record pages used to carry an "Open in the workspace" button for anyone who
+    could sign in to the workspace at all. That put business users one click
+    from the technical configuration interface, which shows every internal field
+    and none of the guidance, and it was offered as though it were the normal
+    way to work a record. The portal is the normal way; the workspace is an
+    administrator's tool, so the link is offered to administrators only, under
+    a name that says what it is. Nothing is refused by this: it only decides
+    whether the button is drawn.
+    """
+    user = frappe.session.user
+    if not user or user == "Guest":
+        return False
+    if frappe.get_cached_value("User", user, "user_type") != "System User":
+        return False
+    return bool(set(ADVANCED_VIEW_ROLES) & set(frappe.get_roles(user)))
+
+
 def cns_has_any_role(*roles: str) -> bool:
     """For templates, whose sandbox does not expose the framework's role lookup."""
     if frappe.session.user == "Guest":
@@ -180,6 +205,23 @@ def cns_has_any_role(*roles: str) -> bool:
 def system_time_zone() -> str:
     """The zone the server stores times in, for the portal to convert from."""
     return frappe.db.get_single_value("System Settings", "time_zone") or "UTC"
+
+
+def viewer_time_zone() -> str:
+    """The zone the signed-in person reads times in: their own setting, or the site's.
+
+    The portal used to show times in whatever zone the browser happened to be
+    in ("GMT-5") while the workspace showed the person's own setting and the
+    service-level calendars ran on the site's — three zones on one screen for
+    the same instant. The workspace's rule is the one people configure, so the
+    portal follows it: the person's ``time_zone`` when set, otherwise the
+    site's. Every time is printed with its zone's name, so nobody has to guess.
+    """
+    user = frappe.session.user if getattr(frappe.local, "session", None) else None
+    zone = None
+    if user and user != "Guest":
+        zone = frappe.get_cached_value("User", user, "time_zone")
+    return zone or system_time_zone()
 
 
 def cns_here() -> str:

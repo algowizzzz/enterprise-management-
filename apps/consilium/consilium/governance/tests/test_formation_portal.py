@@ -203,6 +203,42 @@ class TestReturnAndRespond(PortalCase):
         self.assertEqual(request.originator_response, "None does.")
         self.assertEqual(formation.stage_of(request), "evaluation")
 
+    def test_an_originator_who_cannot_raise_requests_can_answer_theirs(self):
+        """A business executive named as originator, with no governance role,
+        was sent to the answer screen and told "You cannot raise a formation
+        request". They are shown the questions and answer them; the request
+        form itself stays with those who may raise one."""
+        from consilium.consilium_core.tests.test_portal_pages import render
+
+        executive = make_user()
+        frappe.set_user("Administrator")
+        request = make_request(requester=executive)
+        formation.submit(request)
+        self.as_user(self.office)
+        formation.start_request_evaluation(request.name)
+        formation.return_request_to_originator(request.name, "Which <b>forum</b> covers this now?")
+
+        self.as_user(executive)
+        self.assertFalse(frappe.has_permission("Committee Formation Request", "create"))
+        status, body = render("create-forum", executive, {"request": request.name})
+        self.assertEqual(status, 200)
+        self.assertNotIn("You cannot raise a formation request", body)
+        self.assertIn("The governance office has questions", body)
+        self.assertIn("Which &lt;b&gt;forum&lt;/b&gt; covers this now?", body, "the questions are escaped")
+        self.assertNotIn('id="formation-form"', body, "the raising form is not offered")
+
+        self.as_user(executive)
+        formation.respond_to_returned_request(request.name, "None does.")
+        frappe.set_user("Administrator")
+        self.assertEqual(formation.stage_of(frappe.get_doc("Committee Formation Request", request.name)),
+                         "evaluation")
+
+        # Someone else without a role still gets the refusal, not the questions.
+        stranger = make_user()
+        status, body = render("create-forum", stranger, {"request": request.name})
+        self.assertIn("You cannot raise a formation request", body)
+        self.assertNotIn("covers this now", body)
+
     def test_a_reply_to_a_request_that_was_never_returned_is_refused(self):
         name = self.submitted()
         self.as_user(self.originator)

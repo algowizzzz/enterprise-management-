@@ -39,7 +39,12 @@ import uuid
 import frappe
 
 ANTHROPIC = "Anthropic Messages API"
-OPENAI_COMPATIBLE = "OpenAI-compatible (internal gateway)"
+OPENAI_COMPATIBLE = "OpenAI-compatible API"
+#: The option's earlier label. Renamed because hosted providers speak the same
+#: format as an internal gateway; a site that has not migrated yet still holds
+#: it, and every branch below treats anything but ANTHROPIC as this format, so
+#: the old value keeps working (patch v0_1.rename_openai_request_format).
+LEGACY_OPENAI_COMPATIBLE = "OpenAI-compatible (internal gateway)"
 
 #: The Messages API's version header. It versions the request and response
 #: shapes, not the model; this is the current and only stable value.
@@ -134,6 +139,13 @@ def parse_response(settings, payload: dict) -> str:
 		text = ((choices[0] or {}).get("message") or {}).get("content") if choices else ""
 		if isinstance(text, list):  # some gateways return content parts
 			text = "".join(part.get("text", "") for part in text if isinstance(part, dict))
+		# A reasoning model on this format returns its reasoning in a separate
+		# field and the answer in ``content``. When the length limit is spent
+		# on reasoning, ``content`` is empty and the finish reason says so;
+		# that is a configuration problem, not a fault, and is named as one.
+		finish = (choices[0] or {}).get("finish_reason") if choices else None
+		if not (text or "").strip() and finish == "length":
+			raise AIServiceError("the answer ran out of room before it began; raise the maximum length")
 	text = (text or "").strip()
 	if not text:
 		raise AIServiceError("the endpoint returned an empty answer")

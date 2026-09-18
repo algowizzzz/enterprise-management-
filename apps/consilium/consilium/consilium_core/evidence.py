@@ -40,7 +40,7 @@ import frappe
 from frappe import _
 from frappe.utils import now, strip_html
 
-from consilium.consilium_core import audit
+from consilium.consilium_core import audit, state_flags
 
 #: The roles an evidence pack is for. Each can already read every Core table the
 #: pack draws on.
@@ -125,7 +125,11 @@ def _version_entries(doctype: str, name: str) -> list[dict]:
             data = json.loads(row.data or "{}")
         except ValueError:
             data = {}
-        changed = [labels.get(entry[0], entry[0]) for entry in data.get("changed") or []]
+        # The semantic flags move with the status and say nothing a reader does
+        # not already see in the status itself ("Changed Status, Is Editable,
+        # Requires Review"); they are left out of the words, not the evidence.
+        changed = [labels.get(entry[0], entry[0]) for entry in data.get("changed") or []
+                   if entry and entry[0] not in state_flags.FLAG_FIELDS]
         if data.get("added"):
             changed.append(_("rows added"))
         if data.get("removed"):

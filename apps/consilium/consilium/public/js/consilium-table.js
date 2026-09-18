@@ -41,6 +41,9 @@
      searchFields      fields the search box matches (default: sortable text
                        columns; falls back to the first column)
      searchPlaceholder placeholder text for the search box
+     initialSearch     search text to start with, e.g. the page's ?q= (the
+                       header search's "See all" link hands its words over
+                       this way)
      pageSize          initial page size (default 25)
      pageSizeOptions   default [10, 25, 50, 100]
      defaultSort       { field: "modified", order: "desc" }
@@ -50,6 +53,11 @@
      title             heading shown in the toolbar
      searchable        set false to hide the search box (default true)
      emptyTitle/emptyMessage/emptyIcon   empty-state copy
+     exportable        show an "Export CSV" button: every row matching the
+                       filters and search, as shown (default false)
+     exportName        file name stem for the export (default: storageKey)
+     emptyAction       { label, href } or { label, onClick }: the next step an
+                       empty list offers (a search offers "Clear the search")
      rowKey            field used as the row key (default "name")
      onRowClick        function(row, event) — makes rows activatable
      compact / striped booleans
@@ -205,7 +213,7 @@
         : "desc";
 
     this.page = 1;
-    this.search = "";
+    this.search = this.searchable ? String(opts.initialSearch || "").trim().slice(0, 200) : "";
     this.rows = [];
     this.total = 0;
     this.state = "idle"; // idle | loading | ready | empty | error
@@ -245,9 +253,15 @@
     /* Toolbar: title + search + page size */
     var toolbarChildren = [];
 
+    /* The title carries the record count once it is known, so every list
+       says how many rows match in the same place. */
+    this.countBadge = util.el("span", { class: "cns-badge cns-badge--count cns-dt-count", hidden: "hidden" });
     var toolbarStart = util.el("div", { class: "cns-dt-toolbar-start" }, [
       opts.title
-        ? util.el("h2", { class: "cns-card-title", text: opts.title, id: this.id + "-title" })
+        ? util.el("h2", { class: "cns-card-title", id: this.id + "-title" }, [
+            document.createTextNode(opts.title + " "),
+            this.countBadge
+          ])
         : null,
       opts.description
         ? util.el("p", { class: "cns-card-subtitle", text: opts.description })
@@ -266,6 +280,7 @@
         placeholder: opts.searchPlaceholder || "Search",
         autocomplete: "off"
       });
+      if (this.search) this.searchInput.value = this.search;
       this.searchInput.addEventListener(
         "input",
         util.debounce(function () {
@@ -290,6 +305,19 @@
           this.searchInput
         ])
       );
+    }
+
+    if (opts.exportable) {
+      this.exportButton = util.el("button", {
+        type: "button",
+        class: "cns-btn cns-btn-ghost cns-btn-sm",
+        title: "Download the rows that match the filters and search as a CSV file"
+      }, [
+        util.el("i", { class: "bi bi-download", "aria-hidden": "true" }),
+        document.createTextNode(" Export CSV")
+      ]);
+      this.exportButton.addEventListener("click", function () { self.exportCsv(); });
+      toolbarEnd.appendChild(this.exportButton);
     }
 
     var sizeId = this.id + "-pagesize";
@@ -416,7 +444,8 @@
     } else {
       icon = util.el("span", { class: "cns-state-icon" }, [
         util.el("i", {
-          class: "bi " + (kind === "error" ? "bi-exclamation-triangle" : "bi-inbox"),
+          class: "bi " + (kind === "error" ? "bi-exclamation-triangle"
+            : (this.search ? "bi-search" : this.options.emptyIcon || "bi-inbox")),
           "aria-hidden": "true"
         })
       ]);
@@ -631,12 +660,33 @@
     }
 
     if (this.state === "empty") {
+      /* An empty list always offers a way on: clearing the search when there
+         is one, otherwise the page's own next step (``emptyAction``: a label
+         with an ``href`` or an ``onClick``) when it gives one. */
+      var that = this;
+      var next = this.options.emptyAction;
+      var label = null;
+      var act = null;
+      if (this.search && this.searchInput) {
+        label = "Clear the search";
+        act = function () {
+          that.searchInput.value = "";
+          that.setSearch("");
+          that.searchInput.focus();
+        };
+      } else if (next && next.label && (next.href || typeof next.onClick === "function")) {
+        label = next.label;
+        act = next.onClick || function () { window.location.href = next.href; };
+      }
       this._showState(
         "empty",
-        this.options.emptyTitle || (this.search ? "No matching records" : "Nothing here yet"),
+        this.search ? "No matching records" : this.options.emptyTitle || "Nothing here yet",
         this.search
-          ? 'No records match "' + this.search + '".'
-          : this.options.emptyMessage || "There are no records to display."
+          ? 'No records match "' + this.search + '"' +
+            (this.options.emptyMessage ? ". " + this.options.emptyMessage : ".")
+          : this.options.emptyMessage || "There are no records to display.",
+        label,
+        act
       );
       this._renderFooter();
       NS.announce("No records found.");
@@ -705,6 +755,14 @@
   Table.prototype._renderFooter = function () {
     var self = this;
     var lastPage = Math.max(1, Math.ceil(this.total / this.pageSize));
+
+    if (this.countBadge) {
+      var known = this.state === "ready" || this.state === "empty";
+      this.countBadge.hidden = !known;
+      this.countBadge.textContent = known ? String(this.total) : "";
+      this.countBadge.setAttribute("aria-label", this.total + (this.total === 1 ? " record" : " records"));
+    }
+    if (this.exportButton) this.exportButton.disabled = !(this.state === "ready" && this.total > 0);
 
     if (this.state === "loading") {
       this.statusEl.textContent = "Loading…";
@@ -838,6 +896,83 @@
     this.options.filters = filters;
     this.page = 1;
     this.load();
+  };
+
+  /* --- export ------------------------------------------------------------ */
+
+  /** A cell as the screen shows it: the formatter's text, not its markup. */
+  Table.prototype._cellText = function (column, row) {
+    var value = row[column.field];
+    if (typeof column.exportValue === "function") return column.exportValue(value, row, column);
+    if (typeof column.formatter === "function") {
+      var out = column.formatter(value, row, column);
+      if (out && out.nodeType === 1) return out.textContent.trim();
+      var scratch = document.createElement("div");
+      scratch.innerHTML = out === undefined || out === null ? "" : String(out);
+      return scratch.textContent.replace(/\s+/g, " ").trim();
+    }
+    return value === null || value === undefined ? "" : String(value);
+  };
+
+  /**
+   * Download every row matching the current filters and search, in the
+   * current order, as CSV. The rows are read through the same list API and
+   * the same filters as the table, so the file holds nothing the screen would
+   * not show. Capped at EXPORT_LIMIT rows, and says so when the cap bites.
+   */
+  Table.prototype.exportCsv = function () {
+    var self = this;
+    var EXPORT_LIMIT = 5000;
+    var columns = this.columns.filter(function (c) { return c.field && c.exportable !== false; });
+    var rowsPromise = this.staticData
+      ? Promise.resolve(this.staticData)
+      : NS.api.list(this.doctype, {
+          fields: this._fields(),
+          filters: this._baseFilters(),
+          or_filters: this._orFilters(),
+          order_by: this._orderBy(),
+          limit_start: 0,
+          limit_page_length: EXPORT_LIMIT
+        });
+    if (this.exportButton) this.exportButton.disabled = true;
+    return rowsPromise
+      .then(function (rows) {
+        rows = rows || [];
+        function cell(text) {
+          var value = String(text === null || text === undefined ? "" : text);
+          // A leading = + - @ would be run as a formula by a spreadsheet.
+          if (/^[=+\-@\t\r]/.test(value)) value = "'" + value;
+          return /[",\n\r]/.test(value) ? '"' + value.replace(/"/g, '""') + '"' : value;
+        }
+        var lines = [columns.map(function (c) { return cell(c.label || c.field); }).join(",")];
+        rows.forEach(function (row) {
+          lines.push(columns.map(function (c) { return cell(self._cellText(c, row)); }).join(","));
+        });
+        var blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+        var d = new Date();
+        var stamp = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" +
+          String(d.getDate()).padStart(2, "0");
+        var name = String(self.options.exportName || self.options.storageKey || self.doctype || "table")
+          .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = name + "-" + stamp + ".csv";
+        document.body.appendChild(link);
+        link.click();
+        window.setTimeout(function () { URL.revokeObjectURL(link.href); link.remove(); }, 0);
+        var capped = !self.staticData && self.total > rows.length;
+        NS.toast[capped ? "warning" : "success"](
+          capped
+            ? "The first " + rows.length + " of " + self.total + " rows were exported. Narrow the filters to export the rest."
+            : rows.length + (rows.length === 1 ? " row" : " rows") + " exported."
+        );
+      })
+      .catch(function (error) {
+        NS.toast.error((error && error.message) || "The rows could not be read.", { title: "Export failed" });
+      })
+      .then(function () {
+        if (self.exportButton) self.exportButton.disabled = !(self.total > 0);
+      });
   };
 
   Table.prototype.setData = function (rows) {

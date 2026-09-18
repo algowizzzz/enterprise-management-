@@ -1,0 +1,48 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  The Doc AI hand-off when it cannot hand off: not connected, switched off, or
+  a reference that does not exist. A connected hand-off never renders: the
+  server answers with a redirect (www/doc_ai.py).
+-#}
+
+{% block page_content %}
+<div class="cns-card">
+  {%- if outcome == "no_document" %}
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-signpost" aria-hidden="true"></i></span>
+    <p class="cns-state-title">No document was named</p>
+    <p class="cns-state-message">Open a governing document and use its {{ (tool.label or "Open in Doc AI") | e }} button.</p>
+    <a class="cns-btn cns-btn-primary" href="/policies">Go to the policy library</a>
+  </div>
+  {%- elif outcome == "not_found" %}
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">That document or version is not in the policy library</p>
+    <p class="cns-state-message">Reference <span class="cns-mono">{{ record_name | e }}</span> does not exist, or the
+      version named is not one of its versions.</p>
+    <a class="cns-btn cns-btn-secondary" href="/policies">Back to the library</a>
+  </div>
+  {%- elif outcome == "off" %}
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-toggle-off" aria-hidden="true"></i></span>
+    <p class="cns-state-title">Doc AI is switched off</p>
+    <p class="cns-state-message">An administrator has switched the Doc AI hand-off off for this portal.</p>
+    <a class="cns-btn cns-btn-secondary" href="/policy?name={{ record_name | urlencode }}">Back to the document</a>
+  </div>
+  {%- else %}
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-plug" aria-hidden="true"></i></span>
+    <p class="cns-state-title">Doc AI isn&rsquo;t connected yet</p>
+    <p class="cns-state-message">Doc AI isn&rsquo;t connected yet &mdash; an administrator sets its address in
+      Admin &rarr; Integrations. Nothing was sent.</p>
+    <div class="cns-btn-group">
+      {%- if is_admin %}
+      <a class="cns-btn cns-btn-primary" href="/integrations"><i class="bi bi-sliders" aria-hidden="true"></i> Open Integrations</a>
+      {%- endif %}
+      <a class="cns-btn cns-btn-secondary" href="/policy?name={{ record_name | urlencode }}">Back to the document</a>
+    </div>
+  </div>
+  {%- endif %}
+</div>
+{% endblock %}

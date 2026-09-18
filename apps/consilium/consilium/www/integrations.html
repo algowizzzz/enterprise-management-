@@ -1,0 +1,663 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Admin → Integrations. One card per external connection.
+
+  The cards are drawn on the server from consilium_core.integrations.admin;
+  the script posts a card's fields to admin.save and redraws the card's status
+  from the answer. Secrets are write-only: the page knows whether one is saved,
+  never what it is. Tests ("Test connection", "Send a test email to me") use the
+  saved settings, so what was tested is what runs.
+-#}
+
+{%- macro status_pill(key, status) -%}
+{%- set text = status_text[status] -%}
+<span class="cns-pill cns-status-{{ text[1] }}" data-status-for="{{ key }}">{{ text[0] }}</span>
+{%- endmacro -%}
+
+{%- macro check(name, label, value, help=None) -%}
+<div class="cns-check">
+  <input type="checkbox" id="f-{{ name }}" name="{{ name }}" value="1"{% if value %} checked{% endif %}>
+  <label for="f-{{ name }}">{{ label }}{% if help %}<span class="cns-help">{{ help }}</span>{% endif %}</label>
+</div>
+{%- endmacro -%}
+
+{%- macro text(name, label, value, help=None, type="text", placeholder="", wide=False) -%}
+<div class="cns-field{% if wide %} cns-field--wide{% endif %}">
+  <label class="cns-label" for="f-{{ name }}">{{ label }}</label>
+  <input class="cns-input" type="{{ type }}" id="f-{{ name }}" name="{{ name }}" value="{{ (value if value is not none else '') | e }}"
+         {% if placeholder %}placeholder="{{ placeholder | e }}"{% endif %} autocomplete="off" spellcheck="false">
+  {%- if help %}<span class="cns-help">{{ help }}</span>{% endif %}
+</div>
+{%- endmacro -%}
+
+{%- macro select(name, label, value, options, help=None, labels=None) -%}
+<div class="cns-field">
+  <label class="cns-label" for="f-{{ name }}">{{ label }}</label>
+  <select class="cns-select" id="f-{{ name }}" name="{{ name }}">
+    {%- for option in options %}
+    <option value="{{ option | e }}"{% if option == value %} selected{% endif %}>{{ ((labels or {}).get(option) or option) | e }}</option>
+    {%- endfor %}
+  </select>
+  {%- if help %}<span class="cns-help">{{ help }}</span>{% endif %}
+</div>
+{%- endmacro -%}
+
+{%- macro secret(name, label, saved, saved_text, empty_text, help) -%}
+<div class="cns-field">
+  <label class="cns-label" for="f-{{ name }}">{{ label }}</label>
+  <input class="cns-input" type="password" id="f-{{ name }}" name="{{ name }}" value=""
+         placeholder="{{ 'Paste a new one to replace the saved one' if saved else 'Paste it here' }}"
+         autocomplete="new-password" spellcheck="false">
+  <span class="cns-secret-state" data-secret-state="{{ name }}">
+    {%- if saved %}<i class="bi bi-shield-check" aria-hidden="true"></i> {{ saved_text }}
+    {%- else %}<i class="bi bi-shield-exclamation" aria-hidden="true"></i> {{ empty_text }}{% endif %}
+  </span>
+  <span class="cns-help">{{ help }}</span>
+  <div class="cns-check" data-secret-clear="{{ name }}"{% if not saved %} hidden{% endif %} style="margin-top: var(--cns-space-2);">
+    <input type="checkbox" id="f-clear_{{ name }}" name="clear_{{ name }}" value="1">
+    <label for="f-clear_{{ name }}">Remove the saved one</label>
+  </div>
+</div>
+{%- endmacro -%}
+
+{% block page_actions %}
+<a class="cns-btn cns-btn-secondary" href="/admin">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Administration
+</a>
+{% endblock %}
+
+{% block page_content %}
+{%- set ai = cards.ai -%}
+{%- set docai = cards.doc_ai -%}
+{%- set horizon = cards.horizon -%}
+{%- set mail = cards.email -%}
+
+<div class="cns-alert cns-status-info" style="margin-bottom: var(--cns-space-5);">
+  <i class="bi bi-shield-lock" aria-hidden="true"></i>
+  <div>Nothing here sends anything until you switch it on. Keys and secrets are stored encrypted and never
+    shown again: a card says only whether one is saved. Every request to an AI service, every Doc AI hand-off
+    and every notification is recorded.</div>
+</div>
+
+<div class="cns-integrations">
+
+<!-- ------------------------------------------------------------- AI -->
+<section class="cns-card" aria-labelledby="ai-heading" id="ai">
+  <div class="cns-card-header">
+    <div class="cns-integration-head">
+      <span class="cns-integration-icon" aria-hidden="true"><i class="bi bi-stars"></i></span>
+      <div>
+        <h2 class="cns-card-title" id="ai-heading">AI assistant and analysis {{ status_pill("ai", ai.status) }}
+          {#- Once tested, the status says when: "Connected — last tested …". The
+              last test is read from the audited request log, so it is remembered. #}
+          <span class="cns-integration-tested" data-tested-for="ai"{% if ai.status != "connected" %} hidden{% endif %}>
+            {%- if ai.last_test %}&mdash; {% if ai.last_test.ok %}last tested{% else %}last test failed{% endif %}
+            <span data-cns-date="{{ ai.last_test.when | e }}" data-cns-with-time="1">{{ ai.last_test.when | e }}</span>
+            {%- else %}&mdash; not tested yet{% endif -%}
+          </span></h2>
+        <p class="cns-card-subtitle">Written answers in the help assistant, and commentary and suggestions in the
+          governance analysis pages. Both always work without it, from built-in, rule-based answers.</p>
+      </div>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-leaves">
+      <strong><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> What leaves the platform</strong>
+      <ul>
+        <li>Help assistant: the question, the guide sections that match it, the kind of page and the person's role
+          names. A record's summary fields only when sharing is set to include them, and never for a confidential,
+          restricted or sensitive record.</li>
+        <li>Analysis features: counts, category names and opaque record tokens. Titles and short summaries only
+          when sharing includes them, and never above the classification limit below.</li>
+        <li>The API key, as a request header, to the endpoint below. Nothing is sent while both switches are off.
+          Every request is recorded, so it can be audited.</li>
+      </ul>
+    </div>
+
+    <form class="cns-integration-form" data-section="ai" novalidate>
+      <div class="cns-form-grid">
+        {{ secret("api_key", "API key", ai.has_key, "A key is saved", "No key saved",
+                  "Stored encrypted. Leave empty to keep the saved key.") }}
+        <div class="cns-field">
+          <span class="cns-label">Use it for</span>
+          {{ check("ai_enabled", "Use for the Help assistant", ai["values"].ai_enabled) }}
+          {{ check("features_enabled", "Use for analysis features", ai["values"].features_enabled) }}
+        </div>
+      </div>
+
+      <div data-warnings-for="ai">
+        {%- for warning in ai.warnings %}
+        <div class="cns-alert cns-status-warning" role="note"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><div>{{ warning | e }}</div></div>
+        {%- endfor %}
+      </div>
+
+      <h3 class="cns-subhead">Connection</h3>
+      <div class="cns-form-grid">
+        {{ select("provider", "Request format", ai["values"].provider, ai.options.provider,
+                  "The format the service speaks. Most hosted providers and internal gateways speak the OpenAI-compatible format.") }}
+        {{ text("endpoint_url", "Endpoint address", ai["values"].endpoint_url,
+                "The service's base address, or its full chat-completions or messages address. Reached from the server, never from browsers.",
+                placeholder="https://ai-gateway.example.internal/v1") }}
+        {{ text("model", "Model", ai["values"].model, "The model name the service expects.") }}
+        {{ text("timeout_seconds", "Timeout (seconds)", ai["values"].timeout_seconds, "1 to 120. After this the built-in answer is shown.", type="number") }}
+        {{ text("max_tokens", "Longest assistant answer (tokens)", ai["values"].max_tokens,
+                "64 to 4096. A model that reasons first spends part of this on reasoning; the connection test uses it too.", type="number") }}
+        {{ text("feature_max_tokens", "Longest analysis (tokens)", ai["values"].feature_max_tokens, "256 to 8192.", type="number") }}
+      </div>
+      {%- if ai.request_url %}
+      <p class="cns-help" style="margin-top: 0;">Requests go to <span class="cns-mono" data-request-url>{{ ai.request_url | e }}</span></p>
+      {%- endif %}
+
+      <h3 class="cns-subhead">What may be shared</h3>
+      <div class="cns-form-grid">
+        {{ select("data_sharing", "What leaves the platform", ai["values"].data_sharing, ai.options.data_sharing,
+                  "Guidance only sends no record contents at all.") }}
+        {{ select("classification_ceiling", "Highest classification that may leave", ai["values"].classification_ceiling,
+                  ai.options.classification_ceiling, "Restricted records and sensitive escalations never leave, whatever this says.") }}
+      </div>
+
+      <h3 class="cns-subhead">Analysis features</h3>
+      <div class="cns-form-grid">
+        <div>
+          {{ check("ai_policy_impact", "Policy-change impact assessment", ai["values"].ai_policy_impact) }}
+          {{ check("ai_governance_gaps", "Governance gap commentary", ai["values"].ai_governance_gaps) }}
+          {{ check("ai_regulatory_updates", "Regulatory update suggestions", ai["values"].ai_regulatory_updates) }}
+        </div>
+        <div>
+          {{ check("ai_emerging_risks", "Emerging-risk narrative", ai["values"].ai_emerging_risks) }}
+          {{ check("ai_risk_assessment", "Governance risk rationale", ai["values"].ai_risk_assessment) }}
+        </div>
+      </div>
+
+      <div class="cns-form-actions" style="margin-top: var(--cns-space-4);">
+        <button type="submit" class="cns-btn cns-btn-primary"><i class="bi bi-check2" aria-hidden="true"></i> Save</button>
+        <button type="button" class="cns-btn cns-btn-secondary" data-action="test-ai">
+          <i class="bi bi-activity" aria-hidden="true"></i> Test connection
+        </button>
+        <span class="cns-help" style="margin: 0;">The test sends one short request with the saved settings, even with both switches off.</span>
+      </div>
+      <div class="cns-integration-result" data-result-for="ai" role="status" aria-live="polite"></div>
+      <p class="cns-text-sm cns-text-muted" data-last-test style="margin: var(--cns-space-3) 0 0;">
+        {%- if ai.last_test %}Last test: {{ "succeeded" if ai.last_test.ok else (ai.last_test.status | lower | e) }}{% if ai.last_test.duration_ms %} in {{ ai.last_test.duration_ms | e }} ms{% endif %},
+        <span data-cns-date="{{ ai.last_test.when | e }}" data-cns-with-time="1">{{ ai.last_test.when | e }}</span>.
+        {%- if ai.last_test.error %} {{ ai.last_test.error | e }}{% endif %}
+        {%- else %}Not tested yet. &ldquo;Test connection&rdquo; sends one short request and records the result.{% endif -%}
+      </p>
+    </form>
+  </div>
+</section>
+
+<!-- ---------------------------------------------------------- Doc AI -->
+<section class="cns-card" aria-labelledby="docai-heading" id="doc-ai">
+  <div class="cns-card-header">
+    <div class="cns-integration-head">
+      <span class="cns-integration-icon" aria-hidden="true"><i class="bi bi-pencil-square"></i></span>
+      <div>
+        <h2 class="cns-card-title" id="docai-heading">Doc AI {{ status_pill("doc_ai", docai.status) }}</h2>
+        <p class="cns-card-subtitle">An &ldquo;Open in Doc AI&rdquo; button on every governing document, each version
+          and the document viewer, which opens the document in your rich document editor. Until an address is set the
+          button explains that Doc AI is not connected yet.</p>
+      </div>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-leaves">
+      <strong><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> What leaves the platform</strong>
+      <ul>
+        <li>Only what is in the address the person's browser opens: the document's reference, the version's reference
+          and label, the title and the address of the document's page here. Never the file or its text: Doc AI reads
+          the source through its own connection.</li>
+        <li>Each hand-off is recorded in the access log with who, which document and version, and when.</li>
+      </ul>
+    </div>
+    <form class="cns-integration-form" data-section="doc_ai" novalidate>
+      <div class="cns-form-grid">
+        <div>
+          {{ check("doc_ai_enabled", "Show the Doc AI button", docai["values"].doc_ai_enabled,
+                   "Off removes the button everywhere.") }}
+          {{ check("doc_ai_new_tab", "Open in a new tab", docai["values"].doc_ai_new_tab) }}
+        </div>
+        {{ text("doc_ai_label", "Button label", docai["values"].doc_ai_label) }}
+        {{ text("doc_ai_url_template", "Address template", docai["values"].doc_ai_url_template,
+                "An https:// address. Placeholders, each URL-encoded: " ~ ("{" ~ (docai.placeholders | join("}, {")) ~ "}") ~ ".",
+                placeholder="https://docai.example.internal/open?doc={document}&version={version}&title={title}&source={document_url}",
+                wide=True) }}
+        <div class="cns-field cns-field--wide">
+          <span class="cns-label" id="docai-roles-label">Who sees the button</span>
+          <div class="cns-role-picker" role="group" aria-labelledby="docai-roles-label">
+            {%- for role in docai.roles_offered %}
+            <div class="cns-check">
+              <input type="checkbox" id="f-role-{{ loop.index }}" name="doc_ai_roles" value="{{ role | e }}"{% if role in docai.roles %} checked{% endif %}>
+              <label for="f-role-{{ loop.index }}">{{ role | e }}</label>
+            </div>
+            {%- endfor %}
+          </div>
+          <span class="cns-help">The roles this platform uses. Tick none for anyone who can read the document. Tick
+            roles to offer it to those roles only; a person must still be able to read the document.</span>
+        </div>
+      </div>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-primary"><i class="bi bi-check2" aria-hidden="true"></i> Save</button>
+      </div>
+      <div class="cns-integration-result" data-result-for="doc_ai" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+
+<!-- -------------------------------------------------- horizon scanning -->
+<section class="cns-card" aria-labelledby="horizon-heading" id="horizon-scanning">
+  <div class="cns-card-header">
+    <div class="cns-integration-head">
+      <span class="cns-integration-icon" aria-hidden="true"><i class="bi bi-binoculars"></i></span>
+      <div>
+        <h2 class="cns-card-title" id="horizon-heading">Horizon scanning {{ status_pill("horizon", horizon.status) }}</h2>
+        <p class="cns-card-subtitle">A button on the policy inventory and the regulatory updates page, and a menu entry,
+          that open your horizon scanning platform.</p>
+      </div>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-leaves">
+      <strong><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> What leaves the platform</strong>
+      <ul><li>Nothing. The person's browser opens the address below exactly as it is saved; the platform adds nothing to it.</li></ul>
+    </div>
+    <form class="cns-integration-form" data-section="horizon" novalidate>
+      <div class="cns-form-grid">
+        <div>
+          {{ check("horizon_enabled", "Show the horizon scanning button", horizon["values"].horizon_enabled,
+                   "Off removes the buttons.") }}
+          {{ check("horizon_new_tab", "Open in a new tab", horizon["values"].horizon_new_tab) }}
+        </div>
+        {{ text("horizon_label", "Button and menu label", horizon["values"].horizon_label) }}
+        {{ text("horizon_url", "Address", horizon["values"].horizon_url, "An https:// address.",
+                placeholder="https://horizon.example.internal/", wide=True) }}
+      </div>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-primary"><i class="bi bi-check2" aria-hidden="true"></i> Save</button>
+      </div>
+      <div class="cns-integration-result" data-result-for="horizon" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ------------------------------------------------------------- Email -->
+<section class="cns-card" aria-labelledby="email-heading" id="email">
+  <div class="cns-card-header">
+    <div class="cns-integration-head">
+      <span class="cns-integration-icon" aria-hidden="true"><i class="bi bi-envelope"></i></span>
+      <div>
+        <h2 class="cns-card-title" id="email-heading">Email {{ status_pill("email", mail.status) }}</h2>
+        <p class="cns-card-subtitle">Notifications and reminders by email. Sent through:
+          <strong data-current-route>{{ mail.route_label | e }}</strong>.
+          {%- if not mail.channel_active %} The email notification channel is switched off, so notifications are recorded but not emailed.{% endif %}</p>
+      </div>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-leaves">
+      <strong><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> What leaves the platform</strong>
+      <ul>
+        <li>Each notification's subject and text, to its recipient's address, sent through your organisation's mail
+          server (SMTP) or through Microsoft Graph as the sender mailbox.</li>
+        <li>With Microsoft Graph, the application's ID and secret go to the sign-in service to obtain an access token.</li>
+        <li>Every notification is recorded as a Notification Dispatch, sent or not, and a failed one is retried hourly.</li>
+      </ul>
+    </div>
+    {%- if mail.muted %}
+    <div class="cns-alert cns-status-warning" role="note"><i class="bi bi-volume-mute" aria-hidden="true"></i>
+      <div>Email is muted on this site (a site configuration setting), so mail sent through your mail server (SMTP) is queued without being sent.</div></div>
+    {%- endif %}
+
+    <form class="cns-integration-form" data-section="email" novalidate>
+      {{ select("delivery_route", "Send notification email through", mail.route, mail.routes,
+                "Mail the platform sends itself, such as password resets, always goes through your mail server (SMTP).",
+                labels=mail.route_labels) }}
+
+      <h3 class="cns-subhead">SMTP (from the outgoing Email Account)</h3>
+      {%- if mail.smtp %}
+      <dl class="cns-readonly-dl">
+        <dt>Account</dt><dd>{{ mail.smtp.name | e }}{% if mail.smtp.is_default %} (default outgoing){% endif %}</dd>
+        <dt>Sender</dt><dd>{{ (mail.smtp.sender or "—") | e }}</dd>
+        <dt>Server</dt><dd class="cns-mono">{{ (mail.smtp.host or "—") | e }}{% if mail.smtp.port %}:{{ mail.smtp.port | e }}{% endif %}</dd>
+        <dt>Encryption</dt><dd>{{ mail.smtp.security | e }}</dd>
+        <dt>Signs in as</dt><dd>{{ (mail.smtp.login or "—") | e }}</dd>
+      </dl>
+      <a class="cns-btn cns-btn-ghost cns-btn-sm" href="{{ mail.smtp.edit_url | e }}">
+        <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Edit the Email Account (Advanced view)
+      </a>
+      {%- else %}
+      <p class="cns-text-sm cns-text-muted">No outgoing Email Account is set up. SMTP mail cannot be sent until one is.</p>
+      <a class="cns-btn cns-btn-ghost cns-btn-sm" href="{{ mail.new_account_url | e }}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Set up an Email Account (Advanced view)
+      </a>
+      {%- endif %}
+
+      <h3 class="cns-subhead">Microsoft Graph (used when chosen above)</h3>
+      <p class="cns-help" style="margin-top: 0;">For an organisation that does not allow SMTP. The server signs in as an
+        application (the client-credentials flow): nobody signs in interactively, so <strong>no redirect URL is
+        needed</strong> in the app registration.</p>
+      <div class="cns-leaves" style="border-left-color: var(--cns-warning-border);">
+        <strong><i class="bi bi-person-badge" aria-hidden="true"></i> What your directory administrator provides</strong>
+        <ul>
+          <li>An app registration for this portal, and its directory (tenant) ID and application (client) ID.</li>
+          <li>A client secret for it. Paste it below; it is stored encrypted and never shown again.</li>
+          <li>The <span class="cns-mono">Mail.Send</span> application permission, with admin consent, restricted to the
+            sender mailbox by an application access policy, so the registration can send as that mailbox and no other.</li>
+          <li>The sender mailbox's address (user principal name) or object ID.</li>
+        </ul>
+      </div>
+      <div class="cns-form-grid">
+        {{ text("graph_tenant_id", "Directory (tenant) ID", mail["values"].graph_tenant_id,
+                placeholder="00000000-0000-0000-0000-000000000000") }}
+        {{ text("graph_client_id", "Application (client) ID", mail["values"].graph_client_id,
+                placeholder="00000000-0000-0000-0000-000000000000") }}
+        {{ secret("graph_client_secret", "Client secret", mail.has_secret, "A secret is saved", "No secret saved",
+                  "Stored encrypted. Leave empty to keep the saved secret.") }}
+        {{ text("graph_sender", "Sender mailbox", mail["values"].graph_sender,
+                "Its user principal name or its user (object) ID.", placeholder="governance@example.internal") }}
+      </div>
+      <details class="cns-field">
+        <summary class="cns-label" style="cursor: pointer;">Advanced: national clouds and timeout</summary>
+        <div class="cns-form-grid" style="margin-top: var(--cns-space-3);">
+          {{ text("graph_authority_url", "Token endpoint base", mail["values"].graph_authority_url,
+                  "The token is requested from this address followed by /&lt;tenant&gt;/oauth2/v2.0/token. Change only for a national cloud.") }}
+          {{ text("graph_api_url", "Graph base address", mail["values"].graph_api_url,
+                  "Mail is sent to this address followed by /v1.0/users/&lt;sender&gt;/sendMail, and the token's scope is this address followed by /.default. Change only for a national cloud.") }}
+          {{ text("graph_timeout_seconds", "Timeout (seconds)", mail["values"].graph_timeout_seconds, "1 to 120, per request.", type="number") }}
+        </div>
+      </details>
+      {%- if mail.route == mail.graph_route and mail.graph_missing %}
+      <div class="cns-alert cns-status-warning" role="note"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+        <div>Microsoft Graph is chosen but these are missing: {{ mail.graph_missing | join(", ") | e }}.</div></div>
+      {%- endif %}
+
+      <div class="cns-form-actions" style="margin-top: var(--cns-space-4);">
+        <button type="submit" class="cns-btn cns-btn-primary"><i class="bi bi-check2" aria-hidden="true"></i> Save</button>
+        <button type="button" class="cns-btn cns-btn-secondary" data-action="test-email">
+          <i class="bi bi-send" aria-hidden="true"></i> Send a test email to me
+        </button>
+        <span class="cns-help" style="margin: 0;">Sent now, through the saved route, to your own address.</span>
+      </div>
+      <div class="cns-integration-result" data-result-for="email" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ---------------------------------------------------- single sign-on -->
+{%- set sso = cards.sso %}
+<section class="cns-card" aria-labelledby="sso-heading" id="sso">
+  <div class="cns-card-header">
+    <div class="cns-integration-head">
+      <span class="cns-integration-icon" aria-hidden="true"><i class="bi bi-key"></i></span>
+      <div>
+        <h2 class="cns-card-title" id="sso-heading">Single sign-on {{ status_pill("sso", sso.status) }}</h2>
+        <p class="cns-card-subtitle">People sign in with their organisation account, through OpenID Connect or the
+          directory (LDAP), instead of a password kept here.</p>
+      </div>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-alert cns-status-info" role="note">
+      <i class="bi bi-lock" aria-hidden="true"></i>
+      <div>Single sign-on is switched on, off or changed in the server's deployment configuration, not on this page:
+        a wrong provider address or secret saved here would lock everyone out, including the administrator trying to
+        put it right. Your operations team makes the change as described under &ldquo;Changing the configuration &rarr;
+        Single sign-on&rdquo; in the Operations guide, and can undo it the same way.</div>
+    </div>
+    <div class="cns-leaves">
+      <strong><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> What leaves the platform</strong>
+      <ul>
+        <li>The person's browser is sent to the identity provider to sign in, with this portal's client ID and the
+          redirect address below. The server then exchanges a one-time code for the person's email address and
+          identifier, using the client secret. No record of this portal is sent.</li>
+      </ul>
+    </div>
+
+    {%- for provider in sso.providers %}
+    <h3 class="cns-subhead">{{ provider.name | e }}
+      {%- if provider.enabled %} <span class="cns-pill cns-status-success">On</span>{% else %} <span class="cns-pill cns-status-neutral">Off</span>{% endif %}</h3>
+    <dl class="cns-readonly-dl">
+      <dt>Kind</dt><dd>OpenID Connect{% if provider.kind != "Custom" %} ({{ provider.kind | e }}){% endif %}</dd>
+      <dt>Issuer</dt><dd class="cns-mono">{{ (provider.issuer or "—") | e }}</dd>
+      <dt>Authorisation address</dt><dd class="cns-mono">{{ (provider.authorize_url or "—") | e }}</dd>
+      <dt>Client ID</dt><dd class="cns-mono">{{ (provider.client_id or "—") | e }}</dd>
+      <dt>New accounts</dt><dd>{% if provider.sign_ups == "Allow" %}Created at first sign-in{% else %}Not created: only people who already have an account, matched by email{% endif %}</dd>
+      <dt>People linked</dt><dd>{{ provider.people_linked }}{% if provider.last_linked %}, most recently
+        <span data-cns-date="{{ provider.last_linked | e }}" data-cns-with-time="1">{{ provider.last_linked | e }}</span>{% endif %}
+        <span class="cns-help" style="margin: 0;">The sign-in log does not record which method a person used, so this is when a person was first linked to the provider.</span></dd>
+    </dl>
+    <div class="cns-field">
+      <label class="cns-label" for="sso-redirect-{{ loop.index }}">Redirect URI to register with the identity provider</label>
+      <div class="cns-btn-group" style="width: 100%; flex-wrap: nowrap;">
+        <input class="cns-input cns-mono" id="sso-redirect-{{ loop.index }}" type="text" readonly value="{{ provider.redirect_uri | e }}">
+        <button type="button" class="cns-btn cns-btn-secondary" data-copy="sso-redirect-{{ loop.index }}"><i class="bi bi-clipboard" aria-hidden="true"></i> Copy</button>
+      </div>
+      <span class="cns-help">Exactly this, character for character. The identity provider refuses a sign-in whose address differs.</span>
+    </div>
+    {%- else %}
+    <p class="cns-text-sm">No OpenID Connect provider is set up.</p>
+    <div class="cns-field">
+      <label class="cns-label" for="sso-redirect-expected">Redirect URI to register, for the provider name &ldquo;{{ sso.default_provider | e }}&rdquo;</label>
+      <div class="cns-btn-group" style="width: 100%; flex-wrap: nowrap;">
+        <input class="cns-input cns-mono" id="sso-redirect-expected" type="text" readonly value="{{ sso.expected_redirect_uri | e }}">
+        <button type="button" class="cns-btn cns-btn-secondary" data-copy="sso-redirect-expected"><i class="bi bi-clipboard" aria-hidden="true"></i> Copy</button>
+      </div>
+      <span class="cns-help">The last part is the provider name in the deployment configuration, lower-cased with
+        underscores (&ldquo;{{ sso.default_provider | e }}&rdquo; becomes <span class="cns-mono">{{ sso.default_key | e }}</span>).
+        The address uses this site's public address; check it matches the one people type.</span>
+    </div>
+    {%- endfor %}
+
+    <h3 class="cns-subhead">Directory (LDAP)
+      {%- if sso.ldap and sso.ldap.enabled %} <span class="cns-pill cns-status-success">On</span>{% else %} <span class="cns-pill cns-status-neutral">Off</span>{% endif %}</h3>
+    {%- if sso.ldap %}
+    <dl class="cns-readonly-dl">
+      <dt>Server</dt><dd class="cns-mono">{{ (sso.ldap.server or "—") | e }}</dd>
+      <dt>Directory</dt><dd>{{ (sso.ldap.directory or "—") | e }}</dd>
+      <dt>Binds as</dt><dd class="cns-mono">{{ (sso.ldap.bind_dn or "—") | e }}</dd>
+      <dt>People are found under</dt><dd class="cns-mono">{{ (sso.ldap.user_search or "—") | e }}</dd>
+      <dt>Encryption</dt><dd>{{ ("LDAPS" if sso.ldap.server.startswith("ldaps://") else (sso.ldap.tls or "—")) | e }}</dd>
+      <dt>New accounts</dt><dd>{% if sso.ldap.creates_accounts %}Created at first sign-in{% else %}Not created{% endif %}</dd>
+    </dl>
+    {%- else %}
+    <p class="cns-text-sm cns-text-muted">Not set up. A directory needs no redirect address; the server binds to it with a service account.</p>
+    {%- endif %}
+  </div>
+</section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/integrations.css') }}">
+<script>
+(function () {
+  "use strict";
+
+  var api = Consilium.api;
+  var esc = Consilium.util.escapeHtml;
+  var ADMIN = "consilium.consilium_core.integrations.admin.";
+  var STATUS = { connected: ["Connected", "success"], not_connected: ["Not connected", "warning"], off: ["Off", "neutral"] };
+  var SECRET_TEXT = {
+    api_key: ["A key is saved", "No key saved"],
+    graph_client_secret: ["A secret is saved", "No secret saved"]
+  };
+
+  document.querySelectorAll("[data-copy]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var input = document.getElementById(button.getAttribute("data-copy"));
+      if (!input) return;
+      var done = function () { Consilium.toast.success("Copied."); };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(input.value).then(done, function () { input.select(); });
+      } else {
+        input.select();
+        try { if (document.execCommand("copy")) done(); } catch (e) { /* selected for a manual copy */ }
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-cns-date]").forEach(function (node) {
+    var value = node.getAttribute("data-cns-date");
+    if (value) node.textContent = Consilium.util.formatDate(value, true);
+  });
+
+  function setStatus(key, status, lastTest) {
+    var pill = document.querySelector('[data-status-for="' + key + '"]');
+    var text = STATUS[status] || STATUS.off;
+    if (!pill) return;
+    pill.textContent = text[0];
+    pill.className = "cns-pill cns-status-" + text[1];
+    /* "Connected — last tested …" once a test has been run. */
+    var tested = document.querySelector('[data-tested-for="' + key + '"]');
+    if (!tested) return;
+    tested.hidden = status !== "connected";
+    if (lastTest) {
+      tested.textContent = "— " + (lastTest.ok ? "last tested " : "last test failed ") +
+        Consilium.util.formatDate(lastTest.when, true);
+    }
+  }
+
+  function setSecret(form, name, saved) {
+    var state = form.querySelector('[data-secret-state="' + name + '"]');
+    var clear = form.querySelector('[data-secret-clear="' + name + '"]');
+    var input = form.querySelector('[name="' + name + '"]');
+    if (state) {
+      state.innerHTML = saved
+        ? '<i class="bi bi-shield-check" aria-hidden="true"></i> ' + esc(SECRET_TEXT[name][0])
+        : '<i class="bi bi-shield-exclamation" aria-hidden="true"></i> ' + esc(SECRET_TEXT[name][1]);
+    }
+    if (clear) {
+      clear.hidden = !saved;
+      var box = clear.querySelector("input");
+      if (box) box.checked = false;
+    }
+    if (input) {
+      input.value = "";
+      input.placeholder = saved ? "Paste a new one to replace the saved one" : "Paste it here";
+    }
+  }
+
+  function result(section, tone, html) {
+    var box = document.querySelector('[data-result-for="' + section + '"]');
+    if (!box) return;
+    box.innerHTML = html
+      ? '<div class="cns-alert cns-status-' + tone + '"><i class="bi ' +
+        (tone === "success" ? "bi-check-circle" : tone === "danger" ? "bi-x-octagon" : "bi-info-circle") +
+        '" aria-hidden="true"></i><div>' + html + "</div></div>"
+      : "";
+  }
+
+  function collect(form) {
+    var values = {};
+    var roles = [];
+    Array.prototype.forEach.call(form.elements, function (el) {
+      if (!el.name || el.disabled) return;
+      if (el.name === "doc_ai_roles") {
+        if (el.checked) roles.push(el.value);
+        return;
+      }
+      if (el.type === "checkbox") values[el.name] = el.checked ? 1 : 0;
+      else values[el.name] = el.value;
+    });
+    if (form.querySelector('[name="doc_ai_roles"]')) values.doc_ai_roles = roles;
+    return values;
+  }
+
+  function redraw(section, form, card) {
+    setStatus(section, card.status);
+    if (section === "ai") {
+      setSecret(form, "api_key", card.has_key);
+      var warnings = document.querySelector('[data-warnings-for="ai"]');
+      if (warnings) {
+        warnings.innerHTML = (card.warnings || []).map(function (w) {
+          return '<div class="cns-alert cns-status-warning" role="note"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><div>' +
+            esc(w) + "</div></div>";
+        }).join("");
+      }
+      var url = form.querySelector("[data-request-url]");
+      if (url) url.textContent = card.request_url || "";
+    }
+    if (section === "email") {
+      setSecret(form, "graph_client_secret", card.has_secret);
+      var route = document.querySelector("[data-current-route]");
+      if (route) route.textContent = card.route_label || card.route;
+    }
+    form.removeAttribute("data-dirty");
+  }
+
+  function busy(button, on) {
+    if (!button) return;
+    button.disabled = on;
+    button.setAttribute("aria-busy", on ? "true" : "false");
+  }
+
+  document.querySelectorAll(".cns-integration-form").forEach(function (form) {
+    var section = form.getAttribute("data-section");
+    form.addEventListener("input", function () { form.setAttribute("data-dirty", "1"); });
+    form.addEventListener("change", function () { form.setAttribute("data-dirty", "1"); });
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var button = form.querySelector('button[type="submit"]');
+      busy(button, true);
+      result(section, "", "");
+      api.call(ADMIN + "save", { section: section, values: collect(form) }, { method: "POST" })
+        .then(function (card) {
+          redraw(section, form, card);
+          result(section, "success", "Saved.");
+          Consilium.toast.success("Saved.");
+        })
+        .catch(function (error) {
+          result(section, "danger", esc(error.message || "The settings could not be saved."));
+        })
+        .then(function () { busy(button, false); });
+    });
+  });
+
+  function unsavedNote(form) {
+    return form.getAttribute("data-dirty")
+      ? " <strong>You have unsaved changes; the test used the saved settings.</strong>" : "";
+  }
+
+  var testAi = document.querySelector('[data-action="test-ai"]');
+  if (testAi) testAi.addEventListener("click", function () {
+    var form = testAi.closest("form");
+    busy(testAi, true);
+    result("ai", "info", "Sending a test request&hellip;");
+    api.call(ADMIN + "test_ai_connection", {}, { method: "POST" })
+      .then(function (outcome) {
+        var detail = esc(outcome.message || "");
+        if (outcome.request_url) detail += '<br><span class="cns-text-xs">Sent to <span class="cns-mono">' + esc(outcome.request_url) + "</span>" +
+          (outcome.service_request ? ", and recorded" : "") + ".</span>";
+        result("ai", outcome.ok ? "success" : "danger", detail + unsavedNote(form));
+        var last = document.querySelector("[data-last-test]");
+        var tested = outcome.card && outcome.card.last_test;
+        if (last && tested) {
+          last.textContent = "Last test: " + (tested.ok ? "succeeded" : String(tested.status || "").toLowerCase()) +
+            (tested.duration_ms ? " in " + tested.duration_ms + " ms" : "") + ", " +
+            Consilium.util.formatDate(tested.when, true) + ".";
+        }
+        if (outcome.card) setStatus("ai", outcome.card.status, tested);
+      })
+      .catch(function (error) { result("ai", "danger", esc(error.message || "The test could not be run.")); })
+      .then(function () { busy(testAi, false); });
+  });
+
+  var testEmail = document.querySelector('[data-action="test-email"]');
+  if (testEmail) testEmail.addEventListener("click", function () {
+    var form = testEmail.closest("form");
+    busy(testEmail, true);
+    result("email", "info", "Sending&hellip;");
+    api.call(ADMIN + "send_test_email", {}, { method: "POST" })
+      .then(function (outcome) {
+        var detail = esc(outcome.message || "") +
+          (outcome.dispatch ? '<br><span class="cns-text-xs">Recorded as ' + esc(outcome.dispatch) + ".</span>" : "");
+        result("email", outcome.ok ? "success" : "danger", detail + unsavedNote(form));
+      })
+      .catch(function (error) { result("email", "danger", esc(error.message || "The test email could not be sent.")); })
+      .then(function () { busy(testEmail, false); });
+  });
+})();
+</script>
+{% endblock %}

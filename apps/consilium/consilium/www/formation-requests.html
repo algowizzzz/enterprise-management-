@@ -11,7 +11,7 @@
 
 {% block page_actions %}
 {%- if can_request %}
-<a class="cns-btn cns-btn-secondary" href="/create-forum">
+<a class="cns-btn cns-btn-primary" href="/create-forum">
   <i class="bi bi-plus-lg" aria-hidden="true"></i> Raise a request
 </a>
 {%- endif %}
@@ -64,7 +64,7 @@
           <option value="decided">Decided or closed</option>
           <option value="all">Every request</option>
         </select>
-        <span class="cns-help" id="f-stage-help">Read from each request's flags, not its label.</span>
+        <span class="cns-help" id="f-stage-help">Who needs to act next: the governance office, or the person who raised the request.</span>
       </div>
       <div class="cns-field">
         <label class="cns-label" for="f-state">State</label>
@@ -226,6 +226,8 @@
         window.location.href = "/formation-request?name=" + encodeURIComponent(row.name);
       },
       emptyTitle: "No requests match",
+      exportable: true,
+      emptyAction: { label: "Clear the filters", onClick: function () { document.getElementById("filter-clear").click(); } },
       emptyMessage: "Nothing is waiting here. Choose “Every request” to see the whole record.",
       columns: [
         { field: "name", label: "Reference", sortable: true, className: "cns-mono", width: "10rem",

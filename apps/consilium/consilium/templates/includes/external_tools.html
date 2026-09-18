@@ -1,0 +1,55 @@
+{#-
+  Buttons that hand a person to another tool: Doc AI and horizon scanning.
+
+  Import the macros and pass them `cns_external_tools()`:
+
+      {% from "consilium/templates/includes/external_tools.html" import doc_ai_button, horizon_button, tools_assets %}
+      {% set tools = cns_external_tools() %}
+      {{ doc_ai_button(tools, document_name, version_name) }}
+      ...
+      {% block scripts %}{{ tools_assets(tools) }} ... {% endblock %}
+
+  Each button is a plain link to a portal address (/doc-ai, /horizon-scanning)
+  that checks, logs and forwards on the server, so the external address is
+  never in the page. When the tool is not connected the same link carries
+  data-cns-tool-state="not_connected" and the script shows an explanation
+  instead of navigating; without the script, the portal address explains.
+
+  noreferrer: the tool is sent the identifiers in its own address and nothing
+  else, not the address of the page the person came from.
+-#}
+
+{%- macro _attrs(tool, name, admin) -%}
+data-cns-tool="{{ name | e }}" data-cns-tool-state="{{ tool.state | e }}"
+{%- if admin %} data-cns-tool-admin="1"{% endif %}
+{%- if tool.state == "connected" and tool.new_tab %} target="_blank" rel="noopener noreferrer"{% endif %}
+{%- endmacro -%}
+
+{%- macro doc_ai_button(tools, document, version=None, compact=False) -%}
+{%- set tool = tools.doc_ai -%}
+{%- if tool.shown and document -%}
+<a class="cns-btn {{ 'cns-btn-ghost cns-btn-sm' if compact else 'cns-btn-secondary' }}"
+   href="/doc-ai?name={{ document | urlencode }}{% if version %}&amp;version={{ version | urlencode }}{% endif %}"
+   {{ _attrs(tool, "Doc AI", tools.admin) }}>
+  <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ tool.label | e }}
+</a>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro horizon_button(tools, primary=False) -%}
+{%- set tool = tools.horizon -%}
+{%- if tool.shown -%}
+<a class="cns-btn {{ 'cns-btn-primary' if primary else 'cns-btn-secondary' }}" href="/horizon-scanning"
+   {{ _attrs(tool, tool.label, tools.admin) }}>
+  <i class="bi bi-binoculars" aria-hidden="true"></i> {{ tool.label | e }}
+</a>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- The dialog's styles, the settings the script needs (labels and states only;
+    never an address), and the script. Once per page, in the scripts block. -#}
+{%- macro tools_assets(tools) -%}
+<link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/integrations.css') }}">
+<script type="application/json" id="cns-external-tools">{{ tools | tojson }}</script>
+<script src="{{ asset_url('/assets/consilium/js/consilium-integrations.js') }}"></script>
+{%- endmacro -%}

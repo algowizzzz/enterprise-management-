@@ -1,0 +1,102 @@
+{
+  "name": "External Tools Settings",
+  "module": "Consilium Core",
+  "issingle": 1,
+  "hide_toolbar": 1,
+  "track_changes": 1,
+  "description": "Buttons that hand a person over to another tool the organisation runs: a rich document editor (Doc AI) and a horizon-scanning platform. The platform sends each tool only a link: identifiers in the address, never a file or a record's contents.",
+  "fields": [
+    {
+      "fieldname": "doc_ai_section",
+      "fieldtype": "Section Break",
+      "label": "Doc AI (rich document editor)",
+      "description": "An \"Open in Doc AI\" button on every governing document, beside each version and on the document viewer."
+    },
+    {
+      "fieldname": "doc_ai_enabled",
+      "fieldtype": "Check",
+      "label": "Show the Doc AI Button",
+      "default": "1",
+      "description": "On by default. Until an address is set below, the button explains that Doc AI is not connected yet. Switch off to remove the button everywhere."
+    },
+    {
+      "fieldname": "doc_ai_label",
+      "fieldtype": "Data",
+      "label": "Button Label",
+      "default": "Open in Doc AI"
+    },
+    {
+      "fieldname": "doc_ai_url_template",
+      "fieldtype": "Data",
+      "label": "Address Template",
+      "description": "An http:// or https:// address with placeholders, for example https://docai.example.internal/open?doc={document}&version={version}&title={title}&source={document_url}. Placeholders: {document} the document reference, {version} the version reference, {version_label} the version's label, {title} the document title, {document_url} the document's page in this portal. Each value is URL-encoded. Leave empty until the tool is ready."
+    },
+    {
+      "fieldname": "doc_ai_col",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "doc_ai_new_tab",
+      "fieldtype": "Check",
+      "label": "Open in a New Tab",
+      "default": "1"
+    },
+    {
+      "fieldname": "doc_ai_roles",
+      "fieldtype": "Table MultiSelect",
+      "label": "Only These Roles See the Button",
+      "options": "Has Role",
+      "description": "Leave empty for anyone who can read the document. When roles are listed, a person must hold one of them as well as be able to read the document."
+    },
+    {
+      "fieldname": "horizon_section",
+      "fieldtype": "Section Break",
+      "label": "Horizon scanning platform",
+      "description": "A \"Horizon scanning\" button on the policy inventory and the regulatory updates page, and the /horizon-scanning address, which forwards to the platform."
+    },
+    {
+      "fieldname": "horizon_enabled",
+      "fieldtype": "Check",
+      "label": "Show the Horizon Scanning Button",
+      "default": "1",
+      "description": "On by default. Until an address is set below, the button explains that the platform is not connected yet."
+    },
+    {
+      "fieldname": "horizon_label",
+      "fieldtype": "Data",
+      "label": "Button and Menu Label",
+      "default": "Horizon scanning"
+    },
+    {
+      "fieldname": "horizon_col",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "horizon_url",
+      "fieldtype": "Data",
+      "label": "Address",
+      "description": "The platform's http:// or https:// address. Nothing is added to it."
+    },
+    {
+      "fieldname": "horizon_new_tab",
+      "fieldtype": "Check",
+      "label": "Open in a New Tab",
+      "default": "1"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "provenance": "Integrations: external tool hand-off (Doc AI, horizon scanning)"
+}

@@ -15,6 +15,10 @@ web_include_css = [
     "/assets/consilium/css/tokens.css",
     "/assets/consilium/css/consilium.css",
 ]
+# The workspace (desk) forms: the automatic status check boxes are hidden from
+# business users. Plain JavaScript, served as it is — no build step.
+app_include_js = ["/assets/consilium/js/consilium-desk.js"]
+
 web_include_js = [
     "/assets/consilium/js/consilium.js",
     "/assets/consilium/js/consilium-table.js",
@@ -91,9 +95,16 @@ jinja = {
         "consilium.consilium_core.branding.brand_style",
         "consilium.consilium_core.branding.asset_url",
         "consilium.consilium_core.branding.system_time_zone",
+        "consilium.consilium_core.branding.viewer_time_zone",
         "consilium.consilium_core.branding.cns_has_any_role",
+        # The "Advanced view" (workspace) links on business pages: administrators only.
+        "consilium.consilium_core.branding.cns_advanced_view",
         "consilium.consilium_core.branding.cns_can_read",
         "consilium.consilium_core.branding.cns_here",
+        # The header's menus, filtered to what the viewer may use.
+        "consilium.consilium_core.navigation.cns_nav",
+        # The Doc AI and horizon-scanning buttons: labels, states, who sees them.
+        "consilium.consilium_core.integrations.external_tools.cns_external_tools",
     ]
 }
 

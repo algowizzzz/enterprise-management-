@@ -320,9 +320,12 @@ def assessment() -> dict:
 	return {
 		"forums": forum_scores, "policies": policy_scores,
 		"weights": cfg, "weight_problems": problems,
-		"method": _("Each score is the sum of its factors' points: a flag scores its weight, a count scores its weight per item up "
-		            "to its cap, a share scores its weight times the share. Bands: {0}.").format(
-			", ".join(f"{k} from {v}" for k, v in sorted(cfg["bands"].items(), key=lambda kv: -kv[1]))),
+		# In plain words: the page shows this behind "How is this worked out?".
+		"method": _("Each score adds up points from the factors listed for it. A yes-or-no factor adds its full "
+		            "weight when it applies; a counted factor adds its weight for each item, up to a limit; a "
+		            "proportion adds its weight in proportion. {0}.").format(
+			"; ".join(_("{0} from {1} points").format(k, v)
+			          for k, v in sorted(cfg["bands"].items(), key=lambda kv: -kv[1]))),
 		"ai": guard.availability(CAPABILITY),
 		"note": _("Scored over the records you may read. A factor marked unavailable reads records your role cannot see, "
 		          "and scores nothing for you."),

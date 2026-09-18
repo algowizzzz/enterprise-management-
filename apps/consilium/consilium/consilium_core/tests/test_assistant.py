@@ -23,6 +23,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import frappe
 
 from consilium.consilium_core import assistant
+from consilium.consilium_core.ai import client
 from consilium.consilium_core.assistant import answer as answer_mod
 from consilium.consilium_core.assistant import context as ctxmod
 from consilium.consilium_core.assistant import corpus
@@ -602,7 +603,7 @@ class TestAIMode(AssistantTestCase):
 
 	def test_openai_compatible_gateway(self):
 		with stub_endpoint(mode="openai", reply="Gateway answer.") as (server, url):
-			self.enable_ai(url + "/v1", provider="OpenAI-compatible (internal gateway)")
+			self.enable_ai(url + "/v1", provider=client.OPENAI_COMPATIBLE)
 			result = self.ask(self.users["viewer"], "What does quorum mean?", "/forums")
 		self.assertEqual(result["mode"], "ai")
 		self.assertIn("Gateway answer.", self.text(result))

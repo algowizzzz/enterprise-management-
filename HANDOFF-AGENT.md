@@ -35,10 +35,10 @@ Measured state at hand-off:
 
 | Check | Result |
 |---|---|
-| App test suite, clean site | **1372 tests, OK** (about 21 min) |
-| `pytest tests/` (runtime and kit) | 51 passed |
-| Portal sweep (`scripts/ui_regression.py`) | 274 passed, 0 failed |
-| Browser journeys (`scripts/browser_journeys.py`) | 8 / 8 |
+| App test suite, clean site | **1453 tests, OK** (about 24 min) |
+| `pytest tests/` (runtime and kit) | 57 passed |
+| Portal sweep (`scripts/ui_regression.py`) | 302 passed, 0 failed |
+| Browser journeys (`scripts/browser_journeys.py`) | 11 / 11 |
 | Platform rules (`scripts/check_platform_rules.py`) | 6 / 6 |
 | Demo data on an empty site | about 30 s, 0 failed sections, idempotent |
 | Air-gapped install and verify (Rocky 9) | `verify.sh` 14 / 14 |
@@ -90,7 +90,7 @@ cd .bench/sites
 export FRAPPE_BENCH_ROOT=$(cd .. && pwd)
 ../../.venv/bin/python ../../deploy/demo_data.py --site consilium.localhost
 ../../.venv/bin/python ../../deploy/demo_logins.py --site consilium.localhost \
-    --url http://consilium.localhost:8000 --out ~/consilium-demo-logins.md --administrator
+    --url http://consilium.localhost:8000 --out ~/consilium-demo-logins.md --default-password
 ```
 
 - `demo_data.py` builds a fictitious financial-services group:
@@ -102,13 +102,18 @@ export FRAPPE_BENCH_ROOT=$(cd .. && pwd)
 
   It goes through the platform's real functions, so every record carries a
   genuine audit trail. Running it again changes nothing.
-- `demo_logins.py` gives every persona (and Administrator) a random password
-  and writes them to the file you name. **It refuses to write inside the
-  repository**, and the file must never be committed. The personas and their
-  roles, without passwords, are in
-  [`docs/delivery/DEMO-LOGINS.md`](docs/delivery/DEMO-LOGINS.md).
-- `dev_setup.sh` creates the site with Administrator password `admin`. The
-  `--administrator` flag above replaces it.
+- `demo_logins.py --default-password` gives every persona and Administrator
+  the team's shared sandbox password, the same on every demonstration and
+  sandbox site, and writes the logins to the file you name. The personas,
+  their roles and menus are in
+  [`docs/delivery/DEMO-LOGINS.md`](docs/delivery/DEMO-LOGINS.md). Without
+  `--default-password` (and with `--administrator`) each account gets its own
+  random password instead.
+- The shared sandbox password is only for sites with fictitious data that are
+  not reachable from the internet. Before a site holds anything real, follow
+  "Before a site holds anything real" in `DEMO-LOGINS.md`.
+- `dev_setup.sh` creates the site with Administrator password `admin`;
+  `demo_logins.py` replaces it.
 
 Open <http://consilium.localhost:8000> and sign in as a few personas: the
 Chief Risk Officer, the Committee Secretary, the Enterprise Policy Office Lead
@@ -121,7 +126,7 @@ Run all of these from the repository root unless a command says otherwise. Do
 not proceed to stage 2 until each matches.
 
 ```bash
-.venv/bin/python -m pytest tests/ -q                                    # 51 passed
+.venv/bin/python -m pytest tests/ -q                                    # 57 passed
 .venv/bin/python scripts/check_platform_rules.py                        # 6/6
 .venv/bin/python apps/consilium/scripts/check_state_flags.py            # clean
 
@@ -151,12 +156,12 @@ cd .bench/sites
 ../../.venv/bin/python -m frappe.utils.bench_helper frappe --site consilium-test.localhost set-config allow_tests 1 -p
 ../../.venv/bin/python -m frappe.utils.bench_helper frappe --site consilium-test.localhost set-config throttle_user_limit 100000 -p
 ../../.venv/bin/python -m frappe.utils.bench_helper frappe --site consilium-test.localhost run-tests --app consilium
-# expect: Ran 1372 tests ... OK
+# expect: Ran 1453 tests ... OK
 ```
 
 Optional, needs Chrome and `pip install -r requirements-dev.txt`:
 `scripts/browser_journeys.py --site consilium.localhost --url http://consilium.localhost:8000`
-(8/8). It signs in with server-side sessions and never types a password.
+(11/11). It signs in with server-side sessions and never types a password.
 
 The known expected messages are listed in §6.
 
@@ -192,8 +197,22 @@ In short:
 5. **Verify:** `sudo /opt/consilium/deploy/verify.sh --config /etc/consilium/consilium.conf`.
    It must end with **"All 14 checks passed"** and a readiness report marked
    **READY**. Keep that report with the change record.
-6. **Configure the organisation** (§4), then hand the first administrators the
-   [configuration guide](docs/guides/README.md).
+6. **Configure the organisation** (§4). Everything that connects to another
+   system is on one screen, **Admin → Integrations** (`/integrations`,
+   administrators only):
+   - **AI assistant and analysis**: endpoint, model and key, then *Test
+     connection*;
+   - **Doc AI**: the external document editor's address;
+   - **Horizon scanning**: the external platform's address and label;
+   - **Email**: SMTP or Microsoft Graph, then *Send a test email to me*;
+   - **Single sign-on**: read-only; it shows the redirect URI to register with
+     the identity provider.
+
+   Then give the first administrators the
+   [administrator quick start](docs/ADMIN-GUIDE.md) and the
+   [onboarding guide](docs/guides/README.md). Its chapter 9, *Administration
+   without code*, is theirs; §9.14 goes through the Integrations cards one by
+   one.
 
 After go-live, each of these is one command (see RUNBOOK and
 [`docs/OPERATIONS.md`](docs/OPERATIONS.md)):
@@ -204,8 +223,10 @@ After go-live, each of these is one command (see RUNBOOK and
 - `restore.sh`.
 
 **Do not load demonstration data on the production server.** Load it on a
-separate training site if you need one; `demo_logins.py` refuses a site that
-holds real users unless forced.
+separate sandbox or training site if you need one, with the shared sandbox
+logins. `demo_logins.py` refuses a site that holds real users unless forced.
+The production Administrator password is the organisation's own, set at
+install, and never the sandbox one.
 
 ### Milestone 1 acceptance (the first delivery milestone)
 
@@ -220,11 +241,13 @@ true:
 - The organisation's brand is applied through Portal Branding, and no
   framework branding is visible to end users.
 - Sign-in works through the organisation's identity provider, if SSO is in
-  scope, and mail is delivered through its relay.
+  scope. Mail is delivered through its SMTP relay or through Microsoft Graph:
+  *Send a test email to me* on Admin → Integrations arrives.
 - A backup has been taken and restored once on the server (`backup.sh`, then
   `restore.sh` onto a scratch site), with row counts matching.
-- The first administrators have completed the configuration guide's exercises:
-  add a workflow state, add a routing rule, add a notification template.
+- The first administrators have done the onboarding guide's chapter 9
+  exercises on a training site: add a policy lifecycle step (§9.11), add an
+  escalation routing rule (§9.8) and change a notification's wording (§9.6).
 
 ---
 
@@ -236,11 +259,27 @@ default.
 1. **Branding.** Portal Branding: name, logo, favicon, colours, fonts, footer.
    Default: a neutral "Governance Portal".
 2. **Identity.** OIDC single sign-on and LDAP are configured in
-   `consilium.conf`. OIDC was rehearsed against a mock provider; LDAP is
-   configured but untested against a real directory. Default: off, with local
-   accounts.
-3. **Mail.** SMTP relay in `consilium.conf`. Notifications are recorded
-   in-platform regardless; email is an extra channel. Default: off.
+   `consilium.conf`. Admin → Integrations → Single sign-on shows the redirect
+   URI to give the identity team. OIDC was rehearsed against a mock provider;
+   LDAP is configured but untested against a real directory. Default: off,
+   with local accounts.
+3. **Mail.** Choose the route; notifications are recorded in-platform
+   regardless, and e-mail is an extra channel. Default: off.
+   - **SMTP**: a relay in `consilium.conf` (`[email]`).
+   - **Microsoft Graph**, for an organisation that allows no SMTP from servers.
+     The directory administrator provides:
+     - an app registration (tenant ID, client ID, client secret);
+     - the **Mail.Send** *application* permission, with admin consent;
+     - an **application access policy** limiting it to the one sender mailbox.
+
+     No redirect URL is needed, because the server uses client credentials.
+     Set `graph_enabled = yes`, `graph_tenant_id`, `graph_client_id`,
+     `graph_client_secret_file` and `graph_sender`; the route can also be
+     switched in Admin → Integrations → Email. Tokens are cached; a 401 fetches
+     a new one; 429, 503 and 504 are retried per Retry-After.
+   - The framework's own mail (password reset) still goes by SMTP, so keep an
+     SMTP account for it or rely on single sign-on.
+   - Prove it with *Send a test email to me*.
 4. **Python and CPU architecture.** The server must be **x86_64 with Python
    3.11**:
    - Frappe pins `hiredis==2.2.3`, which has no Python 3.12 wheels. That rules
@@ -254,16 +293,21 @@ default.
    - emerging risks;
    - risk scores;
    - regulatory updates.
-   An administrator can add AI commentary in **Assistant Settings**: the
-   endpoint, model and API key, then "Use the AI Endpoint for Analysis
-   Features". Decide:
+   An administrator connects AI in **Admin → Integrations → AI assistant and
+   analysis**: the endpoint (request format "OpenAI-compatible API", or the
+   other supported format), the model and a write-only key, then *Test
+   connection*. It switches on the help assistant's written answers and the
+   commentary on the analysis pages. A warning shows if a switch is on and no
+   key is saved. The build was tested end to end against an OpenAI-compatible
+   provider: the help assistant answers with citations. Decide:
    - which service is approved;
    - the **classification ceiling**: nothing above it is ever sent;
    - whether to allow "Include visible record summary". The default,
      "guidance only", sends counts and category names, never record text.
 
    Every call is logged in *AI Service Request* with exactly what was sent. The
-   API key belongs in the settings' password field and nowhere else.
+   API key belongs in the Integrations card's key field and nowhere else. It is
+   never shown back, and it never goes in `consilium.conf` or git.
 6. **Reference data.**
    - `deploy/seed.py` loads a generic starting taxonomy: risk types,
      organisational levels, retention classes, jurisdictions. Replace it with
@@ -272,10 +316,19 @@ default.
 7. **Retention periods and legal holds** (Retention Class, Legal Hold).
    Nothing is ever deleted by the platform. Records past retention are flagged
    for a disposal decision.
-8. **Workflow states.** To add a policy lifecycle state without a schema
+8. **External tools (optional).** Admin → Integrations → **Doc AI** takes
+   the address template of the organisation's document editor. "Open in Doc
+   AI" on a policy, a version row and the document viewer hands off with
+   identifiers only, after an access check, and each hand-off is logged in the
+   Access Log. **Horizon scanning** takes the address and label of the external
+   platform. Until an address is set, both buttons explain "not connected
+   yet". Either can be switched off, or limited to roles.
+9. **Workflow states.** To add a policy lifecycle state without a schema
    change, run once per site:
    `bench --site <site> execute consilium.policy.lifecycle.derive_phase_from_state`.
-   Then follow the configuration guide, chapter 11.
+   Then follow the onboarding guide, §9.11 *Adding a step to the policy
+   lifecycle* (`docs/guides/09-administration.md`). The technical detail is in
+   `docs/OPERATIONS.md`.
 
 ---
 
@@ -347,8 +400,9 @@ Not yet proven. Each is on the organisation's side:
 | Deployment evidence | `docs/delivery/DEPLOYMENT-READINESS.md`, `docs/delivery/evidence/` |
 | Install, upgrade, backup, restore | `docs/RUNBOOK.md`, `docs/OPERATIONS.md` |
 | Troubleshooting | `docs/TROUBLESHOOTING.md`, `docs/KNOWLEDGE-BASE.md` |
-| User and configuration guides (illustrated) | `docs/guides/` (12 chapters) |
-| Short user and admin guides | `docs/USER-GUIDE.md`, `docs/ADMIN-GUIDE.md` |
+| Onboarding guide for business users and administrators (illustrated, numbered callouts) | `docs/guides/`: chapters 00–10 and a glossary (11). Built as `Consilium-Onboarding-Guide.pdf` and `.docx` (217 pages, 185 annotated screenshots) by `scripts/build_guides.sh` into `~/Desktop/Consilium-deliverables/` |
+| Quick starts | `docs/USER-GUIDE.md` (users), `docs/ADMIN-GUIDE.md` (administrators) |
+| Technical configuration (workflow, state flags, jobs, integrations internals) | `docs/OPERATIONS.md` |
 | Demo personas and roles | `docs/delivery/DEMO-LOGINS.md` |
 | Architecture and history | `HANDOVER.md`, `docs/delivery/SESSION-SUMMARY.md` |
 | Refresh guide screenshots | `scripts/capture_screenshots.py`, then `scripts/build_guides.sh` |

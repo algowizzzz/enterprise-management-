@@ -236,12 +236,103 @@ def _second_signature_items(user: str, today) -> list[dict]:
     return items
 
 
+def _step_words(approval_step: str | None) -> str:
+    """The seat an approval step is decided from, as a person would say it.
+
+    Steps are configured with names such as "Sponsor", "Document Approver
+    Approval" or "Delegating Authority Approval". Read as "as Document Approver
+    Approval" the last word is noise, so a trailing "Approval" is dropped:
+    "as Document Approver". Display only; the step name is never compared.
+    """
+    words = (approval_step or "").strip()
+    suffix = " approval"
+    if words.lower().endswith(suffix) and len(words) > len(suffix):
+        words = words[: -len(suffix)].strip()
+    return words
+
+
+def _earliest_clock(doctype: str, name: str):
+    """The nearest target of a running service-level clock on the record, if any.
+
+    Where the record's type carries no date of its own for the decision, the
+    time limit the organisation has configured for the stage it is in is the
+    due date a person should work to.
+    """
+    targets = frappe.get_all(
+        "SLA Clock",
+        filters={"subject_doctype": doctype, "subject_name": name, "is_open": 1},
+        pluck="target_on",
+        order_by="target_on asc",
+        limit=1,
+    ) if frappe.db.exists("DocType", "SLA Clock") else []
+    return getdate(targets[0]) if targets and targets[0] else None
+
+
+def decision_summary(subject_doctype: str, subject_name: str, approval_step: str | None) -> dict:
+    """What an approval step asks of the person, in words (My work).
+
+    The inbox used to show an approval as the record's code and the step name —
+    "FDIS-2026-00002 · Sponsor" — which tells the person nothing about what they
+    are being asked to decide. This names the decision the way a person asks for
+    it ("Approve the disbandment plan for the Model Risk Committee"), the seat it
+    is decided from ("Sponsor"), and the date it is due by where the record type
+    has one.
+
+    Returns ``title``, ``as_role`` (empty when the step is not a seat) and
+    ``due_on`` (or None). Reads only the fields it words; the caller is named on
+    the decision, which is the entitlement to see what it concerns (see the
+    module docstring), so nothing here widens what the inbox shows.
+    """
+    step = _step_words(approval_step)
+    title, due_on, noun = None, None, ""
+    if subject_doctype == "Disbandment Plan":
+        plan = frappe.db.get_value(subject_doctype, subject_name, ["forum", "effective_on"], as_dict=True) or {}
+        forum = _label("Governance Forum", plan.get("forum")) if plan.get("forum") else subject_name
+        title = _("Approve the disbandment plan for {0}").format(forum)
+        due_on = plan.get("effective_on")
+    elif subject_doctype == "Committee Formation Request":
+        request = frappe.db.get_value(
+            subject_doctype, subject_name, ["forum_name", "request_type", "proposed_timeline"], as_dict=True
+        ) or {}
+        forum = request.get("forum_name") or subject_name
+        # request_type is a configuration choice (Create / Modify / Retire), read
+        # to choose words only.
+        wording = {
+            "Modify": _("Approve the requested change to {0}"),
+            "Retire": _("Approve the request to retire {0}"),
+        }.get(request.get("request_type"), _("Approve the request to form {0}"))
+        title = wording.format(forum)
+        due_on = request.get("proposed_timeline")
+    elif subject_doctype == "Governing Document":
+        document = frappe.db.get_value(
+            subject_doctype, subject_name, ["document_name", "version_label"], as_dict=True
+        ) or {}
+        name = document.get("document_name") or subject_name
+        title = (_("Approve {0}, version {1}").format(name, document.get("version_label"))
+                 if document.get("version_label") else _("Approve {0}").format(name))
+    elif subject_doctype == "Risk Acceptance":
+        acceptance = frappe.db.get_value(
+            subject_doctype, subject_name, ["risk_acceptance_name", "escalation_matter", "start_date"], as_dict=True
+        ) or {}
+        what = acceptance.get("risk_acceptance_name") or subject_name
+        title = _("Approve accepting the risk: {0}").format(what)
+        due_on = acceptance.get("start_date")
+        noun = _("Risk Acceptance")
+    else:
+        title = _("Decide on {0}").format(_label(subject_doctype, subject_name))
+    if not due_on:
+        due_on = _earliest_clock(subject_doctype, subject_name)
+    # A step named after the decision itself ("Risk Acceptance") is not a seat.
+    as_role = "" if not step or step.lower() == str(noun).lower() else step
+    return {"title": title, "as_role": as_role, "due_on": due_on}
+
+
 def _approval_items(user: str, today) -> list[dict]:
     people = _acting_as(user, delegation.ACTION_APPROVE)
     rows = frappe.get_all(
         "Approval Decision",
         filters={"assigned_to": ["in", people], "is_open": 1},
-        fields=["name", "subject_doctype", "subject_name", "approval_step", "assigned_to", "creation"],
+        fields=["name", "subject_doctype", "subject_name", "approval_step", "assigned_to", "creation", "owner"],
         order_by="creation asc",
     )
     # A role-based formation step waits in its role's queue, like an escalation
@@ -273,25 +364,37 @@ def _approval_items(user: str, today) -> list[dict]:
                 continue
             acting_for = row.assigned_to
         subject_doctype, subject_name = row.subject_doctype, row.subject_name
-        # A risk acceptance is decided on its escalation's screen.
+        # A risk acceptance is decided on its escalation's screen, and a
+        # disbandment plan on its forum's disbandment page — never the desk.
         if subject_doctype == "Risk Acceptance":
             matter = frappe.db.get_value("Risk Acceptance", subject_name, "escalation_matter")
             url = _screen("Escalation Matter", matter) if matter else _screen(subject_doctype, subject_name)
+        elif subject_doctype == "Disbandment Plan":
+            forum = frappe.db.get_value("Disbandment Plan", subject_name, "forum")
+            url = (f"/forum-disband?forum={frappe.utils.quote(forum, safe='')}" if forum
+                   else _screen(subject_doctype, subject_name))
         else:
             url = _screen(subject_doctype, subject_name)
         kind = "formation_step" if subject_doctype == "Committee Formation Request" else "approval"
+        summary = decision_summary(subject_doctype, subject_name, row.approval_step)
+        raised_by = row.get("owner") or frappe.db.get_value("Approval Decision", row.name, "owner")
         items.append(_item(
             kind,
             reference=row.name,
             doctype="Approval Decision",
-            title=_label(subject_doctype, subject_name),
+            title=summary["title"],
             url=url,
-            context=_("{0} — {1} {2}, raised {3}").format(
-                row.approval_step, _(subject_doctype), subject_name, str(getdate(row.creation))
-            ),
+            due_on=summary["due_on"],
+            # Kept for readers that show one line (the assistant, exports): the
+            # same facts the page draws from the fields below.
+            context=_("As {0}").format(summary["as_role"]) if summary["as_role"] else None,
             today=today,
             acting_for=acting_for,
+            as_role=summary["as_role"],
+            raised_by=raised_by,
             raised_on=str(getdate(row.creation)),
+            subject_doctype=subject_doctype,
+            subject_name=subject_name,
         ))
     return items
 

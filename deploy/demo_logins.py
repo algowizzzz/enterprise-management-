@@ -4,6 +4,8 @@
     cd .bench/sites
     FRAPPE_BENCH_ROOT=<bench> ../../.venv/bin/python ../../deploy/demo_logins.py \\
         --site <site> --url http://<site>:8000 --out ~/demo-logins.md [--administrator]
+    ... --default-password   every persona and Administrator get the published
+                             sandbox password (DEFAULT_PASSWORD below) instead
 
 ``deploy/demo_data.py`` creates its personas with no password, so none of them
 can sign in until someone decides they should. This is that decision, made for
@@ -23,6 +25,15 @@ is refused unless ``--force`` says the operator knows what the site is.
 
 Running it again issues new passwords and overwrites the file; nothing else
 changes. Nothing is emailed.
+
+**The published sandbox password.** A team that stands up the same demo in
+several sandboxes wants the same sign-in everywhere, written down with the
+rest of the delivery. ``--default-password`` gives every persona and
+Administrator ``DEFAULT_PASSWORD``, which is public by design, so the file may
+then be written anywhere, including the repository. That is only acceptable
+because the data is fictitious and the site is a sandbox: the same refusal of a
+site with real users applies, and the file says to change the Administrator
+password before anything real is connected.
 """
 
 from __future__ import annotations
@@ -35,24 +46,28 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+
+#: The published password for demonstration sandboxes (``--default-password``).
+#: Public: never use it on a site that holds real records.
+DEFAULT_PASSWORD = "Consilium@Demo2026"
 DEMO_DOMAIN = "@demo.example"
 
 # Where each kind of user starts. Keyed by the role that decides it, most
 # specific first; the first role a persona holds picks its line.
 START_HERE = [
-    ("Consilium Administrator", "/admin — reference data, imports, attestation campaigns; the desk at /app"),
-    ("Head of Risk Governance", "Inbox, then /escalations (sensitive matters visible) and /reports"),
-    ("Risk Governance Office", "/formation-requests to decide new forums; /forums compliance reviews"),
-    ("Committee Secretary", "/forums — a forum's meetings, minutes, motions and votes"),
-    ("Enterprise Policy Office", "/policies — approvals, gate exceptions, attestation from a policy"),
-    ("Compliance Reviewer", "Inbox — reviews waiting; /forum-review for compliance decisions"),
-    ("Policy Reviewer", "Inbox — documents in review; return with comments from /policy"),
-    ("Escalation Owner", "/escalations — matters you own; take ownership from a group queue in the Inbox"),
-    ("Escalation Reviewer", "Inbox — escalation approvals and challenges"),
-    ("Policy Owner", "/policies — your documents, versions and review dates"),
-    ("Forum Owner", "/forums — the forums you own and their reviews"),
-    ("Consilium Audit", "/reports and a record's History tab; Export evidence pack"),
-    ("Records Manager", "/policies retention and dispositions; the desk for archive records"),
+    ("Consilium Administrator", "Admin menu — Administration, Imports, Attestation campaigns, Integrations"),
+    ("Head of Risk Governance", "My work, then Escalations (sensitive matters visible) and Insights"),
+    ("Risk Governance Office", "Governance → Formation requests to decide new forums; Awaiting compliance review"),
+    ("Committee Secretary", "Governance → Forum inventory: a forum's meetings, minutes, motions and votes"),
+    ("Enterprise Policy Office", "Policies → In review: approvals in order, gate exceptions, attestation campaigns"),
+    ("Compliance Reviewer", "My work → Reviews; Governance → Awaiting compliance review"),
+    ("Policy Reviewer", "My work → Reviews: documents in review, return with comments"),
+    ("Escalation Owner", "Escalations → Escalation register; take ownership from My work"),
+    ("Escalation Reviewer", "My work → Approvals: escalation approvals and challenges"),
+    ("Policy Owner", "Policies → Policy library: your documents, versions and review dates"),
+    ("Forum Owner", "Governance → Forum inventory: the forums you own and their reviews"),
+    ("Consilium Audit", "Insights, then any record's History tab and Export evidence pack"),
+    ("Records Manager", "Policies → Policy library: retention and dispositions"),
     ("Governance Viewer", "Home — the forum map; read-only across forums and policies"),
 ]
 
@@ -89,13 +104,18 @@ def main() -> int:
     parser.add_argument("--site", required=True)
     parser.add_argument("--sites-path", default=".")
     parser.add_argument("--url", required=True, help="the address people open, e.g. http://consilium.localhost:8000")
-    parser.add_argument("--out", required=True, help="Markdown file to write; must be outside this repository")
+    parser.add_argument("--out", required=True,
+                        help="Markdown file to write; outside this repository unless --default-password")
+    parser.add_argument("--default-password", action="store_true",
+                        help="use the published sandbox password for every persona and Administrator")
     parser.add_argument("--administrator", action="store_true", help="also give Administrator a new password")
     parser.add_argument("--force", action="store_true", help="run even though the site has non-demo users")
     args = parser.parse_args()
 
     out = Path(args.out).expanduser()
-    if _inside_repo(out):
+    if args.default_password:
+        args.administrator = True
+    elif _inside_repo(out):
         print(f"Refused: {out} is inside the repository. Passwords must never be committed; "
               "write the file somewhere outside it.", file=sys.stderr)
         return 2
@@ -123,12 +143,12 @@ def main() -> int:
     rows = []
     for user in personas:
         roles = set(frappe.get_roles(user.name)) - {"All", "Guest", "Desk User"}
-        password = _password()
+        password = DEFAULT_PASSWORD if args.default_password else _password()
         update_password(user.name, password)
         rows.append((user.full_name or user.name, user.name, password, sorted(roles), _start_for(roles)))
     admin_password = None
     if args.administrator:
-        admin_password = _password()
+        admin_password = DEFAULT_PASSWORD if args.default_password else _password()
         update_password("Administrator", admin_password)
     frappe.db.commit()
 
@@ -136,14 +156,25 @@ def main() -> int:
     lines = [
         "# Demonstration logins",
         "",
-        f"Site: **{args.site}** — open <{url}/login>. Generated by `deploy/demo_logins.py`;",
-        "running it again issues new passwords and replaces this file.",
-        "",
-        "> **Keep this file private.** It is deliberately outside the git repository. These are",
-        "> fictitious personas on a demonstration site — never load demo data, or these",
-        "> passwords, onto a server that holds real records.",
+        f"Site: **{args.site}** — open <{url}/login>. Generated by `deploy/demo_logins.py`.",
         "",
     ]
+    if args.default_password:
+        lines += [
+            f"> **Sandbox logins — public by design.** Every persona and Administrator use `{DEFAULT_PASSWORD}`.",
+            "> Use them only on demonstration and sandbox sites holding fictitious data, not reachable from",
+            "> the internet. Before connecting real data or single sign-on, change the Administrator password",
+            "> and disable the demonstration personas.",
+            "",
+        ]
+    else:
+        lines += [
+            "> **Keep this file private.** It is deliberately outside the git repository. These are",
+            "> fictitious personas on a demonstration site — never load demo data, or these",
+            "> passwords, onto a server that holds real records. Running the script again issues new",
+            "> passwords and replaces this file.",
+            "",
+        ]
     if admin_password:
         lines += [
             "## Administrator",
@@ -166,18 +197,18 @@ def main() -> int:
         "",
         "## A tour in five sign-ins",
         "",
-        "1. **Chief Risk Officer** — Inbox, then a sensitive escalation, then Reports → Gaps and risk.",
+        "1. **Chief Risk Officer** — My work, then a sensitive escalation, then Insights → Gaps and risk.",
         "2. **Committee Secretary** — a forum's Meetings and Decisions tabs; put a motion to a vote.",
         "3. **Enterprise Policy Office Lead** — a policy in review: approvals in order, a gate exception.",
-        "4. **Risk Governance Office Lead** — Requests: decide a new forum; Admin for reference data.",
+        "4. **Risk Governance Office Lead** — Governance → Formation requests: decide a new forum; Admin → Integrations.",
         "5. **Internal Auditor** — any record's History tab and *Export evidence pack*.",
         "",
     ]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(lines))
-    out.chmod(0o600)
+    out.chmod(0o644 if args.default_password else 0o600)
     print(f"{len(rows)} persona password(s){' and Administrator' if admin_password else ''} set; "
-          f"written to {out} (readable by you only).")
+          f"written to {out}{'' if args.default_password else ' (readable by you only)'}.")
     return 0
 
 

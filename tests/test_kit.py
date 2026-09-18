@@ -177,6 +177,111 @@ def test_a_secret_can_come_from_the_environment(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# email through Microsoft Graph
+# ---------------------------------------------------------------------------
+
+GRAPH_ON = dict(email__graph_enabled="yes", email__graph_tenant_id="00000000-0000-0000-0000-000000000001",
+                email__graph_client_id="00000000-0000-0000-0000-000000000002")
+
+
+def test_graph_is_off_by_default():
+	cfg = kit.Config.load(EXAMPLE, check_files=False)
+	assert cfg["email"]["graph_enabled"] is False
+
+
+def test_graph_needs_its_ids_a_sender_and_a_secret_file(tmp_path):
+	path = example_with(tmp_path, email__graph_enabled="yes", email__graph_client_secret_file=None,
+	                    email__graph_sender="")
+	with pytest.raises(kit.KitError) as e:
+		kit.Config.load(path, check_files=False)
+	message = str(e.value)
+	for key in ("graph_tenant_id", "graph_client_id", "graph_sender"):
+		assert f"[email] {key} is required when graph_enabled = yes" in message
+	assert "graph_client_secret_file or graph_client_secret_env is required" in message
+
+	cfg = kit.Config.load(example_with(tmp_path, **GRAPH_ON), check_files=False)
+	assert cfg["email"]["graph_enabled"] is True
+	assert cfg.secret_spec("email", "graph_client_secret") == {"file": "/etc/consilium/secrets/graph_client_secret"}
+
+
+def test_a_literal_graph_secret_is_refused(tmp_path):
+	path = example_with(tmp_path, email__graph_client_secret="abc~123")
+	with pytest.raises(kit.KitError) as e:
+		kit.Config.load(path, check_files=False)
+	assert "[email] graph_client_secret" in str(e.value)
+	assert "graph_client_secret_file" in str(e.value)
+
+
+def test_graph_values_cannot_bend_the_request(tmp_path):
+	path = example_with(tmp_path, **dict(GRAPH_ON, email__graph_tenant_id="../common",
+	                                     email__graph_authority_url="http://login.example.internal",
+	                                     email__graph_api_url="javascript:alert(1)"))
+	with pytest.raises(kit.KitError) as e:
+		kit.Config.load(path, check_files=False)
+	message = str(e.value)
+	assert "[email] graph_tenant_id" in message
+	assert "[email] graph_authority_url" in message and "https://" in message
+	assert "[email] graph_api_url" in message
+
+
+def test_a_national_cloud_is_accepted(tmp_path):
+	cfg = kit.Config.load(example_with(tmp_path, **dict(GRAPH_ON,
+	                      email__graph_authority_url="https://login.sovereign.example",
+	                      email__graph_api_url="https://graph.sovereign.example")), check_files=False)
+	assert cfg["email"]["graph_api_url"] == "https://graph.sovereign.example"
+
+
+class _FakeSettings(dict):
+	"""Just enough of a settings document for configure_site to write to."""
+
+	def __getattr__(self, key):
+		return self.get(key)
+
+	def __setattr__(self, key, value):
+		self[key] = value
+
+	def save(self, ignore_permissions=False):
+		self["saved"] = self.get("saved", 0) + 1
+
+
+class _FakeFrappe:
+	def __init__(self, settings):
+		self.settings = settings
+		self.db = self
+
+	def exists(self, doctype, name):
+		return name == "Email Delivery Settings"
+
+	def get_single(self, doctype):
+		assert doctype == "Email Delivery Settings"
+		return self.settings
+
+
+def test_the_apply_step_writes_the_graph_route_and_reads_the_secret(tmp_path, monkeypatch):
+	import configure_site
+
+	cfg = kit.Config.load(example_with(tmp_path, **dict(GRAPH_ON, email__graph_client_secret_file=None,
+	                      email__graph_client_secret_env="CONSILIUM_TEST_GRAPH_SECRET")), check_files=False)
+	monkeypatch.setenv("CONSILIUM_TEST_GRAPH_SECRET", "from-the-environment")
+	email = dict(cfg["email"], graph_client_secret=cfg.secret_spec("email", "graph_client_secret"))
+	settings = _FakeSettings(delivery_route="SMTP (framework mail queue)")
+	summary = configure_site.configure_email_route(_FakeFrappe(settings), email)
+	assert settings["delivery_route"] == "Microsoft Graph"
+	assert settings["graph_tenant_id"] == "00000000-0000-0000-0000-000000000001"
+	assert settings["graph_sender"] == "governance@example.internal"
+	assert settings["graph_client_secret"] == "from-the-environment"
+	assert "graph_api_url" not in settings  # the default global service is left to the settings' own default
+	assert settings["saved"] == 1
+	assert "from-the-environment" not in summary
+
+	# Switching it off returns notifications to SMTP and keeps the Graph values.
+	off = dict(email, graph_enabled=False)
+	assert configure_site.configure_email_route(_FakeFrappe(settings), off).startswith("SMTP")
+	assert settings["delivery_route"] == "SMTP (framework mail queue)"
+	assert settings["graph_tenant_id"] == "00000000-0000-0000-0000-000000000001"
+
+
+# ---------------------------------------------------------------------------
 # templates
 # ---------------------------------------------------------------------------
 

@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-18 15:23:13.276522",
+ "description": "Buttons that hand a person over to another tool the organisation runs: a rich document editor (Doc AI) and a horizon-scanning platform. The platform sends each tool only a link: identifiers in the address, never a file or a record's contents.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "doc_ai_section",
+  "doc_ai_enabled",
+  "doc_ai_label",
+  "doc_ai_url_template",
+  "doc_ai_col",
+  "doc_ai_new_tab",
+  "doc_ai_roles",
+  "horizon_section",
+  "horizon_enabled",
+  "horizon_label",
+  "horizon_col",
+  "horizon_url",
+  "horizon_new_tab"
+ ],
+ "fields": [
+  {
+   "description": "An \"Open in Doc AI\" button on every governing document, beside each version and on the document viewer.",
+   "fieldname": "doc_ai_section",
+   "fieldtype": "Section Break",
+   "label": "Doc AI (rich document editor)"
+  },
+  {
+   "default": "1",
+   "description": "On by default. Until an address is set below, the button explains that Doc AI is not connected yet. Switch off to remove the button everywhere.",
+   "fieldname": "doc_ai_enabled",
+   "fieldtype": "Check",
+   "label": "Show the Doc AI Button"
+  },
+  {
+   "default": "Open in Doc AI",
+   "fieldname": "doc_ai_label",
+   "fieldtype": "Data",
+   "label": "Button Label"
+  },
+  {
+   "description": "An http:// or https:// address with placeholders, for example https://docai.example.internal/open?doc={document}&version={version}&title={title}&source={document_url}. Placeholders: {document} the document reference, {version} the version reference, {version_label} the version's label, {title} the document title, {document_url} the document's page in this portal. Each value is URL-encoded. Leave empty until the tool is ready.",
+   "fieldname": "doc_ai_url_template",
+   "fieldtype": "Data",
+   "label": "Address Template"
+  },
+  {
+   "fieldname": "doc_ai_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "doc_ai_new_tab",
+   "fieldtype": "Check",
+   "label": "Open in a New Tab"
+  },
+  {
+   "description": "Leave empty for anyone who can read the document. When roles are listed, a person must hold one of them as well as be able to read the document.",
+   "fieldname": "doc_ai_roles",
+   "fieldtype": "Table MultiSelect",
+   "label": "Only These Roles See the Button",
+   "options": "Has Role"
+  },
+  {
+   "description": "A \"Horizon scanning\" button on the policy inventory and the regulatory updates page, and the /horizon-scanning address, which forwards to the platform.",
+   "fieldname": "horizon_section",
+   "fieldtype": "Section Break",
+   "label": "Horizon scanning platform"
+  },
+  {
+   "default": "1",
+   "description": "On by default. Until an address is set below, the button explains that the platform is not connected yet.",
+   "fieldname": "horizon_enabled",
+   "fieldtype": "Check",
+   "label": "Show the Horizon Scanning Button"
+  },
+  {
+   "default": "Horizon scanning",
+   "fieldname": "horizon_label",
+   "fieldtype": "Data",
+   "label": "Button and Menu Label"
+  },
+  {
+   "fieldname": "horizon_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The platform's http:// or https:// address. Nothing is added to it.",
+   "fieldname": "horizon_url",
+   "fieldtype": "Data",
+   "label": "Address"
+  },
+  {
+   "default": "1",
+   "fieldname": "horizon_new_tab",
+   "fieldtype": "Check",
+   "label": "Open in a New Tab"
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-18 15:23:13.276530",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "External Tools Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

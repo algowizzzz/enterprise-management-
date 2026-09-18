@@ -552,6 +552,31 @@ def section_reference(ctx: Ctx) -> None:
         }, by=admin, when=ctx.ts(-40, "11:00"))
 
 
+def _align_time_zones(ctx: Ctx) -> None:
+    """Every persona, and the Administrator, reads times in the site's zone.
+
+    The portal and the workspace show a time in the reader's own zone (their
+    ``time_zone``, else the site's), and the business calendars work in the
+    site's. A persona left on another zone — the Administrator had been set to
+    one in an early session — made a demonstration show the same deadline at
+    two different hours on two screens. Only a zone that differs is written,
+    so a second run changes nothing; the site's zone itself is left as the
+    deployment configured it.
+    """
+    frappe = ctx.frappe
+    zone = frappe.db.get_single_value("System Settings", "time_zone") or "UTC"
+    for email in [U(key) for key, _title, _roles in PERSONAS] + ["Administrator"]:
+        current = frappe.db.get_value("User", email, "time_zone")
+        if current is None and not frappe.db.exists("User", email):
+            continue
+        if (current or "") != zone:
+            # A direct write: saving the User would re-run its validation and
+            # role hooks for a display preference.
+            frappe.db.set_value("User", email, "time_zone", zone, update_modified=False)
+            frappe.clear_cache(user=email)
+            ctx.notes.append(f"{email}: time zone {current or '(none)'} -> {zone}")
+
+
 def section_users(ctx: Ctx) -> None:
     """Personas and the user groups notification and applicability resolve through."""
     frappe = ctx.frappe
@@ -583,6 +608,8 @@ def section_users(ctx: Ctx) -> None:
                WHERE "parent" = %s AND "parenttype" = 'User'""",
             (go_live, go_live, U("risk.governance.lead"), email),
         )
+
+    _align_time_zones(ctx)
 
     for group, members in USER_GROUPS:
         ensure(ctx, "User Group", group, {

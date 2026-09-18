@@ -14,13 +14,13 @@ no_cache = 1
 
 def get_context(context):
 	context.no_cache = 1
-	context.page_title = "Governance gaps and risk"
+	context.page_title = "Gaps and risk"
 	context.page_description = (
 		"Where governance coverage is missing or incomplete, and a rules-based risk score for every forum and "
 		"policy — worked out from the records as they stand now."
 	)
-	context.active_nav = "reports"
+	context.active_nav = "insights"
 	context.user_display = frappe.session.user
-	context.breadcrumbs = [{"label": "Home", "url": "/"}, {"label": "Reports", "url": "/reports"},
-	                       {"label": "Governance gaps and risk"}]
+	context.breadcrumbs = [{"label": "Home", "url": "/"}, {"label": "Insights", "url": "/reports"},
+	                       {"label": "Gaps and risk"}]
 	return context

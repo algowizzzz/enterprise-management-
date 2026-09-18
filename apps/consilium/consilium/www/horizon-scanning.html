@@ -1,0 +1,33 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Horizon scanning, when there is nowhere to forward to. A connected platform
+  never renders this page: the server redirects (www/horizon_scanning.py).
+-#}
+
+{% block page_content %}
+<div class="cns-card">
+  {%- if target.state == "off" %}
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-toggle-off" aria-hidden="true"></i></span>
+    <p class="cns-state-title">Horizon scanning is switched off</p>
+    <p class="cns-state-message">An administrator has switched the link to the horizon scanning platform off.
+      Regulatory changes recorded here are on the regulatory updates page.</p>
+    <a class="cns-btn cns-btn-secondary" href="/regulatory-updates">Regulatory updates</a>
+  </div>
+  {%- else %}
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-plug" aria-hidden="true"></i></span>
+    <p class="cns-state-title">Horizon scanning isn&rsquo;t connected yet</p>
+    <p class="cns-state-message">Horizon scanning isn&rsquo;t connected yet &mdash; an administrator sets its address
+      in Admin &rarr; Integrations. Until then, regulatory changes recorded here are on the regulatory updates page.</p>
+    <div class="cns-btn-group">
+      {%- if is_admin %}
+      <a class="cns-btn cns-btn-primary" href="/integrations"><i class="bi bi-sliders" aria-hidden="true"></i> Open Integrations</a>
+      {%- endif %}
+      <a class="cns-btn cns-btn-secondary" href="/regulatory-updates">Regulatory updates</a>
+    </div>
+  </div>
+  {%- endif %}
+</div>
+{% endblock %}

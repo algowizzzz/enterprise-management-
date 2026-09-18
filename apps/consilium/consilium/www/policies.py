@@ -36,7 +36,7 @@ def _has_desk_access() -> bool:
 
 def get_context(context):
 	context.no_cache = 1
-	context.page_title = "Policy inventory"
+	context.page_title = "Policy library"
 	context.page_description = (
 		"Every governing document on record — policies, standards, procedures and the "
 		"rest — with where each stands in its lifecycle and when it is next reviewed."
@@ -44,10 +44,26 @@ def get_context(context):
 	context.active_nav = "policies"
 	context.breadcrumbs = [
 		{"label": "Home", "url": "/"},
-		{"label": "Policy inventory"},
+		{"label": "Policy library"},
 	]
 	context.user_display = frappe.session.user
 	context.can_create = _has_desk_access() and bool(frappe.has_permission(DOCTYPE, "create"))
+	context.open_steps = _open_step_count()
 	context.phase_options = _select_options("lifecycle_phase")
 	context.handling_options = _select_options("handling_classification")
 	return context
+
+
+def _open_step_count() -> int:
+	"""How many approval steps wait on the viewer, so the "Waiting on your
+	decision" panel is drawn from the start (with placeholder lines) rather than
+	inserted above the inventory after the page has painted. The same method the
+	page script calls, so the same rules decide."""
+	if frappe.session.user == "Guest":
+		return 0
+	try:
+		from consilium.policy.routing import my_open_steps
+
+		return len(my_open_steps())
+	except Exception:
+		return 0

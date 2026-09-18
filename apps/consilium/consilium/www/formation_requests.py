@@ -31,7 +31,7 @@ def get_context(context):
 		"Requests to create, change or retire a forum, and where each one stands. "
 		"Open a request to evaluate it, put questions to its originator or decide it."
 	)
-	context.active_nav = "requests"
+	context.active_nav = "governance"
 	context.user_display = frappe.session.user
 	context.breadcrumbs = [
 		{"label": "Home", "url": "/"},

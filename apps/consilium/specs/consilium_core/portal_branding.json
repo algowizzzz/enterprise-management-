@@ -3,6 +3,7 @@
   "module": "Consilium Core",
   "description": "How the portal looks to the people who use it: its name, logo, colours, typeface and home page. Brand assets are uploaded here by the deploying organisation, so none of them live in the code.",
   "issingle": 1,
+  "hide_toolbar": 1,
   "track_changes": 1,
   "fields": [
     {"fieldname": "identity_section", "fieldtype": "Section Break", "label": "Identity"},

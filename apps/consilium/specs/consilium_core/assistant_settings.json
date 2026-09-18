@@ -3,6 +3,7 @@
   "module": "Consilium Core",
   "description": "The portal's help assistant and the governance analysis features. Both always work from built-in, deterministic answers with no external service. An administrator may additionally connect an AI endpoint, which is called from the server only, grounded in those answers, and bypassed on any error.",
   "issingle": 1,
+  "hide_toolbar": 1,
   "track_changes": 1,
   "fields": [
     {
@@ -34,10 +35,10 @@
       "fieldname": "provider",
       "fieldtype": "Select",
       "label": "Request Format",
-      "options": "Anthropic Messages API\nOpenAI-compatible (internal gateway)",
+      "options": "Anthropic Messages API\nOpenAI-compatible API",
       "default": "Anthropic Messages API",
       "reqd": 1,
-      "description": "The wire format the endpoint speaks. An internal gateway that fronts a model usually speaks the second."
+      "description": "The wire format the endpoint speaks. Many hosted providers, and most internal gateways that front a model, speak the OpenAI-compatible chat-completions format."
     },
     {
       "fieldname": "endpoint_url",

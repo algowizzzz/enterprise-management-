@@ -86,6 +86,7 @@
 </section>
 
 <!-- ============================= Forums ============================= -->
+{%- if cns_can_read("Governance Forum") %}
 <section id="forums" aria-labelledby="forums-heading" style="margin-top: var(--cns-space-6);">
   <h2 id="forums-heading" class="cns-eyebrow">Governance forums</h2>
 
@@ -155,8 +156,10 @@
     </section>
   </div>
 </section>
+{%- endif %}
 
 <!-- ===================== Coverage gaps (O-3) ======================= -->
+{%- if cns_can_read("Governance Forum") or cns_can_read("Governing Document") %}
 <section id="coverage" aria-labelledby="coverage-heading" style="margin-top: var(--cns-space-6);">
   <h2 id="coverage-heading" class="cns-eyebrow">Coverage gaps</h2>
   <section class="cns-card" aria-labelledby="coverage-title">
@@ -169,9 +172,15 @@
       </div>
       <div class="cns-field" style="min-width: 14rem;">
         <label class="cns-label" for="coverage-subject">Count</label>
+        {#- Only what the viewer may read is offered: the policy office reads
+            documents but not forums, and was shown "Not available to you". #}
         <select class="cns-select" id="coverage-subject">
+          {%- if cns_can_read("Governance Forum") %}
           <option value="forums">Active governance forums</option>
+          {%- endif %}
+          {%- if cns_can_read("Governing Document") %}
           <option value="documents">Governing documents in force</option>
+          {%- endif %}
         </select>
       </div>
     </div>
@@ -185,8 +194,10 @@
     </div>
   </section>
 </section>
+{%- endif %}
 
 <!-- ======================= Governing documents ====================== -->
+{%- if cns_can_read("Governing Document") %}
 <section id="documents" aria-labelledby="documents-heading" style="margin-top: var(--cns-space-6);">
   <h2 id="documents-heading" class="cns-eyebrow">Governing documents</h2>
 
@@ -387,8 +398,12 @@
     <div class="cns-card-body"><div id="dispositions-table"></div></div>
   </section>
 </section>
+{%- endif %}
 
 <!-- =========================== Escalations ========================== -->
+{#- A section the viewer's roles cannot read is left out rather than shown as
+    "not available": the page reports what this person may see. #}
+{%- if cns_can_read("Escalation Matter") %}
 <section id="escalations" aria-labelledby="escalations-heading" style="margin-top: var(--cns-space-6);">
   <h2 id="escalations-heading" class="cns-eyebrow">Escalations</h2>
 
@@ -496,8 +511,9 @@
         <p class="cns-card-subtitle">Every running clock across the platform — escalations, reviews and
           requests alike — by the kind of record it times.</p>
       </div>
-      {%- if desk_access %}
-      <a class="cns-btn cns-btn-ghost cns-btn-sm" href="/app/sla-clock">Open the clocks</a>
+      {%- if cns_advanced_view() %}
+      <a class="cns-btn cns-btn-ghost cns-btn-sm" href="/app/sla-clock"
+         title="Every clock in the configuration workspace, for administrators">Advanced view</a>
       {%- endif %}
     </div>
     <div class="cns-card-body"><div id="sla-body"><p class="cns-text-muted cns-text-sm">Counting&hellip;</p></div></div>
@@ -559,6 +575,7 @@
     </div>
   </section>
 </section>
+{%- endif %}
 
 {% endblock %}
 
@@ -1091,28 +1108,15 @@
     ]);
   }
 
-  /* Core's clocks are readable only by some roles. Where they can be read,
-     they show the time-limit position across every module, not only escalation. */
+  /* The time-limit position across every module, counted on the server over
+     the clocks of records this viewer may read (`sla.clock_position`). The
+     clock records themselves stay closed to business roles; the counts do not
+     need them to be open. */
   function loadClocks() {
     var body = document.getElementById("sla-body");
-    return Promise.all([
-      groupCount("SLA Clock", [["is_open", "=", 1]], "subject_doctype"),
-      groupCount("SLA Clock", [["is_open", "=", 1], ["breached_on", ">", "1900-01-01"]], "subject_doctype"),
-      groupCount("SLA Clock", [["breached_on", ">", "1900-01-01"]], "subject_doctype")
-    ])
-      .then(function (results) {
-        var kinds = {};
-        function add(rows, key) {
-          (rows || []).forEach(function (row) {
-            var kind = row.name || "Not recorded";
-            kinds[kind] = kinds[kind] || { kind: kind, running: 0, breached_running: 0, breached_ever: 0 };
-            kinds[kind][key] = row.count;
-          });
-        }
-        add(results[0], "running");
-        add(results[1], "breached_running");
-        add(results[2], "breached_ever");
-        var rows = Object.keys(kinds).sort().map(function (k) { return kinds[k]; });
+    return api.call("consilium.consilium_core.sla.clock_position", {}, { trackLoading: false })
+      .then(function (position) {
+        var rows = position.kinds || [];
         if (!rows.length) {
           body.innerHTML = '<p class="cns-text-muted">No time-limit clock has been started yet.</p>';
           return;
@@ -1123,18 +1127,18 @@
           '<th scope="col" class="cns-num">Running and breached</th>' +
           '<th scope="col" class="cns-num">Breached, ever</th></tr></thead><tbody>' +
           rows.map(function (r) {
-            return "<tr><th scope=\"row\">" + escapeHtml(r.kind) + "</th>" +
+            return "<tr><th scope=\"row\">" + escapeHtml(r.label || r.kind) + "</th>" +
               '<td class="cns-num">' + r.running + "</td>" +
               '<td class="cns-num">' + (r.breached_running
                 ? '<span class="cns-pill cns-status-danger">' + r.breached_running + "</span>" : "0") + "</td>" +
               '<td class="cns-num">' + r.breached_ever + "</td></tr>";
           }).join("") + "</tbody></table></div>" +
           '<p class="cns-text-muted cns-text-xs" style="margin-top: var(--cns-space-2);">' +
-          "For escalations, the same position is on each matter as its time-threshold flag, " +
+          "For escalations, each matter shows the same position as whether it is past its time limit, " +
           'which the <a href="/escalations?standing=breached">register</a> filters on.</p>';
       })
       .catch(function () {
-        body.innerHTML = '<p class="cns-text-muted">The clocks are not available to your role. ' +
+        body.innerHTML = '<p class="cns-text-muted">The time-limit position could not be read. ' +
           'The escalation position is above: <a href="/escalations?standing=breached">open matters past ' +
           "their time limit</a>.</p>";
       });
@@ -1260,7 +1264,9 @@
       });
   }
 
-  periodSelect.addEventListener("change", function () {
+  /* The analysis sits in the escalations section, which is left out for a
+     viewer who may not read escalations. */
+  if (periodSelect) periodSelect.addEventListener("change", function () {
     loadAnalysis().then(function () {
       Consilium.announce("Analysis grouped by " + periodSelect.value.toLowerCase() + ".");
     });
@@ -1336,7 +1342,9 @@
   function cellKey(category, group) { return category + "|" + group; }
 
   function loadCoverage() {
-    var subject = COVERAGE[document.getElementById("coverage-subject").value] || COVERAGE.forums;
+    var chooser = document.getElementById("coverage-subject");
+    if (!chooser || !COVERAGE[chooser.value]) return Promise.resolve();
+    var subject = COVERAGE[chooser.value];
     var node = document.getElementById("coverage-matrix");
     var summary = document.getElementById("coverage-summary");
     return coverageAxesLoad().then(function (axes) {
@@ -1420,7 +1428,8 @@
     });
   }
 
-  document.getElementById("coverage-subject").addEventListener("change", function () {
+  var coverageChooser = document.getElementById("coverage-subject");
+  if (coverageChooser) coverageChooser.addEventListener("change", function () {
     loadCoverage().then(function () { Consilium.announce("Coverage recounted."); });
   });
 
@@ -1439,7 +1448,9 @@
       }).catch(function () { /* codes still display */ })
     ])
       .then(function () {
-        return Promise.all([loadForums(), loadCoverage(), loadDocuments(), loadEscalations()]);
+        function shown(id, load) { return document.getElementById(id) ? load() : null; }
+        return Promise.all([shown("forums", loadForums), loadCoverage(), shown("documents", loadDocuments),
+                            shown("escalations", loadEscalations)]);
       })
       .then(function () {
         stamp.textContent = "Figures as at " + Consilium.util.formatDate(new Date(), true) +

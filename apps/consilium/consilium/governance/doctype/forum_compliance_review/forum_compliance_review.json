@@ -58,7 +58,7 @@
    "reqd": 1
   },
   {
-   "description": "A label. The flags below say what it means; the forum status it produces is a configured mapping, read and written, never compared.",
+   "description": "The outcome of the review. It sets the forum's standing.",
    "fieldname": "decision",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -128,7 +128,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.730359",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Forum Compliance Review",

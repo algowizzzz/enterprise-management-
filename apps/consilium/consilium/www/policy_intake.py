@@ -43,17 +43,17 @@ def get_context(context):
 
 	crumbs = [
 		{"label": "Home", "url": "/"},
-		{"label": "Policy inventory", "url": "/policies"},
-		{"label": "Document requests", "url": "/policy-intake"},
+		{"label": "Policy library", "url": "/policies"},
+		{"label": "Request a policy or change", "url": "/policy-intake"},
 	]
 
 	if not name:
-		context.page_title = "Document requests"
+		context.page_title = "Request a policy or change"
 		context.page_description = (
 			"Ask for a new governing document, or a change to or retirement of one. A few questions "
 			"classify the change as major or minor, which decides its approval route and service level."
 		)
-		context.breadcrumbs = crumbs[:2] + [{"label": "Document requests"}]
+		context.breadcrumbs = crumbs[:2] + [{"label": "Request a policy or change"}]
 		return context
 
 	context.breadcrumbs = crumbs + [{"label": name}]

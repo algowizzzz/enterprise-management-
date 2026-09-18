@@ -130,6 +130,24 @@ password_file = /etc/consilium/secrets/smtp_password
 # password_env = CONSILIUM_SMTP_PASSWORD
 sender = governance@example.internal
 sender_name = Governance Portal
+#
+# Microsoft Graph, for an organisation that allows no SMTP from servers.
+# Notifications are then sent through Graph as the sender mailbox below; the
+# SMTP account above, if enabled, is still used for the framework's own mail
+# (password resets). The directory administrator provides an app registration
+# with the Mail.Send application permission, limited to the sender mailbox by
+# an application access policy, and a client secret for it. No redirect URL is
+# needed: the server signs in as the application (client credentials).
+graph_enabled = no
+graph_tenant_id =
+graph_client_id =
+graph_client_secret_file = /etc/consilium/secrets/graph_client_secret
+# graph_client_secret_env = CONSILIUM_GRAPH_CLIENT_SECRET
+# The mailbox mail is sent as: its user principal name or object ID.
+graph_sender = governance@example.internal
+# Only for a national cloud; the defaults are the global service.
+graph_authority_url =
+graph_api_url =
 
 [sso]
 # none, oidc or ldap. Off by default: people sign in with a password until

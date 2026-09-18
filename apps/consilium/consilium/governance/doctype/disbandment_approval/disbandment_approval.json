@@ -49,7 +49,7 @@
    "read_only": 1
   },
   {
-   "description": "Mirrored from the Approval Decision for display. Logic reads the Core record's semantic open flag, never this label.",
+   "description": "The approver's decision, copied from the approval record.",
    "fieldname": "decision",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -71,7 +71,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-09-18 03:31:55.000000",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Disbandment Approval",

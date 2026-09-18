@@ -27,7 +27,7 @@ no_cache = 1
 
 def get_context(context):
 	context.no_cache = 1
-	context.active_nav = "forums"
+	context.active_nav = "governance"
 	context.user_display = frappe.session.user
 
 	name = (frappe.form_dict.get("forum") or frappe.form_dict.get("name") or "").strip()

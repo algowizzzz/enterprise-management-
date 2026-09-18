@@ -9,7 +9,7 @@
 
 {% block page_content %}
 
-{%- if not can_request %}
+{%- if not can_request and not can_answer %}
 <div class="cns-card">
   <div class="cns-state">
     <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
@@ -21,6 +21,7 @@
 </div>
 {%- else %}
 
+{%- if not answer_only %}
 <!-- ------------------------- before you start ------------------------- -->
 <section class="cns-card" aria-labelledby="process-heading">
   <div class="cns-card-header">
@@ -87,6 +88,7 @@
     </p>
   </div>
 </section>
+{%- endif %}
 
 <!-- -------------- questions back from the governance office ------------ -->
 {%- if request_status and request_status.can_respond %}
@@ -94,26 +96,28 @@
   <div class="cns-card-header">
     <div>
       <h2 class="cns-card-title" id="response-heading">The governance office has questions</h2>
-      <p class="cns-card-subtitle">Your request {{ request_status.name }} was returned to you. Answer
-        the questions below; you may also amend the request itself before you send your answer.</p>
+      <p class="cns-card-subtitle">Your request {{ request_status.name | e }} was returned to you. Answer
+        the questions below{% if not answer_only %}; you may also amend the request itself before you send your
+        answer{% else %}. If the request itself needs changing, say so in your answer and the governance office
+        will make the change{% endif %}.</p>
     </div>
   </div>
   <div class="cns-card-body">
     <div class="cns-alert cns-status-warning">
       <i class="bi bi-question-circle" aria-hidden="true"></i>
       <div>
-        <strong>Questions{% if request_status.returned_by %} from {{ request_status.returned_by }}{% endif %}</strong>
+        <strong>Questions{% if request_status.returned_by %} from <span data-cns-person="{{ request_status.returned_by | e }}">{{ request_status.returned_by | e }}</span>{% endif %}</strong>
         <span class="cns-text-muted cns-text-sm" id="returned-on"></span>
-        <p class="cns-prose" style="margin-top: var(--cns-space-2); white-space: pre-line;">{{ request_status.return_questions or "" }}</p>
+        <p class="cns-prose" style="margin-top: var(--cns-space-2); white-space: pre-line;">{{ (request_status.return_questions or "") | e }}</p>
       </div>
     </div>
     <div class="cns-field">
       <label class="cns-label" for="originator_response">Your answer<span class="cns-required" aria-hidden="true">*</span></label>
       <textarea class="cns-textarea" id="originator_response" rows="5" required
                 data-required-message="Enter your answer to the questions."
-                aria-describedby="response-help">{{ request_status.originator_response or "" }}</textarea>
+                aria-describedby="response-help">{{ (request_status.originator_response or "") | e }}</textarea>
       <span class="cns-help" id="response-help">It stays on the record beside the questions. Sending
-        it saves any changes below and hands the request back for evaluation.</span>
+        it {% if not answer_only %}saves any changes below and {% endif %}hands the request back for evaluation.</span>
     </div>
     <div class="cns-form-actions">
       <button type="button" class="cns-btn cns-btn-primary" id="send-response">
@@ -125,6 +129,7 @@
 </section>
 {%- endif %}
 
+{%- if not answer_only %}
 <!-- ------------------------------ the form ---------------------------- -->
 <form id="formation-form" novalidate>
   <div id="form-status" role="status" aria-live="polite"></div>
@@ -297,11 +302,65 @@
     </div>
   </section>
 </form>
+{%- endif %}
 
 {%- endif %}
 {% endblock %}
 
 {% block scripts %}
+{%- if answer_only %}
+<script>
+/* Answering a returned request, for an originator who may not raise requests.
+   The answer goes through the same transition as from the full form
+   (formation.respond_to_returned_request), which checks that the caller is
+   the originator and that the request is waiting for an answer. */
+(function () {
+  "use strict";
+  var STATUS = {{ request_status | tojson }};
+  var box = document.getElementById("originator_response");
+  var button = document.getElementById("send-response");
+  if (STATUS.returned_on) {
+    document.getElementById("returned-on").textContent = " · " + Consilium.util.formatDate(STATUS.returned_on, true);
+  }
+  function setError(message) {
+    var holder = box.closest(".cns-field");
+    var node = holder.querySelector(".cns-error-text");
+    if (!message) {
+      box.removeAttribute("aria-invalid");
+      if (node) node.remove();
+      return;
+    }
+    box.setAttribute("aria-invalid", "true");
+    if (!node) {
+      node = document.createElement("span");
+      node.className = "cns-error-text";
+      node.id = "originator_response-error";
+      holder.appendChild(node);
+      box.setAttribute("aria-describedby", "response-help originator_response-error");
+    }
+    node.textContent = message;
+  }
+  box.addEventListener("input", function () { if (box.getAttribute("aria-invalid")) setError(null); });
+  button.addEventListener("click", function () {
+    var text = box.value.trim();
+    if (!text) { setError(box.dataset.requiredMessage); box.focus(); return; }
+    button.disabled = true;
+    Consilium.api.call("consilium.governance.formation.respond_to_returned_request",
+                       { request: STATUS.name, response: text }, { method: "POST" })
+      .then(function () {
+        Consilium.toast.success("Your answer is on " + STATUS.name + ", and the request is back with the " +
+                                "governance office.", { title: "Answer sent", timeout: 9000 });
+        box.disabled = true;
+        button.hidden = true;
+      })
+      .catch(function (error) {
+        button.disabled = false;
+        Consilium.toast.error(error.message || "Your answer could not be sent.", { title: "Not sent" });
+      });
+  });
+})();
+</script>
+{%- endif %}
 {%- if can_request %}
 <script>
 (function () {
@@ -511,7 +570,7 @@
       dirty = false;
       try { window.localStorage.removeItem(LOCAL_KEY); } catch (e) {}
       document.getElementById("draft-state").textContent =
-        "Saved as " + doc.name + " at " + new Date().toLocaleTimeString() + ".";
+        "Saved as " + doc.name + " at " + Consilium.util.formatDate(new Date(), true) + ".";
       if (window.history && window.history.replaceState) {
         window.history.replaceState(null, "", "/create-forum?request=" + encodeURIComponent(doc.name));
       }

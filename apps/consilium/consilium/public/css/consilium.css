@@ -18,6 +18,14 @@ html.cns-root {
      follows from this single declaration. */
   font-size: var(--cns-font-root);
   -webkit-text-size-adjust: 100%;
+  /* No sideways jump when a table loads and the page grows a scrollbar. */
+  scrollbar-gutter: stable;
+  /* A link to a place on a page (/#forum-map, /reports#coverage) lands below
+     the sticky header, not under it. */
+  scroll-padding-top: 7rem;
+}
+@media (max-width: 767.98px) {
+  html.cns-root { scroll-padding-top: 4.5rem; }
 }
 
 body.cns-portal {
@@ -53,7 +61,14 @@ body.cns-portal {
 .cns-portal .cns-main {
   flex: 1 0 auto;
   padding-block: var(--cns-space-5) var(--cns-space-7);
+  /* Most of a page is drawn by script after the first paint. Starting the
+     footer below the fold means filling the page never moves anything the
+     reader can already see. */
+  min-height: 100vh;
 }
+/* A table reserves a page's worth of room while it loads, so the rows arriving
+   push nothing down the screen. */
+.cns-datatable > .cns-dt-state:not([hidden]):has(.cns-spinner) { min-height: 22rem; }
 
 /* Skip link — first focusable element in the document. */
 .cns-skip-link {
@@ -78,10 +93,16 @@ body.cns-portal {
    -------------------------------------------------------------------------- */
 
 .cns-portal :focus-visible {
-  outline: var(--cns-focus-ring-width) solid var(--cns-focus-ring);
+  /* The solid contrast colour, not the translucent tint: a ring has to be
+     seen on every surface, the tinted cards and the table stripes included. */
+  outline: var(--cns-focus-ring-width) solid var(--cns-focus-ring-contrast);
   outline-offset: 2px;
   border-radius: var(--cns-radius-sm);
 }
+/* Form fields show the ring snug to their own border. */
+.cns-portal .cns-input:focus-visible,
+.cns-portal .cns-select:focus-visible,
+.cns-portal .cns-textarea:focus-visible { outline-offset: 1px; }
 /* Browsers without :focus-visible still get a ring. */
 .cns-portal :focus:not(:focus-visible) {
   outline: none;
@@ -163,13 +184,18 @@ body.cns-portal {
 .cns-text-xs { font-size: var(--cns-text-xs); }
 .cns-mono { font-family: var(--cns-font-mono); font-size: 0.92em; }
 
-.cns-eyebrow {
+/* A section label. Qualified so it wins over the heading scale when it is set
+   on an <h2> (the dashboards' section headings). */
+.cns-eyebrow,
+.cns-portal .cns-eyebrow {
   font-size: var(--cns-text-xs);
   font-weight: var(--cns-weight-semibold);
   text-transform: uppercase;
   letter-spacing: var(--cns-tracking-caps);
   color: var(--cns-text-muted);
 }
+
+.cns-portal h2.cns-eyebrow { font-size: var(--cns-text-sm); margin-bottom: var(--cns-space-3); }
 
 .cns-visually-hidden {
   position: absolute !important;
@@ -183,7 +209,10 @@ body.cns-portal {
 }
 
 /* --------------------------------------------------------------------------
-   4. Top navigation
+   4. Header, menus and global search
+   Two rows on a wide screen — the bar (brand, search, personal controls) and
+   the menu row — and one bar with a slide-out menu panel below 768px. The
+   markup is in base_portal.html, the behaviour in consilium-nav.js.
    -------------------------------------------------------------------------- */
 
 .cns-header {
@@ -200,19 +229,25 @@ body.cns-portal {
   border-bottom-color: var(--cns-border);
   color: var(--cns-text);
 }
+/* On the coloured header the standard ring (a tint of the same colour) would
+   vanish; the foreground colour is what shows. */
+.cns-portal .cns-header-bar :focus-visible,
+.cns-portal .cns-menubar > .cns-menu > .cns-menu-trigger:focus-visible {
+  outline-color: currentColor;
+}
 
 .cns-header-inner {
   display: flex;
   align-items: center;
-  gap: var(--cns-space-4);
+  gap: var(--cns-space-3);
   min-height: var(--cns-header-height);
-  flex-wrap: wrap;
 }
 
 .cns-brand {
   display: inline-flex;
   align-items: center;
   gap: var(--cns-space-2);
+  flex: none;
   font-size: var(--cns-text-lg);
   font-weight: var(--cns-weight-semibold);
   letter-spacing: var(--cns-tracking-wide);
@@ -235,55 +270,488 @@ body.cns-portal {
   color: var(--cns-primary);
 }
 
-/* Tabs */
-/* The nav wrapper is the flex item; it must be allowed to shrink below its
-   content width so the tab strip scrolls instead of widening the page. */
-.cns-header-nav {
+/* ---- Global search ---------------------------------------------------- */
+
+.cns-gsearch {
+  position: relative;
   flex: 1 1 auto;
-  min-width: 0;
+  max-width: 34rem;
+  margin-inline: auto;
 }
-.cns-nav {
+.cns-gsearch-icon {
+  position: absolute;
+  left: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--cns-text-sm);
+  opacity: 0.75;
+  pointer-events: none;
+}
+.cns-portal .cns-gsearch-input {
+  width: 100%;
+  height: 2.25rem;
+  padding: 0 2.4rem 0 2.2rem;
+  font: inherit;
+  font-size: var(--cns-text-sm);
+  color: inherit;
+  background: rgba(255, 255, 255, 0.12);
+  border: var(--cns-border-width) solid rgba(255, 255, 255, 0.24);
+  border-radius: var(--cns-radius-md);
+  transition: background-color var(--cns-transition-fast), border-color var(--cns-transition-fast);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.cns-gsearch-input::placeholder { color: inherit; opacity: 0.72; }
+.cns-gsearch-input::-webkit-search-cancel-button { filter: invert(1); opacity: 0.6; }
+.cns-portal .cns-gsearch-input:hover { background: rgba(255, 255, 255, 0.18); }
+.cns-portal .cns-gsearch-input:focus {
+  background: var(--cns-surface);
+  color: var(--cns-text);
+  border-color: var(--cns-surface);
+}
+.cns-portal .cns-gsearch-input:focus-visible { outline: var(--cns-focus-ring-width) solid rgba(255, 255, 255, 0.55); outline-offset: 1px; }
+.cns-gsearch:focus-within .cns-gsearch-icon { color: var(--cns-text-muted); opacity: 1; }
+.cns-gsearch-input:focus::-webkit-search-cancel-button { filter: none; }
+[data-theme="dark"] .cns-portal .cns-gsearch-input,
+[data-theme="dark"] .cns-gsearch-input {
+  background: var(--cns-surface-muted);
+  border-color: var(--cns-border);
+}
+[data-theme="dark"] .cns-gsearch-input::-webkit-search-cancel-button { filter: invert(1); }
+.cns-gsearch-kbd {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 1.35rem;
+  padding: 0 0.3rem;
+  font: inherit;
+  font-size: var(--cns-text-xs);
+  line-height: 1.35rem;
+  text-align: center;
+  border: var(--cns-border-width) solid currentColor;
+  border-radius: var(--cns-radius-sm);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.cns-gsearch:focus-within .cns-gsearch-kbd { display: none; }
+
+.cns-gsearch-panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  min-width: min(30rem, calc(100vw - 2rem));
+  max-height: min(70vh, 34rem);
+  overflow-y: auto;
+  z-index: var(--cns-z-dropdown);
+  padding: var(--cns-space-2);
+  background: var(--cns-surface-raised);
+  color: var(--cns-text);
+  border: var(--cns-border-width) solid var(--cns-border);
+  border-radius: var(--cns-radius-lg);
+  box-shadow: var(--cns-shadow-lg);
+  font-size: var(--cns-text-sm);
+}
+.cns-gsearch-group + .cns-gsearch-group {
+  margin-top: var(--cns-space-2);
+  padding-top: var(--cns-space-2);
+  border-top: var(--cns-border-width) solid var(--cns-border-subtle);
+}
+.cns-gsearch-group-label {
+  padding: var(--cns-space-1) var(--cns-space-2);
+  font-size: var(--cns-text-xs);
+  font-weight: var(--cns-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--cns-tracking-caps);
+  color: var(--cns-text-muted);
+}
+.cns-portal a.cns-gsearch-option {
+  display: flex;
+  align-items: center;
+  gap: var(--cns-space-3);
+  padding: var(--cns-space-2);
+  border-radius: var(--cns-radius-md);
+  color: var(--cns-text);
+  text-decoration: none;
+}
+.cns-portal a.cns-gsearch-option.is-active,
+.cns-portal a.cns-gsearch-option:hover { background: var(--cns-surface-hover); color: var(--cns-text); }
+.cns-gsearch-option.is-active { box-shadow: inset 3px 0 0 var(--cns-primary); }
+.cns-gsearch-option-icon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--cns-radius-md);
+  background: var(--cns-primary-subtle);
+  color: var(--cns-primary);
+}
+.cns-gsearch-option-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.cns-gsearch-option-title {
+  font-weight: var(--cns-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cns-gsearch-option-title mark { padding: 0; background: var(--cns-warning-bg); color: inherit; border-radius: 2px; }
+.cns-gsearch-option-detail { font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
+.cns-gsearch-option .cns-pill { flex: none; }
+.cns-portal a.cns-gsearch-all {
+  justify-content: space-between;
+  color: var(--cns-text-link);
+  font-weight: var(--cns-weight-medium);
+  font-size: var(--cns-text-xs);
+}
+.cns-gsearch-empty,
+.cns-gsearch-loading {
+  padding: var(--cns-space-4);
+  color: var(--cns-text-muted);
+  text-align: center;
+}
+.cns-gsearch-empty .bi { font-size: var(--cns-text-xl); display: block; margin-bottom: var(--cns-space-2); }
+.cns-gsearch-empty p { margin: 0 0 var(--cns-space-1); }
+.cns-gsearch-empty strong { color: var(--cns-text); }
+.cns-gsearch-loading { display: flex; align-items: center; justify-content: center; gap: var(--cns-space-2); }
+.cns-gsearch-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cns-space-4);
+  margin-top: var(--cns-space-2);
+  padding: var(--cns-space-2) var(--cns-space-2) var(--cns-space-1);
+  border-top: var(--cns-border-width) solid var(--cns-border-subtle);
+  font-size: var(--cns-text-xs);
+  color: var(--cns-text-muted);
+}
+.cns-gsearch-foot kbd {
+  display: inline-block;
+  min-width: 1.2rem;
+  margin-right: 0.2rem;
+  padding: 0 0.25rem;
+  font: inherit;
+  text-align: center;
+  color: var(--cns-text-secondary);
+  background: var(--cns-surface-muted);
+  border: var(--cns-border-width) solid var(--cns-border);
+  border-radius: var(--cns-radius-sm);
+}
+
+/* ---- Menu row --------------------------------------------------------- */
+
+.cns-mainnav {
+  border-top: var(--cns-border-width) solid rgba(255, 255, 255, 0.12);
+}
+[data-theme="dark"] .cns-mainnav { border-top-color: var(--cns-border-subtle); }
+.cns-menubar {
   display: flex;
   align-items: stretch;
   gap: var(--cns-space-1);
   margin: 0;
   padding: 0;
   list-style: none;
-  flex: 1 1 auto;
-  overflow-x: auto;
-  scrollbar-width: thin;
 }
-.cns-nav-link {
+.cns-menu { position: relative; }
+.cns-portal .cns-menu-trigger {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--cns-space-2);
-  padding: var(--cns-space-3) var(--cns-space-3);
-  color: inherit;
-  opacity: 0.86;
-  text-decoration: none;
+  height: 2.75rem;
+  padding: 0 var(--cns-space-3);
+  font: inherit;
   font-size: var(--cns-text-sm);
   font-weight: var(--cns-weight-medium);
   white-space: nowrap;
-  border-bottom: var(--cns-border-width-thick) solid transparent;
-  transition: opacity var(--cns-transition-fast),
-    border-color var(--cns-transition-fast),
-    background-color var(--cns-transition-fast);
-}
-.cns-nav-link:hover {
-  opacity: 1;
   color: inherit;
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  opacity: 0.88;
+  cursor: pointer;
+  transition: opacity var(--cns-transition-fast), background-color var(--cns-transition-fast);
 }
-[data-theme="dark"] .cns-nav-link:hover { background: var(--cns-surface-hover); }
-.cns-nav-link[aria-current="page"] {
+.cns-portal .cns-menu-trigger::after {
+  content: "";
+  position: absolute;
+  left: var(--cns-space-3);
+  right: var(--cns-space-3);
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: transparent;
+}
+.cns-portal .cns-menu-trigger:hover,
+.cns-menu.is-open > .cns-menu-trigger {
   opacity: 1;
-  border-bottom-color: currentColor;
-  font-weight: var(--cns-weight-semibold);
+  color: inherit;
+  background: rgba(255, 255, 255, 0.1);
 }
-[data-theme="dark"] .cns-nav-link[aria-current="page"] {
+[data-theme="dark"] .cns-portal .cns-menu-trigger:hover,
+[data-theme="dark"] .cns-menu.is-open > .cns-menu-trigger { background: var(--cns-surface-hover); }
+.cns-portal .cns-menu-trigger[data-active] { opacity: 1; font-weight: var(--cns-weight-semibold); }
+.cns-portal .cns-menu-trigger[data-active]::after { background: currentColor; }
+[data-theme="dark"] .cns-portal .cns-menu-trigger[data-active] { color: var(--cns-primary); }
+.cns-menu-icon { font-size: 0.95em; opacity: 0.85; }
+.cns-menu-caret { font-size: 0.7em; opacity: 0.8; transition: transform var(--cns-transition-fast); }
+.cns-menu-trigger[aria-expanded="true"] .cns-menu-caret { transform: rotate(180deg); }
+/* The count is laid over the corner of the button, so arriving after the page
+   paints moves nothing. */
+.cns-menu-trigger .cns-nav-badge {
+  position: absolute;
+  top: 0.15rem;
+  right: -0.15rem;
+  pointer-events: none;
+}
+/* The menu that carries the count keeps room for it beside the caret, so the
+   count (laid over the corner) no longer sits on the caret. The room is kept
+   whether or not the count is showing yet, so its arrival moves nothing. */
+.cns-portal .cns-menu-trigger--badge { padding-right: calc(var(--cns-space-3) + 1.1rem); }
+.cns-menu-trigger--badge .cns-nav-badge { right: 0.1rem; }
+.cns-inbox-seat { font-weight: var(--cns-weight-normal, 400); }
+
+.cns-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: var(--cns-z-dropdown);
+  width: 22rem;
+  padding: var(--cns-space-3);
+  background: var(--cns-surface-raised);
+  color: var(--cns-text);
+  border: var(--cns-border-width) solid var(--cns-border);
+  border-radius: var(--cns-radius-lg);
+  box-shadow: var(--cns-shadow-lg);
+  animation: cns-menu-in var(--cns-transition-base);
+}
+.cns-menu-panel[hidden] { display: none; }
+.cns-menu-panel--wide {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--cns-space-3);
+  width: 40rem;
+}
+.cns-menu-panel--wide .cns-menu-group + .cns-menu-group {
+  border-left: var(--cns-border-width) solid var(--cns-border-subtle);
+  padding-left: var(--cns-space-3);
+}
+@keyframes cns-menu-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.cns-portal .cns-menu-group-label {
+  margin: 0 0 var(--cns-space-1);
+  padding: var(--cns-space-1) var(--cns-space-2);
+  font-size: var(--cns-text-xs);
+  font-weight: var(--cns-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--cns-tracking-caps);
+  color: var(--cns-text-muted);
+}
+.cns-menu-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.cns-portal a.cns-menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cns-space-3);
+  padding: var(--cns-space-2);
+  border-radius: var(--cns-radius-md);
+  color: var(--cns-text);
+  text-decoration: none;
+  transition: background-color var(--cns-transition-fast);
+}
+.cns-portal a.cns-menu-item:hover,
+.cns-portal a.cns-menu-item:focus-visible { background: var(--cns-surface-hover); color: var(--cns-text); }
+.cns-portal a.cns-menu-item:focus-visible { outline-offset: -2px; }
+.cns-menu-item-icon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--cns-radius-md);
+  background: var(--cns-primary-subtle);
   color: var(--cns-primary);
-  border-bottom-color: var(--cns-primary);
+  font-size: 1rem;
+}
+.cns-menu-item-text { display: flex; flex-direction: column; min-width: 0; }
+.cns-menu-item-label { font-size: var(--cns-text-sm); font-weight: var(--cns-weight-semibold); line-height: 1.3; }
+.cns-menu-item-ext { font-size: 0.75em; margin-left: 0.2em; color: var(--cns-text-muted); }
+.cns-menu-item-desc { font-size: var(--cns-text-xs); color: var(--cns-text-muted); line-height: 1.4; margin-top: 1px; }
+.cns-menu-item[aria-current="page"] { background: var(--cns-primary-subtle); }
+.cns-menu-item[aria-current="page"] .cns-menu-item-label { color: var(--cns-primary); }
+.cns-menu-item[aria-current="page"] .cns-menu-item-icon { background: var(--cns-primary); color: var(--cns-on-primary); }
+[data-theme="dark"] .cns-menu-item[aria-current="page"] .cns-menu-item-icon { color: var(--cns-surface); }
+
+/* Only on a phone. (Qualified by the header so the control-button rules
+   further down cannot show them.) */
+.cns-header .cns-nav-toggle,
+.cns-header .cns-gsearch-open,
+.cns-drawer-head,
+.cns-drawer-foot,
+.cns-nav-backdrop { display: none; }
+
+/* ---- Phones: one bar, and the menus in a slide-out panel ---------------- */
+
+@media (max-width: 767.98px) {
+  .cns-header-inner { gap: var(--cns-space-2); min-height: 3.25rem; }
+  .cns-header .cns-nav-toggle { display: inline-flex; min-width: 2.5rem; min-height: 2.5rem; font-size: 1.25rem; padding: 0; }
+  .cns-brand { flex: 0 1 auto; font-size: var(--cns-text-md); min-width: 0; overflow: hidden; }
+  /* The open panel must sit above everything the page floats (the help
+     button included); the header is its stacking context. */
+  html.cns-drawer-open .cns-header { z-index: calc(var(--cns-z-toast) - 1); }
+  .cns-brand-name { overflow: hidden; text-overflow: ellipsis; }
+  .cns-brand-logo { max-width: 8rem; }
+  .cns-controls { margin-left: auto; gap: var(--cns-space-1); }
+  /* With a menu panel (anyone signed in) the text size and theme move into
+     it; a signed-out visitor has no panel and keeps them in the bar. */
+  .cns-nav-toggle ~ .cns-controls > .cns-fontsize,
+  .cns-nav-toggle ~ .cns-controls > .cns-theme-btn,
+  .cns-user-name,
+  .cns-user-caret { display: none; }
+  .cns-controls .cns-control-btn { min-width: 2.5rem; min-height: 2.5rem; padding: 0; }
+  .cns-header .cns-gsearch-open { display: inline-flex; }
+
+  /* The search opens as a row under the bar. */
+  .cns-gsearch {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-width: none;
+    margin: 0;
+    padding: var(--cns-space-2) var(--cns-space-4) var(--cns-space-3);
+    background: var(--cns-primary-600);
+    box-shadow: var(--cns-shadow-md);
+  }
+  [data-theme="dark"] .cns-gsearch { background: var(--cns-surface-raised); }
+  .cns-header { background-clip: padding-box; }
+  .cns-header-bar { position: relative; background: inherit; }
+  .cns-header.is-searching .cns-gsearch { display: block; }
+  .cns-gsearch-icon { left: calc(var(--cns-space-4) + 0.8rem); top: calc(var(--cns-space-2) + 1.25rem); }
+  .cns-gsearch-kbd { display: none; }
+  .cns-portal .cns-gsearch-input { height: 2.5rem; font-size: var(--cns-text-md); }
+  .cns-gsearch-panel {
+    left: var(--cns-space-2);
+    right: var(--cns-space-2);
+    min-width: 0;
+    max-height: calc(100dvh - 8rem);
+  }
+  .cns-gsearch-foot { display: none; }
+
+  .cns-nav-backdrop:not([hidden]) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--cns-z-header) + 1);
+    background: rgba(11, 21, 36, 0.5);
+    animation: cns-fade-in var(--cns-transition-base);
+  }
+  .cns-mainnav {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: calc(var(--cns-z-header) + 2);
+    width: min(21rem, 88vw);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 0;
+    background: var(--cns-surface);
+    color: var(--cns-text);
+    box-shadow: var(--cns-shadow-lg);
+    transform: translateX(-102%);
+    visibility: hidden;
+    transition: transform var(--cns-transition-base), visibility 0s linear var(--cns-transition-base);
+  }
+  .cns-mainnav.is-open {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--cns-transition-base);
+  }
+  .cns-portal .cns-mainnav-inner { padding: 0 0 var(--cns-space-5); }
+  .cns-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--cns-space-2);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: var(--cns-space-3) var(--cns-space-4);
+    background: var(--cns-surface);
+    border-bottom: var(--cns-border-width) solid var(--cns-border-subtle);
+  }
+  .cns-drawer-title { font-weight: var(--cns-weight-semibold); }
+  .cns-drawer-close {
+    display: inline-grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0;
+    border-radius: var(--cns-radius-md);
+    background: transparent;
+    color: var(--cns-text);
+    cursor: pointer;
+  }
+  .cns-drawer-close:hover { background: var(--cns-surface-hover); }
+  .cns-menubar { flex-direction: column; gap: 0; padding: var(--cns-space-2) 0; }
+  .cns-menu { border-bottom: var(--cns-border-width) solid var(--cns-border-subtle); }
+  .cns-portal .cns-menu-trigger {
+    width: 100%;
+    height: auto;
+    min-height: 3rem;
+    padding: 0 var(--cns-space-4);
+    font-size: var(--cns-text-md);
+    color: var(--cns-text);
+    opacity: 1;
+  }
+  .cns-portal .cns-menu-trigger::after { left: 0; right: auto; top: 0.6rem; bottom: 0.6rem; width: 3px; height: auto; border-radius: 0 3px 3px 0; }
+  .cns-portal .cns-menu-trigger[data-active] { color: var(--cns-primary); }
+  .cns-portal .cns-menu-trigger[data-active]::after { background: var(--cns-primary); }
+  .cns-portal .cns-menu-trigger:hover,
+  .cns-menu.is-open > .cns-menu-trigger { background: var(--cns-surface-hover); color: var(--cns-text); }
+  .cns-menu-icon { width: 1.25rem; opacity: 1; color: var(--cns-text-muted); }
+  .cns-menu-caret { margin-left: auto; }
+  .cns-portal .cns-header-bar :focus-visible { outline-color: currentColor; }
+  .cns-portal .cns-menubar > .cns-menu > .cns-menu-trigger:focus-visible { outline-color: var(--cns-focus-ring-contrast); outline-offset: -3px; }
+  .cns-menu-trigger .cns-nav-badge { position: static; }
+  .cns-portal .cns-menu-trigger--badge { padding-right: var(--cns-space-3); }
+  .cns-menu-panel,
+  .cns-menu-panel--wide {
+    position: static;
+    display: block;
+    width: auto;
+    padding: 0 var(--cns-space-3) var(--cns-space-3);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    animation: none;
+  }
+  .cns-menu-panel--wide .cns-menu-group + .cns-menu-group { border: 0; padding-left: 0; margin-top: var(--cns-space-2); }
+  .cns-menu-item-desc { display: none; }
+  .cns-portal a.cns-menu-item { align-items: center; min-height: 2.75rem; }
+  .cns-menu-item-icon { width: 1.75rem; height: 1.75rem; font-size: 0.9rem; }
+  .cns-drawer-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--cns-space-3);
+    padding: var(--cns-space-4);
+  }
+  .cns-drawer-foot-label { font-size: var(--cns-text-sm); color: var(--cns-text-secondary); }
+  .cns-drawer-foot + .cns-drawer-foot--flush { padding-top: 0; }
+  .cns-drawer-foot .cns-fontsize { border-color: var(--cns-border); background: var(--cns-surface-muted); color: var(--cns-text); }
+  .cns-drawer-foot .cns-fontsize button { min-width: 2.5rem; min-height: 2.5rem; }
+  .cns-drawer-foot .cns-fontsize button:hover:not(:disabled) { background: var(--cns-surface-hover); }
+  .cns-drawer-foot .cns-fontsize-label { display: none; }
+  html.cns-drawer-open, html.cns-drawer-open body { overflow: hidden; }
+}
+@keyframes cns-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .cns-menu-panel, .cns-mainnav, .cns-nav-backdrop { animation: none; transition: none; }
+}
+@media print {
+  .cns-mainnav, .cns-gsearch, .cns-nav-toggle { display: none !important; }
 }
 
 /* Right-hand control cluster */
@@ -395,24 +863,70 @@ body.cns-portal {
 }
 .cns-breadcrumb li { display: inline-flex; align-items: center; gap: var(--cns-space-2); }
 .cns-breadcrumb li + li::before {
-  content: "/";
+  content: "\203A";
+  font-size: 1.1em;
+  line-height: 1;
   color: var(--cns-text-disabled);
 }
+.cns-breadcrumb li { min-width: 0; }
+.cns-breadcrumb li:last-child span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40ch; display: inline-block; vertical-align: bottom; }
 .cns-breadcrumb a { color: var(--cns-text-secondary); text-decoration: none; }
 .cns-breadcrumb a:hover { color: var(--cns-text-link-hover); text-decoration: underline; }
 .cns-breadcrumb [aria-current="page"] { color: var(--cns-text); font-weight: var(--cns-weight-medium); }
+/* On a phone the trail becomes one "back to the parent" link: the current
+   page is the heading just below, and a wrapped trail took three lines. */
+@media (max-width: 767.98px) {
+  .cns-breadcrumb li { display: none; }
+  .cns-breadcrumb li:nth-last-child(2) { display: inline-flex; }
+  .cns-breadcrumb li:nth-last-child(2)::before { content: "\2039"; font-size: 1.2em; color: var(--cns-text-secondary); }
+  .cns-breadcrumb li:only-child { display: inline-flex; }
+}
 
+/* One header on every page: the title and a one-line description on the left,
+   the actions on the right — secondary actions as ghost buttons, the primary
+   action last, where the eye ends. Pages only list their buttons; the order
+   and the ghost treatment are applied here, so a button a page script adds
+   later follows the same rule. */
 .cns-page-header {
   display: flex;
-  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--cns-space-4);
+  gap: var(--cns-space-3) var(--cns-space-5);
   margin-bottom: var(--cns-space-5);
 }
-.cns-page-title { margin: 0 0 var(--cns-space-1); }
-.cns-page-description { margin: 0; color: var(--cns-text-muted); font-size: var(--cns-text-sm); }
-.cns-page-actions { display: flex; flex-wrap: wrap; gap: var(--cns-space-2); }
+.cns-page-header > :first-child { flex: 1 1 auto; min-width: 0; }
+.cns-portal .cns-page-title { margin: 0 0 var(--cns-space-1); overflow-wrap: anywhere; }
+.cns-portal .cns-page-description { margin: 0; max-width: 75ch; color: var(--cns-text-muted); font-size: var(--cns-text-sm); }
+.cns-page-actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--cns-space-2);
+  padding-top: 0.35rem;
+}
+.cns-page-actions:empty { display: none; }
+@media (min-width: 992px) {
+  .cns-page-actions { flex-wrap: nowrap; }
+}
+.cns-page-actions .cns-btn-primary,
+.cns-page-actions .cns-btn-danger { order: 10; }
+.cns-page-actions .cns-btn-secondary {
+  background: transparent;
+  border-color: transparent;
+  color: var(--cns-text-link);
+}
+.cns-portal .cns-page-actions a.cns-btn-secondary,
+.cns-portal .cns-page-actions a.cns-btn-secondary:hover { color: var(--cns-text-link); }
+.cns-page-actions .cns-btn-secondary:hover { background: var(--cns-surface-hover); }
+.cns-page-actions .cns-field { margin: 0; }
+@media (max-width: 767.98px) {
+  .cns-page-header { flex-direction: column; margin-bottom: var(--cns-space-4); }
+  .cns-page-actions { justify-content: flex-start; padding-top: 0; }
+  .cns-page-actions .cns-btn-primary,
+  .cns-page-actions .cns-btn-danger { order: -1; }
+}
 
 /* --------------------------------------------------------------------------
    6. Cards
@@ -436,11 +950,16 @@ body.cns-portal {
   border-bottom: var(--cns-border-width) solid var(--cns-border-subtle);
   background: var(--cns-surface-muted);
 }
-.cns-card-title {
+/* Qualified by .cns-portal so an <h2> or <h3> card title is the same size as
+   any other: the heading scale above otherwise wins, and the same kind of
+   card showed titles at three sizes across the portal. */
+.cns-portal .cns-card-title {
   margin: 0;
-  font-size: var(--cns-text-md);
+  font-size: var(--cns-text-lg);
   font-weight: var(--cns-weight-semibold);
+  line-height: var(--cns-leading-tight);
 }
+.cns-portal .cns-card-subtitle { margin: var(--cns-space-1) 0 0; }
 .cns-card-subtitle { margin: 0; font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
 .cns-card-body { padding: var(--cns-space-4); }
 .cns-card-footer {
@@ -801,6 +1320,7 @@ th[aria-sort="descending"] .cns-sort-btn { color: var(--cns-text); }
   background: var(--cns-surface-muted);
 }
 .cns-dt-toolbar-end { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cns-space-3); }
+.cns-dt-count { margin-left: var(--cns-space-1); vertical-align: 0.15em; font-weight: var(--cns-weight-medium); }
 .cns-dt-pagesize { display: inline-flex; align-items: center; gap: var(--cns-space-2); font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
 .cns-dt-pagesize .cns-select { width: auto; padding-block: var(--cns-space-1); }
 
@@ -1107,9 +1627,6 @@ a.cns-metric-link:hover { background: var(--cns-surface-hover); }
    -------------------------------------------------------------------------- */
 
 @media (max-width: 767.98px) {
-  .cns-header-inner { padding-block: var(--cns-space-2); }
-  .cns-header-nav { order: 3; width: 100%; flex-basis: 100%; }
-  .cns-controls { margin-left: auto; }
   .cns-fontsize-label { display: none; }
   .cns-dt-toolbar, .cns-dt-footer { flex-direction: column; align-items: stretch; }
   .cns-search { max-width: none; }
@@ -1307,6 +1824,12 @@ a.cns-metric-link:hover { background: var(--cns-surface-hover); }
 .cns-ai-filter { margin: 0; min-width: 12rem; }
 .cns-ai-kinds { display: flex; flex-wrap: wrap; gap: var(--cns-space-2); list-style: none; margin: 0 0 var(--cns-space-3); padding: 0; }
 .cns-ai-details { margin-top: var(--cns-space-1); }
+/* "How is this worked out?" — the rule behind a figure, kept out of the way of
+   the figure itself. */
+.cns-disclosure { margin-top: var(--cns-space-2); }
+.cns-integration-tested { font-size: var(--cns-text-sm); font-weight: var(--cns-weight-normal); color: var(--cns-text-muted); }
+.cns-disclosure > summary { cursor: pointer; color: var(--cns-text-link); }
+.cns-disclosure > p { margin-top: var(--cns-space-2); color: var(--cns-text-muted); max-width: 72ch; }
 .cns-ai-details summary { cursor: pointer; color: var(--cns-text-link); font-size: var(--cns-text-xs); }
 .cns-ai-factors { margin-top: var(--cns-space-2); font-size: var(--cns-text-xs); }
 .cns-ai-list { margin: 0; padding-left: var(--cns-space-5); font-size: var(--cns-text-sm); }

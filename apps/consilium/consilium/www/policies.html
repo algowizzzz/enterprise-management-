@@ -1,7 +1,7 @@
 {% extends "consilium/templates/base_portal.html" %}
 
 {#-
-  Policy inventory.
+  Policy library.
   One table, the shared component, reading Governing Document over the REST API.
   Sorting, search and pagination happen on the server; the filter bar hands the
   component a filter set and lets it reload. Every filter can also be named in
@@ -9,13 +9,20 @@
   reports page links a number straight to the records behind it.
 -#}
 
+{% from "consilium/templates/includes/external_tools.html" import horizon_button, tools_assets %}
+{%- set tools = cns_external_tools() %}
+
 {% block page_actions %}
 <a class="cns-btn cns-btn-primary" href="/policy-intake">
   <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Request a new document
 </a>
-{%- if can_create %}
-<a class="cns-btn cns-btn-secondary" href="/app/governing-document/new">
-  <i class="bi bi-plus-lg" aria-hidden="true"></i> New document in the workspace
+{#- The organisation's horizon scanning platform; /horizon-scanning forwards. -#}
+{{ horizon_button(tools) }}
+{#- Everyone else starts a document with a request, above. -#}
+{%- if can_create and cns_advanced_view() %}
+<a class="cns-btn cns-btn-ghost" href="/app/governing-document/new"
+   title="Create the record directly in the configuration workspace, for administrators">
+  <i class="bi bi-plus-lg" aria-hidden="true"></i> New document (Advanced view)
 </a>
 {%- endif %}
 <a class="cns-btn cns-btn-secondary" href="/reports#documents">
@@ -29,7 +36,7 @@
     over the REST interface except by administrators and audit, so the list
     comes from a server method that returns only the viewer's own. Hidden when
     there is nothing to decide. -#}
-<section class="cns-card" id="my-steps-card" aria-labelledby="my-steps-heading" hidden>
+<section class="cns-card" id="my-steps-card" aria-labelledby="my-steps-heading"{% if not open_steps %} hidden{% endif %}>
   <div class="cns-card-header">
     <div>
       <h2 class="cns-card-title" id="my-steps-heading">Waiting on your decision</h2>
@@ -37,7 +44,13 @@
         live delegation you hold.</p>
     </div>
   </div>
-  <div class="cns-card-body"><ul class="cns-timeline" id="my-steps"></ul></div>
+  <div class="cns-card-body"><ul class="cns-timeline" id="my-steps">
+    {#- Placeholder lines, one per step, so filling the list moves nothing. #}
+    {%- for _ in range([open_steps or 0, 12] | min) %}
+    <li aria-hidden="true"><span class="cns-skeleton" style="display: block; max-width: 60%; margin-bottom: 0.4rem;"></span>
+      <span class="cns-skeleton" style="display: block; max-width: 35%; height: 0.6rem;"></span></li>
+    {%- endfor %}
+  </ul></div>
 </section>
 
 <section class="cns-card" aria-labelledby="filter-heading">
@@ -108,7 +121,7 @@
           <option value="regulatory">Regulatory-required</option>
           <option value="training">Training required</option>
         </select>
-        <span class="cns-help" id="f-standing-help">Read from the record's own flags, not its phase name.</span>
+        <span class="cns-help" id="f-standing-help">Narrow the list to one standing, such as in force or review overdue.</span>
       </div>
     </div>
     {#- E11-S2: full-text search. The table's own search box matches the title,
@@ -144,6 +157,7 @@
 {% endblock %}
 
 {% block scripts %}
+{{ tools_assets(tools) }}
 <script>
 (function () {
   "use strict";
@@ -445,6 +459,8 @@
         window.location.href = "/policy?name=" + encodeURIComponent(row.name);
       },
       emptyTitle: "No documents match",
+      exportable: true,
+      emptyAction: { label: "Clear the filters", onClick: function () { document.getElementById("filter-clear").click(); } },
       emptyMessage: "Clear a filter or widen the search to see more of the inventory.",
       columns: [
         { field: "name", label: "Reference", sortable: true, className: "cns-mono",
@@ -511,7 +527,7 @@
   Consilium.api
     .call("consilium.policy.routing.my_open_steps", {}, { trackLoading: false })
     .then(function (rows) {
-      if (!rows || !rows.length) return;
+      if (!rows || !rows.length) { document.getElementById("my-steps-card").hidden = true; return; }
       document.getElementById("my-steps").innerHTML = rows.map(function (row) {
         return '<li><a href="/policy?name=' + escapeAttr(encodeURIComponent(row.document)) + '#approval">' +
           escapeHtml(row.document_name || row.document) + "</a> &middot; " + escapeHtml(row.approval_step) +
@@ -523,7 +539,10 @@
       }).join("");
       document.getElementById("my-steps-card").hidden = false;
     })
-    .catch(function () { /* the inventory stands without it */ });
+    .catch(function () {
+      /* the inventory stands without it */
+      document.getElementById("my-steps-card").hidden = true;
+    });
 
   /* The reference lists are read once, so the table can show a type by its
      name rather than its code. The table is built when they are in. */

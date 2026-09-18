@@ -49,7 +49,7 @@ SYSTEM_PROMPT = """You are the help assistant for an enterprise governance, risk
 Answer the user's question using only the guidance and context provided in the message. Rules:
 - If the provided guidance does not answer the question, say you don't know and suggest asking an administrator. Do not guess.
 - Never invent features, pages, buttons, roles or steps that the guidance does not mention.
-- The access findings are authoritative: if they say the user may not do something, say so and name the role it needs.
+- The access findings are authoritative for the actions they name: if they say the user may not do something, say so and name the role it needs. They list only this page's common tasks and do not rule out anything else: for an action they do not mention, give the guidance's steps and say the screen will confirm whether the user may do it.
 - Keep the answer short: at most about 120 words, plain sentences or a short list.
 - You may link only to the paths listed under "Links you may use", written as [label](/path). Do not write any other links or URLs.
 - Do not use headings, tables or code blocks."""
@@ -96,7 +96,7 @@ def build_prompt(question: str, ctx: dict, builtin: dict, sharing: str) -> tuple
 	lines.append("User's roles: " + (", ".join(ctx["roles"]) or "none beyond basic sign-in"))
 	if builtin["facts"]["access"]:
 		lines.append("")
-		lines.append("Access findings (authoritative):")
+		lines.append("Access findings (authoritative for the actions named; other actions are not ruled out):")
 		lines.extend(f"- {fact}" for fact in builtin["facts"]["access"])
 
 	record = ctx.get("record")

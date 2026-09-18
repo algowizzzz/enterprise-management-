@@ -248,7 +248,7 @@
   },
   {
    "default": "Draft",
-   "description": "The nine-state formation flow. A label: logic reads the semantic flags.",
+   "description": "Where the request stands in the formation process.",
    "fieldname": "workflow_state",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -287,7 +287,7 @@
   },
   {
    "default": "0",
-   "description": "Semantic flag. Set by states that cannot be entered without a written reason.",
+   "description": "Set automatically from the status: ticked when a written reason is needed.",
    "fieldname": "requires_statement",
    "fieldtype": "Check",
    "label": "Requires Statement",
@@ -295,7 +295,7 @@
   },
   {
    "default": "0",
-   "description": "Semantic flag. True only in the state from which a forum may be created.",
+   "description": "Set automatically from the status: ticked once the forum may be created.",
    "fieldname": "is_committable",
    "fieldtype": "Check",
    "label": "Is Committable",
@@ -368,7 +368,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 03:31:55.000000",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Committee Formation Request",

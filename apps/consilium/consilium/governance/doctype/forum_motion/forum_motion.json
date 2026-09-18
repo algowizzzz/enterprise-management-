@@ -180,7 +180,7 @@
    "read_only": 1
   },
   {
-   "description": "Empty while the motion is open. A label: the flags say whether the motion is still open and whether its votes may still change.",
+   "description": "Empty while the motion is open.",
    "fieldname": "outcome",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -197,7 +197,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag. False once an outcome is recorded, which is what freezes the votes.",
+   "description": "Set automatically: cleared once an outcome is recorded, which freezes the votes.",
    "fieldname": "is_editable",
    "fieldtype": "Check",
    "label": "Is Editable",
@@ -220,7 +220,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 03:31:55.000000",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Forum Motion",

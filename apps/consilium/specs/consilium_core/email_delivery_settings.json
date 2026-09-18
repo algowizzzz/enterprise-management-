@@ -1,0 +1,93 @@
+{
+  "name": "Email Delivery Settings",
+  "module": "Consilium Core",
+  "issingle": 1,
+  "hide_toolbar": 1,
+  "track_changes": 1,
+  "description": "How the platform's notification email leaves the server: through the framework's mail queue and the site's outgoing Email Account over SMTP (the default), or through Microsoft Graph for an organisation that does not allow SMTP. Either way every notification is recorded as a Notification Dispatch and a failed one is retried.",
+  "fields": [
+    {
+      "fieldname": "route_section",
+      "fieldtype": "Section Break",
+      "label": "Route"
+    },
+    {
+      "fieldname": "delivery_route",
+      "fieldtype": "Select",
+      "label": "Send Notification Email Through",
+      "options": "SMTP (framework mail queue)\nMicrosoft Graph",
+      "default": "SMTP (framework mail queue)",
+      "reqd": 1,
+      "description": "SMTP uses the outgoing Email Account. Microsoft Graph uses the application registration below; choosing it is what switches it on. Mail the framework sends itself (password resets, for example) always uses the Email Account."
+    },
+    {
+      "fieldname": "graph_section",
+      "fieldtype": "Section Break",
+      "label": "Microsoft Graph",
+      "description": "An application registration in the organisation's directory with the Mail.Send application permission, limited to the sender mailbox by an application access policy."
+    },
+    {
+      "fieldname": "graph_tenant_id",
+      "fieldtype": "Data",
+      "label": "Directory (Tenant) ID"
+    },
+    {
+      "fieldname": "graph_client_id",
+      "fieldtype": "Data",
+      "label": "Application (Client) ID"
+    },
+    {
+      "fieldname": "graph_client_secret",
+      "fieldtype": "Password",
+      "label": "Client Secret",
+      "description": "Stored encrypted and never shown again. The deployment kit can set it from a secret file."
+    },
+    {
+      "fieldname": "graph_sender",
+      "fieldtype": "Data",
+      "label": "Sender Mailbox",
+      "description": "The mailbox the mail is sent as: its user principal name (for example governance@example.internal) or its object ID."
+    },
+    {
+      "fieldname": "graph_col",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "graph_authority_url",
+      "fieldtype": "Data",
+      "label": "Sign-in Base Address",
+      "default": "https://login.microsoftonline.com",
+      "description": "Where the access token is requested. Change only for a national cloud."
+    },
+    {
+      "fieldname": "graph_api_url",
+      "fieldtype": "Data",
+      "label": "Graph Base Address",
+      "default": "https://graph.microsoft.com",
+      "description": "Where mail is sent. Change only for a national cloud. The token's scope is this address followed by /.default."
+    },
+    {
+      "fieldname": "graph_timeout_seconds",
+      "fieldtype": "Int",
+      "label": "Timeout (seconds)",
+      "default": "20",
+      "reqd": 1,
+      "description": "For each request. Between 1 and 120."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "provenance": "Integrations: notification email over Microsoft Graph for organisations without SMTP"
+}

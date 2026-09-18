@@ -59,11 +59,11 @@
   },
   {
    "default": "Anthropic Messages API",
-   "description": "The wire format the endpoint speaks. An internal gateway that fronts a model usually speaks the second.",
+   "description": "The wire format the endpoint speaks. Many hosted providers, and most internal gateways that front a model, speak the OpenAI-compatible chat-completions format.",
    "fieldname": "provider",
    "fieldtype": "Select",
    "label": "Request Format",
-   "options": "Anthropic Messages API\nOpenAI-compatible (internal gateway)",
+   "options": "Anthropic Messages API\nOpenAI-compatible API",
    "reqd": 1
   },
   {
@@ -186,10 +186,11 @@
    "options": "JSON"
   }
  ],
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-18 06:17:44.394968",
+ "modified": "2026-09-18 15:23:13.275641",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Assistant Settings",

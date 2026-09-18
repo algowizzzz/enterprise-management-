@@ -10,48 +10,40 @@
   Context variables this template understands (all optional):
       page_title        <h1> and document title
       page_description  short line under the title
-      active_nav        id of the active top-level tab
+      active_nav        id of the menu the page belongs to (home, mywork,
+                        governance, policies, escalations, insights, admin;
+                        the old tab ids inbox, forums, requests and reports
+                        are mapped to their menus)
       breadcrumbs       list of {"label": ..., "url": ...}; the last entry is
                         rendered as the current page
-      nav_items         override the default tab list
+      nav_items         override the default menus
       user_display      name shown in the user menu
 
   Assets: only files vendored under /assets/consilium/vendor are referenced.
   Nothing is fetched from a CDN at build or run time.
 -#}
-{%- set _nav_items = nav_items or [
-  {"id": "home",        "label": "Home",        "url": "/",            "icon": "bi-house"},
-  {"id": "inbox",       "label": "Inbox",       "url": "/tasks",       "icon": "bi-inbox"},
-  {"id": "forums",      "label": "Forums",      "url": "/forums",      "icon": "bi-chat-square-text"},
-  {"id": "policies",    "label": "Policies",    "url": "/policies",    "icon": "bi-file-earmark-text"},
-  {"id": "escalations", "label": "Escalations", "url": "/escalations", "icon": "bi-exclamation-diamond"},
-  {"id": "reports",     "label": "Reports",     "url": "/reports",     "icon": "bi-bar-chart"},
-  {"id": "admin",       "label": "Admin",       "url": "/admin",       "icon": "bi-sliders"}
-] -%}
+{#- The primary navigation: one menu per area, each a panel of the area's pages
+    and the filtered views people are sent to. Which menus and items a viewer
+    sees is decided in consilium/consilium_core/navigation.py (``cns_nav``), by
+    the same permission checks the pages make; ``active_nav`` names the menu
+    the page belongs to (the old tab ids still work). ``nav_items`` may still
+    override the whole list: an entry with ``groups`` renders as a menu, one
+    with only a ``url`` as a plain link. #}
 {%- set brand = get_brand() -%}
-{#- The formation queue is the governance office's working list; everyone else
-    reaches a request from the forum inventory, so the tab is shown only to
-    the roles that act on it. #}
-{%- if not nav_items and cns_has_any_role("Risk Governance Office", "Head of Risk Governance", "System Manager") -%}
-{%- set _nav_items = _nav_items[:2] + [{"id": "requests", "label": "Requests", "url": "/formation-requests", "icon": "bi-inboxes"}] + _nav_items[2:] -%}
-{%- endif -%}
-{#- A tab someone cannot use is noise at best and a dead end at worst, so each
-    area's tab shows only to those who may read its records. #}
-{%- if not nav_items and frappe.session.user != "Guest" -%}
-{%- set _hidden = [] -%}
-{%- if not cns_can_read("Governing Document") %}{% set _ = _hidden.append("policies") %}{% endif -%}
-{%- if not cns_can_read("Escalation Matter") %}{% set _ = _hidden.append("escalations") %}{% endif -%}
-{%- if not cns_has_any_role("System Manager", "Consilium Administrator") %}{% set _ = _hidden.append("admin") %}{% endif -%}
-{%- set _nav_items = _nav_items | rejectattr("id", "in", _hidden) | list -%}
-{%- endif -%}
 {%- set is_guest = frappe.session.user == "Guest" -%}
+{#- Guarded so a server still running without the navigation hook renders
+    the page (with no menus) rather than failing it. #}
+{%- set _menus = nav_items or ([] if (is_guest or cns_nav is not defined) else cns_nav(active_nav)) -%}
 <!DOCTYPE html>
 <html lang="{{ frappe.local.lang or 'en' }}" class="cns-root" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="same-origin">
-<meta name="cns-time-zone" content="{{ system_time_zone() }}">
+<meta name="cns-time-zone" content="{{ system_time_zone() | e }}">
+{#- The zone this person reads times in (their own setting, else the site's).
+    Guarded like the menus, so a server still running without the hook renders. #}
+<meta name="cns-viewer-zone" content="{{ (viewer_time_zone() if viewer_time_zone is defined else system_time_zone()) | e }}">
 {#- The framework's Jinja does not autoescape, and several pages build their
     title or breadcrumbs from the address (?name=...). Everything the shell
     prints from context is escaped here, so a crafted link cannot inject markup. #}
@@ -104,8 +96,19 @@ window.frappe = window.frappe || {};
 <a class="cns-skip-link" href="#cns-main">Skip to main content</a>
 
 {% block header %}
-<header class="cns-header">
+{#- Two rows on a wide screen: the brand, search and personal controls, then
+    the menus. Below 768px the menus become a slide-out panel opened from the
+    menu button, each menu an expandable section, and the search box opens
+    under the bar from its button. Behaviour: consilium-nav.js. #}
+<header class="cns-header" data-cns-header>
+  <div class="cns-header-bar">
   <div class="cns-container cns-header-inner">
+    {%- if _menus %}
+    <button type="button" class="cns-control-btn cns-nav-toggle" data-cns-nav-toggle
+            aria-controls="cns-primary-nav" aria-expanded="false" aria-label="Open the menu">
+      <i class="bi bi-list" aria-hidden="true"></i>
+    </button>
+    {%- endif %}
     <a class="cns-brand" href="/">
       {%- if brand.has_custom_logo %}
       <img class="cns-brand-logo" src="{{ brand.logo_url }}" alt="{{ brand.organisation_name or brand.portal_name }}">
@@ -117,23 +120,32 @@ window.frappe = window.frappe || {};
     </a>
 
     {%- if not is_guest %}
-    <nav class="cns-header-nav" aria-label="Primary">
-      <ul class="cns-nav">
-        {%- for item in _nav_items %}
-        <li>
-          <a class="cns-nav-link" href="{{ item.url }}"
-             {% if active_nav == item.id %}aria-current="page"{% endif %}>
-            <i class="bi {{ item.icon }}" aria-hidden="true"></i>
-            <span>{{ item.label }}</span>
-            {%- if item.id == "inbox" %}<span class="cns-nav-badge" data-cns-inbox-badge hidden></span>{% endif %}
-          </a>
-        </li>
-        {%- endfor %}
-      </ul>
-    </nav>
+    {#- Global search (consilium.consilium_core.search.global_search). The box
+        is a combobox; results are options grouped by record type. #}
+    <div class="cns-gsearch" role="search" data-cns-search>
+      <label class="cns-visually-hidden" for="cns-gsearch-input">Search forums, policies and escalations</label>
+      <i class="bi bi-search cns-gsearch-icon" aria-hidden="true"></i>
+      <input class="cns-gsearch-input" id="cns-gsearch-input" type="search" autocomplete="off"
+             spellcheck="false" maxlength="100" placeholder="Search forums, policies, escalations&hellip;"
+             role="combobox" aria-autocomplete="list" aria-expanded="false"
+             aria-controls="cns-gsearch-results" aria-describedby="cns-gsearch-hint">
+      <kbd class="cns-gsearch-kbd" aria-hidden="true" title="Press / to search">/</kbd>
+      <span class="cns-visually-hidden" id="cns-gsearch-hint">Press slash to search from anywhere. Use the up
+        and down arrow keys to move through the results, and Enter to open one.</span>
+      <div class="cns-gsearch-panel" id="cns-gsearch-results" role="listbox"
+           aria-label="Search results" hidden></div>
+      <div class="cns-visually-hidden" role="status" aria-live="polite" data-cns-search-status></div>
+    </div>
     {%- endif %}
 
     <div class="cns-controls">
+      {%- if not is_guest %}
+      <button type="button" class="cns-control-btn cns-gsearch-open" data-cns-search-open
+              aria-controls="cns-gsearch-input" aria-expanded="false" aria-label="Search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+      </button>
+      {%- endif %}
+
       {# --- Font size ------------------------------------------------- #}
       <div class="cns-fontsize" role="group" aria-label="Text size">
         <button type="button" data-cns-fontsize="decrease"
@@ -155,7 +167,7 @@ window.frappe = window.frappe || {};
       </div>
 
       {# --- Theme ------------------------------------------------------ #}
-      <button type="button" class="cns-control-btn" data-cns-theme-toggle
+      <button type="button" class="cns-control-btn cns-theme-btn" data-cns-theme-toggle
               aria-pressed="false" aria-label="Switch to dark theme"
               title="Switch to dark theme">
         <i class="bi bi-moon-stars-fill" data-cns-theme-icon aria-hidden="true"></i>
@@ -169,16 +181,16 @@ window.frappe = window.frappe || {};
       </a>
       {%- else %}
       <div class="dropdown">
-        <button class="cns-control-btn" type="button" id="cns-user-menu"
+        <button class="cns-control-btn cns-user-btn" type="button" id="cns-user-menu"
                 data-bs-toggle="dropdown" aria-expanded="false">
           <i class="bi bi-person-circle" aria-hidden="true"></i>
           {%- set _who = frappe.get_fullname(frappe.session.user) or user_display or "Account" %}
           <span class="cns-user-name" title="{{ _who | e }}">{{ _who | e }}</span>
-          <i class="bi bi-chevron-down" aria-hidden="true"></i>
+          <i class="bi bi-chevron-down cns-user-caret" aria-hidden="true"></i>
         </button>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cns-user-menu">
           {% block user_menu_items %}
-          <li><h6 class="dropdown-header">Signed in as {{ frappe.session.user }}</h6></li>
+          <li><h6 class="dropdown-header">Signed in as {{ frappe.session.user | e }}</h6></li>
           <li><a class="dropdown-item" href="/me">Profile</a></li>
           {%- if cns_has_any_role("System Manager", "Consilium Administrator") %}
           <li><a class="dropdown-item" href="/ui-kit">Interface reference</a></li>
@@ -191,6 +203,98 @@ window.frappe = window.frappe || {};
       {%- endif %}
     </div>
   </div>
+  </div>
+
+  {%- if _menus %}
+  <div class="cns-nav-backdrop" data-cns-nav-backdrop hidden></div>
+  <nav class="cns-mainnav" id="cns-primary-nav" aria-label="Primary" data-cns-nav>
+    <div class="cns-container cns-mainnav-inner">
+      <div class="cns-drawer-head">
+        <span class="cns-drawer-title">{{ (portal_name or brand.portal_name) | e }}</span>
+        <button type="button" class="cns-drawer-close" data-cns-nav-close aria-label="Close the menu">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </div>
+      <ul class="cns-menubar">
+        {%- for menu in _menus %}
+        {%- set _mid = (menu.id or loop.index) | string | e %}
+        <li class="cns-menu{% if menu.active %} is-active{% endif %}">
+          {%- if menu.groups %}
+          <button type="button" class="cns-menu-trigger{% if menu.badge %} cns-menu-trigger--badge{% endif %}" id="cns-menu-{{ _mid }}-btn"
+                  aria-expanded="false" aria-controls="cns-menu-{{ _mid }}"
+                  {%- if menu.active %} data-active{% endif %}>
+            <i class="bi {{ menu.icon | e }} cns-menu-icon" aria-hidden="true"></i>
+            <span class="cns-menu-label">{{ menu.label | e }}</span>
+            {%- if menu.badge %}<span class="cns-nav-badge" data-cns-inbox-badge hidden></span>{% endif %}
+            {%- if menu.active %}<span class="cns-visually-hidden">, current section</span>{% endif %}
+            <i class="bi bi-chevron-down cns-menu-caret" aria-hidden="true"></i>
+          </button>
+          <div class="cns-menu-panel{% if menu.wide %} cns-menu-panel--wide{% endif %}" id="cns-menu-{{ _mid }}"
+               data-cns-menu-panel hidden>
+            {%- for group in menu.groups %}
+            <div class="cns-menu-group">
+              {%- if group.label %}
+              <p class="cns-menu-group-label" id="cns-menu-{{ _mid }}-g{{ loop.index }}">{{ group.label | e }}</p>
+              {%- endif %}
+              <ul class="cns-menu-list"{% if group.label %} aria-labelledby="cns-menu-{{ _mid }}-g{{ loop.index }}"{% endif %}>
+                {%- for item in group["items"] %}
+                <li>
+                  <a class="cns-menu-item" href="{{ item.url | e }}"{% if item.current %} aria-current="page"{% endif %}
+                     {%- if item.new_tab %} target="_blank" rel="noopener"{% endif %}>
+                    <span class="cns-menu-item-icon" aria-hidden="true"><i class="bi {{ (item.icon or 'bi-dot') | e }}"></i></span>
+                    <span class="cns-menu-item-text">
+                      <span class="cns-menu-item-label">{{ item.label | e }}
+                        {%- if item.new_tab %} <i class="bi bi-box-arrow-up-right cns-menu-item-ext" aria-hidden="true"></i><span class="cns-visually-hidden"> (opens in a new tab)</span>{% endif %}</span>
+                      {%- if item.description %}
+                      <span class="cns-menu-item-desc">{{ item.description | e }}</span>
+                      {%- endif %}
+                    </span>
+                  </a>
+                </li>
+                {%- endfor %}
+              </ul>
+            </div>
+            {%- endfor %}
+          </div>
+          {%- else %}
+          <a class="cns-menu-trigger cns-menu-link" href="{{ menu.url | e }}"
+             {%- if menu.active or active_nav == menu.id %} aria-current="page" data-active{% endif %}>
+            <i class="bi {{ (menu.icon or 'bi-dot') | e }} cns-menu-icon" aria-hidden="true"></i>
+            <span class="cns-menu-label">{{ menu.label | e }}</span>
+          </a>
+          {%- endif %}
+        </li>
+        {%- endfor %}
+      </ul>
+      {#- On a phone the header has no room for the text-size buttons, so the
+          menu panel carries a copy. The live label stays in the header copy
+          only, so a change is announced once. #}
+      <div class="cns-drawer-foot">
+        <span class="cns-drawer-foot-label">Theme</span>
+        <button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" data-cns-theme-toggle
+                aria-pressed="false" aria-label="Switch to dark theme">
+          <i class="bi bi-moon-stars-fill" data-cns-theme-icon aria-hidden="true"></i>
+          <span data-cns-theme-label>Dark</span>
+        </button>
+      </div>
+      <div class="cns-drawer-foot cns-drawer-foot--flush">
+        <span class="cns-drawer-foot-label" id="cns-drawer-textsize">Text size</span>
+        <div class="cns-fontsize" role="group" aria-labelledby="cns-drawer-textsize">
+          <button type="button" data-cns-fontsize="decrease" aria-label="Decrease text size">
+            <span aria-hidden="true">A&minus;</span>
+          </button>
+          <span class="cns-fontsize-label" aria-hidden="true"><span data-cns-fontsize-label>Default</span></span>
+          <button type="button" data-cns-fontsize="increase" aria-label="Increase text size">
+            <span aria-hidden="true">A+</span>
+          </button>
+          <button type="button" data-cns-fontsize="reset" aria-label="Reset text size">
+            <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+  {%- endif %}
 </header>
 {% endblock %}
 
@@ -204,7 +308,11 @@ window.frappe = window.frappe || {};
         {%- if loop.last %}
         <li><span aria-current="page">{{ crumb.label | e }}</span></li>
         {%- else %}
-        <li><a href="{{ (crumb.url or '#') | e }}">{{ crumb.label | e }}</a></li>
+        {%- if crumb.url %}
+        <li><a href="{{ crumb.url | e }}">{{ crumb.label | e }}</a></li>
+        {%- else %}
+        <li><span>{{ crumb.label | e }}</span></li>
+        {%- endif %}
         {%- endif %}
         {%- endfor %}
       </ol>
@@ -267,6 +375,8 @@ window.frappe = window.frappe || {};
 <script src="{{ asset_url('/assets/consilium/js/consilium.js') }}"></script>
 <script src="{{ asset_url('/assets/consilium/js/consilium-table.js') }}"></script>
 <script src="{{ asset_url('/assets/consilium/js/consilium-reference.js') }}"></script>
+{#- The header's menus, slide-out panel and global search. #}
+<script src="{{ asset_url('/assets/consilium/js/consilium-nav.js') }}"></script>
 {#- The help assistant. It hides itself from signed-out visitors. #}
 <script src="{{ asset_url('/assets/consilium/js/consilium-assistant.js') }}"></script>
 {%- if not is_guest or allow_guest %}

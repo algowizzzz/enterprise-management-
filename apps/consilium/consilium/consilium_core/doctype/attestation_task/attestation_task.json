@@ -85,7 +85,7 @@
   },
   {
    "default": "Pending",
-   "description": "A label. Regeneration and reporting read is_open, never this string.",
+   "description": "Where the task stands.",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -95,7 +95,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag derived from Workflow State Flag. An open task is never duplicated by regeneration.",
+   "description": "Set automatically from the status. An open task is never created twice.",
    "fieldname": "is_open",
    "fieldtype": "Check",
    "label": "Is Open",
@@ -115,7 +115,7 @@
    "read_only": 1
   },
   {
-   "description": "Semantic flag derived from Workflow State Flag. Validation reads this, never the status label.",
+   "description": "Set automatically from the status: ticked when the answer needs a written statement.",
    "fieldname": "requires_statement",
    "fieldtype": "Check",
    "label": "Requires Statement",
@@ -155,7 +155,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.702702",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Attestation Task",

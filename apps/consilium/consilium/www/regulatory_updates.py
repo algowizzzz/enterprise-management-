@@ -21,9 +21,9 @@ def get_context(context):
 	context.page_description = (
 		"Record a change to a regulatory requirement, see everything that cites it, and work through what it touches."
 	)
-	context.active_nav = "reports"
+	context.active_nav = "insights"
 	context.user_display = frappe.session.user
-	crumbs = [{"label": "Home", "url": "/"}, {"label": "Reports", "url": "/reports"},
+	crumbs = [{"label": "Home", "url": "/"}, {"label": "Insights", "url": "/reports"},
 		{"label": "Regulatory updates", "url": "/regulatory-updates"}]
 	context.breadcrumbs = crumbs + [{"label": requirement}] if requirement else crumbs[:2] + [{"label": "Regulatory updates"}]
 	signed_in = frappe.session.user != "Guest"

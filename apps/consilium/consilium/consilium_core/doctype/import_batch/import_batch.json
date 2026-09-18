@@ -82,7 +82,7 @@
   },
   {
    "default": "Uploaded",
-   "description": "A label. Logic reads the semantic flags below.",
+   "description": "Where the record stands.",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -143,7 +143,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.711825",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Import Batch",

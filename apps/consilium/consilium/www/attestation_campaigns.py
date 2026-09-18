@@ -28,11 +28,10 @@ def get_context(context):
 		"Open the annual forum attestations, generate each campaign's tasks, and chase "
 		"the records a campaign could not ask about."
 	)
-	context.active_nav = "inbox"
+	context.active_nav = "policies"
 	context.user_display = frappe.session.user
 	context.breadcrumbs = [
 		{"label": "Home", "url": "/"},
-		{"label": "Inbox", "url": "/tasks"},
 		{"label": "Attestation campaigns"},
 	]
 	signed_in = frappe.session.user != "Guest"

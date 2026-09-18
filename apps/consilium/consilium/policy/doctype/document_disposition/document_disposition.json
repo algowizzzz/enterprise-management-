@@ -39,7 +39,7 @@
    "reqd": 1
   },
   {
-   "description": "What the disposition records. Written by the application from the document's semantic flags as it moves.",
+   "description": "What the disposition records. Filled in automatically as the document moves through its lifecycle.",
    "fieldname": "disposition_kind",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -151,7 +151,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 06:44:45.939774",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Policy",
  "name": "Document Disposition",

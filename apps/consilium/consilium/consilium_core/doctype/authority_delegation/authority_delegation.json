@@ -48,7 +48,7 @@
    "reqd": 1
   },
   {
-   "description": "Required for the DocType, Record and Forum scopes. A Forum scope names the forum DocType here; the model's separate scope_forum column is not built, because Core cannot link to a module entity.",
+   "description": "Required for the record-type, record and forum scopes. For a forum scope, name the forum record type here.",
    "fieldname": "scope_doctype",
    "fieldtype": "Link",
    "label": "Scope DocType",
@@ -98,7 +98,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.703412",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Authority Delegation",

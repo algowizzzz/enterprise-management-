@@ -40,7 +40,19 @@
   color: var(--cns-primary);
   border-bottom: 3px solid var(--cns-primary);
 }
-.cns-header-light .cns-nav-link:hover { background: var(--cns-primary-subtle); }
+.cns-header-light .cns-mainnav { border-top-color: var(--cns-border-subtle); }
+.cns-header-light .cns-portal .cns-menu-trigger:hover,
+.cns-header-light .cns-menu.is-open > .cns-menu-trigger { background: var(--cns-primary-subtle); }
+.cns-header-light .cns-gsearch-input {
+  background: var(--cns-surface-muted);
+  border-color: var(--cns-border-strong);
+  color: var(--cns-text);
+}
+.cns-header-light .cns-gsearch-input::-webkit-search-cancel-button { filter: none; }
+.cns-header-light .cns-portal .cns-header-bar :focus-visible { outline-color: var(--cns-focus-ring-contrast); }
+@media (max-width: 767.98px) {
+  .cns-header-light .cns-gsearch { background: var(--cns-surface); }
+}
 .cns-header-light .cns-header .cns-control-btn,
 .cns-header-light .cns-header .cns-fontsize button,
 .cns-header-light .cns-header .cns-fontsize-label {
@@ -187,33 +199,23 @@
   .cns-portal a.cns-quick-tile:hover { transform: none; }
 }
 
-/* ---- Header fit -------------------------------------------------------- */
-/* With the brand, seven tabs and the controls, the header outgrows a laptop
-   screen and wraps the controls onto a second row. Above the phone layout the
-   row stays single: tabs tighten, the text-size label (the buttons say the
-   same) gives way first, and anything still left over scrolls inside the tab
-   strip rather than pushing the controls down. */
-@media (min-width: 768px) {
-  .cns-header-inner { flex-wrap: nowrap; gap: var(--cns-space-3); }
-  .cns-nav-link { padding-left: var(--cns-space-2); padding-right: var(--cns-space-2); }
-  /* The tab strip gives way (and scrolls) before the controls do, and a long
-     name in the user menu is shortened rather than pushing tabs off screen. */
-  .cns-header-nav { min-width: 0; overflow-x: auto; scrollbar-width: thin; }
-  .cns-controls { flex-shrink: 0; }
-  .cns-user-name { display: inline-block; max-width: 9rem; overflow: hidden;
-    text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-}
-/* The header is capped at the page container's width (about 1290px), so a
-   wider screen buys it nothing: these hold at every desktop width. */
+/* ---- Header fit ------------------------------------------------------- */
+/* The menus have a row of their own, so the bar holds only the brand, the
+   search box and the personal controls. On a laptop-width screen the long
+   parts give way first: the text-size label (the buttons say the same), then
+   the user's name, which is shortened rather than pushing the search aside. */
 @media (min-width: 768px) {
   .cns-fontsize-label { display: none; }
+  .cns-user-name { display: inline-block; max-width: 11rem; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 }
-@media (min-width: 768px) {
-  /* Eight tabs with icons do not fit beside the controls; the words carry it. */
-  .cns-nav-link i { display: none; }
+@media (min-width: 768px) and (max-width: 1099.98px) {
+  .cns-user-name, .cns-user-caret { display: none; }
+  .cns-menu-icon { display: none; }
 }
-@media (min-width: 768px) and (max-width: 1279.98px) {
+@media (min-width: 768px) and (max-width: 899.98px) {
   .cns-brand-name { display: none; }
+  .cns-portal .cns-menu-trigger { padding-inline: var(--cns-space-2); }
 }
 
 /* ---- Inbox badge ------------------------------------------------------- */

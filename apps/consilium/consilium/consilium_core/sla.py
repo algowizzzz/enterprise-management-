@@ -558,3 +558,73 @@ def _live_update(definition, doc, before) -> None:
         # First action only: a clock that has already stopped is not restarted.
         if clock:
             stop_clock(clock, stopped_on=doc.modified)
+
+
+# ----------------------------------------------------------- the reporting view
+
+#: What each kind of timed record is called on the reporting page.
+KIND_LABELS = {
+    "Escalation Matter": "Escalations",
+    "Governing Document": "Policies",
+    "Document Review Cycle": "Policy reviews",
+    "Document Intake Request": "Policy requests",
+    "Committee Formation Request": "Formation requests",
+}
+
+#: Names checked against the permission engine in one query at a time.
+_READ_CHUNK = 500
+
+
+def _readable_names(doctype: str, names: list[str]) -> set[str]:
+    """Those of ``names`` the caller may read, asked of the permission engine
+    (so a sensitive matter's restriction applies exactly as on its list)."""
+    readable: set[str] = set()
+    for start in range(0, len(names), _READ_CHUNK):
+        chunk = names[start:start + _READ_CHUNK]
+        readable.update(frappe.get_list(doctype, filters={"name": ["in", chunk]}, pluck="name",
+                                        limit_page_length=len(chunk)))
+    return readable
+
+
+@frappe.whitelist(methods=["GET"])
+def clock_position() -> dict:
+    """Running and breached clocks by the kind of record they time, counted
+    over the records the caller may read (management reporting).
+
+    The clock records themselves are open to administrators and audit only: a
+    clock names its record and carries its timings, and a sensitive matter's
+    clock must not be listed to someone the matter is hidden from. The reporting
+    page needs only counts, so they are counted here, clock by clock, over the
+    subjects the permission engine lets the caller read — which is what lets the
+    Chief Risk Officer (and anyone else) see the time-limit position of what
+    they already see, without opening the clock records to them. Nothing is
+    counted for a record type the caller may not read at all.
+    """
+    if frappe.session.user == "Guest":
+        raise frappe.PermissionError(_("Sign in to see the time-limit position."))
+    rows = frappe.get_all(
+        "SLA Clock",
+        fields=["subject_doctype", "subject_name", "is_open", "breached_on"],
+        limit_page_length=0,
+    )
+    by_type: dict[str, list] = {}
+    for row in rows:
+        if row.subject_doctype:
+            by_type.setdefault(row.subject_doctype, []).append(row)
+    kinds = []
+    for doctype, clocks in sorted(by_type.items()):
+        if not frappe.db.exists("DocType", doctype) or not frappe.has_permission(doctype, "read"):
+            continue
+        readable = _readable_names(doctype, sorted({row.subject_name for row in clocks if row.subject_name}))
+        mine = [row for row in clocks if row.subject_name in readable]
+        if not mine:
+            continue
+        kinds.append({
+            "kind": doctype,
+            "label": _(KIND_LABELS.get(doctype, doctype)),
+            "running": sum(1 for row in mine if int(row.is_open or 0)),
+            "breached_running": sum(1 for row in mine if int(row.is_open or 0) and row.breached_on),
+            "breached_ever": sum(1 for row in mine if row.breached_on),
+        })
+    kinds.sort(key=lambda kind: kind["label"])
+    return {"kinds": kinds}

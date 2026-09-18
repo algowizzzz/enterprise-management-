@@ -182,3 +182,49 @@ class TestGatesOnEveryRoute(PolicyTestCase):
         _approve_all(doc)
         lifecycle.perform(doc, "Publish")
         self.assertInForce(doc)
+
+
+class TestChangeLogForThePolicyOffice(PolicyTestCase):
+    """The policy office was told "The change log is not available to you" on a
+    document's Versions tab: the page read the framework's own change log
+    (Version), which only administrators may list. The log is now read through
+    Core's record history, which shows it to whoever may read the document."""
+
+    def _changed(self, doc):
+        import json
+
+        frappe.get_doc({
+            "doctype": "Version", "ref_doctype": DOCTYPE, "docname": doc.name,
+            "data": json.dumps({"changed": [["lifecycle_phase", "Draft", "Review"], ["is_editable", 1, 0],
+                                            ["requires_review", 0, 1]]}),
+        }).insert(ignore_permissions=True)
+
+    def test_the_policy_office_reads_a_documents_change_log(self):
+        from consilium.consilium_core import evidence
+        from consilium.policy.tests.utils import make_user
+
+        doc = make_document()
+        self._changed(doc)
+        office = make_user("Enterprise Policy Office")
+        frappe.set_user(office)
+        self.assertTrue(frappe.has_permission(DOCTYPE, "read", doc=doc.name))
+        changes = [e for e in evidence.record_history(DOCTYPE, doc.name)["entries"] if e["kind"] == "change"]
+        self.assertTrue(changes, "the policy office sees the document's changes")
+        phase = frappe.get_meta(DOCTYPE).get_label("lifecycle_phase")
+        self.assertTrue(any(phase in e["summary"] for e in changes))
+        # The semantic flags move with the phase; they are not news to a reader.
+        for e in changes:
+            for flag in ("is_editable", "Is Editable", "requires_review", "Requires Review"):
+                self.assertNotIn(flag, e["summary"])
+
+    def test_someone_who_cannot_read_the_document_gets_no_change_log(self):
+        from consilium.consilium_core import evidence
+        from consilium.policy.tests.utils import make_user
+
+        doc = make_document()
+        self._changed(doc)
+        outsider = make_user("Escalation Owner")
+        frappe.set_user(outsider)
+        self.assertFalse(frappe.has_permission(DOCTYPE, "read", doc=doc.name))
+        with self.assertRaises(frappe.PermissionError):
+            evidence.record_history(DOCTYPE, doc.name)

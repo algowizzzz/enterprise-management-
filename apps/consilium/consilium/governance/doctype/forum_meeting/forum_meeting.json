@@ -74,7 +74,7 @@
   },
   {
    "default": "Scheduled",
-   "description": "A label. Logic reads the semantic flags.",
+   "description": "Where the record stands.",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -106,7 +106,7 @@
   },
   {
    "default": "0",
-   "description": "Semantic flag. True only where the meeting actually sat, which is when attendance and quorum may be recorded.",
+   "description": "Set automatically from the status: ticked once the meeting has sat, when attendance and quorum may be recorded.",
    "fieldname": "is_committable",
    "fieldtype": "Check",
    "label": "Is Committable",
@@ -147,7 +147,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.731739",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Forum Meeting",

@@ -6,22 +6,22 @@ picks it up next. The index of every delivery document is
 
 ## What exists
 
-**A finished product.** Four modules run on one platform: **142 entities over
+**A finished product.** Four modules run on one platform: **144 entities over
 378 PostgreSQL tables** and 11 scheduled jobs. Every figure below was measured
 on the final build, not asserted.
 
 | Measure | Result |
 |---|---|
-| Application tests, clean site | **1372 tests, OK**: 0 failures, 0 errors, 1248 s |
-| Toolchain tests, `pytest tests/` | 51 passed (22 of them simulate Windows) |
-| Interface sweep, final demo site | 274 passed, 0 failed |
-| Browser journeys | 8/8 |
+| Application tests, clean site | **1453 tests, OK**: 0 failures, 0 errors, 1433 s |
+| Toolchain tests, `pytest tests/` | 57 passed (22 of them simulate Windows) |
+| Interface sweep, final demo site | 302 passed, 0 failed |
+| Browser journeys | 11/11 |
 | Platform rules | 6/6 |
 | Deployment kit, air-gapped Rocky Linux 9 | `verify.sh` 14/14, fresh and after upgrade |
 
 | | |
 |---|---|
-| Consilium Core | 62 entities. Taxonomy, identity and delegation. The shared engines: versioning and revert, attestation, retention and legal hold, the classification rules engine, notification templates and delivery, reminders, service levels, imports, evidence packs, the help assistant, and the audited AI client |
+| Consilium Core | 64 entities. Taxonomy, identity and delegation. The shared engines: versioning and revert, attestation, retention and legal hold, the classification rules engine, notification templates and delivery, reminders, service levels, imports, evidence packs, the help assistant, the audited AI client, navigation and global search, and the integrations (external tools, Microsoft Graph mail) |
 | Governance | 24 entities. Forum inventory and map; committee formation with sequential approval and charter challenge; the compliance lifecycle and annual review; membership with history; meetings, motions and voting; disbandment |
 | Policy | 38 entities. Repository and full-text search; lineage; applicability; lifecycle and approval routing; confidential and restricted handling; intake classification; publication; horizon scanning; monitoring; violations; glossary; dispositions; regulatory-change import |
 | Escalation | 18 entities. Matters with three templates; matrix routing; role and group queues; action plans; risk acceptances; time in each status; closure |
@@ -33,6 +33,42 @@ publication, intake, raising and working escalations. A task inbox (`/tasks`),
 attestation campaigns and import review (`/imports`) exist, and every portal
 page has a page-context test.
 
+**A header people can find their way with.** The header has two rows:
+
+- the brand, a **global search** box ("/" or Ctrl/Cmd+K), text size, theme and
+  the user menu;
+- the menus Home, **My work** (with a count badge), Governance, Policies,
+  Escalations, Insights and Admin.
+
+Each menu opens a panel of sub-pages and filtered views, each with a one-line
+description, filtered by role. The menus work from the keyboard and slide out
+on phones. Search reads only through the permission-checked list, so
+confidential documents and sensitive matters never appear to those not cleared.
+Lists export to CSV (up to 5,000 rows, formula-safe), and empty states say
+what to do next. A review pass fixed twelve interface issues:
+
+- consistent naming (Policy library, Insights, Gaps and risk, Administration);
+- My work approvals described in words;
+- time-limit clock counts limited to records the viewer may read;
+- originators able to answer a returned request;
+- the policy change log opened to the policy office;
+- "Advanced view" offered to administrators only;
+- times labelled with their zone.
+
+**One screen for the organisation's other systems.** Admin → Integrations
+(`/integrations`) has a card for each:
+
+- **The AI endpoint:** a write-only key and *Test connection*. It is tested end
+  to end against an OpenAI-compatible provider, and the help assistant answers
+  with citations from the illustrated guides.
+- **The external document editor:** "Open in Doc AI" on a policy, a version and
+  the viewer. The hand-off is access-checked and logged, and carries
+  identifiers only.
+- **The horizon-scanning platform.**
+- **E-mail:** SMTP, or Microsoft Graph with app-only credentials, token
+  caching and Retry-After handling. *Send a test email to me* checks the route.
+- **Single sign-on:** the redirect URI to register, with a copy button.
+
 **Measured coverage.** Of 64 mandatory requirements:
 
 - **49** are fully reachable: 43 through a portal screen, 6 through the desk or
@@ -40,8 +76,9 @@ page has a page-context test.
 - **9** are partly reachable.
 - **6** each miss one mandatory clause.
 
-On 2026-09-17 the figures were 22, 24 and 18. Of 180 backlog stories, 143 are
-done, 36 partial and 1 not started; none is in progress. See
+On 2026-09-17 the figures were 22, 24 and 18. Of 191 backlog stories, 151 are
+done, 39 partial and 1 not started; none is in progress. Eleven of those
+stories, E35 and E36, cover the navigation and integrations work. See
 [`REQUIREMENTS-COVERAGE.md`](REQUIREMENTS-COVERAGE.md) and
 [`EPICS.md`](EPICS.md).
 
@@ -78,11 +115,14 @@ See [`DEPLOYMENT-READINESS.md`](DEPLOYMENT-READINESS.md) and
 
 - The stakeholder: data model, schema, architecture, requirements coverage and
   the backlog.
-- The people who use and configure it: twelve illustrated chapters in
-  `docs/guides/`, built to PDF and Word outside the repository.
+- The people who use and administer it: the onboarding guide in `docs/guides/`.
+  It has chapters 00–10 and a glossary, with every screen shown and numbered
+  callouts, built into `Consilium-Onboarding-Guide` (PDF and Word, 217 pages,
+  185 screenshots). `USER-GUIDE.md` and `ADMIN-GUIDE.md` are the quick starts,
+  and the technical configuration material is in `OPERATIONS.md`.
 - The deploying team: the runbook, operations and readiness documents.
 
-There is also a 47-slide leadership briefing.
+There is also a 49-slide leadership briefing.
 
 ## The decisions that shaped it
 
@@ -134,8 +174,9 @@ Deployment work, which can only close on the target:
 - No RHEL 8 or Ubuntu 22.04 rehearsal.
 - **Python 3.11 on x86_64 is required.** The framework's `hiredis` pin blocks
   3.12, and `psutil` blocks ARM.
-- Real certificates, the identity provider, SMTP and load testing need the
-  target environment.
+- Real certificates, the identity provider, the mail route (an SMTP relay or a
+  Microsoft Graph app registration with Mail.Send limited to the sender
+  mailbox) and load testing need the target environment.
 - **The offline bundle must be rebuilt from the final commit.** First remove
   the untracked scratch DocType `ABC`, in
   `apps/consilium/consilium/consilium_core/doctype/abc/`, which is also
@@ -152,7 +193,10 @@ None of this blocks a demonstration. The deployment items block going live.
   point, meant to be replaced.
 - **The classification rules** for major versus minor policy change. The engine
   is built; the rules must come from the business.
-- **Whether AI is switched on**, which endpoint it uses, and under which
-  data-boundary policy.
+- **Whether AI is switched on** in production, which approved endpoint it
+  uses, and under which data-boundary policy. The build is proven against an
+  OpenAI-compatible provider; the organisation's own endpoint is its choice.
+- **Mail route:** SMTP relay or Microsoft Graph, and who in the directory team
+  grants Mail.Send and the application access policy.
 - **Whether the assumptions in `docs/product/07-assumptions-and-gaps.md`
   hold.** That document exists to be argued with.

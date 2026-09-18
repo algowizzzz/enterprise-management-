@@ -20,8 +20,8 @@
   <div class="cns-card-header">
     <div>
       <h2 class="cns-card-title" id="people-heading">People and access</h2>
-      <p class="cns-card-subtitle">Accounts, roles and permission rules are maintained on the
-        framework's own screens.</p>
+      <p class="cns-card-subtitle">Accounts, roles and permission rules. These open in the Advanced
+        view, the platform's configuration workspace.</p>
     </div>
   </div>
   <div class="cns-card-body">
@@ -105,12 +105,16 @@
   <div class="cns-card-header">
     <div>
       <h2 class="cns-card-title" id="config-heading">Configuration and operations</h2>
-      <p class="cns-card-subtitle">Everything below is the framework's own, and is linked rather
-        than rebuilt.</p>
+      <p class="cns-card-subtitle">How the platform is set up and how it runs. Apart from the first three,
+        these open in the Advanced view.</p>
     </div>
   </div>
   <div class="cns-card-body">
     <ul class="cns-link-list">
+      <li><a class="cns-link-card" href="/integrations">
+        <span class="cns-link-card-title">Integrations</span>
+        <span class="cns-link-card-desc">The AI service, Doc AI, horizon scanning, email and single sign-on: what is
+          connected, and what leaves the platform.</span></a></li>
       <li><a class="cns-link-card" href="/imports">
         <span class="cns-link-card-title">Imports</span>
         <span class="cns-link-card-desc">Upload a file against an import profile, review each row, then commit or discard.</span></a></li>
@@ -121,9 +125,9 @@
         <span class="cns-link-card-title">Workflows</span>
         <span class="cns-link-card-desc">The states and transitions each record type moves through.</span></a></li>
       <li><a class="cns-link-card" href="/app/workflow-state-flag">
-        <span class="cns-link-card-title">State flags</span>
-        <span class="cns-link-card-desc">Which states count as editable, active or awaiting review.
-          Add the row whenever you add a state.</span></a></li>
+        <span class="cns-link-card-title">What each status means</span>
+        <span class="cns-link-card-desc">Which statuses count as editable, in force or awaiting review.
+          Add a row whenever you add a status.</span></a></li>
       <li><a class="cns-link-card" href="/app/watched-field-set">
         <span class="cns-link-card-title">Watched fields</span>
         <span class="cns-link-card-desc">The changes that send a record back for review.</span></a></li>
@@ -142,7 +146,7 @@
         <span class="cns-link-card-desc">The background work, and when it last ran.</span></a></li>
       <li><a class="cns-link-card" href="/app/error-log">
         <span class="cns-link-card-title">Error log</span>
-        <span class="cns-link-card-desc">What has failed, with its traceback.</span></a></li>
+        <span class="cns-link-card-desc">What has failed, with the technical detail.</span></a></li>
       <li><a class="cns-link-card" href="/app/system-settings">
         <span class="cns-link-card-title">System settings</span>
         <span class="cns-link-card-desc">Site-wide settings: time zone, formats, session policy.</span></a></li>
@@ -174,16 +178,16 @@
      "Seat roles, and whether each votes, counts toward quorum or may attest."],
     ["Governance Responsibility", "governance-responsibility", "Governance responsibilities", "Governance",
      "Oversight, decision making, or both."],
-    ["Organization Unit", "organization-unit", "Organisational units", "Core",
+    ["Organization Unit", "organization-unit", "Organisational units", "Shared",
      "The one tree: operating groups, corporate support, lines of business and business units."],
-    ["Risk Category", "risk-category", "Risk categories", "Core",
+    ["Risk Category", "risk-category", "Risk categories", "Shared",
      "The primary risk category a forum or document carries."],
-    ["Risk Type", "risk-type", "Risk types", "Core", "The finer risk taxonomy."],
-    ["Organizational Level", "organizational-level", "Organisational levels", "Core",
+    ["Risk Type", "risk-type", "Risk types", "Shared", "The finer risk taxonomy."],
+    ["Organizational Level", "organizational-level", "Organisational levels", "Shared",
      "The level of the organisation a matter sits at, from enterprise down to business unit."],
-    ["Legal Entity", "legal-entity", "Legal entities", "Core", "The entities in scope."],
-    ["Jurisdiction", "jurisdiction", "Jurisdictions", "Core", "Where an obligation applies."],
-    ["Regulatory Requirement", "regulatory-requirement", "Regulatory requirements", "Core",
+    ["Legal Entity", "legal-entity", "Legal entities", "Shared", "The entities in scope."],
+    ["Jurisdiction", "jurisdiction", "Jurisdictions", "Shared", "Where an obligation applies."],
+    ["Regulatory Requirement", "regulatory-requirement", "Regulatory requirements", "Shared",
      "The obligations a forum or document can be required by."],
     ["Governing Document Type", "governing-document-type", "Document types", "Policy",
      "Policy, standard, procedure, framework, charter and the rest."],
@@ -193,9 +197,9 @@
      "The kinds of matter that can be escalated."],
     ["Escalation Template", "escalation-template", "Escalation templates", "Escalation",
      "The shape of an escalation, an action plan or a risk acceptance."],
-    ["Retention Class", "retention-class", "Retention classes", "Core",
+    ["Retention Class", "retention-class", "Retention classes", "Shared",
      "How long each class of record is kept."],
-    ["Line Of Defence", "line-of-defence", "Lines of defence", "Core",
+    ["Line Of Defence", "line-of-defence", "Lines of defence", "Shared",
      "First, second and third line."]
   ];
 
@@ -222,7 +226,7 @@
         formatter: function (value, row) {
           return '<a href="/app/' + escapeAttr(row.route) + '">' + escapeHtml(value) + "</a>";
         } },
-      { field: "module", label: "Module", sortable: true,
+      { field: "module", label: "Used in", sortable: true,
         formatter: f.status({ Core: "neutral", Governance: "primary", Policy: "info",
                               Escalation: "warning" }) },
       { field: "purpose", label: "What it is for" },

@@ -441,4 +441,12 @@ def check_requirement(requires: dict, ctx: dict) -> tuple[bool, str | None]:
 			return False, "nobody holds that permission at present"
 	if requires.get("desk") and not has_desk_access():
 		return False, "it happens in the workspace, which your account cannot open"
+	if requires.get("advanced"):
+		# The record pages offer the workspace ("Advanced view") to administrators
+		# only (branding.cns_advanced_view); the assistant must not send anyone
+		# else looking for a button they will not see.
+		from consilium.consilium_core.branding import cns_advanced_view
+
+		if not cns_advanced_view():
+			return False, "it is done in the Advanced view, which is for administrators"
 	return True, None

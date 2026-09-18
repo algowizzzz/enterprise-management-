@@ -57,7 +57,7 @@
   },
   {
    "default": "Not Reviewed",
-   "description": "A label. The effective-challenge gate reads the semantic flags.",
+   "description": "Where the governance office's challenge of the charter stands.",
    "fieldname": "rgo_challenge_status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -128,7 +128,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.727037",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Committee Charter",

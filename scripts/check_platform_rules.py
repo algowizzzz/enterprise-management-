@@ -47,11 +47,24 @@ failures: list[tuple[str, list[str]]] = []
 passes: list[tuple[str, str]] = []
 
 
+def _nested_repositories() -> list[Path]:
+    """Folders inside the checkout that are git repositories of their own.
+
+    Another project cloned into the working folder (a sibling tool someone is
+    trying out) is not part of this repository and is never committed to it,
+    so this repository's rules do not apply to it.
+    """
+    return [p.parent for p in REPO.glob("*/.git") if p.parent != REPO]
+
+
 def walk_text_files():
+    nested = _nested_repositories()
     for path in REPO.rglob("*"):
         if not path.is_file() or path.suffix not in TEXT_SUFFIXES:
             continue
         if any(part in SKIP_DIRS for part in path.parts):
+            continue
+        if any(path.is_relative_to(n) for n in nested):
             continue
         rel = str(path.relative_to(REPO))
         if any(v in rel for v in VENDORED):

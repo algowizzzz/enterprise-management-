@@ -168,11 +168,20 @@
     storageKey: "forum-inventory",
     rowKey: "name",
     searchPlaceholder: "Search by name, reference or mandate",
+    // The header search's "See all" arrives as ?q=.
+    initialSearch: (function () {
+      try { return new URLSearchParams(window.location.search).get("q") || ""; } catch (e) { return ""; }
+    })(),
     searchFields: ["forum_name", "name", "description"],
     defaultSort: { field: "forum_name", order: "asc" },
     pageSize: 25,
     striped: true,
     filters: [["is_active", "=", 1]],
+    emptyTitle: "No forums match",
+    emptyMessage: "Clear a filter or choose another standing to see more of the inventory.",
+    emptyIcon: "bi-diagram-3",
+    exportable: true,
+    emptyAction: { label: "Clear the filters", onClick: function () { document.getElementById("filter-clear").click(); } },
     onRowClick: function (row) {
       window.location.href = "/forum?name=" + encodeURIComponent(row.name);
     },
@@ -260,6 +269,7 @@
       if (select.value) params.set(select.getAttribute("data-tag-dimension"), select.value);
     });
     if (standing.value !== "active") params.set("standing", standing.value);
+    if (table && table.search) params.set("q", table.search);
     var query = params.toString();
     try {
       window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : ""));

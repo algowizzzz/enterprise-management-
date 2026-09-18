@@ -122,7 +122,7 @@
   },
   {
    "depends_on": "eval:doc.participant_source=='Seat Role'",
-   "description": "The seat's link to Governance Forum Role. Only roles flagged can_attest are drawn.",
+   "description": "The seat's forum role. Only roles that may attest are drawn.",
    "fieldname": "seat_role_field",
    "fieldtype": "Data",
    "label": "Seat Role Field"
@@ -154,7 +154,7 @@
   },
   {
    "default": "Draft",
-   "description": "A label. Business logic reads the semantic flags below, never this string.",
+   "description": "Where the record stands.",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -163,7 +163,7 @@
    "reqd": 1
   },
   {
-   "description": "Semantic flag derived from Workflow State Flag. Tasks are generated only while open.",
+   "description": "Set automatically from the status. Tasks are generated only while the campaign is open.",
    "fieldname": "is_open",
    "fieldtype": "Check",
    "label": "Is Open",
@@ -197,7 +197,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 06:44:45.938547",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Attestation Campaign",

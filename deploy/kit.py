@@ -123,6 +123,16 @@ SCHEMA: dict = {
         "password": ("secret", False, None),
         "sender": ("email?", False, ""),
         "sender_name": ("str", False, "Governance Portal"),
+        # Notification email through Microsoft Graph instead of SMTP, for an
+        # organisation that allows no SMTP. Independent of `enabled`, which is
+        # the SMTP account (still used by the framework's own mail).
+        "graph_enabled": ("bool", False, "no"),
+        "graph_tenant_id": ("graphid?", False, ""),
+        "graph_client_id": ("graphid?", False, ""),
+        "graph_client_secret": ("secret", False, None),
+        "graph_sender": ("graphid?", False, ""),
+        "graph_authority_url": ("url?:https", False, ""),
+        "graph_api_url": ("url?:https", False, ""),
     },
     "sso": {
         "mode": ("choice:none|oidc|ldap", False, "none"),
@@ -168,6 +178,9 @@ _RE_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _RE_NAME = re.compile(r"^[a-z_][a-z0-9_-]{0,31}$")
 _RE_DBNAME = re.compile(r"^[a-z_][a-z0-9_]{0,62}$")
 _RE_SITENAME = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
+# A directory (tenant) ID, application ID or mailbox: each is put into a
+# request path, so nothing that could change the path is accepted.
+_RE_GRAPHID = re.compile(r"^[A-Za-z0-9._@+-]+$")
 # A value that looks like it names a secret but holds it literally.
 _SECRET_WORDS = ("password", "secret", "api_key", "_token", "_key")
 
@@ -327,6 +340,10 @@ def _coerce(kind: str, raw: str):
         if not _RE_DBNAME.match(raw):
             raise ValueError("use lower-case letters, digits and '_', starting with a letter")
         return raw
+    if base == "graphid":
+        if not _RE_GRAPHID.match(raw):
+            raise ValueError("use letters, digits and . _ @ + - only (an ID, a domain or a mailbox address)")
+        return raw
     if base == "sitename":
         if not _RE_SITENAME.match(raw):
             raise ValueError("use letters, digits, dots and hyphens")
@@ -420,6 +437,13 @@ def _cross_checks(v: dict, secrets_spec: dict, check_files: bool) -> list[str]:
                 errors.append(f"[email] {key} is required when enabled = yes")
         if v["email"]["login"] and ("email", "password") not in secrets_spec:
             errors.append("[email] login is set, so password_file or password_env is required")
+    if v["email"]["graph_enabled"]:
+        for key in ("graph_tenant_id", "graph_client_id", "graph_sender"):
+            if not v["email"][key]:
+                errors.append(f"[email] {key} is required when graph_enabled = yes")
+        if ("email", "graph_client_secret") not in secrets_spec:
+            errors.append("[email] graph_client_secret_file or graph_client_secret_env is required "
+                          "when graph_enabled = yes")
     mode = v["sso"]["mode"]
     if mode == "oidc":
         for key in ("oidc_authorize_url", "oidc_token_url", "oidc_userinfo_url", "oidc_client_id"):
@@ -1043,7 +1067,9 @@ def seed_and_configure(runner: Runner) -> dict:
         "public_url": cfg.public_url(),
         "admin_email": cfg["site"]["admin_email"],
         "timezone": cfg["site"]["timezone"],
-        "email": dict(cfg["email"], password=handoff("email", "password") if cfg["email"]["enabled"] else None),
+        "email": dict(cfg["email"], password=handoff("email", "password") if cfg["email"]["enabled"] else None,
+                      graph_client_secret=handoff("email", "graph_client_secret")
+                      if cfg["email"]["graph_enabled"] else None),
         "sso": dict(cfg["sso"],
                     oidc_client_secret=handoff("sso", "oidc_client_secret") if cfg["sso"]["mode"] == "oidc" else None,
                     ldap_bind_password=handoff("sso", "ldap_bind_password") if cfg["sso"]["mode"] == "ldap" else None),
@@ -1405,7 +1431,8 @@ def cmd_check_config(args) -> int:
     print(f"  site {cfg.site} at {cfg.public_url()}, installed in {cfg.install_dir}")
     print(f"  database {cfg['database']['name']} on {cfg['database']['host']}:{cfg['database']['port']} "
           f"({cfg['database']['provisioning']})")
-    print(f"  proxy {cfg['tls']['proxy']}, SSO {cfg['sso']['mode']}, email {'on' if cfg['email']['enabled'] else 'off'}, "
+    print(f"  proxy {cfg['tls']['proxy']}, SSO {cfg['sso']['mode']}, email {'on' if cfg['email']['enabled'] else 'off'}"
+          f"{' (notifications through Microsoft Graph)' if cfg['email']['graph_enabled'] else ''}, "
           f"AI {'on' if cfg['assistant']['ai_enabled'] else 'off'}")
     return 0
 

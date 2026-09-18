@@ -265,6 +265,44 @@ class TestDisbandment(GovernanceTestCase):
             plan.append("approvals", {"approver_role": role, "approver": make_user(), "required": 1})
         return plan.insert(ignore_permissions=True)
 
+    def test_my_work_says_what_a_disbandment_approver_is_deciding(self):
+        """My work used to list a disbandment approval as the plan's code and the
+        step ("FDIS-2026-00002 · Sponsor"). It now names the decision, the seat
+        it is decided from, who raised it and when, and opens the forum's
+        disbandment page rather than the workspace."""
+        from consilium.consilium_core import inbox
+
+        forum = make_forum()
+        self.purge_on_teardown("Governance Forum", forum.name)
+        plan = self._plan(forum)
+        plan.raise_approvals()
+        sponsor = next(row.approver for row in plan.approvals if row.approver_role == "Sponsor")
+        forum_name = frappe.db.get_value("Governance Forum", forum.name, "forum_name")
+
+        frappe.set_user(sponsor)
+        try:
+            items = [item for group in inbox.my_tasks()["groups"] for item in group["items"]
+                     if item["kind"] == "approval" and item.get("subject_name") == plan.name]
+        finally:
+            frappe.set_user("Administrator")
+        self.assertEqual(len(items), 1)
+        item = items[0]
+        self.assertEqual(item["title"], f"Approve the disbandment plan for {forum_name}")
+        self.assertEqual(item["as_role"], "Sponsor")
+        self.assertEqual(item["raised_by"], "Administrator")
+        self.assertEqual(item["raised_on"], nowdate())
+        self.assertEqual(item["due_on"], nowdate(), "due by the plan's effective date")
+        self.assertEqual(item["url"], f"/forum-disband?forum={forum.name}")
+        self.assertNotIn(plan.name, item["title"])
+
+    def test_approval_step_names_read_as_seats(self):
+        from consilium.consilium_core import inbox
+
+        self.assertEqual(inbox._step_words("Document Approver Approval"), "Document Approver")
+        self.assertEqual(inbox._step_words("Sponsor"), "Sponsor")
+        self.assertEqual(inbox._step_words("Approval"), "Approval")
+        self.assertEqual(inbox._step_words(None), "")
+
     def test_a_forum_cannot_be_disbanded_while_an_approval_is_outstanding(self):
         forum = make_forum()
         self.purge_on_teardown("Governance Forum", forum.name)

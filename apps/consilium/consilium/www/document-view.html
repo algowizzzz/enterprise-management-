@@ -9,8 +9,13 @@
   made on the server (www/document_view.py); this template only draws it.
 -#}
 
+{% from "consilium/templates/includes/external_tools.html" import doc_ai_button, tools_assets %}
+{%- set tools = cns_external_tools() %}
+
 {% block page_actions %}
 {%- if found %}
+{#- This version, in the document editor. Offered wherever the file is. -#}
+{{ doc_ai_button(tools, document.name, version.name) }}
 {%- if download_url %}
 <a class="cns-btn cns-btn-primary" href="{{ download_url | e }}" download>
   <i class="bi bi-download" aria-hidden="true"></i> Download
@@ -29,8 +34,8 @@
   <div class="cns-state">
     <span class="cns-state-icon"><i class="bi bi-signpost" aria-hidden="true"></i></span>
     <p class="cns-state-title">No version was named</p>
-    <p class="cns-state-message">Open a document from the inventory and choose a version from its Versions tab.</p>
-    <a class="cns-btn cns-btn-primary" href="/policies">Go to the inventory</a>
+    <p class="cns-state-message">Open a document from the policy library and choose a version from its Versions tab.</p>
+    <a class="cns-btn cns-btn-primary" href="/policies">Go to the policy library</a>
   </div>
 </div>
 {%- elif not found %}
@@ -39,8 +44,8 @@
     <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
     <p class="cns-state-title">That version is not available</p>
     <p class="cns-state-message">Version <span class="cns-mono">{{ version_name | e }}</span> is not a version of a
-      governing document on the inventory.</p>
-    <a class="cns-btn cns-btn-secondary" href="/policies">Back to the inventory</a>
+      governing document in the policy library.</p>
+    <a class="cns-btn cns-btn-secondary" href="/policies">Back to the library</a>
   </div>
 </div>
 {%- else %}
@@ -228,6 +233,7 @@
 
 {% block scripts %}
 {%- if found %}
+{{ tools_assets(tools) }}
 <script>
 (function () {
   "use strict";

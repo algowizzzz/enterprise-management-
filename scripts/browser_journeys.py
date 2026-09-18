@@ -228,8 +228,10 @@ class Browser:
 		self.shots = shots
 		self.errors: list[str] = []
 
-	def page_as(self, user: str):
-		context = self.browser.new_context(viewport=VIEWPORT, device_scale_factor=1, locale="en-GB")
+	def page_as(self, user: str, viewport: dict | None = None):
+		phone = bool(viewport and viewport["width"] < 768)
+		context = self.browser.new_context(viewport=viewport or VIEWPORT, device_scale_factor=1, locale="en-GB",
+			is_mobile=phone, has_touch=phone)
 		sid = self.sessions.sid_for(user)
 		if sid:
 			context.add_cookies([{"name": "sid", "value": sid, "domain": self.host, "path": "/"}])
@@ -261,7 +263,14 @@ def visible_text(page, selector: str) -> str:
 
 
 def nav_links(page) -> list[str]:
-	return page.eval_on_selector_all(".cns-nav .cns-nav-link", "els => els.map(e => e.getAttribute('href'))")
+	"""Every address the header's menus offer, open or not."""
+	return page.eval_on_selector_all(
+		".cns-menubar .cns-menu-item, .cns-menubar a.cns-menu-trigger", "els => els.map(e => e.getAttribute('href'))"
+	)
+
+
+def menu_names(page) -> list[str]:
+	return page.eval_on_selector_all(".cns-menubar .cns-menu-label", "els => els.map(e => e.textContent.trim())")
 
 
 def open_tab(page, tab_id: str, panel_id: str):
@@ -289,13 +298,14 @@ def home_loads(site: Site, b: Browser, j: Journey):
 	page = b.page_as(j.persona)
 	b.open(page, "/")
 	page.wait_for_selector("h1", state="visible")
-	assert page.locator(".cns-nav .cns-nav-link").count() >= 3, "the primary navigation did not render"
+	assert page.locator(".cns-menubar .cns-menu-trigger").count() >= 3, "the primary navigation did not render"
 	assert page.locator(".cns-signin-card").count() == 0, "a signed-in administrator was asked to sign in"
 	title = page.title()
 	assert title.startswith("Home"), f"unexpected page title {title!r}"
-	assert "/admin" in nav_links(page), "the administrator has no Admin tab"
+	assert "/admin" in nav_links(page), "the administrator has no Admin menu"
+	assert page.locator("#cns-gsearch-input").is_visible(), "the header has no search box"
 	b.snap(page, j.name)
-	j.detail = f"title {title!r}, {page.locator('.cns-nav .cns-nav-link').count()} navigation tabs"
+	j.detail = f"title {title!r}, menus {menu_names(page)}, {len(nav_links(page))} menu items"
 
 
 def policy_owner_views_a_version(site: Site, b: Browser, j: Journey):
@@ -460,11 +470,101 @@ def non_admin_has_no_admin_nav(site: Site, b: Browser, j: Journey):
 	b.open(page, "/")
 	links = nav_links(page)
 	assert links, "no navigation rendered"
-	assert "/admin" not in links, "an everyday user is offered the Admin tab"
+	assert "/admin" not in links, "an everyday user is offered the Admin menu"
+	menus = menu_names(page)
+	assert menus, "no menus rendered"
+	assert "Admin" not in menus, "an everyday user is shown the Admin menu"
 	assert page.locator("a[href='/ui-kit']").count() == 0, "an everyday user is offered the interface reference"
 	b.open(page, "/admin", expect_status=403)
 	b.snap(page, j.name)
-	j.detail = f"navigation {links}; /admin refuses with 403"
+	j.detail = f"menus {menus}; /admin refuses with 403"
+
+
+def menu_keyboard_walk(site: Site, b: Browser, j: Journey):
+	"""A dropdown menu, driven by the keyboard alone."""
+	j.persona = site.everyday_person()
+	page = b.page_as(j.persona)
+	b.open(page, "/")
+	trigger = page.locator("button.cns-menu-trigger").nth(1)
+	panel_id = trigger.get_attribute("aria-controls")
+	trigger.focus()
+	page.keyboard.press("Enter")
+	assert trigger.get_attribute("aria-expanded") == "true", "Enter did not open the menu"
+	assert page.locator(f"#{panel_id}").is_visible(), "the menu panel is not shown"
+	first = page.evaluate("() => document.activeElement.textContent.trim().split(/\\s{2,}/)[0]")
+	assert page.evaluate("() => document.activeElement.classList.contains('cns-menu-item')"), "focus did not move into the menu"
+	page.keyboard.press("ArrowDown")
+	second = page.evaluate("() => document.activeElement.textContent.trim().split(/\\s{2,}/)[0]")
+	assert second != first, "ArrowDown did not move to the next item"
+	page.keyboard.press("End")
+	page.keyboard.press("Home")
+	assert page.evaluate("() => document.activeElement.textContent.trim().split(/\\s{2,}/)[0]") == first, "Home did not return to the first item"
+	page.keyboard.press("ArrowRight")
+	nxt = page.locator("button.cns-menu-trigger").nth(2)
+	assert nxt.get_attribute("aria-expanded") == "true", "ArrowRight did not open the next menu"
+	assert trigger.get_attribute("aria-expanded") == "false", "the first menu stayed open"
+	page.keyboard.press("Escape")
+	assert nxt.get_attribute("aria-expanded") == "false", "Escape did not close the menu"
+	assert page.evaluate("(id) => document.activeElement.id === id", nxt.get_attribute("id")), "Escape did not return focus to the menu button"
+	b.snap(page, j.name)
+	j.detail = f"Enter opened, Down/Home/End moved, Right moved to the next menu, Escape closed and returned focus ({first!r}, {second!r})"
+
+
+def global_search_opens_a_result(site: Site, b: Browser, j: Journey):
+	"""Search from the header, move with the arrows, open with Enter."""
+	j.persona = site.everyday_person()
+	page = b.page_as(j.persona)
+	b.open(page, "/forums")
+	page.keyboard.press("/")
+	box = page.locator("#cns-gsearch-input")
+	assert page.evaluate("() => document.activeElement.id") == "cns-gsearch-input", "'/' did not focus the search"
+	# A forum this person may read, found the way the endpoint finds it.
+	name = site.frappe.get_list("Governance Forum", fields=["name", "forum_name"], limit_page_length=1,
+		order_by="modified desc", user=j.persona)
+	if not name:
+		raise Skip("no forum on this site to search for")
+	word = name[0].forum_name.split()[0]
+	box.fill(word)
+	page.wait_for_selector("#cns-gsearch-results [role='option']", timeout=15000)
+	assert box.get_attribute("aria-expanded") == "true", "the box does not report its results as shown"
+	groups = page.eval_on_selector_all("#cns-gsearch-results .cns-gsearch-group-label", "els => els.map(e => e.textContent)")
+	page.keyboard.press("ArrowDown")
+	active = box.get_attribute("aria-activedescendant")
+	assert active, "ArrowDown did not select a result"
+	href = page.locator(f"#{active}").get_attribute("href")
+	b.snap(page, j.name)
+	page.keyboard.press("Enter")
+	page.wait_for_url("**" + href, timeout=15000)
+	j.detail = f"'{word}' found in {groups}; Enter opened {href}"
+
+
+def phone_menu_opens(site: Site, b: Browser, j: Journey):
+	"""At phone width the menus fold into a slide-out panel with sections."""
+	j.persona = site.everyday_person()
+	page = b.page_as(j.persona, viewport={"width": 390, "height": 844})
+	b.open(page, "/")
+	assert not page.locator(".cns-mainnav").is_visible(), "the menu panel shows before it is opened"
+	toggle = page.locator("[data-cns-nav-toggle]")
+	toggle.click()
+	page.wait_for_timeout(300)
+	assert toggle.get_attribute("aria-expanded") == "true", "the menu button does not report the panel open"
+	assert page.locator(".cns-mainnav").is_visible(), "the panel did not open"
+	# Pinned by id: a lazy "first collapsed section" locator would move on to
+	# the next collapsed one as soon as this one opens.
+	section_id = page.locator("button.cns-menu-trigger[aria-expanded='false']").first.get_attribute("id")
+	section = page.locator(f"#{section_id}")
+	section.click()
+	assert section.get_attribute("aria-expanded") == "true", "a section did not expand"
+	assert page.locator(f"#{section.get_attribute('aria-controls')} .cns-menu-item").first.is_visible()
+	width = page.evaluate("() => document.documentElement.scrollWidth")
+	assert width <= 390, f"the page scrolls sideways ({width}px)"
+	label = section.locator(".cns-menu-label").inner_text().strip()
+	b.snap(page, j.name)
+	page.keyboard.press("Escape")
+	page.wait_for_timeout(300)
+	assert toggle.get_attribute("aria-expanded") == "false", "Escape did not close the panel"
+	assert not page.locator(".cns-mainnav").is_visible(), "the panel is still shown after Escape"
+	j.detail = f"panel opened, {label!r} expanded, Escape closed it; no sideways scroll"
 
 
 JOURNEYS = [
@@ -472,7 +572,10 @@ JOURNEYS = [
 	Journey("policy-owner-version-history", "A policy owner opens their document, its versions and history, and views a version", policy_owner_views_a_version),
 	Journey("secretary-forum-review", "A forum secretary opens their forum and its compliance review page", secretary_opens_forum_and_review),
 	Journey("escalation-filters", "The escalation register narrows by severity and widens again", escalation_list_filters),
-	Journey("inbox-badge", "The inbox tab shows the number of things waiting", inbox_badge_shows_count),
+	Journey("inbox-badge", "The My work menu shows the number of things waiting", inbox_badge_shows_count),
+	Journey("menu-keyboard", "A header menu opens, moves and closes from the keyboard", menu_keyboard_walk),
+	Journey("global-search", "The header search finds a forum and opens it from the keyboard", global_search_opens_a_result),
+	Journey("phone-menu", "At phone width the menus open in a slide-out panel", phone_menu_opens),
 	Journey("help-assistant", "The help assistant panel opens", help_assistant_opens),
 	Journey("guest-sign-in", "A signed-out visitor is shown the sign-in card and no records", guest_sees_sign_in),
 	Journey("non-admin-no-admin-nav", "An everyday user is not offered administration", non_admin_has_no_admin_nav),

@@ -25,14 +25,19 @@
 
 {% block page_content %}
 
-<section class="cns-card" id="queue-card" aria-labelledby="queue-heading" hidden>
+<section class="cns-card" id="queue-card" aria-labelledby="queue-heading"{% if not queue_rows %} hidden{% endif %}>
   <div class="cns-card-header">
     <div>
       <h2 class="cns-card-title" id="queue-heading">Waiting on you</h2>
       <p class="cns-card-subtitle">Open a matter to act on it; its page offers only what you can do now.</p>
     </div>
   </div>
-  <div class="cns-card-body" id="queue-body"></div>
+  <div class="cns-card-body" id="queue-body" aria-busy="true">
+    {#- Placeholder lines, one per line the panel will hold, so filling it moves nothing. #}
+    {%- for _ in range([queue_rows or 0, 12] | min) %}
+    <div class="cns-skeleton-row"><span class="cns-skeleton" style="max-width: {{ 40 + (loop.index * 7) % 30 }}%"></span></div>
+    {%- endfor %}
+  </div>
 </section>
 
 <section class="cns-card" aria-labelledby="filter-heading">
@@ -294,6 +299,7 @@
     try { params = new URLSearchParams(); } catch (e) { return; }
     if (standing.value && standing.value !== "open") params.set("standing", standing.value);
     if (age.value) params.set("age", age.value);
+    if (table && table.search) params.set("q", table.search);
     selects.forEach(function (select) {
       if (select.value) params.set(select.getAttribute("data-filter-field"), select.value);
     });
@@ -417,6 +423,10 @@
       rowKey: "name",
       fields: FIELDS,
       searchPlaceholder: "Search by title, reference or trigger",
+      // The header search's "See all" arrives as ?q=.
+      initialSearch: (function () {
+        try { return new URLSearchParams(window.location.search).get("q") || ""; } catch (e) { return ""; }
+      })(),
       searchFields: ["escalation_title", "name", "escalation_id", "escalation_trigger"],
       defaultSort: { field: "opened_on", order: "desc" },
       pageSize: 25,
@@ -426,6 +436,8 @@
         window.location.href = "/escalation?name=" + encodeURIComponent(row.name);
       },
       emptyTitle: "No matters match",
+      exportable: true,
+      emptyAction: { label: "Clear the filters", onClick: function () { document.getElementById("filter-clear").click(); } },
       emptyMessage: "Clear a filter or widen the search. Matters with restricted handling are shown only to those cleared to see them.",
       columns: COLUMNS
     });
@@ -464,11 +476,16 @@
         groups.push("<p class=\"cns-eyebrow\">Open matters you answer for</p><ul class=\"cns-prose\">" +
           q.owned.map(function (m) { return "<li>" + matterLink(m.name, m.escalation_title) + "</li>"; }).join("") + "</ul>");
       }
-      if (!groups.length) return;
-      document.getElementById("queue-body").innerHTML = groups.join("");
+      var body = document.getElementById("queue-body");
+      body.removeAttribute("aria-busy");
+      if (!groups.length) { document.getElementById("queue-card").hidden = true; return; }
+      body.innerHTML = groups.join("");
       document.getElementById("queue-card").hidden = false;
     })
-    .catch(function () { /* the register stands on its own */ });
+    .catch(function () {
+      /* the register stands on its own */
+      document.getElementById("queue-card").hidden = true;
+    });
 })();
 </script>
 {% endblock %}

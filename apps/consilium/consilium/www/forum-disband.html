@@ -170,11 +170,17 @@
   }
 
   function renderSummary(forum) {
-    var standing = forum.is_active ? pill("Active", "success") : pill("Disbanded", "neutral");
+    /* One status. A disbanded forum's compliance standing is itself
+       "Disbanded", so showing the active flag and the standing side by side
+       printed the word twice. An active forum shows its standing; an inactive
+       one shows that it is disbanded (read from the flag, not the label). */
+    var standing = forum.is_active
+      ? pill(forum.compliance_status || "Active", "success")
+      : pill("Disbanded", "neutral");
     document.getElementById("forum-summary").innerHTML =
       '<div class="cns-card-body">' +
       '<p style="margin-bottom: var(--cns-space-3);"><strong>' + escapeHtml(forum.forum_name || forum.name) + "</strong> " +
-      standing + " " + pill(forum.compliance_status || "", "neutral") + "</p>" +
+      standing + "</p>" +
       '<dl class="cns-dl">' +
       '<div><dt>Reference</dt><dd class="cns-mono">' + escapeHtml(forum.name) + "</dd></div>" +
       "<div><dt>Chair</dt><dd>" + (forum.committee_chair ? person(forum.committee_chair) : dash()) + "</dd></div>" +

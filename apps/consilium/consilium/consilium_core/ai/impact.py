@@ -302,10 +302,14 @@ def _rating(parts: dict) -> dict:
 	         + 2 * len(reg) + len(parts["applicability"]["scopes"]) + len(parts["monitoring"])
 	         + 2 * len(parts["open_violations"]) + 3 * len(parts["open_escalations"]))
 	band = "High" if score >= 15 else "Medium" if score >= 6 else "Low"
+	# ``basis`` is the rule in plain words. The panel keeps it behind "How is this
+	# worked out?": printed beside the rating, a formula read as the answer.
 	return {"score": score, "band": band,
-	        "basis": _("2 per child or addendum, 1 per further descendant or parent, 2 per regulatory reference, "
-	                   "1 per applicability scope and monitoring activity, 2 per open violation, 3 per open escalation. "
-	                   "15 or more is High, 6 or more Medium.")}
+	        "basis": _("Every record this document reaches adds to its reach. A child document or addendum, a "
+	                   "regulatory requirement it cites and an open violation each add two points; an open "
+	                   "escalation adds three; a parent, a document further down the line, each group it "
+	                   "applies to and each monitoring activity add one. Fifteen points or more is High, six "
+	                   "or more is Medium, and anything less is Low.")}
 
 
 def review_points(doc, parts: dict) -> list[dict]:

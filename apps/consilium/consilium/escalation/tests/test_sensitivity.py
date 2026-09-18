@@ -41,6 +41,34 @@ class TestSensitiveMatters(EscalationTestCase):
             cleared = [row["name"] for row in rest_list("Escalation Matter", self.cleared, limit_page_length=0)]
             self.assertIn(self.restricted.name, cleared)
 
+    def test_the_time_limit_position_counts_only_what_the_reader_may_see(self):
+        """Management reporting counts clocks over the matters the reader may
+        read (``sla.clock_position``): the Chief Risk Officer is shown the
+        position without the clock records being opened to business roles, and
+        a sensitive matter's clock is never counted for someone not cleared."""
+        from consilium.consilium_core import sla
+        from consilium.escalation.tests.utils import unique
+
+        def escalations(user):
+            with as_user(user):
+                kinds = {k["kind"]: k for k in sla.clock_position()["kinds"]}
+            return kinds.get("Escalation Matter", {}).get("running", 0)
+
+        with escalation_permission_hooks():
+            before = {user: escalations(user) for user in (self.cleared, self.uncleared)}
+            definition = frappe.get_doc({
+                "doctype": "SLA Definition", "sla_code": unique("SLA"), "title": "Reporting position",
+                "target_doctype": "Escalation Matter", "measure": "Total Open Time", "target_hours": 8,
+                "warning_threshold_pct": 80, "calendar": "24x7",
+            }).insert(ignore_permissions=True)
+            for matter in (self.ordinary, self.restricted):
+                sla.start_clock(definition.name, "Escalation Matter", matter.name)
+            self.assertEqual(escalations(self.cleared) - before[self.cleared], 2)
+            self.assertEqual(escalations(self.uncleared) - before[self.uncleared], 1)
+            with as_user(self.uncleared):
+                self.assertFalse(frappe.has_permission("SLA Clock", "read"),
+                                 "the counts do not open the clock records themselves")
+
     def test_the_api_read_of_a_sensitive_matter_is_refused(self):
         with escalation_permission_hooks():
             with self.assertRaises(frappe.PermissionError):

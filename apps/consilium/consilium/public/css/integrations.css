@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Consilium — integrations: the "not connected yet" dialog and the
+   Integrations page's cards. Tokens only (tokens.css), so both themes and
+   every brand apply without a rule here.
+   ========================================================================== */
+
+/* ------------------------------------------------------------ the dialog */
+
+.cns-dialog {
+  max-width: min(30rem, calc(100vw - 2rem));
+  width: 100%;
+  padding: 0;
+  border: var(--cns-border-width) solid var(--cns-border-subtle);
+  border-radius: var(--cns-radius-lg);
+  background: var(--cns-surface);
+  color: var(--cns-text);
+  box-shadow: var(--cns-shadow-lg);
+}
+.cns-dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
+.cns-dialog-inner { padding: var(--cns-space-5); }
+.cns-dialog-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.5rem; height: 2.5rem; margin-bottom: var(--cns-space-3);
+  border-radius: 999px;
+  background: var(--cns-info-bg); color: var(--cns-info-fg);
+  font-size: 1.15rem;
+}
+.cns-dialog-title { font-size: var(--cns-text-lg); font-weight: var(--cns-weight-semibold); margin: 0 0 var(--cns-space-2); }
+.cns-dialog-body { margin: 0 0 var(--cns-space-5); color: var(--cns-text-secondary); }
+.cns-dialog-actions { display: flex; flex-wrap: wrap; gap: var(--cns-space-2); justify-content: flex-end; }
+
+/* ------------------------------------------------------ integration cards */
+
+.cns-integrations { display: grid; gap: var(--cns-space-5); }
+.cns-integration-head { display: flex; gap: var(--cns-space-3); align-items: flex-start; }
+.cns-integration-icon {
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.5rem; height: 2.5rem;
+  border-radius: var(--cns-radius-md);
+  background: var(--cns-primary-subtle); color: var(--cns-primary-500);
+  font-size: 1.2rem;
+}
+[data-theme="dark"] .cns-integration-icon { color: var(--cns-primary); }
+.cns-integration-head .cns-card-title { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cns-space-2); }
+.cns-leaves {
+  margin: 0 0 var(--cns-space-4);
+  padding: var(--cns-space-3) var(--cns-space-4);
+  border-left: 3px solid var(--cns-info-border);
+  background: var(--cns-surface-sunken);
+  border-radius: 0 var(--cns-radius-sm) var(--cns-radius-sm) 0;
+  font-size: var(--cns-text-sm);
+}
+.cns-leaves strong { display: block; margin-bottom: var(--cns-space-1); }
+.cns-leaves ul { margin: 0; padding-left: 1.1rem; }
+.cns-secret-state { display: inline-flex; align-items: center; gap: var(--cns-space-1); font-size: var(--cns-text-xs); margin-top: var(--cns-space-1); }
+.cns-integration-result { margin-top: var(--cns-space-3); }
+.cns-integration-result:empty { display: none; }
+.cns-readonly-dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--cns-space-1) var(--cns-space-4); margin: 0 0 var(--cns-space-3); font-size: var(--cns-text-sm); }
+.cns-readonly-dl dt { color: var(--cns-text-muted); font-weight: var(--cns-weight-medium); }
+.cns-readonly-dl dd { margin: 0; overflow-wrap: anywhere; }
+.cns-role-picker {
+  max-height: 12rem; overflow: auto;
+  padding: var(--cns-space-2) var(--cns-space-3);
+  border: var(--cns-border-width) solid var(--cns-border-strong);
+  border-radius: var(--cns-radius-sm);
+  background: var(--cns-surface);
+}
+.cns-role-picker .cns-check { margin-bottom: var(--cns-space-1); }
+.cns-subhead { font-size: var(--cns-text-md); font-weight: var(--cns-weight-semibold); margin: var(--cns-space-4) 0 var(--cns-space-2); }
+.cns-graph-fields[hidden] { display: none; }

@@ -130,6 +130,16 @@ def email_configured() -> bool:
 
 
 def _email_available(channel) -> str | None:
+    """Whether the chosen route can send at all. See ``Email Delivery Settings``."""
+    from consilium.consilium_core.integrations import graph_mail
+
+    if graph_mail.uses_graph():
+        absent = graph_mail.missing(graph_mail.settings())
+        if absent:
+            return _("Microsoft Graph is chosen for email but is not fully set up: {0} missing.").format(
+                ", ".join(absent)
+            )
+        return None
     if email_configured():
         return None
     return _("No outgoing email account is configured on this site.")
@@ -171,17 +181,31 @@ def as_html(body: str | None) -> str:
 
 @register_adapter("email", available=_email_available, accepts=_email_refusal)
 def _email(dispatch, channel) -> None:
-    """Hand the message to the framework's mail queue.
+    """Hand the message to the route ``Email Delivery Settings`` chooses.
 
-    Delivery is the queue's job, on its own schedule, through the site's
-    outgoing account. The queue row references this dispatch, so the retry job
-    can find a message the mail server later refused and send it again.
-    ``configuration`` may name a ``sender`` and a ``reply_to``.
+    SMTP (the default): the framework's mail queue. Delivery is the queue's
+    job, on its own schedule, through the site's outgoing account. The queue
+    row references this dispatch, so the retry job can find a message the mail
+    server later refused and send it again.
+
+    Microsoft Graph: ``integrations.graph_mail.deliver``, which keeps the same
+    meaning of "sent" and the same retry policy; see that module.
+
+    ``configuration`` may name a ``sender`` (SMTP only: Graph always sends as
+    its configured mailbox) and a ``reply_to``. A caller that needs the answer
+    now rather than from the queue — the Integrations page's test email — sets
+    ``frappe.flags.cns_mail_inline``.
     """
+    from consilium.consilium_core.integrations import graph_mail
+
     config = channel.configuration
     if isinstance(config, str):
         config = json.loads(config) if config.strip() else {}
     config = config or {}
+    if graph_mail.uses_graph():
+        graph_mail.deliver(dispatch, config)
+        return
+    inline = bool(frappe.flags.cns_mail_inline)
     queued = frappe.sendmail(
         recipients=[_email_address(dispatch.recipient)],
         sender=config.get("sender") or None,
@@ -191,7 +215,7 @@ def _email(dispatch, channel) -> None:
         reference_doctype="Notification Dispatch",
         reference_name=dispatch.name,
         add_unsubscribe_link=0,
-        delayed=True,
+        delayed=not inline,
     )
     if not queued:
         # The queue builder drops recipients who unsubscribed from this sender

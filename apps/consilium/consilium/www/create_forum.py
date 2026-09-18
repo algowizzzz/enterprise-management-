@@ -26,7 +26,7 @@ def get_context(context):
 	context.page_description = (
 		"A guided request. Nothing is created until it has been evaluated and approved."
 	)
-	context.active_nav = "forums"
+	context.active_nav = "governance"
 	context.user_display = frappe.session.user
 	context.breadcrumbs = [
 		{"label": "Home", "url": "/"},
@@ -38,6 +38,15 @@ def get_context(context):
 	context.cadence_options = _options("Committee Formation Request", "cadence")
 	context.existing = (frappe.form_dict.get("request") or "").strip()
 	context.request_status = _request_status(context.existing)
+	# The originator of a returned request answers it whatever roles they hold
+	# (formation.may_take lets them; the request is shared with them). Someone
+	# who may not raise requests was shown "You cannot raise a formation
+	# request" instead of the questions; they now get the questions and a box
+	# for the answer. The request form itself stays with those who may raise
+	# one: its lists are read with the viewer's permissions, and saving a form
+	# whose lists came back empty would blank the request's fields.
+	context.can_answer = bool(context.request_status and context.request_status.get("can_respond"))
+	context.answer_only = context.can_answer and not context.can_request
 	return context
 
 

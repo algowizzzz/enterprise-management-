@@ -126,11 +126,12 @@ Full list and rationale: [`docs/KNOWLEDGE-BASE.md`](docs/KNOWLEDGE-BASE.md).
 The build is finished. Everything below was measured on a clean site, not
 asserted.
 
-- **Tests:** 1372 application tests, OK (0 failures, 0 errors, 1248 s).
-  `pytest tests/` 51 passed. Interface sweep (`scripts/ui_regression.py`) 274
-  passed, 0 failed. Browser journeys (`scripts/browser_journeys.py`) 8/8.
-  Platform rules (`scripts/check_platform_rules.py`) 6/6.
-- **Size:** 142 entities (Core 62, Governance 24, Policy 38, Escalation 18),
+- **Tests:** 1453 application tests, OK (0 failures, 0 errors, 1433 s).
+  `pytest tests/` 57 passed. Interface sweep (`scripts/ui_regression.py`) 302
+  passed, 0 failed.
+  Browser journeys (`scripts/browser_journeys.py`) 11/11. Platform rules
+  (`scripts/check_platform_rules.py`) 6/6.
+- **Size:** 144 entities (Core 64, Governance 24, Policy 38, Escalation 18),
   378 PostgreSQL tables on the demonstration site, 11 scheduled jobs. A
   scratch DocType, `ABC`, is untracked in
   `apps/consilium/consilium/consilium_core/doctype/abc/` and installed on the
@@ -143,6 +144,17 @@ asserted.
   committed: `deploy/demo_logins.py` issues random ones per run into a file
   outside the repository (see
   [`docs/delivery/DEMO-LOGINS.md`](docs/delivery/DEMO-LOGINS.md)).
+- **Interface:** a two-row header with global search ("/" or Ctrl/Cmd+K,
+  permission-filtered) and role-filtered menus: Home, My work, Governance,
+  Policies, Escalations, Insights, Admin. Lists export to CSV.
+- **Integrations:** Admin → Integrations (`/integrations`) connects:
+  - the AI endpoint, which is tested end to end against an OpenAI-compatible
+    provider; the help assistant answers with citations;
+  - the external document editor ("Open in Doc AI");
+  - the horizon-scanning platform;
+  - e-mail over SMTP or Microsoft Graph.
+
+  It also shows the single sign-on redirect URI.
 - **Deployment kit:** rehearsed air-gapped on Rocky Linux 9, with `verify.sh`
   14/14 after install and after upgrade. See
   [`docs/delivery/DEPLOYMENT-READINESS.md`](docs/delivery/DEPLOYMENT-READINESS.md).
@@ -160,8 +172,9 @@ asserted.
 - No RHEL 8 or Ubuntu 22.04 rehearsal.
 - Python 3.11 on x86_64 is required: the framework's `hiredis` pin blocks 3.12,
   and `psutil` blocks ARM.
-- Real certificates, the identity provider, SMTP and load testing need the
-  target environment.
+- Real certificates, the identity provider, the mail route (an SMTP relay or a
+  Microsoft Graph app registration) and load testing need the target
+  environment.
 - The offline bundle must be rebuilt from the final commit.
 
 ### The toolchain: verified working
@@ -335,4 +348,4 @@ a no-op on POSIX. The moment we fork, we own Frappe's security patching forever.
 | `scripts/` | bootstrap, availability check, smoke test, compat auditor |
 | `winbench/` | The CLI and the compatibility layer |
 | `assets/` | Prebuilt Frappe asset bundle, so no machine needs node |
-| `tests/` | 51 toolchain tests: 22 for the compat layer, the deployment kit, the install layout |
+| `tests/` | 57 toolchain tests: 22 for the compat layer, the deployment kit (Microsoft Graph keys included), the install layout |

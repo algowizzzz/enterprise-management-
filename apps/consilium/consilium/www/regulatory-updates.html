@@ -10,7 +10,12 @@
   person with write access to it accepts them.
 -#}
 
+{% from "consilium/templates/includes/external_tools.html" import horizon_button, tools_assets %}
+{%- set tools = cns_external_tools() %}
+
 {% block page_actions %}
+{#- The organisation's horizon scanning platform; /horizon-scanning forwards. -#}
+{{ horizon_button(tools, primary=True) }}
 {%- if requirement %}
 <a class="cns-btn cns-btn-ghost" href="/regulatory-updates">
   <i class="bi bi-list-ul" aria-hidden="true"></i> Every requirement
@@ -33,6 +38,7 @@
 {% endblock %}
 
 {% block scripts %}
+{{ tools_assets(tools) }}
 <script src="{{ asset_url('/assets/consilium/js/consilium-ai.js') }}"></script>
 <script>
 (function () {
@@ -116,7 +122,7 @@
     });
     html += "</dl>";
     if (data.change) {
-      html += '<h3 class="cns-card-title" style="margin-top: var(--cns-space-4);">Most recent change · ' + esc(data.change.on.slice(0, 16)) + " by " + esc(data.change.by) + "</h3>" +
+      html += '<h3 class="cns-card-title" style="margin-top: var(--cns-space-4);">Most recent change · ' + esc(Consilium.util.formatDate(data.change.on, true)) + " by " + Consilium.person(data.change.by) + "</h3>" +
         '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><thead><tr><th scope="col">Field</th><th scope="col">Was</th><th scope="col">Now</th></tr></thead><tbody>' +
         data.change.changes.map(function (c) {
           return "<tr><td>" + esc(c.label) + "</td><td>" + esc(c.old || "—") + "</td><td>" + esc(c.new || "—") + "</td></tr>";
@@ -177,7 +183,7 @@
     if (!data.ai_runs.length) return "";
     return data.ai_runs.map(function (run) {
       var html = '<section class="cns-card cns-ai-run"><div class="cns-card-header"><div><h2 class="cns-card-title"><span class="cns-pill cns-status-info"><i class="bi bi-robot" aria-hidden="true"></i> Machine-generated</span> Suggestions of ' +
-        esc(run.requested_on.slice(0, 16)) + '</h2><p class="cns-card-subtitle">Asked by ' + esc(run.requested_by) + " · audit " + esc(run.service_request) +
+        esc(Consilium.util.formatDate(run.requested_on, true)) + '</h2><p class="cns-card-subtitle">Asked by ' + Consilium.person(run.requested_by) + " · " + ai.recorded(run.service_request) +
         " · nothing below is in any record until a person accepts it.</p></div></div><div class=\"cns-card-body\">";
       if (run.summary) html += '<div class="cns-ai-text cns-prose"><p>' + esc(run.summary) + "</p></div>";
       if (!run.suggestions.length) {
@@ -189,8 +195,8 @@
           if (s.reason) body += '<div class="cns-text-sm cns-text-muted">' + esc(s.reason) + "</div>";
           if (s.decision) {
             body += '<p class="cns-text-sm">' + (s.decision.accepted
-              ? '<span class="cns-pill cns-status-success">Accepted</span> by ' + esc(s.decision.by) + " on " + esc(s.decision.on.slice(0, 16)) + (s.decision.edited ? " (edited before accepting)" : "") + " — written to the document's regulatory references."
-              : '<span class="cns-pill cns-status-neutral">Rejected</span> by ' + esc(s.decision.by) + " on " + esc(s.decision.on.slice(0, 16)) + " — nothing was written.") + "</p>";
+              ? '<span class="cns-pill cns-status-success">Accepted</span> by ' + Consilium.person(s.decision.by) + " on " + esc(Consilium.util.formatDate(s.decision.on, true)) + (s.decision.edited ? " (edited before accepting)" : "") + " — written to the document's regulatory references."
+              : '<span class="cns-pill cns-status-neutral">Rejected</span> by ' + Consilium.person(s.decision.by) + " on " + esc(Consilium.util.formatDate(s.decision.on, true)) + " — nothing was written.") + "</p>";
           } else if (s.may_decide) {
             var id = "note-" + run.service_request + "-" + s.document;
             body += '<div class="cns-field"><label class="cns-label" for="' + esc(id) + '">Note to write into the document\'s regulatory references if you accept (edit it first if you like)</label>' +
@@ -216,8 +222,8 @@
     ai.renderAIBox(document.getElementById("reg-ai"), data.ai, result && !result.used ? result : null, {
       button: data.ai_runs.length ? "Ask again for a summary and suggestions" : "Ask the AI service for a summary and suggestions",
       onAsk: ask,
-      meta: result && result.used ? "AI was used · audit " + result.service_request : null,
-      foot: result && result.used ? "The AI service answered (audit " + result.service_request + "). Its summary and suggestions are below, each awaiting a decision." : null
+      meta: result && result.used ? "AI was used · this answer was recorded" : null,
+      foot: result && result.used ? "The AI service answered, and its answer was recorded. Its summary and suggestions are below, each awaiting a decision." : null
     });
     var form = document.getElementById("reg-form");
     if (form) form.addEventListener("submit", save);

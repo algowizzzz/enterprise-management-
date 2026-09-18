@@ -100,7 +100,7 @@
   },
   {
    "default": "0",
-   "description": "Set from the state-flag map. True only for a state that expresses positive consent, so an abstention is not counted as an approval.",
+   "description": "Set automatically from the decision. Ticked only for a decision that gives consent, so an abstention does not count as an approval.",
    "fieldname": "is_affirmative",
    "fieldtype": "Check",
    "label": "Is Affirmative",
@@ -109,7 +109,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 07:55:35.942015",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Workflow State Flag",

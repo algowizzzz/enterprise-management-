@@ -46,6 +46,28 @@ def get_context(context):
 	]
 	context.user_display = frappe.session.user
 	context.can_raise = _has_desk_access() and bool(frappe.has_permission(DOCTYPE, "create"))
+	context.queue_rows = _queue_size()
 	context.status_options = _select_options("status")
 	context.severity_options = _select_options("severity")
 	return context
+
+
+def _queue_size() -> int:
+	"""How many lines the "Waiting on you" panel will hold, or 0 to leave it out.
+
+	The panel is filled by the page script; knowing here whether it will have
+	anything lets the page draw it (with placeholder lines) from the start,
+	instead of inserting it above the register once the page has painted and
+	pushing everything down. The same method the script calls, so the same
+	permission rules decide.
+	"""
+	if frappe.session.user == "Guest":
+		return 0
+	try:
+		from consilium.escalation.resolution import my_escalation_queue
+
+		queue = my_escalation_queue()
+	except Exception:
+		return 0
+	groups = [rows for rows in queue.values() if rows]
+	return len(groups) + sum(len(rows) for rows in groups)

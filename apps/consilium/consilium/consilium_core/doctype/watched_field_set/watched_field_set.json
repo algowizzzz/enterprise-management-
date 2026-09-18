@@ -41,7 +41,7 @@
    "reqd": 1
   },
   {
-   "description": "Configuration only, used by the reset action. Read and written; never compared in logic.",
+   "description": "The status a record returns to when a watched field changes.",
    "fieldname": "reset_to_state",
    "fieldtype": "Data",
    "label": "Reset To State"
@@ -61,7 +61,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.719989",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Watched Field Set",

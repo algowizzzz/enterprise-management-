@@ -48,6 +48,7 @@ KEY_SECTIONS = {
 	"admin": ["Administration", "People and access", "Reference data"],
 	"attestation-campaigns": ["Attestation campaigns", "Campaigns"],
 	"create-forum": ["Request a new forum", "Before you start"],
+	"doc-ai": ["Doc AI", "No document was named"],
 	"document-view": ["Document viewer"],
 	"emerging-risks": ["Emerging risks", "Leading indicators"],
 	"escalation": ["Escalation matter"],
@@ -59,21 +60,24 @@ KEY_SECTIONS = {
 	"forum-review": ["Compliance review"],
 	"forum": ["Forum"],
 	"forums": ["Forum inventory", "Narrow the list"],
-	"governance-gaps": ["Governance gaps and risk", "Governance risk assessment"],
+	"governance-gaps": ["Gaps and risk", "Governance risk assessment"],
+	"horizon-scanning": ["Horizon scanning", "Regulatory updates"],
 	"imports": ["Imports", "Upload a file", "Batches"],
-	"policies": ["Policy inventory", "Narrow the list"],
+	"integrations": ["Integrations", "AI assistant and analysis", "Doc AI", "Horizon scanning", "Email",
+	                 "Single sign-on", "What leaves the platform"],
+	"policies": ["Policy library", "Narrow the list"],
 	"policy-impact": ["Impact of a change"],
-	"policy-intake": ["Document requests", "Request a document"],
+	"policy-intake": ["Request a policy or change", "Request a document"],
 	"policy": ["Governing document"],
 	"raise-escalation": ["Raise an escalation", "Before you start"],
 	"regulatory-updates": ["Regulatory updates", "Regulatory requirements"],
 	"reports": ["Management reporting", "The headline"],
-	"tasks": ["Inbox", "What to show"],
+	"tasks": ["My work", "What to show"],
 	"ui-kit": ["Interface reference", "Typography"],
 }
 
 #: Pages for platform administrators only; everyone else is refused outright.
-ADMIN_ONLY = {"admin", "ui-kit"}
+ADMIN_ONLY = {"admin", "integrations", "ui-kit"}
 
 #: One representative person per business role. ``nobody`` holds no role at
 #: all: a signed-in account that should be able to read nothing.
@@ -160,6 +164,12 @@ class PortalPageCase(CoreTestCase):
 		governance_setup.ensure_configuration(force=True)
 		frappe.db.commit()
 		PEOPLE.attach(cls, PERSONAS)
+
+	def setUp(self):
+		super().setUp()
+		# /integrations audits the refusal of everyone but an administrator,
+		# on a connection of its own; the rows are removed after each test.
+		self.purge_on_teardown("External Tools Settings", "External Tools Settings")
 
 	def tearDown(self):
 		frappe.set_user("Administrator")

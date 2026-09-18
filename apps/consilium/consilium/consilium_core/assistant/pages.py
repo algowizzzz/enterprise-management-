@@ -151,7 +151,8 @@ PAGES: dict[str, dict] = {
 		"title": "Forum",
 		"purpose": (
 			"One forum: its type, compliance standing, officers and next review date, with tabs "
-			"for Details, Membership (as at any past date), Linkages, Documents, Decisions and History."
+			"for Details, Membership (as at any past date), Linkages, Documents (charter), Decisions (motions "
+			"and sittings), Escalations and History (compliance decisions and record history)."
 		),
 		"module": "Governance",
 		"doctype": "Governance Forum",
@@ -159,7 +160,8 @@ PAGES: dict[str, dict] = {
 		"starters": [
 			"What can I do here?",
 			"How do I see who sat on this forum last year?",
-			"How do I record a compliance review?",
+			"How do I record minutes?",
+			"How do I put a motion to a vote?",
 			"Why can't I edit this forum?",
 		],
 		"tasks": [
@@ -194,6 +196,63 @@ PAGES: dict[str, dict] = {
 				["Open the Decisions tab: motions and their outcomes, and the meetings held.",
 				 "A decision counts only if the meeting was quorate and the outcome was recorded."],
 				requires={"doctype": "Governance Forum", "ptype": "read"},
+			),
+			_task(
+				"forum-minutes", "Record or correct minutes",
+				"minutes record correct meeting sitting write notes secretary",
+				["Open the Decisions tab and choose the meeting under Sittings (it opens in Advanced configuration).",
+				 "Choose 'Record minutes' (or 'Correct minutes'), type the minutes or attach a file, then 'Save minutes'.",
+				 "Correcting adds a new version; earlier versions are kept."],
+				requires={"doctype": "Forum Meeting", "ptype": "write", "desk": True},
+				why="Minutes are recorded by the forum's secretary (Committee Secretary) or the governance office.",
+			),
+			_task(
+				"forum-motion", "Put a motion to a vote",
+				"motion vote put propose ballot resolution decision secretary",
+				["Open the Decisions tab and choose 'Put a motion'.",
+				 "Give the reference, decision date, sitting, how it is voted and what is put, then 'Put the motion'.",
+				 "Members vote on the motion's page; you then choose 'Record the outcome and close the motion'."],
+				requires={"doctype": "Forum Motion", "ptype": "create"},
+				why="Motions are put by the forum's secretary (the Committee Secretary role).",
+			),
+			_task(
+				"forum-vote", "Vote on a motion",
+				"vote ballot cast for against abstain motion",
+				["Open the motion from the Decisions tab or your link.",
+				 "Under 'Your vote', choose your ballot and choose 'Cast my ballot'. You can change it until the outcome is recorded."],
+				requires={"doctype": "Governance Forum", "ptype": "read"},
+			),
+			_task(
+				"forum-annual", "Start or record the annual review",
+				"annual review yearly attest owner counter-sign compliance contact",
+				["Choose 'Annual review' at the top of the forum's page.",
+				 "The governance office starts it ('Start the review'); the owner answers and the compliance contact "
+				 "counter-signs in My work; a compliance reviewer then chooses 'Record the annual review'."],
+				requires={"doctype": "Governance Forum", "ptype": "read"},
+			),
+			_task(
+				"forum-charter", "Take a new version of the charter",
+				"charter version publish challenge terms of reference",
+				["Open the Documents tab. Under 'Take a new version', say what changed, add the text or file, "
+				 "then 'Publish the version'. The governance office records its challenge with 'Record the outcome'."],
+				requires={"doctype": "Committee Charter", "ptype": "write"},
+				why="Charters are changed by the Committee Secretary or the Risk Governance Office.",
+			),
+			_task(
+				"forum-disband", "Disband this forum",
+				"disband retire close forum committee wind up disbandment",
+				["Choose 'Disband this forum'. Give the reason, any successor forum, what happens to the records "
+				 "and the approvers, then 'Raise the plan and ask for approval'.",
+				 "When every approval is in, choose 'Execute the disbandment'."],
+				requires={"roles": ("Risk Governance Office", "System Manager")},
+				why="Disbandment plans are raised and executed by the Risk Governance Office.",
+			),
+			_task(
+				"forum-evidence", "Export an evidence pack",
+				"evidence pack export audit download zip history",
+				["Choose 'Export evidence pack' at the top of the page: the record, its history, approvals and attachments in one file."],
+				requires={"roles": ("Consilium Audit", "Consilium Administrator", "System Manager")},
+				why="Evidence packs are for Consilium Audit and administrators.",
 			),
 			_task(
 				"forum-change", "Ask for a change to this forum",
@@ -359,7 +418,7 @@ PAGES: dict[str, dict] = {
 		],
 	},
 	"/policies": {
-		"title": "Policy inventory",
+		"title": "Policy library",
 		"purpose": (
 			"Every governing document — frameworks, policies, standards, procedures. Filter by type, "
 			"lifecycle phase, owning group, risk category and handling classification; Standing "
@@ -385,10 +444,25 @@ PAGES: dict[str, dict] = {
 			_task(
 				"policies-create", "Create a new governing document",
 				"create new document policy draft write add",
-				["Choose 'New document'. It opens a new record in the workspace, in Draft.",
+				["Choose 'New document (Advanced view)'. It opens a new record in the workspace, in Draft.",
 				 "To ask for a document rather than draft one, use a policy intake request."],
-				requires={"doctype": "Governing Document", "ptype": "create", "desk": True},
-				why="Drafting documents needs the Policy Owner or Enterprise Policy Office role, and workspace access.",
+				requires={"doctype": "Governing Document", "ptype": "create", "desk": True, "advanced": True},
+				why="Drafting a document directly is for administrators. Anyone else asks for one with a "
+				    "policy intake request ('Request a new document').",
+			),
+			_task(
+				"policies-text", "Search inside the documents",
+				"search text inside content words mention find full text",
+				["Type in 'Search the text of the documents' and choose 'Search the text'. It searches the title, "
+				 "reference, abstract and the words of the current version."],
+				href="/policies",
+				requires={"doctype": "Governing Document", "ptype": "read"},
+			),
+			_task(
+				"policies-export", "Export the list",
+				"export csv download spreadsheet list",
+				["Choose 'Export CSV' above the table. It downloads every row matching your filters and search."],
+				href="/policies",
 			),
 			_task(
 				"policies-intake", "Ask for a new document or a change",
@@ -402,8 +476,9 @@ PAGES: dict[str, dict] = {
 	"/policy": {
 		"title": "Governing document",
 		"purpose": (
-			"One governing document, with tabs for Details, Lifecycle (where it is, the actions "
-			"available next and anything that would block them), Versions, Lineage and Horizon scanning."
+			"One governing document, with tabs for Details (including Correct metadata and the Impact "
+			"panel), Lifecycle (where it is, the actions available next and anything that would block "
+			"them), Approval, Versions, Reviews, Monitoring and Lineage."
 		),
 		"module": "Policy",
 		"doctype": "Governing Document",
@@ -417,17 +492,45 @@ PAGES: dict[str, dict] = {
 			_task(
 				"policy-move", "Move the document through its lifecycle",
 				"submit review approve publish implement retire reinstate reopen lifecycle action move phase",
-				["Open the Lifecycle tab to see the actions available next and what would block each.",
-				 "Take the action from the Actions menu on the document in the workspace.",
-				 "A lifecycle gate may refuse a move, for example publishing without a complete approval chain."],
+				["Under 'What you can do now', choose the action (for example 'Submit for Review' or 'Publish') "
+				 "and confirm.",
+				 "The Lifecycle tab shows every action, who takes it and what would stop it today, for example "
+				 "an incomplete approval chain."],
 			),
 			_task(
 				"policy-edit", "Edit this document",
 				"edit change update document record owner",
-				["Choose 'Edit' at the top of the page to open it in the workspace.",
-				 "A document is editable only while its phase allows it (in Draft, for example)."],
-				requires={"doctype": "Governing Document", "ptype": "write", "record": True, "desk": True},
-				why="Editing needs write access to this document and workspace access.",
+				["Choose 'Advanced view' at the top of the page to open the full record.",
+				 "A document is editable only while its phase allows it (in Draft, for example). To fix one "
+				 "wrong detail, use 'Correct metadata' on the Details tab instead."],
+				requires={"doctype": "Governing Document", "ptype": "write", "record": True, "desk": True,
+				          "advanced": True},
+				why="Editing the full record is for administrators. A wrong detail is fixed with 'Correct "
+				    "metadata' on the Details tab.",
+			),
+			_task(
+				"policy-correct", "Correct a wrong or missing detail",
+				"correct metadata fix wrong detail field owner category",
+				["Choose 'Correct metadata', pick the field, give the new value and why it was wrong, then "
+				 "'Record the correction'. No new version is made and the document does not go back through approval."],
+				requires={"doctype": "Governing Document", "ptype": "write", "record": True},
+				why="Corrections are made by the document's owner or the policy office.",
+			),
+			_task(
+				"policy-docai", "Open the document in Doc AI",
+				"doc ai editor open rich document edit",
+				["Choose 'Open in Doc AI' at the top of the page, on a version row, or in the viewer. If Doc AI "
+				 "isn't connected yet, the page says so."],
+				requires={"doctype": "Governing Document", "ptype": "read"},
+			),
+			_task(
+				"policy-exception", "Ask for an exception to a rule",
+				"exception gate excuse refused blocked bypass waive",
+				["On the Approval tab, under Exceptions, choose 'Ask for a gate to be excused', give the "
+				 "justification and choose 'Ask for the exception'. The policy office approves it; then name it "
+				 "when you confirm the action."],
+				requires={"roles": ("Policy Owner", "Enterprise Policy Office", "System Manager")},
+				why="Exceptions are asked for by the policy owner or the policy office.",
 			),
 			_task(
 				"policy-versions", "See earlier versions",
@@ -437,7 +540,7 @@ PAGES: dict[str, dict] = {
 		],
 	},
 	"/policy-intake": {
-		"title": "Document requests",
+		"title": "Request a policy or change",
 		"purpose": (
 			"Ask for a new governing document, a change to one, or its retirement. With no request "
 			"named, the page lists the requests you may read and, if you may raise one, the form. "
@@ -552,40 +655,65 @@ PAGES: dict[str, dict] = {
 		"starters": [
 			"What can I do here?",
 			"How do I close this matter?",
+			"How do I take ownership?",
 			"How do I add an action plan?",
 			"What is a risk acceptance?",
 		],
 		"tasks": [
 			_task(
+				"esc-take", "Take ownership of this matter",
+				"take ownership owner queue unowned pick up claim response owner",
+				["If the matter is waiting in a queue you belong to, choose 'Take ownership' under 'What you can do now' "
+				 "(or in My work, 'Escalations waiting for an owner'). You become its response owner."],
+				requires={"roles": ("Escalation Owner", "System Manager")},
+				why="Matters are taken by an Escalation Owner who belongs to the queue.",
+			),
+			_task(
 				"esc-close", "Close the matter",
 				"close closure resolve finish complete matter",
-				["Record an Escalation Closure: the closure type and a summary.",
-				 "Tick 'Response template completed' on the matter and set its status to Closed.",
-				 "The system refuses to close a matter until both are done."],
-				requires={"doctype": "Escalation Matter", "ptype": "write", "record": True, "desk": True},
-				why="Closing needs write access to this matter (Escalation Owner) and workspace access.",
+				["Choose 'Record the closure': how it ended, a summary, and each closure criterion with its evidence.",
+				 "Then choose 'Close the matter', pick Closed (or Closed — Tracked Externally), tick that the response "
+				 "template is complete, and confirm."],
+				requires={"doctype": "Escalation Matter", "ptype": "write", "record": True},
+				why="Closing needs write access to this matter (the Escalation Owner role).",
 			),
 			_task(
 				"esc-action-plan", "Add an action plan",
 				"action plan add owner dates remediate",
-				["Open the matter in the workspace and add an action plan with an owner and dates."],
-				requires={"doctype": "Action Plan", "ptype": "create", "desk": True},
+				["Choose 'Add an action plan' under 'What you can do now'. Give the plan, its dates, the accountable "
+				 "executive, the owner and what will be done, then 'Add the plan'."],
+				requires={"doctype": "Action Plan", "ptype": "create"},
 				why="Action plans are created by the Escalation Owner role.",
 			),
 			_task(
 				"esc-accept", "Record a risk acceptance",
 				"accept risk acceptance rationale expire",
-				["Record a risk acceptance with a rationale, an accountable executive, start and end "
-				 "dates and an approval. It expires and is reassessed periodically."],
-				requires={"doctype": "Risk Acceptance", "ptype": "create", "desk": True},
-				why="Risk acceptances are recorded by the Escalation Owner role.",
+				["Choose 'Propose a risk acceptance', give the rationale, the accountable executive and the period, "
+				 "then 'Request risk-acceptance approval' from a Head of Risk Governance. It takes effect once approved."],
+				requires={"doctype": "Risk Acceptance", "ptype": "create"},
+				why="Risk acceptances are proposed by the Escalation Owner role.",
+			),
+			_task(
+				"esc-time", "See how long it has spent in each status",
+				"time status duration how long target sla stay",
+				["Open the Details tab: 'Time in each status' shows the time spent, the target and how each stay compares."],
+				requires={"doctype": "Escalation Matter", "ptype": "read"},
+			),
+			_task(
+				"esc-evidence", "Export an evidence pack",
+				"evidence pack export audit download zip history",
+				["Choose 'Export evidence pack' at the top of the page."],
+				requires={"roles": ("Consilium Audit", "Consilium Administrator", "System Manager")},
+				why="Evidence packs are for Consilium Audit and administrators.",
 			),
 			_task(
 				"esc-edit", "Edit this matter",
 				"edit change update matter severity status",
-				["Choose 'Edit' at the top of the page to open it in the workspace."],
-				requires={"doctype": "Escalation Matter", "ptype": "write", "record": True, "desk": True},
-				why="Editing needs write access to this matter and workspace access.",
+				["Choose 'Advanced view' at the top of the page to open the full record."],
+				requires={"doctype": "Escalation Matter", "ptype": "write", "record": True, "desk": True,
+				          "advanced": True},
+				why="Editing the full record is for administrators. The matter's owner moves it on with "
+				    "the actions on this page.",
 			),
 		],
 	},
@@ -616,7 +744,7 @@ PAGES: dict[str, dict] = {
 	"/reports": {
 		"title": "Management reporting",
 		"purpose": (
-			"The management view across forums, documents and escalations: headline figures, "
+			"Insights → Management reporting. The management view across forums, documents and escalations: headline figures, "
 			"breakdowns, records missing required information, time-limit clocks, and an escalation "
 			"analysis you can group by period and download. Counts include only records you may see."
 		),
@@ -627,7 +755,7 @@ PAGES: dict[str, dict] = {
 				"reports-csv", "Download the escalation analysis",
 				"download csv export escalation analysis group month quarter year",
 				["In the Escalations section, group the analysis by month, quarter or year.",
-				 "Choose 'Download CSV'."],
+				 "Choose 'Download' beside the table."],
 				href="/reports",
 			),
 			_task(
@@ -639,27 +767,45 @@ PAGES: dict[str, dict] = {
 		],
 	},
 	"/tasks": {
-		"title": "Inbox",
+		"title": "My work",
 		"purpose": (
-			"Everything waiting on you, across forums, policies and escalations: approval steps to "
-			"decide, requests returned to you, reviews falling due and more. Attestations are answered "
-			"here; everything else opens on its own screen."
+			"My work: everything waiting on you, across forums, policies and escalations — approval steps, "
+			"second signatures, reviews, attestations, requests returned to you, action plans and escalations "
+			"waiting for an owner. 'Show' switches between views: everything, overdue, due soon, approvals, "
+			"reviews, attestations and unowned escalations. Attestations are answered here; everything else "
+			"opens on its own screen."
 		),
 		"module": "Core",
-		"starters": ["What can I do here?", "How do I complete an attestation?", "Why is something in my inbox?"],
+		"starters": ["What can I do here?", "How do I complete an attestation?", "How do I take ownership of an escalation?",
+			"Why is something in My work?"],
 		"tasks": [
 			_task(
-				"tasks-open", "Act on an item in your inbox",
-				"inbox task act open complete decide item waiting me",
-				["Choose an item to open the record it concerns, where the action waiting on you is offered."],
+				"tasks-open", "Act on an item in My work",
+				"my work inbox task act open complete decide item waiting me approval",
+				["Choose 'Open' on an item to go to the record, where the action waiting on you is offered.",
+				 "Use 'Show' (or the My work menu) for Approvals, Reviews, Attestations or Due soon."],
 				href="/tasks",
 			),
 			_task(
 				"tasks-attest", "Complete an attestation",
 				"attest attestation confirm answer campaign complete",
-				["Attestations are answered in the inbox itself: confirm each statement, or say what is "
-				 "wrong, and submit before the due date."],
-				href="/tasks",
+				["Choose 'Answer' on the attestation, pick your answer (give a statement if it isn't simply "
+				 "accurate) and choose 'Record answer' before the due date."],
+				href="/tasks?show=attestations",
+			),
+			_task(
+				"tasks-countersign", "Counter-sign an attestation",
+				"counter-sign second signature countersign dual",
+				["Under 'Second signatures', read the answer and choose 'Counter-sign'."],
+				href="/tasks?show=approvals",
+			),
+			_task(
+				"tasks-take", "Take ownership of an escalation",
+				"take ownership unowned queue escalation pick up claim owner",
+				["Choose 'Escalations waiting for an owner', then 'Take ownership' on the matter and confirm."],
+				href="/tasks?show=unowned",
+				requires={"roles": ("Escalation Owner", "System Manager")},
+				why="Matters are taken by an Escalation Owner in the queue they were routed to.",
 			),
 		],
 	},
@@ -708,7 +854,7 @@ PAGES: dict[str, dict] = {
 				"campaigns-start", "Open a campaign and generate its tasks",
 				"start open create new campaign attestation annual population generate tasks",
 				["Open the campaign for the period.",
-				 "Generate its tasks: each person in its population gets one in their inbox."],
+				 "Generate its tasks: each person in its population gets one in their My work list."],
 				href="/attestation-campaigns",
 				requires={"roles": ("Risk Governance Office", "Head of Risk Governance", "Consilium Administrator", "System Manager")},
 				why="Running campaigns belongs to the governance office (forum campaigns) and campaign administrators.",
@@ -768,12 +914,111 @@ PAGES: dict[str, dict] = {
 			_task(
 				"admin-assistant", "Configure the help assistant",
 				"assistant ai answers answer endpoint model settings help configure turn on enable",
-				["Open Assistant Settings in the workspace.",
-				 "The assistant works with nothing configured. To add AI-assisted answers, set the "
-				 "request format, endpoint, model and key, then tick 'Use an AI Endpoint'."],
-				href="/app/assistant-settings",
+				["Open Admin → Integrations. On 'AI assistant and analysis', paste the API key, tick "
+				 "'Use for the Help assistant', save, then choose 'Test connection'.",
+				 "The assistant works with nothing configured; AI only phrases its answers."],
+				href="/integrations",
 				requires={"doctype": "Assistant Settings", "ptype": "write"},
 				why="Assistant Settings are for administrators.",
+			),
+		],
+	},
+	"/forum-motion": {
+		"title": "Motion",
+		"purpose": (
+			"One motion put to a forum: its tally, whether it is quorate so far, every entitled voter and "
+			"their ballot. Members cast or change their ballot here; the secretary records the outcome."
+		),
+		"module": "Governance",
+		"starters": ["What can I do here?", "How do I vote?", "How do I record the outcome?"],
+		"tasks": [
+			_task(
+				"motion-vote", "Cast or change your ballot",
+				"vote ballot cast change for against abstain recused",
+				["Under 'Your vote', choose your ballot and choose 'Cast my ballot' (or 'Change my ballot')."],
+			),
+			_task(
+				"motion-outcome", "Record the outcome",
+				"outcome record close carried not carried deferred inquorate",
+				["Under 'Record the outcome', choose the outcome, tick if the chair used a casting vote, then "
+				 "'Record the outcome and close the motion'. Carried and Not Carried need the vote to be quorate."],
+				requires={"doctype": "Forum Motion", "ptype": "write"},
+				why="The outcome is recorded by the forum's secretary.",
+			),
+		],
+	},
+	"/forum-disband": {
+		"title": "Disbandment",
+		"purpose": (
+			"A forum's disbandment plans: raising one (governance office), each approver's decision, and "
+			"executing the plan once every approval is in. Nothing is deleted."
+		),
+		"module": "Governance",
+		"starters": ["What can I do here?", "How do I approve a disbandment?"],
+		"tasks": [
+			_task(
+				"disband-decide", "Decide a disbandment approval",
+				"approve reject disbandment decision approver",
+				["Under 'Your decision', choose Approved or Rejected (with a reason), then 'Record the decision'."],
+			),
+		],
+	},
+	"/governance-gaps": {
+		"title": "Gaps and risk",
+		"purpose": (
+			"Insights → Gaps and risk: where governance coverage is missing or incomplete (forums without "
+			"charters, policies without approving forums, overdue reviews, uncited regulations), and a "
+			"rules-based risk score for every forum and policy."
+		),
+		"module": "Core",
+		"starters": ["What can I do here?", "Why is this a high-severity gap?"],
+		"tasks": [],
+	},
+	"/emerging-risks": {
+		"title": "Emerging risks",
+		"purpose": (
+			"Insights → Emerging risks: rising trends and leading indicators across escalations, time-limit "
+			"breaches, monitoring and violations, over a 6, 12 or 24-month window."
+		),
+		"module": "Core",
+		"starters": ["What can I do here?"],
+		"tasks": [],
+	},
+	"/regulatory-updates": {
+		"title": "Regulatory updates",
+		"purpose": (
+			"Every regulatory requirement, its most recent change, and the policies and forums it touches "
+			"directly or possibly. Recording a change notifies the owners of everything that cites it."
+		),
+		"module": "Policy",
+		"starters": ["What can I do here?", "How do I record a regulatory change?"],
+		"tasks": [
+			_task(
+				"reg-change", "Record a regulatory change",
+				"regulatory change record requirement update regulation notify",
+				["Open the requirement. Under 'Record a change', edit its details and choose 'Save the change "
+				 "and notify citers'."],
+				requires={"doctype": "Regulatory Requirement", "ptype": "write"},
+				why="Regulatory requirements are maintained by people who may edit them.",
+			),
+		],
+	},
+	"/integrations": {
+		"title": "Integrations",
+		"purpose": (
+			"For administrators: connections to AI, Doc AI, horizon scanning, email and single sign-on. Each "
+			"card says what it is for, what leaves the platform, and whether it is working."
+		),
+		"module": "Core",
+		"admin_only": True,
+		"starters": ["What can I do here?", "How do I send a test email?", "How do I connect AI?"],
+		"tasks": [
+			_task(
+				"integrations-email", "Send a test email",
+				"email test send mail smtp graph",
+				["On the Email card, choose how mail is sent and save, then choose 'Send a test email to me'."],
+				requires={"roles": ADMIN_ROLES},
+				why="Integrations are for administrators.",
 			),
 		],
 	},
@@ -791,13 +1036,18 @@ GLOBAL_TASKS = [
 	_task(
 		"global-theme", "Change the text size or switch to the dark theme",
 		"text size font bigger smaller dark light theme contrast",
-		["Use A− / A+ in the top bar to change the text size (↺ resets it).",
+		["Use A− / A+ in the header to change the text size (↺ resets it).",
 		 "Use the moon button to switch between light and dark. Both are remembered on this browser."],
 	),
 	_task(
 		"global-signout", "Sign out or see your profile",
 		"sign out log out logout profile account",
 		["Choose your name at the top right, then Profile or Sign out."],
+	),
+	_task(
+		"global-search", "Search for a forum, policy or escalation",
+		"search find look up quick global slash",
+		["Click the search box at the top of every screen, or press /, and type part of a name or reference."],
 	),
 	_task(
 		"global-roles", "Get access to something you cannot see",
@@ -811,7 +1061,8 @@ GLOBAL_TASKS = [
 #: The pages that are an area someone works in, rather than a single record or
 #: a form. "What access do I have" lists these.
 AREA_ROUTES = ("/tasks", "/forums", "/formation-requests", "/policies", "/policy-intake", "/escalations",
-               "/reports", "/imports", "/attestation-campaigns", "/admin")
+               "/reports", "/governance-gaps", "/emerging-risks", "/regulatory-updates", "/imports",
+               "/attestation-campaigns", "/admin", "/integrations")
 
 
 def normalise_route(path: str | None) -> str:

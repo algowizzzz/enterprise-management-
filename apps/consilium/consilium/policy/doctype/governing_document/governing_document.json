@@ -112,7 +112,7 @@
   },
   {
    "default": "Draft",
-   "description": "The business-facing phase. Business logic reads the semantic flags below, never this label.",
+   "description": "Where the document stands in its lifecycle.",
    "fieldname": "lifecycle_phase",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -122,7 +122,7 @@
    "reqd": 1
   },
   {
-   "description": "Set by the configured workflow. Configuration, not a logic key.",
+   "description": "Set by the approval workflow.",
    "fieldname": "workflow_state",
    "fieldtype": "Data",
    "in_standard_filter": 1,
@@ -131,7 +131,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag set from the configured state. Logic reads this, never the label.",
+   "description": "Set automatically from the status.",
    "fieldname": "is_editable",
    "fieldtype": "Check",
    "label": "Is Editable",
@@ -478,7 +478,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 03:32:53.000000",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Policy",
  "name": "Governing Document",

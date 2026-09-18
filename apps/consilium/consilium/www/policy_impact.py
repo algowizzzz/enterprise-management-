@@ -20,7 +20,7 @@ def get_context(context):
 	context.active_nav = "policies"
 	context.user_display = frappe.session.user
 	name = (frappe.form_dict.get("name") or "").strip()
-	crumbs = [{"label": "Home", "url": "/"}, {"label": "Policies", "url": "/policies"}]
+	crumbs = [{"label": "Home", "url": "/"}, {"label": "Policy library", "url": "/policies"}]
 	context.record_name = None
 	context.page_title = "Impact of a change"
 	title = None

@@ -85,9 +85,10 @@
         });
       }
       var lin = a.lineage;
-      var html = '<div class="cns-ai-impact-rating"><span class="cns-stat-label">Reach</span> ' + ai.severity(a.rating.band) +
-        ' <span class="cns-text-sm cns-text-muted">score ' + esc(a.rating.score) + " · " + esc(a.rating.basis) + "</span></div>";
-      html += block("Review points (rule-based)", list(a.review_points, function (p) {
+      var html = '<div class="cns-ai-impact-rating"><span class="cns-stat-label">Reach</span> ' + ai.severity(a.rating.band) + "</div>" +
+        '<details class="cns-disclosure cns-text-sm"><summary>How is this worked out?</summary>' +
+        "<p>" + esc(a.rating.basis) + " This change scores " + esc(a.rating.score) + " points.</p></details>";
+      html += block("Points to review", list(a.review_points, function (p) {
         return p.href ? link(p, p.text) : esc(p.text);
       }, "Nothing to review was found."));
       if (a.change && (a.change.diff || a.change.diff_note)) {
@@ -124,7 +125,8 @@
         return esc(v.name) + " · " + esc(v.type || "") + " · " + esc(v.severity || "");
       }, "No open violation.") + list(a.open_escalations, function (e) { return link(e, e.title || e.name); }, "No open escalation."));
       html += "</div>";
-      html += '<p class="cns-text-sm cns-text-muted">' + esc(a.note) + " Section detection reads headings from the version text, a heuristic.</p>";
+      html += '<p class="cns-text-sm cns-text-muted">' + esc(a.note) + " Changed sections are found from the headings in the " +
+        "version's text, so check them against the document itself.</p>";
       result.innerHTML = html;
     }
 

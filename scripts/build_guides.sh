@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the illustrated guides in docs/guides/ into one PDF and one Word file.
+# Build the onboarding guide in docs/guides/ into one PDF and one Word file.
 #
 #     scripts/build_guides.sh [output-directory]
 #
@@ -8,10 +8,10 @@
 # are regenerated, not versioned).
 #
 # Produces:
-#   Consilium-User-and-Configuration-Guide.pdf
-#   Consilium-User-and-Configuration-Guide.docx
+#   Consilium-Onboarding-Guide.pdf
+#   Consilium-Onboarding-Guide.docx
 #
-# How. pandoc combines README.md and the twelve chapters, in order, into
+# How. pandoc combines README.md and the chapters (00- to 11-), in order, into
 #   * a Word document (pandoc's own .docx writer, with a title page and a table
 #     of contents that Word fills in when the document is opened), and
 #   * an HTML book, which Google Chrome prints to PDF. No LaTeX engine is
@@ -34,7 +34,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 GUIDES="$REPO/docs/guides"
 OUT="${1:-$HOME/Desktop/Consilium-deliverables}"
-NAME="Consilium-User-and-Configuration-Guide"
+NAME="Consilium-Onboarding-Guide"
 PANDOC="${PANDOC:-$(command -v pandoc || echo /opt/homebrew/bin/pandoc)}"
 PYTHON="${PYTHON:-$REPO/.venv/bin/python}"
 SOFFICE="${SOFFICE:-$(command -v soffice || echo /Applications/LibreOffice.app/Contents/MacOS/soffice)}"
@@ -153,7 +153,7 @@ CSS
 COMMON=(--from=markdown+pipe_tables+grid_tables-smart --file-scope
   --lua-filter="$WORK/guides.lua"
   --metadata=title:"Consilium"
-  --metadata=subtitle:"User and configuration guide"
+  --metadata=subtitle:"Onboarding guide"
   --metadata=date:"$TODAY${SHOTS_TAKEN:+ · screenshots taken $SHOTS_TAKEN}"
   --toc --toc-depth=2)
 
@@ -164,7 +164,7 @@ echo "Building the Word document"
 
 echo "Building the HTML book"
 "$PANDOC" "${COMMON[@]}" --standalone --css="$WORK/book.css" \
-  --metadata=pagetitle:"Consilium: user and configuration guide" \
+  --metadata=pagetitle:"Consilium: onboarding guide" \
   "${CHAPTERS[@]}" -o "$WORK/book.html"
 # Pictures are referenced relative to docs/guides; the book lives elsewhere.
 sed -i.bak "s#src=\"images/#src=\"file://$GUIDES/images/#g" "$WORK/book.html"
@@ -182,7 +182,7 @@ with sync_playwright() as pw:
 	page.pdf(path=dst, format="A4", print_background=True, display_header_footer=True,
 		header_template="<div></div>",
 		footer_template='<div style="font-size:7pt;color:#5b6675;width:100%;padding:0 16mm;display:flex;justify-content:space-between;">'
-			'<span>Consilium — user and configuration guide</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>',
+			'<span>Consilium — onboarding guide</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>',
 		margin={"top": "16mm", "bottom": "18mm", "left": "14mm", "right": "14mm"})
 	browser.close()
 PY

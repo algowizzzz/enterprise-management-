@@ -64,7 +64,7 @@
       return "AI commentary is available. Asking sends the facts listed on this page to the configured AI service " +
         (ai.mode === "Include visible record summary"
           ? "(record titles and short summaries you may read are included)."
-          : "(counts, taxonomy and opaque record references only — no titles or record text).");
+          : "(counts, categories and anonymous record references only — no titles or record text).");
     }
     return (ai.reason || "AI is not available.") + " The rule-based result above is complete without it.";
   }
@@ -84,7 +84,7 @@
     html += '<div class="cns-ai-box-head"><span class="cns-pill cns-status-info cns-ai-label">' +
       '<i class="bi bi-robot" aria-hidden="true"></i> Machine-generated</span>';
     if (result && result.used) {
-      html += '<span class="cns-ai-meta">AI was used · not reviewed by a person · audit ' + esc(result.service_request || "") + "</span>";
+      html += '<span class="cns-ai-meta">AI was used · not reviewed by a person · ' + recorded(result.service_request) + "</span>";
     } else if (result) {
       html += '<span class="cns-ai-meta">AI was not used</span>';
     } else {
@@ -138,8 +138,19 @@
       esc((error && error.message) || "Something went wrong.") + "</div></div>";
   }
 
+  /* "This answer was recorded", with the record's reference on hover and for
+     screen readers. Every AI request is kept (AI Service Request) so it can be
+     audited; the reference is for whoever audits it, not for the reader, who
+     needs only to know that it was kept. */
+  function recorded(reference) {
+    if (!reference) return "This answer was recorded";
+    return '<span class="cns-ai-recorded" title="Reference ' + esc(reference) + '">This answer was recorded' +
+      '<span class="cns-visually-hidden"> (reference ' + esc(reference) + ")</span></span>";
+  }
+
   NS.ai = {
     esc: esc,
+    recorded: recorded,
     safeHref: safeHref,
     renderBlocks: renderBlocks,
     renderAIBox: renderAIBox,

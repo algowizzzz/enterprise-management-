@@ -17,8 +17,8 @@ def get_context(context):
 		"Month-over-month trends in escalations, violations, adverse monitoring and breaches, the series that are "
 		"rising, and the leading indicators that tend to come first."
 	)
-	context.active_nav = "reports"
+	context.active_nav = "insights"
 	context.user_display = frappe.session.user
-	context.breadcrumbs = [{"label": "Home", "url": "/"}, {"label": "Reports", "url": "/reports"},
+	context.breadcrumbs = [{"label": "Home", "url": "/"}, {"label": "Insights", "url": "/reports"},
 	                       {"label": "Emerging risks"}]
 	return context

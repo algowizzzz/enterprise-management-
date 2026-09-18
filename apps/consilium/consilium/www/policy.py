@@ -55,7 +55,7 @@ def get_context(context):
 
 	crumbs = [
 		{"label": "Home", "url": "/"},
-		{"label": "Policy inventory", "url": "/policies"},
+		{"label": "Policy library", "url": "/policies"},
 	]
 
 	if not name:
@@ -83,6 +83,13 @@ def get_context(context):
 	context.found = True
 	# The change log records fieldnames; the page shows them as the form labels.
 	context.field_labels = {df.fieldname: df.label for df in frappe.get_meta(DOCTYPE).fields if df.label}
+	# The panels are drawn as their own payloads arrive, and the review panel's
+	# often arrives before the action payload that carries these words; a form
+	# heading then showed the action's key ("record_horizon_scan"). The words are
+	# in the page from the start instead.
+	from consilium.policy import lifecycle as _lifecycle
+
+	context.action_labels = dict(_lifecycle.ACTION_LABELS)
 	context.page_title = title or name
 	context.page_description = "Reference {0}".format(name)
 	context.desk_access = _has_desk_access()
@@ -90,5 +97,8 @@ def get_context(context):
 	# The viewer the document-view page will serve a version to; it builds its
 	# own checks, this page only links to it.
 	context.viewer_route = "/document-view"
+	# The "Open in Doc AI" button beside the document hands over its current
+	# version; each row of the version table hands over its own.
+	context.current_version = doc.get("current_version")
 	context.breadcrumbs = crumbs + [{"label": title or name}]
 	return context

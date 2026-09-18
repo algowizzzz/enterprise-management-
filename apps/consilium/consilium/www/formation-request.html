@@ -306,7 +306,7 @@
       '<p class="cns-state-title">' + escapeHtml(title) + "</p>" +
       '<p class="cns-state-message">' + escapeHtml(message || "") + "</p></div>";
   }
-  function label(action) { return (ctx.action_labels || {})[action] || action; }
+  function label(action) { return ((ctx && ctx.action_labels) || {})[action] || Consilium.util.humanize(action); }
 
   /* ------------------------------- tabs -------------------------------- */
 

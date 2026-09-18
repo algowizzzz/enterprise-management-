@@ -253,7 +253,7 @@
   },
   {
    "default": "Draft",
-   "description": "The forum's workflow state. A label: every piece of logic reads the semantic flags below instead. Disbanded is the terminal state a controlled disbandment leaves behind \u2014 see the module README.",
+   "description": "The forum's standing, moved by compliance reviews. Disbanded is final: a disbanded forum stays on record.",
    "fieldname": "compliance_status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -264,7 +264,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag derived from Workflow State Flag.",
+   "description": "Set automatically from the status.",
    "fieldname": "is_editable",
    "fieldtype": "Check",
    "label": "Is Editable",
@@ -272,7 +272,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag. False once disbanded; the record is never deleted.",
+   "description": "Set automatically: cleared once the forum is disbanded. The record is never deleted.",
    "fieldname": "is_active",
    "fieldtype": "Check",
    "label": "Is Active",
@@ -280,7 +280,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag. Set by the state map and by the watched-field hook.",
+   "description": "Set automatically from the standing, and when a watched field changes.",
    "fieldname": "requires_review",
    "fieldtype": "Check",
    "label": "Requires Review",
@@ -342,7 +342,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 03:32:53.000000",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Governance Forum",

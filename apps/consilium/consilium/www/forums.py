@@ -27,7 +27,7 @@ def get_context(context):
 		"Every governance forum on record, with the attributes the inventory is "
 		"accountable for. Open a forum to see its membership, linkages and decisions."
 	)
-	context.active_nav = "forums"
+	context.active_nav = "governance"
 	context.breadcrumbs = [
 		{"label": "Home", "url": "/"},
 		{"label": "Forum inventory"},

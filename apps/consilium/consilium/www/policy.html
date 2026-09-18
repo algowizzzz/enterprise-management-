@@ -17,11 +17,20 @@
   approval panel only.
 -#}
 
+{% from "consilium/templates/includes/external_tools.html" import doc_ai_button, tools_assets %}
+{%- set tools = cns_external_tools() %}
+
 {% block page_actions %}
 {%- if found %}
-{%- if desk_access and readable %}
-<a class="cns-btn cns-btn-secondary" href="/app/governing-document/{{ record_name | urlencode }}">
-  <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Open in the workspace
+{%- if readable %}
+{#- Doc AI: /doc-ai checks read access, the version's handling and the role
+    list again, records the hand-off and forwards. -#}
+{{ doc_ai_button(tools, record_name, current_version) }}
+{%- endif %}
+{%- if readable and cns_advanced_view() %}
+<a class="cns-btn cns-btn-ghost" href="/app/governing-document/{{ record_name | urlencode }}"
+   title="The full record in the configuration workspace, for administrators">
+  <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Advanced view
 </a>
 {%- endif %}
 {%- if readable and cns_has_any_role("Consilium Audit", "Consilium Administrator", "System Manager") %}
@@ -31,7 +40,7 @@
 </a>
 {%- endif %}
 <a class="cns-btn cns-btn-secondary" href="/policies">
-  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to inventory
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to the library
 </a>
 {%- endif %}
 {% endblock %}
@@ -43,18 +52,18 @@
   <div class="cns-state">
     <span class="cns-state-icon"><i class="bi bi-signpost" aria-hidden="true"></i></span>
     <p class="cns-state-title">No document was named</p>
-    <p class="cns-state-message">Open a document from the inventory to see its record.</p>
-    <a class="cns-btn cns-btn-primary" href="/policies">Go to the inventory</a>
+    <p class="cns-state-message">Open a document from the policy library to see its record.</p>
+    <a class="cns-btn cns-btn-primary" href="/policies">Go to the policy library</a>
   </div>
 </div>
 {%- elif not found %}
 <div class="cns-card">
   <div class="cns-state cns-state--error">
     <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
-    <p class="cns-state-title">That document is not on the inventory</p>
+    <p class="cns-state-title">That document is not in the policy library</p>
     <p class="cns-state-message">Reference <span class="cns-mono">{{ record_name | e }}</span> does not exist,
       or it has been removed.</p>
-    <a class="cns-btn cns-btn-secondary" href="/policies">Back to the inventory</a>
+    <a class="cns-btn cns-btn-secondary" href="/policies">Back to the library</a>
   </div>
 </div>
 {%- else %}
@@ -427,6 +436,7 @@
 
 {% block scripts %}
 {%- if found %}
+{{ tools_assets(tools) }}
 <script>
 (function () {
   "use strict";
@@ -434,6 +444,7 @@
   var DOCUMENT = {{ record_name | tojson }};
   var READABLE = {{ (readable and true or false) | tojson }};
   var FIELD_LABELS = {{ (field_labels or {}) | tojson }};
+  var ACTION_WORDS = {{ (action_labels or {}) | tojson }};
   var PHASES = {{ phases | tojson }};
   var VIEWER = {{ viewer_route | tojson }};
   var POLICY = "consilium.policy.";
@@ -489,7 +500,9 @@
   function pill(text, tone) {
     return '<span class="cns-pill cns-status-' + escapeAttr(tone || "neutral") + '">' + escapeHtml(text) + "</span>";
   }
-  function label(action) { return ((ctx && ctx.action_labels) || {})[action] || action; }
+  function label(action) {
+    return ((ctx && ctx.action_labels) || {})[action] || ACTION_WORDS[action] || Consilium.util.humanize(action);
+  }
   function todayISO() {
     var d = new Date();
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" +
@@ -1538,7 +1551,11 @@
         { field: "owner", label: "Captured by", sortable: true, formatter: person },
         { field: "creation", label: "Captured", sortable: true, formatter: f.datetime },
         { field: "name", label: "Text", formatter: function (v) {
-            return '<a href="' + escapeAttr(VIEWER + "?version=" + encodeURIComponent(v)) + '">View</a>';
+            var view = '<a href="' + escapeAttr(VIEWER + "?version=" + encodeURIComponent(v)) + '">View</a>';
+            /* Each version can be handed to Doc AI on its own. */
+            var docAi = READABLE && Consilium.integrations
+              ? Consilium.integrations.docAiLink(DOCUMENT, v, { compact: true, label: "Doc AI" }) : "";
+            return docAi ? '<span class="cns-btn-group" style="align-items: center;">' + view + docAi + "</span>" : view;
           } }
       ]
     });
@@ -1760,37 +1777,35 @@
     }
   });
 
+  /* The document's change log, read through Core's history
+     (`evidence.record_history`), which shows a record's changes to whoever may
+     read the record — the same rule the version chain follows. The framework's
+     own change log (Version) is readable by administrators only, so reading it
+     directly left the policy office, the document's owner and its reviewers
+     with "not available". Field changes, workflow moves and comments are shown;
+     who was notified is on the evidence pack. */
+  var CHANGE_KINDS = { change: "bi-pencil", workflow: "bi-arrow-right-circle", comment: "bi-chat-left-text",
+                       attachment: "bi-paperclip", info: "bi-info-circle" };
+
   function loadChangeLog() {
-    Consilium.api
-      .list("Version", {
-        fields: ["name", "owner", "creation", "data"],
-        filters: [["ref_doctype", "=", "Governing Document"], ["docname", "=", DOCUMENT]],
-        order_by: "creation desc",
-        limit_page_length: 20
-      })
-      .then(function (rows) {
+    Consilium.api.call("consilium.consilium_core.evidence.record_history",
+      { doctype: "Governing Document", name: DOCUMENT })
+      .then(function (history) {
         var list = document.getElementById("change-list");
+        var rows = (history.entries || []).filter(function (e) { return CHANGE_KINDS[e.kind]; }).slice(0, 30);
         if (!rows.length) {
           list.innerHTML = '<li class="cns-text-muted">No change has been recorded against this record yet.</li>';
           return;
         }
-        list.innerHTML = rows.map(function (row) {
-          var changed = [];
-          try {
-            var data = JSON.parse(row.data || "{}");
-            changed = (data.changed || []).map(function (entry) { return FIELD_LABELS[entry[0]] || entry[0]; });
-            if ((data.added || []).length) changed.push("rows added");
-            if ((data.removed || []).length) changed.push("rows removed");
-          } catch (e) { /* a version whose payload cannot be read is still a change */ }
-          return "<li>" +
-            (changed.length ? "Changed " + escapeHtml(changed.slice(0, 6).join(", ")) : "Record updated") +
-            '<span class="cns-timeline-meta">' + escapeHtml(row.owner) + " &middot; " +
-            escapeHtml(Consilium.util.formatDate(row.creation, true)) + "</span></li>";
+        list.innerHTML = rows.map(function (e) {
+          return '<li><i class="bi ' + CHANGE_KINDS[e.kind] + '" aria-hidden="true"></i> ' + escapeHtml(e.summary || "") +
+            '<span class="cns-timeline-meta">' + (e.by ? Consilium.person(e.by) + " &middot; " : "") +
+            escapeHtml(Consilium.util.formatDate(e.on, true)) + "</span></li>";
         }).join("");
       })
       .catch(function () {
         document.getElementById("change-list").innerHTML =
-          '<li class="cns-text-muted">The change log is not available to you. ' +
+          '<li class="cns-text-muted">The change log could not be read. ' +
           "The version chain above is the record of how this document's content moved.</li>";
       });
   }

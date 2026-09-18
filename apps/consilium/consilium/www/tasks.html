@@ -11,7 +11,7 @@
 
 {% block page_actions %}
 {%- if may_run_campaigns %}
-<a class="cns-btn cns-btn-secondary" href="/attestation-campaigns">
+<a class="cns-btn cns-btn-ghost" href="/attestation-campaigns">
   <i class="bi bi-clipboard-check" aria-hidden="true"></i> Attestation campaigns
 </a>
 {%- endif %}
@@ -31,6 +31,12 @@
         <option value="all">Everything waiting on me</option>
         <option value="overdue">Only what is overdue</option>
         <option value="soon">Overdue or due within a week</option>
+        <optgroup label="By kind">
+          <option value="approvals">Approvals and second signatures</option>
+          <option value="reviews">Reviews</option>
+          <option value="attestations">Attestations</option>
+          <option value="unowned">Escalations waiting for an owner</option>
+        </optgroup>
       </select>
     </div>
   </div>
@@ -95,9 +101,20 @@
     return '<span class="cns-pill cns-status-neutral">Due ' + date(item.due_on) + "</span>";
   }
 
+  /* The kinds each "By kind" view shows. Display grouping only: the server
+     decides what is waiting on whom, and every kind it sends is shown under
+     "Everything waiting on me". The header's My work menu links to these. */
+  var KIND_VIEWS = {
+    approvals: ["approval", "second_signature", "formation_step"],
+    reviews: ["forum_compliance", "forum_review", "document_review", "escalation_review"],
+    attestations: ["attestation"],
+    unowned: ["escalation_queue"]
+  };
+
   function visible(item) {
     if (showSelect.value === "overdue") return item.overdue;
     if (showSelect.value === "soon") return item.overdue || item.due_soon;
+    if (KIND_VIEWS[showSelect.value]) return KIND_VIEWS[showSelect.value].indexOf(item.kind) !== -1;
     return true;
   }
 
@@ -128,11 +145,29 @@
       "</form>";
   }
 
+  /* An approval says what is being decided and from which seat, who asked and
+     when ("Approve the disbandment plan for … — as Sponsor · Raised by … on …").
+     Its step reference means nothing to the person deciding, so it is kept for
+     hover and screen readers only. */
+  var DECISIONS = { approval: 1, formation_step: 1 };
+
   function renderItem(item) {
     var meta = [];
-    if (item.context) meta.push(escapeHtml(item.context));
-    meta.push('<span class="cns-mono">' + escapeHtml(item.reference) + "</span>");
+    var decision = !!DECISIONS[item.kind];
+    if (decision) {
+      if (item.raised_by) {
+        meta.push("Raised by " + Consilium.person(item.raised_by) + (item.raised_on ? " on " + date(item.raised_on) : ""));
+      } else if (item.raised_on) {
+        meta.push("Raised " + date(item.raised_on));
+      }
+      if (!item.due_on) meta.push("No due date set");
+    } else {
+      if (item.context) meta.push(escapeHtml(item.context));
+      meta.push('<span class="cns-mono">' + escapeHtml(item.reference) + "</span>");
+    }
     if (item.acting_for) meta.push("Acting for " + Consilium.person(item.acting_for));
+    var heading = escapeHtml(item.title) +
+      (decision && item.as_role ? ' <span class="cns-inbox-seat">— as ' + escapeHtml(item.as_role) + "</span>" : "");
 
     var body = "";
     if (item.kind === "second_signature") {
@@ -159,9 +194,10 @@
     var form = item.action === "respond" ? answerForm(item) : "";
 
     return '<li class="cns-inbox-item' + (item.overdue ? " cns-inbox-item--overdue" : "") + '" data-reference="' +
-      escapeAttr(item.reference) + '">' +
+      escapeAttr(item.reference) + '"' + (decision ? ' title="Reference ' + escapeAttr(item.reference) + '"' : "") + ">" +
       '<div class="cns-inbox-main">' +
-      '<div class="cns-inbox-title"><a href="' + escapeAttr(item.url) + '">' + escapeHtml(item.title) + "</a> " +
+      '<div class="cns-inbox-title"><a href="' + escapeAttr(item.url) + '">' + heading + "</a> " +
+      (decision ? '<span class="cns-visually-hidden">(reference ' + escapeHtml(item.reference) + ")</span> " : "") +
       duePill(item) + "</div>" +
       '<div class="cns-inbox-meta">' + meta.join(' <span aria-hidden="true">&middot;</span> ') + "</div>" +
       body + "</div>" +
@@ -201,8 +237,11 @@
       html = '<div class="cns-card"><div class="cns-state">' +
         '<span class="cns-state-icon"><i class="bi bi-funnel" aria-hidden="true"></i></span>' +
         '<p class="cns-state-title">Nothing matches</p>' +
-        '<p class="cns-state-message">None of what is waiting on you is overdue or due this week. ' +
-        'Choose “Everything waiting on me” to see it all.</p></div></div>';
+        '<p class="cns-state-message">' + (KIND_VIEWS[showSelect.value]
+          ? "Nothing of this kind is waiting on you. "
+          : "None of what is waiting on you is overdue or due this week. ") +
+        "The other " + data.count + (data.count === 1 ? " item is" : " items are") + " under “Everything waiting on me”.</p>" +
+        '<button type="button" class="cns-btn cns-btn-secondary" data-show-all>Show everything</button></div></div>';
     }
     groupsNode.innerHTML = html;
 
@@ -264,6 +303,12 @@
   }
 
   groupsNode.addEventListener("click", function (event) {
+    if (event.target.closest("[data-show-all]")) {
+      showSelect.value = "all";
+      showSelect.dispatchEvent(new Event("change"));
+      showSelect.focus();
+      return;
+    }
     var button = event.target.closest("button[data-act]");
     if (!button) return;
     var item = button.closest(".cns-inbox-item");
@@ -331,7 +376,7 @@
   });
 
   document.getElementById("inbox-refresh").addEventListener("click", function () {
-    load().then(function () { Consilium.announce("Inbox refreshed."); });
+    load().then(function () { Consilium.announce("Your work list is refreshed."); });
   });
 
   load();

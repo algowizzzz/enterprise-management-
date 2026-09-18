@@ -56,6 +56,11 @@
      Tiny helpers
      ---------------------------------------------------------------------- */
 
+  function viewerZone() {
+    return (document.querySelector('meta[name="cns-viewer-zone"]') || {}).content ||
+      (document.querySelector('meta[name="cns-time-zone"]') || {}).content || undefined;
+  }
+
   /* Wall-clock time in the site's zone -> the instant it names. Uses only the
      browser's own zone data (Intl), so nothing is fetched. */
   function fromSiteZone(m) {
@@ -150,12 +155,33 @@
       if (isNaN(d.getTime())) return text;
       var opts = { year: "numeric", month: "short", day: "2-digit" };
       if (withTime) {
+        /* An instant is shown in the reader's zone — their own setting, else the
+           site's (the page names it) — never the browser's, which differed from
+           both and made one screen show three zones. Always labelled. A bare
+           date is a calendar day and is not converted. */
         opts.hour = "2-digit";
         opts.minute = "2-digit";
         opts.timeZoneName = "short";
+        opts.timeZone = viewerZone();
       }
-      return d.toLocaleString(undefined, opts);
-    }
+      try {
+        return d.toLocaleString(undefined, opts);
+      } catch (e) {
+        delete opts.timeZone; // an unknown zone name: the browser's, still labelled
+        return d.toLocaleString(undefined, opts);
+      }
+    },
+
+    /** A key such as "record_horizon_scan" as words ("Record horizon scan"). A
+        last resort for a label the server did not send: a person should never
+        see an identifier. */
+    humanize: function (key) {
+      var text = String(key || "").replace(/[_-]+/g, " ").trim();
+      return text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
+    },
+
+    /** The zone times are shown in: the reader's own setting, else the site's. */
+    viewerZone: function () { return viewerZone(); }
   });
 
   /* ----------------------------------------------------------------------
@@ -450,7 +476,22 @@
     return parts.length ? "?" + parts.join("&") : "";
   }
 
+  /* The framework's own permission refusals name the account and the record
+     type ("User a@b does not have doctype access via role permission for
+     document Governance Forum"). Shown as they are, they read as a fault and
+     leak the internal type name, on screens that are simply showing a person
+     less because their role sees less. The application's own refusals are
+     written for people and are left as they are. */
+  var FRAMEWORK_REFUSAL = /does not have (doctype )?access|^No permission for|^Insufficient Permission|^Not permitted/i;
+
   function extractMessage(payload, status) {
+    var message = rawMessage(payload, status);
+    var refused = status === 403 || (payload && typeof payload === "object" && payload.exc_type === "PermissionError");
+    if (refused && FRAMEWORK_REFUSAL.test(message)) return "This information is not available to your role.";
+    return message;
+  }
+
+  function rawMessage(payload, status) {
     if (!payload) return "Request failed (" + status + ")";
     // The framework returns errors in several shapes depending on the layer
     // that raised them; normalise all of them to a single string.

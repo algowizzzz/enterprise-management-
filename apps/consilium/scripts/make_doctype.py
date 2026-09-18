@@ -144,6 +144,9 @@ def build_doctype(spec: dict) -> dict:
         # an explicit document_type for reporting.
         "allow_import", "allow_copy", "document_type", "max_attachments",
         "allow_events_in_timeline", "read_only", "issingle",
+        # Settings forms: the desk's sidebar (assign, attach, share, like,
+        # follow) and its comment timeline mean nothing on a single record.
+        "hide_toolbar",
     ):
         if key in spec:
             doc[key] = spec[key]

@@ -33,7 +33,7 @@ def get_context(context):
 		"Where forums, governing documents and escalations stand today. Every number "
 		"opens the records behind it."
 	)
-	context.active_nav = "reports"
+	context.active_nav = "insights"
 	context.breadcrumbs = [
 		{"label": "Home", "url": "/"},
 		{"label": "Management reporting"},

@@ -17,6 +17,10 @@ framework and the application read them:
   admin email      the Administrator account's address
   outgoing email   an Email Account, when [email] enabled = yes; the framework
                    tests the connection to the mail server when it is saved
+  email route      Email Delivery Settings: Microsoft Graph when [email]
+                   graph_enabled = yes (tenant, application, secret, sender,
+                   and the base addresses for a national cloud), otherwise
+                   the SMTP mail queue
   SSO              an OpenID Connect provider (Social Login Key) or LDAP
                    Settings, only when [sso] mode says so; otherwise any
                    provider this kit configured earlier is switched off
@@ -108,6 +112,42 @@ def configure_email(frappe, e: dict) -> str:
     return f"on via {e['smtp_host']}:{e['smtp_port']} ({e['security']}), from {e['sender']}"
 
 
+def configure_email_route(frappe, e: dict) -> str:
+    """Email Delivery Settings: the Graph route when graph_enabled, else SMTP.
+
+    The client secret arrives as a reference and is written to the settings'
+    encrypted Password field. Switching Graph off returns notifications to the
+    SMTP mail queue and leaves the Graph values where they are, so switching it
+    back on needs no secret re-entered.
+    """
+    if not frappe.db.exists("DocType", "Email Delivery Settings"):
+        return "not present in this release"
+    smtp_route, graph_route = "SMTP (framework mail queue)", "Microsoft Graph"
+    settings = frappe.get_single("Email Delivery Settings")
+    if not e.get("graph_enabled"):
+        if settings.delivery_route == graph_route:
+            settings.delivery_route = smtp_route
+            settings.save(ignore_permissions=True)
+            return "SMTP (Microsoft Graph switched off)"
+        return "SMTP"
+    values = {
+        "delivery_route": graph_route,
+        "graph_tenant_id": e["graph_tenant_id"],
+        "graph_client_id": e["graph_client_id"],
+        "graph_sender": e["graph_sender"],
+    }
+    for key in ("graph_authority_url", "graph_api_url"):
+        if e.get(key):
+            values[key] = e[key]
+    settings.update(values)
+    secret = read_secret(e.get("graph_client_secret"))
+    if secret:
+        settings.graph_client_secret = secret
+    # Validation refuses an incomplete route (a missing secret, for example).
+    settings.save(ignore_permissions=True)
+    return f"Microsoft Graph as {e['graph_sender']} (tenant {e['graph_tenant_id']})"
+
+
 def configure_oidc(frappe, sso: dict) -> str:
     provider_name = sso.get("oidc_provider_name") or "Corporate SSO"
     key = frappe.scrub(provider_name)
@@ -187,7 +227,7 @@ def configure_ldap(frappe, sso: dict) -> str:
 
 
 def configure_assistant(frappe, a: dict) -> str:
-    providers = {"anthropic": "Anthropic Messages API", "openai-compatible": "OpenAI-compatible (internal gateway)"}
+    providers = {"anthropic": "Anthropic Messages API", "openai-compatible": "OpenAI-compatible API"}
     if not frappe.db.exists("DocType", "Assistant Settings"):
         return "not present in this release"
     values = {"ai_enabled": 1 if a.get("ai_enabled") else 0}
@@ -223,6 +263,7 @@ def main() -> int:
         for label, fn in (("scheduler", lambda: configure_scheduler(frappe)),
                           ("site", lambda: configure_system(frappe, s)),
                           ("email", lambda: configure_email(frappe, s["email"])),
+                          ("email route", lambda: configure_email_route(frappe, s["email"])),
                           ("sso (oidc)", lambda: configure_oidc(frappe, s["sso"])),
                           ("sso (ldap)", lambda: configure_ldap(frappe, s["sso"])),
                           ("assistant", lambda: configure_assistant(frappe, s["assistant"]))):

@@ -252,7 +252,7 @@
   },
   {
    "default": "0",
-   "description": "The issue is systemic rather than isolated. A matrix rule may test this flag to send the matter on the systemic route, and a service level may time the second-line challenge of systemic matters.",
+   "description": "The issue is systemic rather than isolated. A matrix rule may test this to send the matter on the systemic route, and a service level may time the second-line challenge of systemic matters.",
    "fieldname": "systemic",
    "fieldtype": "Check",
    "label": "Systemic"
@@ -284,7 +284,7 @@
   },
   {
    "default": "Open",
-   "description": "A label. Business logic reads the semantic flags, never this string.",
+   "description": "Where the matter stands.",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -294,7 +294,7 @@
    "reqd": 1
   },
   {
-   "description": "Set by the framework's workflow engine where one is configured. Flags are derived from it as well as from status.",
+   "description": "Set by the approval workflow, where one is configured.",
    "fieldname": "workflow_state",
    "fieldtype": "Data",
    "label": "Workflow State",
@@ -302,7 +302,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+   "description": "Set automatically from the status.",
    "fieldname": "is_editable",
    "fieldtype": "Check",
    "label": "Is Editable",
@@ -310,7 +310,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+   "description": "Set automatically from the status.",
    "fieldname": "is_active",
    "fieldtype": "Check",
    "label": "Is Active",
@@ -318,7 +318,7 @@
   },
   {
    "default": "1",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+   "description": "Set automatically from the status.",
    "fieldname": "is_open",
    "fieldtype": "Check",
    "label": "Is Open",
@@ -326,7 +326,7 @@
   },
   {
    "default": "0",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+   "description": "Set automatically from the status.",
    "fieldname": "requires_review",
    "fieldtype": "Check",
    "label": "Requires Review",
@@ -334,7 +334,7 @@
   },
   {
    "default": "0",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+   "description": "Set automatically from the status.",
    "fieldname": "is_committable",
    "fieldtype": "Check",
    "label": "Is Committable",
@@ -342,7 +342,7 @@
   },
   {
    "default": "0",
-   "description": "Semantic flag set from Workflow State Flag on validate. Business logic reads this, never the status label.",
+   "description": "Set automatically from the status.",
    "fieldname": "requires_statement",
    "fieldtype": "Check",
    "label": "Requires Statement",
@@ -390,7 +390,7 @@
    "read_only": 1
   },
   {
-   "description": "Core's clock for this matter. The module writes no timing logic of its own.",
+   "description": "The service-level clock timing this matter.",
    "fieldname": "sla_clock",
    "fieldtype": "Link",
    "label": "SLA Clock",
@@ -434,7 +434,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 06:40:43.319862",
+ "modified": "2026-09-18 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Escalation",
  "name": "Escalation Matter",

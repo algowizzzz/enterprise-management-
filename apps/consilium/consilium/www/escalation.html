@@ -17,9 +17,10 @@
 
 {% block page_actions %}
 {%- if found %}
-{%- if desk_access %}
-<a class="cns-btn cns-btn-primary" href="/app/escalation-matter/{{ record_name | urlencode }}">
-  <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Open in the workspace
+{%- if cns_advanced_view() %}
+<a class="cns-btn cns-btn-ghost" href="/app/escalation-matter/{{ record_name | urlencode }}"
+   title="The full record in the configuration workspace, for administrators">
+  <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Advanced view
 </a>
 {%- endif %}
 {%- if cns_has_any_role("Consilium Audit", "Consilium Administrator", "System Manager") %}
@@ -83,7 +84,8 @@
   <i class="bi bi-info-circle" aria-hidden="true"></i>
   <div id="read-only-text">
     {%- if can_edit %}
-    Nothing on this matter is open to you at its present stage. Anything else is done in the workspace.
+    Nothing on this matter is open to you at its present stage. Its owner and the second line move it on
+    from here.
     {%- else %}
     You have read access to this matter. It is worked by its response owner and accountable
     executive, and challenged by the second line.
@@ -925,12 +927,12 @@
   function historyEntry(e) {
     var meta = [];
     if (e.kind === "notification") {
-      meta.push("To " + escapeHtml(e.recipient || "—"));
+      meta.push("To " + (e.recipient ? Consilium.person(e.recipient) : "—"));
       if (e.channel) meta.push(escapeHtml(e.channel));
       if (e.status) meta.push(escapeHtml(e.status));
       if (e.mail_status && e.mail_status !== e.status) meta.push("mail: " + escapeHtml(e.mail_status));
     } else if (e.by) {
-      meta.push(escapeHtml(e.by));
+      meta.push(Consilium.person(e.by));
     }
     meta.push(escapeHtml(Consilium.util.formatDate(e.on, true)));
     return '<li><i class="bi bi-' + (HISTORY_ICONS[e.kind] || "dot") + '" aria-hidden="true"></i> ' +
@@ -970,7 +972,7 @@
   function acceptanceById(name) {
     return ((WB && WB.acceptances) || []).filter(function (a) { return a.name === name; })[0];
   }
-  function actionLabel(key) { return (WB && WB.action_labels && WB.action_labels[key]) || key; }
+  function actionLabel(key) { return (WB && WB.action_labels && WB.action_labels[key]) || Consilium.util.humanize(key); }
   function peopleOptions() {
     return ((WB && WB.people) || []).map(function (p) { return { value: p.name, label: p.full_name || p.name }; });
   }
