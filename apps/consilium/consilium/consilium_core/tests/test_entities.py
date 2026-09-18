@@ -158,6 +158,11 @@ class TestEntityStructure(CoreTestCase):
         # event (a question put to the assistant, a reminder sent) and is never
         # edited, so a change history of it would only ever be empty.
         logs = {"Assistant Interaction", "Reminder Log"}
+        # Personal preferences, not governed records: a saved dashboard layout
+        # is one person's choice of what to see, and changes nothing anyone
+        # relies on.
+        preferences = {"Dashboard Layout"}
+        logs |= preferences
         # A DocType a site administrator created for their own trials, not part
         # of the application, may sit in this module on a working site.
         local = {"ABC"}
