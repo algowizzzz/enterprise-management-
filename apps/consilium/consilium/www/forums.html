@@ -1,0 +1,320 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Forum inventory.
+  One table, the shared component, reading Governance Forum over the REST API.
+  Sorting, search and pagination all happen on the server; the filter bar below
+  hands the component a filter set and lets it reload.
+-#}
+
+{% block page_actions %}
+{%- if can_request %}
+<a class="cns-btn cns-btn-primary" href="/create-forum">
+  <i class="bi bi-plus-lg" aria-hidden="true"></i> Request a new forum
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+<section class="cns-card" aria-labelledby="filter-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="filter-heading">Narrow the list</h2>
+      <p class="cns-card-subtitle">Filters apply on the server and combine with whatever you
+        type in the table's search box.</p>
+    </div>
+    <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" id="filter-clear">
+      <i class="bi bi-x-circle" aria-hidden="true"></i> Clear filters
+    </button>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-form-grid">
+      <div class="cns-field">
+        <label class="cns-label" for="f-type">Forum type</label>
+        <select class="cns-select" id="f-type" data-filter-field="forum_type">
+          <option value="">Any type</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-status">Compliance status</label>
+        <select class="cns-select" id="f-status" data-filter-field="compliance_status">
+          <option value="">Any status</option>
+          {%- for option in status_options %}
+          <option value="{{ option }}">{{ option }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-cadence">Cadence</label>
+        <select class="cns-select" id="f-cadence" data-filter-field="cadence">
+          <option value="">Any cadence</option>
+          {%- for option in cadence_options %}
+          <option value="{{ option }}">{{ option }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-risk">Primary risk category</label>
+        <select class="cns-select" id="f-risk" data-filter-field="primary_risk_category">
+          <option value="">Any category</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-group">Owning operating group</label>
+        <select class="cns-select" id="f-group" data-filter-field="owning_operating_group">
+          <option value="">Any operating group</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-standing">Standing</label>
+        <select class="cns-select" id="f-standing">
+          <option value="active">Active forums</option>
+          <option value="all">Active and disbanded</option>
+          <option value="disbanded">Disbanded only</option>
+          <option value="review">Awaiting review</option>
+          <option value="regulatory">Regulatory-required</option>
+          <option value="overdue">Review overdue</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="forum-table"></div>
+
+<p class="cns-text-muted cns-text-sm" style="margin-top: var(--cns-space-3);">
+  The table scrolls sideways to reach the later columns. A forum's multi-value
+  attributes — business units, risk types, legal entities and jurisdictions — are
+  held against the forum itself and are shown on its own page.
+</p>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/assets/consilium/js/consilium-reference.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var f = Consilium.Table.formatters;
+  var escapeHtml = Consilium.util.escapeHtml;
+
+  var STATUS_TONES = {
+    Draft: "neutral",
+    Pending: "warning",
+    Compliant: "success",
+    "Non-Compliant": "danger",
+    "Not Applicable": "info",
+    Disbanded: "neutral"
+  };
+
+  /** A yes/no cell that reads as a word, not a tick nobody can search for. */
+  function flag(yes, no, tone) {
+    return function (value) {
+      return value
+        ? '<span class="cns-pill cns-status-' + tone + '">' + escapeHtml(yes) + "</span>"
+        : '<span class="cns-text-muted">' + escapeHtml(no) + "</span>";
+    };
+  }
+
+  function plain(value) {
+    return value ? escapeHtml(value) : '<span class="cns-text-muted">&mdash;</span>';
+  }
+
+  /** A reference code shown by its name, because nobody says "EXEC_CTTE". */
+  function named(doctype) {
+    return function (value) {
+      if (!value) return '<span class="cns-text-muted">&mdash;</span>';
+      return escapeHtml(Consilium.reference.label(doctype, value));
+    };
+  }
+
+  /** A due date that says plainly when it has passed. */
+  function dueDate(value) {
+    if (!value) return '<span class="cns-text-muted">&mdash;</span>';
+    var text = escapeHtml(Consilium.util.formatDate(value, false));
+    var due = new Date(String(value) + "T00:00:00");
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (due < today) {
+      return text + ' <span class="cns-pill cns-status-danger">Overdue</span>';
+    }
+    return text;
+  }
+
+  var table = null;
+
+  function buildTable() {
+    table = Consilium.Table.create({
+    target: "#forum-table",
+    doctype: "Governance Forum",
+    title: "Governance forums",
+    description: "Sort any column, search by name or reference, and set the page size to suit.",
+    caption: "Governance forum inventory",
+    storageKey: "forum-inventory",
+    rowKey: "name",
+    searchPlaceholder: "Search by name, reference or mandate",
+    searchFields: ["forum_name", "name", "description"],
+    defaultSort: { field: "forum_name", order: "asc" },
+    pageSize: 25,
+    striped: true,
+    filters: [["is_active", "=", 1]],
+    onRowClick: function (row) {
+      window.location.href = "/forum?name=" + encodeURIComponent(row.name);
+    },
+    emptyTitle: "No forums match",
+    emptyMessage: "Clear a filter or widen the search to see more of the inventory.",
+    columns: [
+      { field: "name", label: "Reference", sortable: true, className: "cns-mono",
+        width: "9rem", formatter: f.link("/forum?name=") },
+      { field: "forum_name", label: "Forum", sortable: true, searchable: true,
+        width: "16rem", formatter: f.truncate(60) },
+      { field: "forum_type", label: "Type", sortable: true, width: "11rem",
+        formatter: named("Governance Forum Type") },
+      { field: "cadence", label: "Cadence", sortable: true, formatter: plain },
+      { field: "compliance_status", label: "Compliance", sortable: true,
+        formatter: f.status(STATUS_TONES) },
+      { field: "requires_review", label: "Review due", sortable: true,
+        formatter: flag("Awaiting review", "No", "warning") },
+      { field: "next_review_on", label: "Next review", sortable: true, formatter: dueDate },
+      { field: "committee_chair", label: "Chair", sortable: true, formatter: plain },
+      { field: "secretary", label: "Secretary", sortable: true, formatter: plain },
+      { field: "forum_owner", label: "Owner", sortable: true, formatter: plain },
+      { field: "sponsor", label: "Sponsor", sortable: true, formatter: plain },
+      { field: "compliance_contact", label: "Compliance contact", sortable: true, formatter: plain },
+      { field: "primary_risk_category", label: "Primary risk", sortable: true, formatter: named("Risk Category") },
+      { field: "owning_operating_group", label: "Operating group", sortable: true, formatter: named("Organization Unit") },
+      { field: "owning_line_of_business", label: "Line of business", sortable: true, formatter: named("Organization Unit") },
+      { field: "parent_forum", label: "Parent forum", sortable: true,
+        formatter: function (value) {
+          if (!value) return '<span class="cns-text-muted">&mdash;</span>';
+          return '<a href="/forum?name=' + Consilium.util.escapeAttr(encodeURIComponent(value)) +
+            '">' + escapeHtml(Consilium.reference.label("Governance Forum", value)) + "</a>";
+        } },
+      { field: "regulatory_required", label: "Regulatory", sortable: true,
+        formatter: flag("Required", "Not required", "info") },
+      { field: "quorum_rule_type", label: "Quorum rule", sortable: true, formatter: plain },
+      { field: "quorum_value", label: "Quorum value", sortable: true, align: "end",
+        formatter: f.number },
+      { field: "quorum_requires_chair", label: "Chair in quorum", sortable: true,
+        formatter: flag("Required", "No", "info") },
+      { field: "confidential", label: "Handling", sortable: true,
+        formatter: flag("Confidential", "Standard", "warning") },
+      { field: "established_on", label: "Established", sortable: true, formatter: f.date },
+      { field: "last_attested_on", label: "Last attested", sortable: true, formatter: f.date },
+      { field: "disbanded_on", label: "Disbanded", sortable: true, formatter: f.date },
+      { field: "retention_class", label: "Retention", sortable: true, formatter: named("Retention Class") },
+      { field: "is_active", label: "Standing", sortable: true,
+        formatter: flag("Active", "Disbanded", "success") },
+      { field: "formation_request", label: "Formation request", sortable: true,
+        formatter: plain },
+      { field: "modified", label: "Updated", sortable: true, formatter: f.datetime }
+    ]
+    });
+  }
+
+  /* A standing can be named in the address, so the home page can link
+     straight to "awaiting review" or "overdue". */
+  function standingFromAddress() {
+    try {
+      var asked = new URLSearchParams(window.location.search).get("standing");
+      var select = document.getElementById("f-standing");
+      if (asked && Array.prototype.some.call(select.options, function (o) { return o.value === asked; })) {
+        select.value = asked;
+      }
+    } catch (e) { /* the default standing already applies */ }
+  }
+
+  /* The reference lists are read once, so the table can show a forum type by
+     its name rather than its code. The table is built when they are in. */
+  Consilium.reference
+    .load(["Governance Forum Type", "Risk Category", "Organization Unit",
+           "Retention Class", "Governance Forum"])
+    .then(buildTable)
+    .catch(buildTable)
+    .then(function () {
+      standingFromAddress();
+      if (document.getElementById("f-standing").value !== "active") applyFilters();
+    });
+
+  /* --- filter bar ------------------------------------------------------ */
+
+  var selects = Array.prototype.slice.call(
+    document.querySelectorAll("[data-filter-field]")
+  );
+  var standing = document.getElementById("f-standing");
+
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+  }
+
+  var STANDING_FILTERS = {
+    active: [["is_active", "=", 1]],
+    all: [],
+    disbanded: [["is_active", "=", 0]],
+    review: [["requires_review", "=", 1]],
+    regulatory: [["regulatory_required", "=", 1]],
+    overdue: null // built at apply time, it needs today's date
+  };
+
+  function applyFilters() {
+    var filters = [];
+    if (standing.value === "overdue") {
+      filters.push(["next_review_on", "<", today()]);
+      filters.push(["is_active", "=", 1]);
+    } else {
+      filters = (STANDING_FILTERS[standing.value] || []).slice();
+    }
+    selects.forEach(function (select) {
+      if (select.value) filters.push([select.getAttribute("data-filter-field"), "=", select.value]);
+    });
+    if (!table) return;
+    table.setFilters(filters);
+    Consilium.announce("Filters applied.");
+  }
+
+  selects.concat([standing]).forEach(function (node) {
+    node.addEventListener("change", applyFilters);
+  });
+
+  document.getElementById("filter-clear").addEventListener("click", function () {
+    selects.forEach(function (select) { select.value = ""; });
+    standing.value = "active";
+    applyFilters();
+  });
+
+  /* Reference data for the two link-backed filters. Read over the same API as
+     everything else, so a viewer only ever sees values they may read. */
+  function fillSelect(id, doctype, valueField, labelField) {
+    var select = document.getElementById(id);
+    Consilium.api
+      .list(doctype, {
+        fields: [valueField, labelField],
+        filters: [["is_active", "=", 1]],
+        order_by: labelField + " asc",
+        limit_page_length: 200
+      })
+      .then(function (rows) {
+        rows.forEach(function (row) {
+          var option = document.createElement("option");
+          option.value = row[valueField];
+          option.textContent = row[labelField] || row[valueField];
+          select.appendChild(option);
+        });
+      })
+      .catch(function () {
+        select.disabled = true;
+        select.setAttribute("title", "This filter is unavailable because the reference list could not be read.");
+      });
+  }
+
+  fillSelect("f-type", "Governance Forum Type", "name", "forum_type_name");
+  fillSelect("f-risk", "Risk Category", "name", "risk_category_name");
+  fillSelect("f-group", "Organization Unit", "name", "org_unit_name");
+})();
+</script>
+{% endblock %}

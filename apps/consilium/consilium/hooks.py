@@ -7,11 +7,23 @@ app_license = "MIT"
 
 # All front-end assets are vendored. Nothing is fetched from a CDN at build
 # or run time, because the target environment has no internet access.
-app_include_css = "/assets/consilium/css/consilium.css"
-app_include_js = "/assets/consilium/js/consilium.js"
+# Deliberately no app_include_*: the portal stylesheet and scripts are for the
+# custom screens. The framework's own administration interface is left as it
+# comes, and loading our assets into every one of its pages would buy nothing.
 
-web_include_css = "/assets/consilium/css/consilium.css"
-web_include_js = "/assets/consilium/js/consilium.js"
+web_include_css = [
+    "/assets/consilium/css/tokens.css",
+    "/assets/consilium/css/consilium.css",
+]
+web_include_js = [
+    "/assets/consilium/js/consilium.js",
+    "/assets/consilium/js/consilium-table.js",
+    "/assets/consilium/js/consilium-reference.js",
+]
+
+# Signed-in users are sent to the framework's own landing page otherwise, and
+# never see ours.
+home_page = "index"
 
 after_install = "consilium.consilium_core.setup.install.after_install"
 

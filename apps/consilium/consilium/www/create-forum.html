@@ -1,0 +1,621 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Guided formation request.
+  The form explains what it is doing before it asks for anything, checks each
+  answer as it is given, and keeps a draft on the server so a long request
+  survives an interruption.
+-#}
+
+{% block page_content %}
+
+{%- if not can_request %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
+    <p class="cns-state-title">You cannot raise a formation request</p>
+    <p class="cns-state-message">Ask the governance office to raise one on your behalf, or to give
+      you the access that lets you raise one yourself.</p>
+    <a class="cns-btn cns-btn-secondary" href="/forums">Back to the inventory</a>
+  </div>
+</div>
+{%- else %}
+
+<!-- ------------------------- before you start ------------------------- -->
+<section class="cns-card" aria-labelledby="process-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="process-heading">Before you start</h2>
+      <p class="cns-card-subtitle">What this form does, and what happens after you send it.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-alert cns-status-info">
+      <i class="bi bi-info-circle" aria-hidden="true"></i>
+      <div>
+        <strong>This form does not create a forum.</strong> It raises a formation request. The forum
+        comes into existence only when the request is approved — and <strong>a compliance review is
+        required before that can happen</strong>. Expect questions back; that exchange stays on the
+        record.
+      </div>
+    </div>
+
+    <ol class="cns-workflow" aria-label="What happens to this request">
+      <li class="cns-workflow-step" data-state="current" aria-current="step">
+        <span class="cns-workflow-marker" aria-hidden="true">1</span> You draft it
+      </li>
+      <li class="cns-workflow-step" data-state="pending">
+        <span class="cns-workflow-marker" aria-hidden="true">2</span> Submitted
+      </li>
+      <li class="cns-workflow-step" data-state="pending">
+        <span class="cns-workflow-marker" aria-hidden="true">3</span> Evaluated and compliance review
+      </li>
+      <li class="cns-workflow-step" data-state="pending">
+        <span class="cns-workflow-marker" aria-hidden="true">4</span> Approved
+      </li>
+      <li class="cns-workflow-step" data-state="pending">
+        <span class="cns-workflow-marker" aria-hidden="true">5</span> Forum created
+      </li>
+    </ol>
+
+    <div class="cns-form-grid" style="margin-top: var(--cns-space-5);">
+      <div>
+        <p class="cns-eyebrow">What you must provide</p>
+        <ul class="cns-prose">
+          <li>The kind of request, and for a change or retirement, the forum it concerns</li>
+          <li>The forum's proposed name and type</li>
+          <li>Why it is needed, what it will cover and what it will be responsible for</li>
+          <li>Who delegates the authority, and who sponsors it</li>
+          <li>The accountable operating group</li>
+          <li>The date you need it in place by</li>
+        </ul>
+      </div>
+      <div>
+        <p class="cns-eyebrow">What helps, but is not required</p>
+        <ul class="cns-prose">
+          <li>A proposed reference, if your area uses its own numbering</li>
+          <li>The parent forum it will report into</li>
+          <li>The meeting cadence and the intended first meeting date</li>
+          <li>The line of business beneath the operating group</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="cns-text-muted cns-text-sm" style="margin-top: var(--cns-space-4);">
+      Check the <a href="/forums">inventory</a> first. A request that duplicates a forum already
+      covering the ground is the most common reason one is sent back.
+    </p>
+  </div>
+</section>
+
+<!-- ------------------------------ the form ---------------------------- -->
+<form id="formation-form" novalidate>
+  <div id="form-status" role="status" aria-live="polite"></div>
+
+  <div class="cns-alert cns-status-danger" id="form-errors" role="alert" hidden>
+    <i class="bi bi-x-octagon" aria-hidden="true"></i>
+    <div>
+      <strong>This request is not ready to send.</strong>
+      <ul id="form-errors-list" class="cns-prose" style="margin-top: var(--cns-space-2);"></ul>
+    </div>
+  </div>
+
+  <fieldset class="cns-fieldset">
+    <legend>1. What you are asking for</legend>
+    <div class="cns-form-grid">
+      <div class="cns-field">
+        <label class="cns-label" for="request_type">Kind of request<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="request_type" name="request_type" required>
+          {%- for option in request_types %}
+          <option value="{{ option }}">{{ option }}</option>
+          {%- endfor %}
+        </select>
+        <span class="cns-help">Create a new forum, change an existing one, or retire one.</span>
+      </div>
+      <div class="cns-field" id="subject-field" hidden>
+        <label class="cns-label" for="subject_forum">Forum this concerns<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="subject_forum" name="subject_forum">
+          <option value="">Choose a forum</option>
+        </select>
+        <span class="cns-help">Required for a change or a retirement.</span>
+      </div>
+    </div>
+    <div class="cns-field">
+      <label class="cns-label" for="rationale">Why it is needed<span class="cns-required" aria-hidden="true">*</span></label>
+      <textarea class="cns-textarea" id="rationale" name="rationale" rows="4" required
+                data-min="40" aria-describedby="rationale-help"></textarea>
+      <span class="cns-help" id="rationale-help">The gap in oversight this closes. Evaluators read this first.</span>
+    </div>
+    <div class="cns-field">
+      <label class="cns-label" for="purpose_scope">Purpose and scope<span class="cns-required" aria-hidden="true">*</span></label>
+      <textarea class="cns-textarea" id="purpose_scope" name="purpose_scope" rows="4" required
+                data-min="40" aria-describedby="purpose-help"></textarea>
+      <span class="cns-help" id="purpose-help">What it will cover — and, just as usefully, what it will not.</span>
+    </div>
+    <div class="cns-field">
+      <label class="cns-label" for="proposed_responsibilities">Proposed responsibilities<span class="cns-required" aria-hidden="true">*</span></label>
+      <textarea class="cns-textarea" id="proposed_responsibilities" name="proposed_responsibilities"
+                rows="4" required data-min="40" aria-describedby="resp-help"></textarea>
+      <span class="cns-help" id="resp-help">What it will decide, what it will only review, and what it must escalate.</span>
+    </div>
+  </fieldset>
+
+  <fieldset class="cns-fieldset">
+    <legend>2. The forum</legend>
+    <div class="cns-form-grid">
+      <div class="cns-field">
+        <label class="cns-label" for="forum_name">Proposed name<span class="cns-required" aria-hidden="true">*</span></label>
+        <input class="cns-input" type="text" id="forum_name" name="forum_name" required
+               maxlength="140" aria-describedby="forum-name-help">
+        <span class="cns-help" id="forum-name-help">Name it as it will be referred to in minutes.</span>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="forum_type">Forum type<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="forum_type" name="forum_type" required
+                aria-describedby="forum-type-help">
+          <option value="">Choose a type</option>
+        </select>
+        <span class="cns-help" id="forum-type-help">The type settles how much authority it may hold.</span>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="primary_risk_category">Primary risk category</label>
+        <select class="cns-select" id="primary_risk_category" name="primary_risk_category">
+          <option value="">Choose a category</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="cadence">Cadence</label>
+        <select class="cns-select" id="cadence" name="cadence">
+          <option value="">Not decided yet</option>
+          {%- for option in cadence_options %}
+          <option value="{{ option }}">{{ option }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="parent_forum">Parent forum</label>
+        <select class="cns-select" id="parent_forum" name="parent_forum">
+          <option value="">None</option>
+        </select>
+        <span class="cns-help">Which forum it will report into.</span>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="forum_id_proposed">Proposed reference</label>
+        <input class="cns-input" type="text" id="forum_id_proposed" name="forum_id_proposed"
+               maxlength="60">
+        <span class="cns-help">Only if your area keeps its own numbering.</span>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="cns-fieldset">
+    <legend>3. Accountability</legend>
+    <div class="cns-form-grid">
+      <div class="cns-field">
+        <label class="cns-label" for="owning_operating_group">Owning operating group<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="owning_operating_group" name="owning_operating_group" required>
+          <option value="">Choose an operating group</option>
+        </select>
+        <span class="cns-help">One accountable line. A line of business may sit beneath it.</span>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="owning_line_of_business">Owning line of business</label>
+        <select class="cns-select" id="owning_line_of_business" name="owning_line_of_business">
+          <option value="">None</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="delegating_authority">Delegating authority<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="delegating_authority" name="delegating_authority" required>
+          <option value="">Choose a person</option>
+        </select>
+        <span class="cns-help">Whose authority the forum will act under.</span>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="forum_sponsor">Sponsor<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="forum_sponsor" name="forum_sponsor" required>
+          <option value="">Choose a person</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <div class="cns-check">
+          <input type="checkbox" id="delegating_authority_approved" name="delegating_authority_approved">
+          <label for="delegating_authority_approved">The delegating authority has already agreed to this</label>
+        </div>
+        <span class="cns-help">Leave unticked if that conversation has not happened yet.</span>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="cns-fieldset">
+    <legend>4. Timing</legend>
+    <div class="cns-form-grid">
+      <div class="cns-field">
+        <label class="cns-label" for="proposed_timeline">Needed in place by<span class="cns-required" aria-hidden="true">*</span></label>
+        <input class="cns-input" type="date" id="proposed_timeline" name="proposed_timeline" required>
+        <span class="cns-help">Allow time for evaluation and the compliance review.</span>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="first_meeting_date">Intended first meeting</label>
+        <input class="cns-input" type="date" id="first_meeting_date" name="first_meeting_date">
+      </div>
+    </div>
+  </fieldset>
+
+  <section class="cns-card">
+    <div class="cns-card-body">
+      <div class="cns-form-actions">
+        <button type="button" class="cns-btn cns-btn-secondary" id="save-draft">
+          <i class="bi bi-save" aria-hidden="true"></i> Save draft
+        </button>
+        <button type="submit" class="cns-btn cns-btn-primary" id="submit-request">
+          <i class="bi bi-send" aria-hidden="true"></i> Submit for evaluation
+        </button>
+        <span class="cns-text-muted cns-text-sm" id="draft-state">Not saved yet.</span>
+      </div>
+      <p class="cns-text-muted cns-text-sm" style="margin-top: var(--cns-space-3);">
+        A saved draft is yours to come back to. Submitting hands it to the governance office and
+        locks it while it is being evaluated.
+      </p>
+    </div>
+  </section>
+</form>
+
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if can_request %}
+<script>
+(function () {
+  "use strict";
+
+  var form = document.getElementById("formation-form");
+  var escapeHtml = Consilium.util.escapeHtml;
+  var LOCAL_KEY = "cns:draft:formation";
+  var requestName = {{ existing | tojson }} || null;
+  var dirty = false;
+
+  var FIELDS = ["request_type", "subject_forum", "rationale", "purpose_scope",
+                "proposed_responsibilities", "forum_name", "forum_type", "primary_risk_category",
+                "cadence", "parent_forum", "forum_id_proposed", "owning_operating_group",
+                "owning_line_of_business", "delegating_authority", "forum_sponsor",
+                "delegating_authority_approved", "proposed_timeline", "first_meeting_date"];
+
+  function field(name) { return document.getElementById(name); }
+
+  function values() {
+    var out = {};
+    FIELDS.forEach(function (name) {
+      var node = field(name);
+      if (!node) return;
+      out[name] = node.type === "checkbox" ? (node.checked ? 1 : 0) : node.value.trim();
+    });
+    return out;
+  }
+
+  /* --- validation ------------------------------------------------------ */
+
+  function setError(node, message) {
+    var wrapper = node.closest(".cns-field");
+    var existing = wrapper.querySelector(".cns-error-text");
+    if (message) {
+      node.setAttribute("aria-invalid", "true");
+      if (!existing) {
+        var span = document.createElement("span");
+        span.className = "cns-error-text";
+        span.id = node.id + "-error";
+        wrapper.appendChild(span);
+        existing = span;
+      }
+      existing.textContent = message;
+      var described = (node.getAttribute("aria-describedby") || "").split(" ")
+        .filter(function (v) { return v && v !== existing.id; });
+      described.push(existing.id);
+      node.setAttribute("aria-describedby", described.join(" "));
+    } else {
+      node.removeAttribute("aria-invalid");
+      if (existing) existing.remove();
+    }
+  }
+
+  function checkField(node) {
+    if (!node || node.type === "checkbox") return null;
+    var label = (node.closest(".cns-field").querySelector("label") || {}).textContent || node.id;
+    label = label.replace("*", "").trim();
+    var value = node.value.trim();
+    var required = node.required && !node.hidden && !node.closest("[hidden]");
+    var message = null;
+
+    if (required && !value) {
+      message = label + " is needed before this can be sent.";
+    } else if (value && node.dataset.min && value.length < Number(node.dataset.min)) {
+      message = "Please give a little more detail — at least " + node.dataset.min +
+        " characters. You have " + value.length + ".";
+    } else if (value && node.type === "date") {
+      var chosen = new Date(value + "T00:00:00");
+      var today = new Date(); today.setHours(0, 0, 0, 0);
+      if (chosen < today) message = "That date has passed. Choose one in the future.";
+    }
+    setError(node, message);
+    return message ? { id: node.id, message: message } : null;
+  }
+
+  function validateAll() {
+    var problems = [];
+    FIELDS.forEach(function (name) {
+      var problem = checkField(field(name));
+      if (problem) problems.push(problem);
+    });
+    var box = document.getElementById("form-errors");
+    var list = document.getElementById("form-errors-list");
+    if (problems.length) {
+      list.innerHTML = problems.map(function (p) {
+        return '<li><a href="#' + p.id + '">' + escapeHtml(p.message) + "</a></li>";
+      }).join("");
+      box.hidden = false;
+    } else {
+      box.hidden = true;
+      list.innerHTML = "";
+    }
+    return problems;
+  }
+
+  /* --- request type drives the subject field --------------------------- */
+
+  function syncRequestType() {
+    var isCreate = field("request_type").value === "Create";
+    var wrapper = document.getElementById("subject-field");
+    wrapper.hidden = isCreate;
+    field("subject_forum").required = !isCreate;
+    if (isCreate) setError(field("subject_forum"), null);
+  }
+
+  field("request_type").addEventListener("change", function () {
+    syncRequestType();
+    markDirty();
+  });
+
+  /* --- duplicate warning ------------------------------------------------ */
+
+  var duplicateNote = null;
+
+  var checkDuplicate = Consilium.util.debounce(function () {
+    var name = field("forum_name").value.trim();
+    var wrapper = field("forum_name").closest(".cns-field");
+    if (duplicateNote) { duplicateNote.remove(); duplicateNote = null; }
+    if (name.length < 4) return;
+    Consilium.api
+      .list("Governance Forum", {
+        fields: ["name", "forum_name"],
+        filters: [["forum_name", "like", "%" + name + "%"]],
+        limit_page_length: 3,
+        trackLoading: false
+      })
+      .then(function (rows) {
+        if (!rows.length) return;
+        duplicateNote = document.createElement("span");
+        duplicateNote.className = "cns-help";
+        duplicateNote.innerHTML = "Already on the inventory, and possibly the same ground: " +
+          rows.map(function (row) {
+            return '<a href="/forum?name=' + Consilium.util.escapeAttr(encodeURIComponent(row.name)) +
+              '">' + escapeHtml(row.forum_name) + "</a>";
+          }).join(", ") + ".";
+        wrapper.appendChild(duplicateNote);
+      })
+      .catch(function () { /* the warning is a courtesy, not a gate */ });
+  }, 400);
+
+  /* --- draft handling --------------------------------------------------- */
+
+  function markDirty() {
+    dirty = true;
+    document.getElementById("draft-state").textContent = "Unsaved changes.";
+    try { window.localStorage.setItem(LOCAL_KEY, JSON.stringify(values())); } catch (e) {}
+  }
+
+  FIELDS.forEach(function (name) {
+    var node = field(name);
+    if (!node) return;
+    node.addEventListener("input", function () {
+      markDirty();
+      if (node.getAttribute("aria-invalid")) checkField(node);
+      if (name === "forum_name") checkDuplicate();
+    });
+    node.addEventListener("change", markDirty);
+    node.addEventListener("blur", function () { checkField(node); });
+  });
+
+  function payload(state) {
+    var data = values();
+    data.doctype = "Committee Formation Request";
+    data.is_new_committee = data.request_type === "Create" ? 1 : 0;
+    // Only the draft state is written directly. Submission goes through the
+    // server's own transition — see submitRequest below.
+    if (state) { data.workflow_state = state; }
+    FIELDS.forEach(function (name) {
+      if (data[name] === "") delete data[name];
+    });
+    if (data.request_type === "Create") delete data.subject_forum;
+    return data;
+  }
+
+  // Submission is a transition, not a field write. Setting `workflow_state`
+  // over the REST interface moves the record and sets its semantic flags
+  // correctly, and skips everything the transition does around them — for a
+  // formation request that is the duplicate check, so two identical forums
+  // could be requested and nobody would be told.
+  function submitRequest() {
+    return save(null).then(function (doc) {
+      return Consilium.api.call("consilium.governance.formation.submit_request",
+                                { request: doc.name }, { method: "POST" })
+        .then(function () { return doc; });
+    });
+  }
+
+  function save(state) {
+    var data = payload(state);
+    var promise = requestName
+      ? Consilium.api.update("Committee Formation Request", requestName, data)
+      : Consilium.api.create("Committee Formation Request", data);
+    return promise.then(function (doc) {
+      requestName = doc.name;
+      dirty = false;
+      try { window.localStorage.removeItem(LOCAL_KEY); } catch (e) {}
+      document.getElementById("draft-state").textContent =
+        "Saved as " + doc.name + " at " + new Date().toLocaleTimeString() + ".";
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, "", "/create-forum?request=" + encodeURIComponent(doc.name));
+      }
+      return doc;
+    });
+  }
+
+  document.getElementById("save-draft").addEventListener("click", function () {
+    /* A draft is allowed to be incomplete — but the record still needs the
+       handful of fields it cannot be stored without. */
+    var missing = ["forum_name", "forum_type", "owning_operating_group", "delegating_authority",
+                   "forum_sponsor", "proposed_timeline", "rationale", "purpose_scope",
+                   "proposed_responsibilities"]
+      .filter(function (name) { return !field(name).value.trim(); });
+    if (missing.length) {
+      missing.forEach(function (name) { checkField(field(name)); });
+      Consilium.toast.warning(
+        "A draft still needs the request's own essentials: " + missing.length +
+        " field(s) are empty. They are marked on the form."
+      );
+      return;
+    }
+    save("Draft")
+      .then(function (doc) {
+        Consilium.toast.success("Draft saved as " + doc.name + ". You can come back to it.");
+      })
+      .catch(function (error) {
+        Consilium.toast.error(error.message || "The draft could not be saved.", { title: "Not saved" });
+      });
+  });
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var problems = validateAll();
+    if (problems.length) {
+      var first = document.getElementById(problems[0].id);
+      if (first) first.focus();
+      Consilium.announce(problems.length + " field(s) need attention before this can be sent.");
+      return;
+    }
+    var button = document.getElementById("submit-request");
+    button.disabled = true;
+    submitRequest()
+      .then(function (doc) {
+        Consilium.toast.success(
+          "Request " + doc.name + " has been submitted. The governance office will evaluate it and " +
+          "a compliance review will follow.",
+          { title: "Submitted", timeout: 9000 }
+        );
+        document.getElementById("form-status").innerHTML =
+          '<div class="cns-alert cns-status-success"><i class="bi bi-check-circle" aria-hidden="true"></i>' +
+          "<div><strong>Submitted as " + escapeHtml(doc.name) + ".</strong> It is locked while it is " +
+          "evaluated. You will be asked if anything is unclear.</div></div>";
+        form.querySelectorAll("input, select, textarea, button").forEach(function (node) {
+          node.disabled = true;
+        });
+      })
+      .catch(function (error) {
+        button.disabled = false;
+        Consilium.toast.error(error.message || "The request could not be submitted.",
+                              { title: "Not submitted" });
+      });
+  });
+
+  window.addEventListener("beforeunload", function (event) {
+    if (!dirty) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+
+  /* --- reference data and any existing draft ---------------------------- */
+
+  function fill(id, doctype, labelField, filters) {
+    var select = field(id);
+    return Consilium.api
+      .list(doctype, {
+        fields: ["name", labelField],
+        filters: filters,
+        order_by: labelField + " asc",
+        limit_page_length: 300
+      })
+      .then(function (rows) {
+        rows.forEach(function (row) {
+          var option = document.createElement("option");
+          option.value = row.name;
+          option.textContent = row[labelField] || row.name;
+          select.appendChild(option);
+        });
+      })
+      .catch(function () {
+        select.disabled = true;
+        setError(select, "This list could not be read, so the field cannot be filled in here.");
+      });
+  }
+
+  var ready = Promise.all([
+    fill("forum_type", "Governance Forum Type", "forum_type_name", [["is_active", "=", 1]]),
+    fill("primary_risk_category", "Risk Category", "risk_category_name", [["is_active", "=", 1]]),
+    fill("owning_operating_group", "Organization Unit", "org_unit_name",
+         [["is_active", "=", 1], ["unit_level", "in", ["Operating Group", "Corporate Support"]]]),
+    fill("owning_line_of_business", "Organization Unit", "org_unit_name",
+         [["is_active", "=", 1], ["unit_level", "=", "Line of Business"]]),
+    fill("parent_forum", "Governance Forum", "forum_name", [["is_active", "=", 1]]),
+    fill("subject_forum", "Governance Forum", "forum_name", [["is_active", "=", 1]]),
+    fill("delegating_authority", "User", "full_name", [["enabled", "=", 1]]),
+    fill("forum_sponsor", "User", "full_name", [["enabled", "=", 1]])
+  ]);
+
+  function apply(data) {
+    FIELDS.forEach(function (name) {
+      var node = field(name);
+      if (!node || data[name] === undefined || data[name] === null) return;
+      if (node.type === "checkbox") node.checked = !!data[name];
+      else node.value = data[name];
+    });
+    syncRequestType();
+  }
+
+  ready.then(function () {
+    if (requestName) {
+      Consilium.api
+        .get("Committee Formation Request", requestName)
+        .then(function (doc) {
+          apply(doc);
+          document.getElementById("draft-state").textContent = "Draft " + doc.name + " loaded.";
+          if (!doc.is_editable) {
+            document.getElementById("form-status").innerHTML =
+              '<div class="cns-alert cns-status-info"><i class="bi bi-lock" aria-hidden="true"></i>' +
+              "<div>This request is with the governance office and cannot be changed here.</div></div>";
+            form.querySelectorAll("input, select, textarea, button").forEach(function (node) {
+              node.disabled = true;
+            });
+          }
+        })
+        .catch(function (error) {
+          Consilium.toast.error(error.message || "That draft could not be opened.");
+        });
+      return;
+    }
+    try {
+      var stored = window.localStorage.getItem(LOCAL_KEY);
+      if (stored) {
+        apply(JSON.parse(stored));
+        document.getElementById("draft-state").textContent =
+          "Restored from this browser. Save the draft to keep it on the record.";
+      }
+    } catch (e) { /* no stored draft, or storage is unavailable */ }
+    syncRequestType();
+  });
+
+  syncRequestType();
+})();
+</script>
+{%- endif %}
+{% endblock %}

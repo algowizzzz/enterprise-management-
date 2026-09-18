@@ -1,6 +1,8 @@
 """Reading the inventory: search, filter, hierarchy, interconnectivity, attestation."""
 
 import frappe
+
+from consilium.governance.tests import task_for
 from frappe.utils import add_days, nowdate
 
 from consilium.consilium_core import attestation
@@ -96,7 +98,7 @@ class TestAttestationStamp(GovernanceTestCase):
 
         campaign = reviews.open_inventory_attestation(unique("period"),
                                                       due_on=add_days(nowdate(), 30))
-        task_name = reviews.generate(campaign)["created"][0]
+        task_name = task_for(reviews.generate(campaign), forum.name)
 
         self.assertIsNone(inventory.stamp_attestation(task_name))
         self.assertIn(forum.name, [row["name"] for row in inventory.unattested()])
@@ -120,7 +122,7 @@ class TestAttestationStamp(GovernanceTestCase):
         make_seat(forum.name, seat_role(is_owner_role=1, max_holders=1, can_attest=1), make_user())
         campaign = reviews.open_inventory_attestation(unique("period"),
                                                       due_on=add_days(nowdate(), 30))
-        task_name = reviews.generate(campaign)["created"][0]
+        task_name = task_for(reviews.generate(campaign), forum.name)
         attestation.respond(task_name, "Declined", statement="The record is out of date.")
 
         task = frappe.get_doc("Attestation Task", task_name)

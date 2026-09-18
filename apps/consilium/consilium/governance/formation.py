@@ -104,6 +104,30 @@ def duplicate_check(request) -> str:
 
 
 # ------------------------------------------------------------ transitions
+#
+# `submit` and `respond_to_return` are whitelisted because the portal has to be
+# able to call them. Without that, a screen can only move the request by writing
+# its state over the REST interface — which sets the state and the semantic flags
+# correctly, and silently skips everything the transition does around them. For
+# submission that means the duplicate check never runs, so two identical forums
+# can be requested and nobody is told. A transition that can be bypassed by
+# writing a field is not a transition.
+
+
+@frappe.whitelist(methods=["POST"])
+def submit_request(request: str):
+    """Submit a formation request. The portal's entry point."""
+    doc = frappe.get_doc("Committee Formation Request", request)
+    doc.check_permission("write")
+    return submit(doc)
+
+
+@frappe.whitelist(methods=["POST"])
+def respond_to_returned_request(request: str, response: str):
+    """The originator's reply to a returned request. The portal's entry point."""
+    doc = frappe.get_doc("Committee Formation Request", request)
+    doc.check_permission("write")
+    return respond_to_return(doc, response)
 
 
 def submit(request):

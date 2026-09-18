@@ -22,6 +22,7 @@ The shared shell, theme system and components every portal screen is built on.
 | `css/consilium.css` | The portal stylesheet, written entirely against the tokens. |
 | `js/consilium.js` | Theme, font size, API client, toasts, announcements. |
 | `js/consilium-table.js` | The table component. |
+| `js/consilium-reference.js` | Reference-code to readable-name lookup, loaded per screen. |
 | `../templates/base_portal.html` | The layout every page extends. |
 | `../www/ui-kit.html` | Live reference and manual test surface for all of the above. |
 
@@ -99,8 +100,17 @@ empty and error panels, `cns-spinner`, `cns-skeleton`, `cns-workflow` with
 `cns-workflow-step[data-state=done|current|pending|blocked]`, and the utilities
 `cns-visually-hidden`, `cns-text-muted`, `cns-mono`, `cns-eyebrow`.
 
-`/ui-kit` renders all of them; use it as the reference and check a change there
-in both themes before shipping it.
+Screens also share a few layout pieces, all token-driven: `cns-metric-grid`
+(the dashboard strip), `cns-bars` / `cns-bar-row` / `cns-bar-track` /
+`cns-bar-fill` (a distribution, tone-coloured like a status pill), `cns-dl`
+(a labelled detail list, `cns-dl--stacked` for long values), `cns-chips`,
+`cns-tabs` + `cns-tab` + `cns-tabpanel`, `cns-timeline`, `cns-prose` (authored
+copy), `cns-diagram` (an inline SVG that scales with the page and follows the
+theme), `cns-fieldset` + `cns-form-actions`, and `cns-link-list` +
+`cns-link-card` for linking out to the framework's own screens.
+
+`/ui-kit` renders the shared components; use it as the reference and check a
+change there in both themes before shipping it.
 
 ## Configuring a table
 
@@ -199,3 +209,39 @@ Consilium.announce("Filtered to 12 records.");   // screen readers only
 
 `consilium:themechange`, `consilium:fontsizechange`, `consilium:loading` — all
 dispatched on `document`.
+
+## Reference codes and their names
+
+Reference data is keyed by a code. A code is the right thing to store and the
+wrong thing to show — nobody says "EXEC_CTTE" in a meeting. `consilium-reference.js`
+reads the label field for a list once, through the same API client, and gives a
+lookup a formatter can call synchronously:
+
+```html
+<script src="/assets/consilium/js/consilium-reference.js"></script>
+<script>
+  Consilium.reference
+    .load(["Governance Forum Type", "Risk Category"])
+    .then(function () {
+      Consilium.reference.label("Governance Forum Type", "EXEC_CTTE");  // "Executive Committee"
+    });
+</script>
+```
+
+An unknown code, an unreadable list and a missing value all come back as the
+code itself, so a viewer without access to a reference list still sees something
+truthful. Build a table that shows a coded column only after `load()` resolves —
+formatters run synchronously.
+
+## The portal screens
+
+| Route | File | What it is |
+|---|---|---|
+| `/` | `www/index.html` | Guide to using the system, plus the inventory dashboard. Guidance comes from `Guide Article`; each section falls back to built-in copy. |
+| `/forums` | `www/forums.html` | The forum inventory: every recorded column, sortable, filterable, searchable, paginated. `?standing=review|overdue|…` preselects a filter. |
+| `/forum?name=…` | `www/forum.html` | One forum: details, membership (as at any date), linkages and the interconnectivity diagram, documents, decisions, history. |
+| `/create-forum` | `www/create-forum.html` | The guided formation request. Creates a `Committee Formation Request`, never a forum. |
+| `/admin` | `www/admin.html` | Administration. Reference data here; users, roles and configuration linked to the framework's own screens. |
+
+The home page is only served at `/` when Website Settings' home page is set to
+`index`; the framework otherwise sends a signed-in user to `/me`.

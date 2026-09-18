@@ -134,6 +134,18 @@ body.cns-portal {
 .cns-portal .cns-footer a {
   text-decoration: none;
 }
+
+/* A link styled as a button takes the button's colour. Without this the link
+   colour above wins on specificity and the button reads as body copy. */
+.cns-portal a.cns-btn-primary,
+.cns-portal a.cns-btn-primary:hover { color: var(--cns-on-primary); }
+.cns-portal a.cns-btn-secondary,
+.cns-portal a.cns-btn-secondary:hover { color: var(--cns-text); }
+.cns-portal a.cns-btn-ghost,
+.cns-portal a.cns-btn-ghost:hover { color: var(--cns-text-link); }
+.cns-portal a.cns-btn-danger,
+.cns-portal a.cns-btn-danger:hover { color: var(--cns-on-primary); }
+
 .cns-portal .cns-breadcrumb a:hover,
 .cns-portal .cns-footer a:hover {
   text-decoration: underline;
@@ -970,7 +982,122 @@ th[aria-sort="descending"] .cns-sort-btn { color: var(--cns-text); }
 .cns-footer a:hover { color: var(--cns-text-link-hover); text-decoration: underline; }
 
 /* --------------------------------------------------------------------------
-   15. Small-screen adjustments
+   15. Screen compositions
+   Layout pieces the portal screens share: metric strips, distribution bars,
+   detail lists, tab panels, timelines, prose and the interconnectivity
+   diagram. Tokens only — nothing here knows a colour by name.
+   -------------------------------------------------------------------------- */
+
+/* Metric strip -------------------------------------------------------- */
+.cns-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--cns-space-4);
+  margin-bottom: var(--cns-space-5);
+}
+.cns-metric-grid .cns-card { margin-bottom: 0; }
+.cns-metric-note { display: block; margin-top: var(--cns-space-1); font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
+a.cns-metric-link { text-decoration: none; color: inherit; display: block; height: 100%; }
+a.cns-metric-link:hover .cns-stat-value { color: var(--cns-text-link-hover); }
+a.cns-metric-link:hover { background: var(--cns-surface-hover); }
+
+/* Distribution bars --------------------------------------------------- */
+.cns-bars { display: flex; flex-direction: column; gap: var(--cns-space-3); margin: 0; }
+.cns-bar-row { display: grid; grid-template-columns: minmax(7rem, 12rem) 1fr auto; gap: var(--cns-space-3); align-items: center; }
+.cns-bar-label { font-size: var(--cns-text-sm); color: var(--cns-text-secondary); }
+.cns-bar-track { background: var(--cns-surface-sunken); border: var(--cns-border-width) solid var(--cns-border-subtle); border-radius: var(--cns-radius-pill); height: 0.75rem; overflow: hidden; }
+.cns-bar-fill { display: block; height: 100%; min-width: 0.15rem; background: var(--cns-neutral); border-radius: var(--cns-radius-pill); }
+.cns-bar-fill.cns-status-success { background: var(--cns-success); }
+.cns-bar-fill.cns-status-warning { background: var(--cns-warning); }
+.cns-bar-fill.cns-status-danger  { background: var(--cns-danger); }
+.cns-bar-fill.cns-status-info    { background: var(--cns-info); }
+.cns-bar-fill.cns-status-primary { background: var(--cns-primary); }
+.cns-bar-value { font-variant-numeric: tabular-nums; font-size: var(--cns-text-sm); color: var(--cns-text); min-width: 2.5rem; text-align: end; }
+
+@media (max-width: 575.98px) {
+  .cns-bar-row { grid-template-columns: 1fr auto; }
+  .cns-bar-label { grid-column: 1 / -1; }
+}
+
+/* Detail list --------------------------------------------------------- */
+.cns-dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--cns-space-4); margin: 0; }
+.cns-dl > div { min-width: 0; }
+.cns-dl dt { font-size: var(--cns-text-xs); font-weight: var(--cns-weight-semibold); letter-spacing: var(--cns-tracking-caps); text-transform: uppercase; color: var(--cns-text-muted); margin-bottom: var(--cns-space-1); }
+.cns-dl dd { margin: 0; color: var(--cns-text); overflow-wrap: anywhere; }
+.cns-dl--stacked { grid-template-columns: 1fr; gap: var(--cns-space-3); }
+
+/* Chips --------------------------------------------------------------- */
+.cns-chips { display: flex; flex-wrap: wrap; gap: var(--cns-space-2); margin: 0; padding: 0; list-style: none; }
+
+/* Tab panels ---------------------------------------------------------- */
+.cns-tabs { display: flex; flex-wrap: wrap; gap: var(--cns-space-1); border-bottom: var(--cns-border-width) solid var(--cns-border); margin-bottom: var(--cns-space-4); }
+.cns-tab {
+  appearance: none; background: none; border: none;
+  border-bottom: var(--cns-border-width-thick) solid transparent;
+  padding: var(--cns-space-3) var(--cns-space-4);
+  font: inherit; font-size: var(--cns-text-sm); font-weight: var(--cns-weight-medium);
+  color: var(--cns-text-secondary); cursor: pointer;
+  border-radius: var(--cns-radius-xs) var(--cns-radius-xs) 0 0;
+  transition: color var(--cns-transition-fast), background var(--cns-transition-fast);
+}
+.cns-tab:hover { color: var(--cns-text); background: var(--cns-surface-hover); }
+.cns-tab[aria-selected="true"] { color: var(--cns-primary); border-bottom-color: var(--cns-primary); }
+.cns-tab .cns-badge { margin-left: var(--cns-space-2); }
+.cns-tabpanel[hidden] { display: none; }
+
+/* Timeline ------------------------------------------------------------ */
+.cns-timeline { list-style: none; margin: 0; padding: 0; }
+.cns-timeline > li { position: relative; padding: 0 0 var(--cns-space-4) var(--cns-space-5); border-left: var(--cns-border-width) solid var(--cns-border); }
+.cns-timeline > li:last-child { padding-bottom: 0; border-left-color: transparent; }
+.cns-timeline > li::before {
+  content: ""; position: absolute; left: -0.3rem; top: 0.35rem;
+  width: 0.55rem; height: 0.55rem; border-radius: var(--cns-radius-pill);
+  background: var(--cns-surface); border: var(--cns-border-width-thick) solid var(--cns-primary);
+}
+.cns-timeline-meta { display: block; font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
+
+/* Prose (guide article bodies) ---------------------------------------- */
+.cns-prose { max-width: 68ch; }
+.cns-prose > :first-child { margin-top: 0; }
+.cns-prose > :last-child { margin-bottom: 0; }
+.cns-prose p, .cns-prose ul, .cns-prose ol { margin-bottom: var(--cns-space-3); line-height: var(--cns-leading-loose); }
+.cns-prose ul, .cns-prose ol { padding-left: var(--cns-space-5); }
+.cns-prose li { margin-bottom: var(--cns-space-2); }
+.cns-prose h3, .cns-prose h4 { margin-top: var(--cns-space-4); }
+
+/* Interconnectivity diagram ------------------------------------------- */
+.cns-diagram { width: 100%; overflow-x: auto; }
+.cns-diagram svg { display: block; width: 100%; height: auto; min-width: 20rem; }
+.cns-diagram .cns-node-box { fill: var(--cns-surface-raised); stroke: var(--cns-border-strong); }
+.cns-diagram .cns-node-box--self { fill: var(--cns-primary-subtle); stroke: var(--cns-primary); }
+.cns-diagram .cns-node-label { fill: var(--cns-text); font-size: 0.72rem; font-family: var(--cns-font-sans); }
+.cns-diagram .cns-node-kind { fill: var(--cns-text-muted); font-size: 0.62rem; font-family: var(--cns-font-sans); }
+.cns-diagram .cns-edge { stroke: var(--cns-border-strong); stroke-width: 1.5; fill: none; }
+.cns-diagram .cns-edge-label { fill: var(--cns-text-muted); font-size: 0.6rem; font-family: var(--cns-font-sans); }
+.cns-diagram a:focus-visible rect { outline: none; stroke: var(--cns-primary); stroke-width: 3; }
+
+/* Guided form --------------------------------------------------------- */
+.cns-fieldset { border: var(--cns-border-width) solid var(--cns-border-subtle); border-radius: var(--cns-radius-md); padding: var(--cns-space-4); margin-bottom: var(--cns-space-5); }
+.cns-fieldset > legend { font-size: var(--cns-text-md); font-weight: var(--cns-weight-semibold); padding-inline: var(--cns-space-2); }
+.cns-form-actions { display: flex; flex-wrap: wrap; gap: var(--cns-space-3); align-items: center; }
+
+/* Link list (administration) ------------------------------------------ */
+.cns-link-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--cns-space-3); }
+.cns-link-card {
+  display: block; height: 100%; padding: var(--cns-space-4);
+  border: var(--cns-border-width) solid var(--cns-border); border-radius: var(--cns-radius-md);
+  background: var(--cns-surface); color: inherit; text-decoration: none;
+  transition: background var(--cns-transition-fast), border-color var(--cns-transition-fast);
+}
+.cns-portal a.cns-link-card { text-decoration: none; }
+.cns-link-card:hover { background: var(--cns-surface-hover); border-color: var(--cns-border-strong); }
+.cns-link-card:hover .cns-link-card-title { text-decoration: underline; text-underline-offset: 0.15em; }
+.cns-portal a.cns-metric-link { text-decoration: none; }
+.cns-link-card-title { display: block; font-weight: var(--cns-weight-semibold); color: var(--cns-text-link); margin-bottom: var(--cns-space-1); }
+.cns-link-card-desc { display: block; font-size: var(--cns-text-sm); color: var(--cns-text-muted); }
+
+/* --------------------------------------------------------------------------
+   16. Small-screen adjustments
    -------------------------------------------------------------------------- */
 
 @media (max-width: 767.98px) {
@@ -980,10 +1107,14 @@ th[aria-sort="descending"] .cns-sort-btn { color: var(--cns-text); }
   .cns-fontsize-label { display: none; }
   .cns-dt-toolbar, .cns-dt-footer { flex-direction: column; align-items: stretch; }
   .cns-search { max-width: none; }
+  .cns-metric-grid { gap: var(--cns-space-3); }
+  .cns-dl { grid-template-columns: 1fr; gap: var(--cns-space-3); }
+  .cns-tabs { flex-wrap: nowrap; overflow-x: auto; }
+  .cns-tab { white-space: nowrap; }
 }
 
 /* --------------------------------------------------------------------------
-   16. Print
+   17. Print
    -------------------------------------------------------------------------- */
 
 @media print {

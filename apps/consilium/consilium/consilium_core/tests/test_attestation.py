@@ -186,3 +186,72 @@ class TestAttestation(CoreTestCase):
         task = frappe.get_doc("Attestation Task", task_name)
         self.assertEqual(task.status, "Expired")
         self.assertFalse(task.is_open)
+
+
+
+class TestUnconfiguredRecordsDoNotStopACampaign(CoreTestCase):
+    """One record missing its second signatory must not stop the rest being asked.
+
+    An annual attestation covers a whole population. Raising on the first record
+    that cannot supply a second signatory would mean nobody is asked at all
+    because of one unfilled field — and the person who has to fix it would learn
+    about it from a failed job rather than from a list.
+    """
+
+    def setUp(self):
+        self.owner = make_user()
+        self.second = make_user()
+        self.configured = make_guide_article(category="Policy Lifecycle")
+        self.unconfigured = make_guide_article(category="Policy Lifecycle")
+        for article in (self.configured, self.unconfigured):
+            frappe.db.set_value("Guide Article", article.name, "owner", self.owner)
+        # Only one of the two names a second signatory.
+        frappe.db.set_value("Guide Article", self.configured.name, "modified_by",
+                            self.second, update_modified=False)
+        frappe.db.set_value("Guide Article", self.unconfigured.name, "modified_by",
+                            "", update_modified=False)
+
+        self.campaign = frappe.get_doc(
+            {
+                "doctype": "Attestation Campaign",
+                "campaign_title": "Annual review",
+                "campaign_type": "Governing Document",
+                "period_label": unique("period"),
+                "target_doctype": "Guide Article",
+                "population_filter": '{"category": "Policy Lifecycle"}',
+                "participant_source": "Record Field",
+                "participant_field": "owner",
+                "requires_dual_signature": 1,
+                "second_signatory_field": "modified_by",
+                "opens_on": nowdate(),
+                "due_on": add_days(nowdate(), 30),
+                "status": "Open",
+            }
+        ).insert(ignore_permissions=True)
+
+    def test_the_configured_record_is_asked_and_the_other_is_reported(self):
+        result = attestation.generate_tasks(self.campaign)
+
+        subjects = [
+            frappe.db.get_value("Attestation Task", name, "subject_name")
+            for name in result["created"]
+        ]
+        self.assertIn(self.configured.name, subjects)
+        self.assertNotIn(self.unconfigured.name, subjects)
+        self.assertIn(self.unconfigured.name, result["unconfigured"])
+
+    def test_filling_the_field_in_picks_the_record_up_on_the_next_run(self):
+        attestation.generate_tasks(self.campaign)
+        frappe.db.set_value("Guide Article", self.unconfigured.name, "modified_by",
+                            self.second, update_modified=False)
+
+        result = attestation.generate_tasks(self.campaign)
+
+        subjects = [
+            frappe.db.get_value("Attestation Task", name, "subject_name")
+            for name in result["created"]
+        ]
+        self.assertIn(self.unconfigured.name, subjects)
+        self.assertEqual(result["unconfigured"], [])
+        # And the record that was already asked is not asked twice.
+        self.assertNotIn(self.configured.name, subjects)

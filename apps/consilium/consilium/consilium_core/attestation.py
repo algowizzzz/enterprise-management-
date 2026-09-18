@@ -140,7 +140,13 @@ def _existing_open_task(campaign_name: str, user: str, subject_doctype: str, sub
 def generate_tasks(campaign) -> dict:
     """Materialise tasks for a campaign. Safe to run repeatedly.
 
-    Returns ``{"created": [...], "skipped": [...], "population": n}``.
+    Returns ``{"created": [...], "skipped": [...], "unconfigured": [...], "population": n}``.
+
+    ``skipped`` are records that already have an open task — regeneration is
+    safe and does not duplicate. ``unconfigured`` are records the campaign
+    cannot ask about yet, because a dual-signature campaign found no second
+    signatory on them. They are reported rather than raised, so one record
+    missing a field does not stop the whole population being asked.
     """
     if isinstance(campaign, str):
         campaign = frappe.get_doc("Attestation Campaign", campaign)
@@ -151,7 +157,7 @@ def generate_tasks(campaign) -> dict:
             title=_("Campaign Not Open"),
         )
 
-    created, skipped = [], []
+    created, skipped, unconfigured = [], [], []
     records = population(campaign)
     for record in records:
         for participant in participants_for(campaign, record):
@@ -166,6 +172,16 @@ def generate_tasks(campaign) -> dict:
                 second = frappe.db.get_value(
                     campaign.target_doctype, record, campaign.second_signatory_field
                 )
+                if not second:
+                    # The record has no second signatory, so its task cannot be
+                    # created. Skip it and report it rather than failing the
+                    # campaign: an annual attestation covers the whole
+                    # population, and one record missing a field should not stop
+                    # everyone else from being asked. The gap is returned so it
+                    # can be chased, and regenerating once it is filled in picks
+                    # the record up.
+                    unconfigured.append(record)
+                    continue
             task = frappe.get_doc(
                 {
                     "doctype": "Attestation Task",
@@ -182,7 +198,12 @@ def generate_tasks(campaign) -> dict:
             created.append(task.name)
 
     campaign.db_set("generated_on", now())
-    return {"created": created, "skipped": skipped, "population": len(records)}
+    return {
+        "created": created,
+        "skipped": skipped,
+        "unconfigured": sorted(set(unconfigured)),
+        "population": len(records),
+    }
 
 
 def respond(

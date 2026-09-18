@@ -1,0 +1,525 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Home.
+  Two jobs: tell someone who has never used the system how it works, and show
+  where the inventory stands today. The guidance sections carry built-in copy
+  and are replaced, section by section, with whatever the Guide Article records
+  say — so the words are maintained by the governance office, not by a release.
+-#}
+
+{% block page_actions %}
+<a class="cns-btn cns-btn-secondary" href="/forums">
+  <i class="bi bi-table" aria-hidden="true"></i> Forum inventory
+</a>
+{%- if can_request %}
+<a class="cns-btn cns-btn-primary" href="/create-forum">
+  <i class="bi bi-plus-lg" aria-hidden="true"></i> Request a new forum
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+<!-- =============== Where the inventory stands =============== -->
+<section aria-labelledby="dash-heading">
+  <h2 id="dash-heading" class="cns-eyebrow">Where the inventory stands</h2>
+
+  <div class="cns-metric-grid" id="metric-strip">
+    <div class="cns-card">
+      <div class="cns-card-body cns-stat">
+        <span class="cns-stat-value" data-metric="active"><span class="cns-skeleton" style="width:3rem;display:inline-block;">&nbsp;</span></span>
+        <span class="cns-stat-label">Active forums</span>
+        <span class="cns-metric-note">Recorded and not disbanded</span>
+      </div>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/forums?standing=review">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="review">&nbsp;</span>
+          <span class="cns-stat-label">Awaiting compliance review</span>
+          <span class="cns-metric-note">Open the inventory, filtered to these</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/forums?standing=overdue">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="overdue">&nbsp;</span>
+          <span class="cns-stat-label">Reviews overdue</span>
+          <span class="cns-metric-note">Past the date recorded on the forum</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <div class="cns-card-body cns-stat">
+        <span class="cns-stat-value" data-metric="requests">&nbsp;</span>
+        <span class="cns-stat-label">Formation requests open</span>
+        <span class="cns-metric-note">Raised but not yet decided</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cns-form-grid">
+    <section class="cns-card" aria-labelledby="by-type-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="by-type-heading">Forums by category</h3>
+          <p class="cns-card-subtitle">By forum type, then by the primary risk category each forum carries.</p>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <p class="cns-eyebrow">Forum type</p>
+        <div id="bars-type" class="cns-bars" role="img" aria-label="Forum counts by forum type">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+        <p class="cns-eyebrow" style="margin-top: var(--cns-space-5);">Primary risk category</p>
+        <div id="bars-risk" class="cns-bars" role="img" aria-label="Forum counts by primary risk category"></div>
+      </div>
+    </section>
+
+    <section class="cns-card" aria-labelledby="by-status-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="by-status-heading">Compliance standing</h3>
+          <p class="cns-card-subtitle">Every forum sits in one of these states. The state is moved by a
+            compliance review, never by editing the record.</p>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-status" class="cns-bars" role="img" aria-label="Forum counts by compliance status">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+        <p class="cns-eyebrow" style="margin-top: var(--cns-space-5);">How decisions carry</p>
+        <div id="bars-quorum" class="cns-bars" role="img" aria-label="Forum counts by quorum rule"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="cns-card" aria-labelledby="recent-heading">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="recent-heading">Recent changes</h3>
+        <p class="cns-card-subtitle">The forums whose records moved most recently.</p>
+      </div>
+      <a class="cns-btn cns-btn-ghost cns-btn-sm" href="/forums">See all</a>
+    </div>
+    <div class="cns-card-body">
+      <ul class="cns-timeline" id="recent-changes">
+        <li><span class="cns-skeleton" style="width:60%;display:inline-block;">&nbsp;</span></li>
+      </ul>
+    </div>
+  </section>
+</section>
+
+<!-- =============== Using the system =============== -->
+<section aria-labelledby="guide-heading" style="margin-top: var(--cns-space-6);">
+  <h2 id="guide-heading" class="cns-eyebrow">Using the system</h2>
+
+  <!-- Setting up a forum -->
+  <section class="cns-card" aria-labelledby="g1">
+    <div class="cns-card-header">
+      <h3 class="cns-card-title" id="g1" data-guide-title="Getting Started">Setting up a governance forum</h3>
+    </div>
+    <div class="cns-card-body">
+      <div class="cns-prose" data-guide-category="Getting Started">
+        <p>A forum is never created directly. You raise a <strong>formation request</strong>; it is
+          evaluated against the governance criteria; and an approved request is what brings the forum
+          into existence. That order exists so every forum on the inventory has a recorded reason for
+          being there and a named sponsor.</p>
+        <ol>
+          <li><strong>Search the inventory first.</strong> Most refused requests duplicate a forum that
+            already covers the ground.</li>
+          <li><strong>Choose the type.</strong> The type settles how much authority the forum may hold
+            and who it answers to.</li>
+          <li><strong>Name the accountable line.</strong> One operating group owns the forum; a line of
+            business may sit beneath it.</li>
+          <li><strong>Write the mandate and the escalation route.</strong> A forum with no route out of
+            it quietly absorbs risk.</li>
+          <li><strong>Expect a compliance review.</strong> Nothing is approved without one.</li>
+        </ol>
+      </div>
+      <p class="cns-text-muted cns-text-xs" data-guide-note="Getting Started" hidden></p>
+    </div>
+    <div class="cns-card-footer">
+      <a class="cns-btn cns-btn-secondary cns-btn-sm" href="/create-forum">Start a formation request</a>
+    </div>
+  </section>
+
+  <!-- Forum types -->
+  <section class="cns-card" aria-labelledby="g2">
+    <div class="cns-card-header">
+      <h3 class="cns-card-title" id="g2" data-guide-title="Forum Types">Forum types, and choosing between them</h3>
+    </div>
+    <div class="cns-card-body">
+      <div class="cns-prose" data-guide-category="Forum Types">
+        <p>Work down from authority. Ask what the forum may decide on its own, and the type follows.
+          Where two types would fit, take the one with less authority: authority is easier to add at the
+          next review than to withdraw.</p>
+      </div>
+      <p class="cns-text-muted cns-text-xs" data-guide-note="Forum Types" hidden></p>
+
+      <p class="cns-eyebrow" style="margin-top: var(--cns-space-5);">The types on this site</p>
+      <div class="cns-table-wrap">
+        <table class="cns-table cns-table--compact">
+          <caption class="cns-visually-hidden">Forum types, their definitions and how many forums use each</caption>
+          <thead>
+            <tr>
+              <th scope="col">Type</th>
+              <th scope="col">What it is</th>
+              <th scope="col">Forums</th>
+            </tr>
+          </thead>
+          <tbody id="type-rows">
+            <tr><td colspan="3" class="cns-text-muted">Loading the type list&hellip;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Templates -->
+  <section class="cns-card" aria-labelledby="g3">
+    <div class="cns-card-header">
+      <h3 class="cns-card-title" id="g3" data-guide-title="Templates">Templates you can start from</h3>
+    </div>
+    <div class="cns-card-body">
+      <div class="cns-prose" data-guide-category="Templates">
+        <p>Templates fix the shape of a document or an escalation so that reviewers are not reading a
+          different structure every time. A template names the fields a submission must carry and, where
+          one is held, the file to start from. Use the template that matches the action you are taking —
+          issuing a new document, revising one, reviewing one or retiring one — rather than the nearest
+          document you happen to have.</p>
+      </div>
+      <p class="cns-text-muted cns-text-xs" data-guide-note="Templates" hidden></p>
+
+      <div class="cns-form-grid" style="margin-top: var(--cns-space-4);">
+        <div>
+          <p class="cns-eyebrow">Document templates</p>
+          <ul id="doc-templates" class="cns-prose"><li class="cns-text-muted">Loading&hellip;</li></ul>
+        </div>
+        <div>
+          <p class="cns-eyebrow">Escalation templates</p>
+          <ul id="esc-templates" class="cns-prose"><li class="cns-text-muted">Loading&hellip;</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Decision authority -->
+  <section class="cns-card" aria-labelledby="g4">
+    <div class="cns-card-header">
+      <h3 class="cns-card-title" id="g4" data-guide-title="Decision Authority">Where decision authority sits</h3>
+    </div>
+    <div class="cns-card-body">
+      <div class="cns-prose" data-guide-category="Decision Authority">
+        <p>Authority travels downward and is always narrower than the authority above it. The board holds
+          what it has reserved to itself and delegates the rest; a board committee acts within that
+          delegation; an executive committee acts within the delegation it has been given by the board or
+          the chief executive; a management committee acts within its business. Councils, advisory forums
+          and working groups recommend — they do not decide.</p>
+        <p>Three things settle whether a decision stands: the forum holds the authority for it, the
+          sitting was quorate under the forum's own quorum rule, and the decision is recorded as a motion
+          with its outcome. Where any of the three is missing, the decision has not been taken, however
+          firmly it was agreed in the room.</p>
+        <p>A forum's own page shows its quorum rule, its voting seats and the motions it has carried.</p>
+      </div>
+      <p class="cns-text-muted cns-text-xs" data-guide-note="Decision Authority" hidden></p>
+    </div>
+  </section>
+
+  <!-- Escalation -->
+  <section class="cns-card" aria-labelledby="g5">
+    <div class="cns-card-header">
+      <h3 class="cns-card-title" id="g5" data-guide-title="Escalation Protocol">Escalation protocols</h3>
+    </div>
+    <div class="cns-card-body">
+      <div class="cns-prose" data-guide-category="Escalation Protocol">
+        <p>Every forum records two things about escalation: the <strong>threshold</strong> that triggers
+          it, and the <strong>protocol</strong> that says where the matter goes and how quickly.</p>
+        <p>A threshold is a measurable condition rather than a judgement — a limit breached, a severity
+          rating reached, a regulatory deadline missed. A protocol names the receiving forum, the
+          timescale, and what must travel with the matter: the decision being sought, the accountable
+          owner, and the treatment already attempted.</p>
+        <p>Matters normally travel up the parent chain. They move sideways only where an escalation link
+          between the two forums has been recorded, which is what the interconnectivity view on each
+          forum shows.</p>
+      </div>
+      <p class="cns-text-muted cns-text-xs" data-guide-note="Escalation Protocol" hidden></p>
+    </div>
+  </section>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+
+  var STATUS_TONES = {
+    Draft: "neutral", Pending: "warning", Compliant: "success",
+    "Non-Compliant": "danger", "Not Applicable": "info", Disbanded: "neutral"
+  };
+
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") +
+      "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  function setMetric(key, value) {
+    var node = document.querySelector('[data-metric="' + key + '"]');
+    if (node) node.textContent = String(value);
+  }
+
+  /** Render a set of counts as labelled bars. Tones are optional. */
+  function renderBars(target, entries, tones) {
+    var node = document.getElementById(target);
+    if (!node) return;
+    if (!entries.length) {
+      node.innerHTML = '<p class="cns-text-muted cns-text-sm">Nothing recorded yet.</p>';
+      return;
+    }
+    var max = entries.reduce(function (m, e) { return Math.max(m, e.count); }, 0) || 1;
+    node.innerHTML = entries.map(function (entry) {
+      var pct = Math.round((entry.count / max) * 100);
+      var tone = (tones && tones[entry.label]) || "primary";
+      return '<div class="cns-bar-row">' +
+        '<span class="cns-bar-label">' + escapeHtml(entry.label) + "</span>" +
+        '<span class="cns-bar-track"><span class="cns-bar-fill cns-status-' + escapeAttr(tone) +
+        '" style="width:' + pct + '%"></span></span>' +
+        '<span class="cns-bar-value">' + entry.count + "</span></div>";
+    }).join("");
+    node.setAttribute(
+      "aria-label",
+      node.getAttribute("aria-label") + ": " +
+        entries.map(function (e) { return e.label + ", " + e.count; }).join("; ")
+    );
+  }
+
+  function tally(rows, field, labels) {
+    var counts = {};
+    rows.forEach(function (row) {
+      var key = row[field] || "Not recorded";
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return Object.keys(counts)
+      .map(function (key) { return { key: key, label: (labels && labels[key]) || key, count: counts[key] }; })
+      .sort(function (a, b) { return b.count - a.count || a.label.localeCompare(b.label); });
+  }
+
+  /* --- the dashboard strip --------------------------------------------- */
+
+  var typeLabels = {};
+
+  var forumsPromise = Consilium.api.list("Governance Forum", {
+    fields: ["name", "forum_name", "forum_type", "primary_risk_category", "compliance_status",
+             "quorum_rule_type", "requires_review", "is_active", "next_review_on", "modified"],
+    order_by: "modified desc",
+    limit_page_length: 500
+  });
+
+  var typesPromise = Consilium.api.list("Governance Forum Type", {
+    fields: ["name", "forum_type_name", "definition", "sort_order"],
+    filters: [["is_active", "=", 1]],
+    order_by: "sort_order asc",
+    limit_page_length: 100
+  });
+
+  typesPromise.then(function (types) {
+    types.forEach(function (t) { typeLabels[t.name] = t.forum_type_name || t.name; });
+  });
+
+  // Risk categories are keyed by their code, so a record holds "CYBER" and the
+  // readable name lives on the taxonomy. Nobody reads a dashboard in codes.
+  var riskLabels = {};
+  var risksPromise = Consilium.api.list("Risk Category", {
+    fields: ["name", "risk_category_name"],
+    limit_page_length: 500
+  }).then(function (rows) {
+    rows.forEach(function (r) { riskLabels[r.name] = r.risk_category_name || r.name; });
+    return rows;
+  }).catch(function () { return []; });
+
+  Promise.all([forumsPromise, typesPromise, risksPromise])
+    .then(function (results) {
+      var rows = results[0];
+      var types = results[1];
+      var active = rows.filter(function (r) { return r.is_active; });
+      var today = todayISO();
+
+      setMetric("active", active.length);
+      setMetric("review", active.filter(function (r) { return r.requires_review; }).length);
+      setMetric("overdue", active.filter(function (r) {
+        return r.next_review_on && r.next_review_on < today;
+      }).length);
+
+      renderBars("bars-type", tally(active, "forum_type", typeLabels));
+      renderBars("bars-risk", tally(active, "primary_risk_category", riskLabels).slice(0, 8));
+      renderBars("bars-status", tally(rows, "compliance_status"), STATUS_TONES);
+      renderBars("bars-quorum", tally(active, "quorum_rule_type"));
+
+      /* Type reference table, with a live count against each type. */
+      var perType = {};
+      active.forEach(function (r) { perType[r.forum_type] = (perType[r.forum_type] || 0) + 1; });
+      var body = document.getElementById("type-rows");
+      body.innerHTML = types.map(function (t) {
+        return "<tr><th scope=\"row\">" + escapeHtml(t.forum_type_name || t.name) + "</th>" +
+          "<td>" + escapeHtml(t.definition || "No definition recorded.") + "</td>" +
+          '<td class="cns-num">' + (perType[t.name] || 0) + "</td></tr>";
+      }).join("") ||
+        '<tr><td colspan="3" class="cns-text-muted">No forum types are configured.</td></tr>';
+
+      /* Recent changes. */
+      var recent = rows.slice(0, 6);
+      var list = document.getElementById("recent-changes");
+      list.innerHTML = recent.map(function (r) {
+        var tone = STATUS_TONES[r.compliance_status] || "neutral";
+        return "<li><a href=\"/forum?name=" + escapeAttr(encodeURIComponent(r.name)) + "\">" +
+          escapeHtml(r.forum_name || r.name) + "</a> " +
+          '<span class="cns-pill cns-status-' + escapeAttr(tone) + '">' +
+          escapeHtml(r.compliance_status || "") + "</span>" +
+          '<span class="cns-timeline-meta">Updated ' +
+          escapeHtml(Consilium.util.formatDate(r.modified, true)) + "</span></li>";
+      }).join("") || '<li class="cns-text-muted">No forums are recorded yet.</li>';
+    })
+    .catch(function (error) {
+      var strip = document.getElementById("metric-strip");
+      strip.innerHTML = '<div class="cns-alert cns-status-danger" role="alert">' +
+        '<i class="bi bi-x-octagon" aria-hidden="true"></i><div>' +
+        escapeHtml(error.message || "The inventory could not be read.") + "</div></div>";
+      ["bars-type", "bars-risk", "bars-status", "bars-quorum"].forEach(function (id) {
+        var node = document.getElementById(id);
+        if (node) node.innerHTML = '<p class="cns-text-muted cns-text-sm">Unavailable.</p>';
+      });
+      document.getElementById("recent-changes").innerHTML =
+        '<li class="cns-text-muted">Unavailable.</li>';
+      document.getElementById("type-rows").innerHTML =
+        '<tr><td colspan="3" class="cns-text-muted">Unavailable.</td></tr>';
+    });
+
+  Consilium.api
+    .count("Committee Formation Request", { filters: [["is_open", "=", 1]] })
+    .then(function (n) { setMetric("requests", n); })
+    .catch(function () { setMetric("requests", "—"); });
+
+  /* --- templates -------------------------------------------------------- */
+
+  function renderTemplates(id, promise, format) {
+    var node = document.getElementById(id);
+    promise
+      .then(function (rows) {
+        node.innerHTML = rows.length
+          ? rows.map(format).join("")
+          : '<li class="cns-text-muted">None are configured on this site yet.</li>';
+      })
+      .catch(function () {
+        node.innerHTML = '<li class="cns-text-muted">You do not have access to this list.</li>';
+      });
+  }
+
+  renderTemplates(
+    "doc-templates",
+    Consilium.api.list("Document Template", {
+      fields: ["name", "template_title", "document_type", "action"],
+      filters: [["is_active", "=", 1]],
+      order_by: "template_title asc",
+      limit_page_length: 20
+    }),
+    function (row) {
+      return "<li>" + escapeHtml(row.template_title || row.name) +
+        ' <span class="cns-badge cns-status-neutral">' + escapeHtml(row.action || "") + "</span>" +
+        '<br><span class="cns-text-muted cns-text-xs">For ' +
+        escapeHtml(row.document_type || "any document type") + "</span></li>";
+    }
+  );
+
+  renderTemplates(
+    "esc-templates",
+    Consilium.api.list("Escalation Template", {
+      fields: ["name", "title", "escalation_type", "template_scope"],
+      filters: [["is_active", "=", 1]],
+      order_by: "title asc",
+      limit_page_length: 20
+    }),
+    function (row) {
+      return "<li>" + escapeHtml(row.title || row.name) +
+        ' <span class="cns-badge cns-status-neutral">' + escapeHtml(row.template_scope || "") + "</span>" +
+        '<br><span class="cns-text-muted cns-text-xs">Escalation type ' +
+        escapeHtml(row.escalation_type || "any") + "</span></li>";
+    }
+  );
+
+  /* --- guidance, from the Guide Article records ------------------------- */
+
+  /* The body is authored HTML held in a record. It is rendered, but only after
+     everything that could execute has been taken out of it. */
+  var ALLOWED = {
+    P: 1, BR: 1, STRONG: 1, B: 1, EM: 1, I: 1, U: 1, UL: 1, OL: 1, LI: 1,
+    H3: 1, H4: 1, H5: 1, BLOCKQUOTE: 1, CODE: 1, PRE: 1, SPAN: 1, DIV: 1,
+    TABLE: 1, THEAD: 1, TBODY: 1, TR: 1, TH: 1, TD: 1, A: 1, HR: 1, SMALL: 1
+  };
+
+  function sanitize(html) {
+    var doc = document.implementation.createHTMLDocument("guide");
+    doc.body.innerHTML = String(html || "");
+    (function walk(node) {
+      var child = node.firstChild;
+      while (child) {
+        var next = child.nextSibling;
+        if (child.nodeType === 1) {
+          if (!ALLOWED[child.tagName]) {
+            node.removeChild(child);
+          } else {
+            Array.prototype.slice.call(child.attributes).forEach(function (attr) {
+              var name = attr.name.toLowerCase();
+              var keep = name === "href" && child.tagName === "A" &&
+                /^(https?:|mailto:|\/|#)/i.test(attr.value.trim());
+              if (!keep) child.removeAttribute(attr.name);
+            });
+            if (child.tagName === "A") {
+              child.setAttribute("rel", "noopener noreferrer");
+            }
+            walk(child);
+          }
+        } else if (child.nodeType !== 3) {
+          node.removeChild(child);
+        }
+        child = next;
+      }
+    })(doc.body);
+    return doc.body.innerHTML;
+  }
+
+  Consilium.api
+    .list("Guide Article", {
+      fields: ["name", "title", "category", "body", "display_order", "modified"],
+      filters: [["is_published", "=", 1]],
+      order_by: "display_order asc",
+      limit_page_length: 50
+    })
+    .then(function (articles) {
+      articles.forEach(function (article) {
+        var target = document.querySelector('[data-guide-category="' + article.category + '"]');
+        if (!target || !article.body) return;
+        target.innerHTML = sanitize(article.body);
+        var heading = document.querySelector('[data-guide-title="' + article.category + '"]');
+        if (heading && article.title) heading.textContent = article.title;
+        var note = document.querySelector('[data-guide-note="' + article.category + '"]');
+        if (note) {
+          note.textContent = "Maintained in the guide, last edited " +
+            Consilium.util.formatDate(article.modified, false) + ".";
+          note.hidden = false;
+        }
+      });
+    })
+    .catch(function () {
+      /* The built-in copy is already on the page; nothing to do. */
+    });
+})();
+</script>
+{% endblock %}

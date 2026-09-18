@@ -6,6 +6,7 @@ from frappe.utils import add_days, add_years, nowdate
 from consilium.consilium_core import attestation, state_flags
 from consilium.consilium_core.tests.utils import refusals_for
 from consilium.governance import lifecycle, membership, reviews, setup
+from consilium.governance.tests import task_for
 from consilium.governance.state_flag_seed import GOVERNANCE_STATE_FLAGS
 from consilium.governance.tests.utils import (
     GovernanceTestCase, make_forum, make_org_unit, make_seat, make_user, seat_role, unique,
@@ -185,9 +186,11 @@ class TestAnnualReview(GovernanceTestCase):
         forum, owner, contact = self._forum_with_owner_and_compliance()
         campaign = reviews.open_annual_review(unique("period"), due_on=add_days(nowdate(), 30))
         result = reviews.generate(campaign)
-        self.assertEqual(len(result["created"]), 1)
+        # The campaign covers every forum on the inventory, so the count is not 1.
+        self.assertIn(forum.name, [frappe.db.get_value("Attestation Task", n, "subject_name")
+                                   for n in result["created"]])
 
-        task = frappe.get_doc("Attestation Task", result["created"][0])
+        task = frappe.get_doc("Attestation Task", task_for(result, forum.name))
         self.assertEqual(task.assigned_to, owner)
         self.assertEqual(task.second_signatory, contact)
 
@@ -243,7 +246,7 @@ class TestAnnualReview(GovernanceTestCase):
         campaign = reviews.open_annual_review(
             unique("period"), opens_on=add_days(nowdate(), -30), due_on=add_days(nowdate(), -1)
         )
-        task_name = reviews.generate(campaign)["created"][0]
+        task_name = task_for(reviews.generate(campaign), forum.name)
         attestation.respond(task_name, "Attested")
 
         rows = [row for row in reviews.overdue_reviews() if row["forum"] == forum.name]

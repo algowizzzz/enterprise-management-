@@ -1,0 +1,874 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  One forum.
+  Six panels behind a tab strip: the record itself, its membership (as it
+  stands or as it stood), its linkages and the interconnectivity view, the
+  documents it approves, the decisions it has taken, and its history.
+-#}
+
+{% block page_actions %}
+{%- if found %}
+{%- if can_edit %}
+<a class="cns-btn cns-btn-primary" href="/app/governance-forum/{{ forum }}">
+  <i class="bi bi-pencil" aria-hidden="true"></i> Edit this forum
+</a>
+{%- endif %}
+<a class="cns-btn cns-btn-secondary" href="/forums">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to inventory
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not forum %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-signpost" aria-hidden="true"></i></span>
+    <p class="cns-state-title">No forum was named</p>
+    <p class="cns-state-message">Open a forum from the inventory to see its record.</p>
+    <a class="cns-btn cns-btn-primary" href="/forums">Go to the inventory</a>
+  </div>
+</div>
+{%- elif not found %}
+<div class="cns-card">
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">That forum is not on the inventory</p>
+    <p class="cns-state-message">Reference <span class="cns-mono">{{ forum }}</span> does not exist,
+      or it has been removed.</p>
+    <a class="cns-btn cns-btn-secondary" href="/forums">Back to the inventory</a>
+  </div>
+</div>
+{%- else %}
+
+<div id="forum-summary" class="cns-card">
+  <div class="cns-card-body">
+    <p class="cns-text-muted cns-text-sm">Loading the record&hellip;</p>
+  </div>
+</div>
+
+{%- if not can_edit %}
+<div class="cns-alert cns-status-info" style="margin-bottom: var(--cns-space-4);">
+  <i class="bi bi-info-circle" aria-hidden="true"></i>
+  <div>You have read access to this forum. Changes to it are made by the forum's owner,
+    its secretary or the governance office.</div>
+</div>
+{%- endif %}
+
+<div class="cns-tabs" role="tablist" aria-label="Forum detail sections">
+  <button class="cns-tab" role="tab" id="tab-details"  aria-controls="panel-details"  aria-selected="true">Details</button>
+  <button class="cns-tab" role="tab" id="tab-members"  aria-controls="panel-members"  aria-selected="false" tabindex="-1">Membership</button>
+  <button class="cns-tab" role="tab" id="tab-links"    aria-controls="panel-links"    aria-selected="false" tabindex="-1">Linkages</button>
+  <button class="cns-tab" role="tab" id="tab-docs"     aria-controls="panel-docs"     aria-selected="false" tabindex="-1">Documents</button>
+  <button class="cns-tab" role="tab" id="tab-decisions" aria-controls="panel-decisions" aria-selected="false" tabindex="-1">Decisions</button>
+  <button class="cns-tab" role="tab" id="tab-history"  aria-controls="panel-history"  aria-selected="false" tabindex="-1">History</button>
+</div>
+
+<!-- ------------------------------ Details ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-details" aria-labelledby="tab-details" tabindex="0">
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Mandate</h2></div>
+    <div class="cns-card-body"><p id="detail-mandate" class="cns-prose">&nbsp;</p></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">The record</h2></div>
+    <div class="cns-card-body"><dl class="cns-dl" id="detail-fields"></dl></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Scope</h2>
+      <p class="cns-card-subtitle">The multi-value attributes the forum covers.</p>
+    </div>
+    <div class="cns-card-body"><dl class="cns-dl" id="detail-scope"></dl></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Escalation and quorum</h2></div>
+    <div class="cns-card-body"><dl class="cns-dl cns-dl--stacked" id="detail-escalation"></dl></div>
+  </section>
+</div>
+
+<!-- ---------------------------- Membership ----------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-members" aria-labelledby="tab-members" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Seats</h2>
+        <p class="cns-card-subtitle">A seat is closed by ending it, never by deleting it, so the
+          membership can be read back at any date.</p>
+      </div>
+      <div class="cns-field" style="margin-bottom:0;">
+        <label class="cns-label" for="as-at">Membership as at</label>
+        <input class="cns-input" type="date" id="as-at">
+        <span class="cns-help" id="as-at-help">Leave as today for the current membership.</span>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <p id="as-at-summary" class="cns-text-secondary cns-text-sm" role="status"></p>
+      <div id="members-table"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ----------------------------- Linkages ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-links" aria-labelledby="tab-links" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Interconnectivity</h2>
+        <p class="cns-card-subtitle">How this forum sits against its parent, its sub-forums and the
+          forums it escalates to or informs.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div class="cns-diagram" id="forum-diagram">
+        <p class="cns-text-muted cns-text-sm">Drawing the map&hellip;</p>
+      </div>
+      <p class="cns-text-muted cns-text-xs" style="margin-top: var(--cns-space-3);">
+        Each box opens that forum. The same relationships are listed in full below,
+        for anyone reading this without the diagram.
+      </p>
+    </div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Related forums</h2></div>
+    <div class="cns-card-body"><div id="links-table"></div></div>
+  </section>
+</div>
+
+<!-- ----------------------------- Documents ----------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-docs" aria-labelledby="tab-docs" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Charter</h2></div>
+    <div class="cns-card-body"><div id="charter-body"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div></div>
+  </section>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Documents this forum approves</h2>
+        <p class="cns-card-subtitle">Governing documents whose approving forum is this one.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="docs-table"></div></div>
+  </section>
+</div>
+
+<!-- ----------------------------- Decisions ----------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-decisions" aria-labelledby="tab-decisions" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Motions</h2>
+        <p class="cns-card-subtitle">A decision counts when the sitting was quorate and the outcome
+          was recorded.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="motions-table"></div></div>
+  </section>
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Sittings</h2></div>
+    <div class="cns-card-body"><div id="meetings-table"></div></div>
+  </section>
+</div>
+
+<!-- ------------------------------ History ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-history" aria-labelledby="tab-history" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Compliance decisions</h2>
+        <p class="cns-card-subtitle">Every move of this forum's standing, with its author and reason.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="reviews-table"></div></div>
+  </section>
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Record changes</h2></div>
+    <div class="cns-card-body">
+      <ul class="cns-timeline" id="version-list">
+        <li class="cns-text-muted">Loading&hellip;</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if found %}
+<script src="/assets/consilium/js/consilium-reference.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var FORUM = {{ forum | tojson }};
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var f = Consilium.Table.formatters;
+
+  var STATUS_TONES = {
+    Draft: "neutral", Pending: "warning", Compliant: "success",
+    "Non-Compliant": "danger", "Not Applicable": "info", Disbanded: "neutral"
+  };
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+  /** A reference code shown by its name. */
+  function named(doctype, code) {
+    return code ? escapeHtml(Consilium.reference.label(doctype, code)) : dash();
+  }
+  function value(v) { return (v === null || v === undefined || v === "") ? dash() : escapeHtml(v); }
+  function dateValue(v) { return v ? escapeHtml(Consilium.util.formatDate(v, false)) : dash(); }
+  function yesNo(v) { return v ? "Yes" : "No"; }
+
+  function forumLink(name, label) {
+    if (!name) return dash();
+    return '<a href="/forum?name=' + escapeAttr(encodeURIComponent(name)) + '">' +
+      escapeHtml(label || name) + "</a>";
+  }
+
+  function fillList(target, rows) {
+    document.getElementById(target).innerHTML = rows.map(function (row) {
+      return "<div><dt>" + escapeHtml(row[0]) + "</dt><dd>" + row[1] + "</dd></div>";
+    }).join("");
+  }
+
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") +
+      "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  /* ------------------------------- tabs -------------------------------- */
+
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  var loaders = {};
+  var loaded = {};
+
+  function selectTab(tab, focus) {
+    tabs.forEach(function (other) {
+      var selected = other === tab;
+      other.setAttribute("aria-selected", selected ? "true" : "false");
+      other.tabIndex = selected ? 0 : -1;
+      document.getElementById(other.getAttribute("aria-controls")).hidden = !selected;
+    });
+    if (focus) tab.focus();
+    var key = tab.id.replace("tab-", "");
+    if (loaders[key] && !loaded[key]) { loaded[key] = true; loaders[key](); }
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, "", "#" + key);
+    }
+  }
+
+  tabs.forEach(function (tab, index) {
+    tab.addEventListener("click", function () { selectTab(tab); });
+    tab.addEventListener("keydown", function (event) {
+      var step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (step) {
+        event.preventDefault();
+        selectTab(tabs[(index + step + tabs.length) % tabs.length], true);
+      } else if (event.key === "Home") {
+        event.preventDefault(); selectTab(tabs[0], true);
+      } else if (event.key === "End") {
+        event.preventDefault(); selectTab(tabs[tabs.length - 1], true);
+      }
+    });
+  });
+
+  /* ------------------------------ the record --------------------------- */
+
+  Consilium.reference
+    .load(["Governance Forum Type", "Risk Category", "Organization Unit", "Risk Type",
+           "Legal Entity", "Jurisdiction", "Governance Responsibility",
+           "Regulatory Requirement", "Retention Class", "Governing Document Type",
+           "Governance Forum Role",
+           "Governance Forum"])
+    .then(function () {
+      return Consilium.api.get("Governance Forum", FORUM);
+    })
+    .then(function (doc) {
+      renderSummary(doc);
+      renderDetails(doc);
+      renderLinks(doc);
+    })
+    .catch(function (error) {
+      document.getElementById("forum-summary").innerHTML =
+        '<div class="cns-state cns-state--error"><span class="cns-state-icon">' +
+        '<i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>' +
+        '<p class="cns-state-title">The record could not be read</p>' +
+        '<p class="cns-state-message">' + escapeHtml(error.message || "") + "</p></div>";
+    });
+
+  function renderSummary(doc) {
+    var tone = STATUS_TONES[doc.compliance_status] || "neutral";
+    var flags = [];
+    if (doc.requires_review) flags.push('<span class="cns-pill cns-status-warning">Awaiting review</span>');
+    if (!doc.is_editable) flags.push('<span class="cns-pill cns-status-info">Locked for review</span>');
+    if (!doc.is_active) flags.push('<span class="cns-pill cns-status-neutral">Disbanded</span>');
+    if (doc.regulatory_required) flags.push('<span class="cns-pill cns-status-info">Regulatory</span>');
+    if (doc.confidential) flags.push('<span class="cns-pill cns-status-warning">Confidential</span>');
+
+    document.getElementById("forum-summary").innerHTML =
+      '<div class="cns-card-body">' +
+      '<p class="cns-eyebrow">' + named("Governance Forum Type", doc.forum_type) + "</p>" +
+      '<p style="margin-bottom: var(--cns-space-3);">' +
+      '<span class="cns-pill cns-status-' + escapeAttr(tone) + '">' +
+      escapeHtml(doc.compliance_status || "") + "</span> " + flags.join(" ") + "</p>" +
+      '<dl class="cns-dl">' +
+      "<div><dt>Reference</dt><dd class=\"cns-mono\">" + escapeHtml(doc.name) + "</dd></div>" +
+      "<div><dt>Chair</dt><dd>" + value(doc.committee_chair) + "</dd></div>" +
+      "<div><dt>Secretary</dt><dd>" + value(doc.secretary) + "</dd></div>" +
+      "<div><dt>Owner</dt><dd>" + value(doc.forum_owner) + "</dd></div>" +
+      "<div><dt>Cadence</dt><dd>" + value(doc.cadence) + "</dd></div>" +
+      "<div><dt>Next review</dt><dd>" + dateValue(doc.next_review_on) + "</dd></div>" +
+      "</dl></div>";
+  }
+
+  function renderDetails(doc) {
+    document.getElementById("detail-mandate").innerHTML =
+      doc.description ? escapeHtml(doc.description) : dash();
+
+    fillList("detail-fields", [
+      ["Forum name", value(doc.forum_name)],
+      ["Forum type", named("Governance Forum Type", doc.forum_type)],
+      ["Cadence", value(doc.cadence)],
+      ["Compliance status", value(doc.compliance_status)],
+      ["Chair", value(doc.committee_chair)],
+      ["Secretary", value(doc.secretary)],
+      ["Forum owner", value(doc.forum_owner)],
+      ["Sponsor", value(doc.sponsor)],
+      ["Compliance contact", value(doc.compliance_contact)],
+      ["Primary risk category", named("Risk Category", doc.primary_risk_category)],
+      ["Owning operating group", named("Organization Unit", doc.owning_operating_group)],
+      ["Owning line of business", named("Organization Unit", doc.owning_line_of_business)],
+      ["Parent forum", doc.parent_forum
+        ? forumLink(doc.parent_forum, Consilium.reference.label("Governance Forum", doc.parent_forum))
+        : dash()],
+      ["Regulatory required", yesNo(doc.regulatory_required)],
+      ["Confidential handling", yesNo(doc.confidential)],
+      ["Established on", dateValue(doc.established_on)],
+      ["Next review on", dateValue(doc.next_review_on)],
+      ["Last attested on", dateValue(doc.last_attested_on)],
+      ["Disbanded on", dateValue(doc.disbanded_on)],
+      ["Disbandment plan", value(doc.disbandment_plan)],
+      ["Retention class", named("Retention Class", doc.retention_class)],
+      ["Formation request", value(doc.formation_request)],
+      ["Editable", yesNo(doc.is_editable)],
+      ["Active", yesNo(doc.is_active)],
+      ["Awaiting review", yesNo(doc.requires_review)],
+      ["Last updated", escapeHtml(Consilium.util.formatDate(doc.modified, true))]
+    ]);
+
+    function chips(rows, field, doctype) {
+      if (!rows || !rows.length) return dash();
+      return '<ul class="cns-chips">' + rows.map(function (row) {
+        return '<li><span class="cns-badge cns-status-neutral">' +
+          escapeHtml(Consilium.reference.label(doctype, row[field])) + "</span></li>";
+      }).join("") + "</ul>";
+    }
+
+    fillList("detail-scope", [
+      ["Business units", chips(doc.business_units, "business_unit", "Organization Unit")],
+      ["Risk types", chips(doc.risk_types, "risk_type", "Risk Type")],
+      ["Legal entities", chips(doc.legal_entities, "legal_entity", "Legal Entity")],
+      ["Jurisdictions", chips(doc.jurisdictions, "jurisdiction", "Jurisdiction")],
+      ["Governance responsibilities",
+       chips(doc.governance_responsibilities, "governance_responsibility", "Governance Responsibility")],
+      ["Regulatory requirements", (doc.regulatory_requirements || []).length
+        ? '<ul class="cns-chips">' + doc.regulatory_requirements.map(function (row) {
+            return '<li><span class="cns-badge cns-status-info">' +
+              escapeHtml(Consilium.reference.label("Regulatory Requirement", row.regulatory_requirement)) +
+              "</span></li>";
+          }).join("") + "</ul>"
+        : dash()]
+    ]);
+
+    var quorum = doc.quorum_rule_type || "";
+    if (doc.quorum_value) quorum += " — " + doc.quorum_value;
+    if (doc.quorum_requires_chair) quorum += ", chair must be present";
+
+    fillList("detail-escalation", [
+      ["Escalation threshold", value(doc.escalation_threshold)],
+      ["Escalation protocol", value(doc.escalation_protocol)],
+      ["Quorum rule", value(quorum)]
+    ]);
+  }
+
+  /* ----------------------------- membership ---------------------------- */
+
+  var membersTable = null;
+  var asAt = document.getElementById("as-at");
+  asAt.value = todayISO();
+  asAt.max = todayISO();
+
+  function memberColumns() {
+    return [
+      { field: "seat", label: "Seat", sortable: true,
+        formatter: function (v, row) {
+          if (row.seat_type === "Position") {
+            return escapeHtml(row.position_title || "By position") +
+              (row.member ? " — " + escapeHtml(row.member)
+                          : ' <span class="cns-pill cns-status-warning">Vacant</span>');
+          }
+          return escapeHtml(row.member || "");
+        } },
+      { field: "forum_role", label: "Role", sortable: true,
+        formatter: function (v) { return named("Governance Forum Role", v); } },
+      { field: "seat_type", label: "Held by", sortable: true },
+      { field: "votes", label: "Votes", sortable: true,
+        formatter: function (v) { return v ? "Yes" : "No"; } },
+      { field: "counts_toward_quorum", label: "Counts to quorum", sortable: true,
+        formatter: function (v) { return v ? "Yes" : "No"; } },
+      { field: "is_voting_chair", label: "Casting vote", sortable: true,
+        formatter: function (v) { return v ? "Yes" : "No"; } },
+      { field: "delegate", label: "Standing delegate",
+        formatter: function (v) { return v ? escapeHtml(v) : dash(); } },
+      { field: "start_date", label: "From", sortable: true, formatter: f.date },
+      { field: "end_date", label: "To", sortable: true,
+        formatter: function (v) { return v ? escapeHtml(Consilium.util.formatDate(v, false)) : "Current"; } },
+      { field: "end_reason", label: "Closed because",
+        formatter: function (v) { return v ? escapeHtml(v) : dash(); } }
+    ];
+  }
+
+  function loadMembers() {
+    var date = asAt.value || todayISO();
+    var summary = document.getElementById("as-at-summary");
+    /* Seats open on that date: started on or before it, and either never closed
+       or closed on or after it. */
+    Consilium.api
+      .list("Forum Membership", {
+        fields: ["name", "member", "seat_type", "position_title", "forum_role", "votes",
+                 "counts_toward_quorum", "is_voting_chair", "delegate", "start_date",
+                 "end_date", "end_reason"],
+        filters: [["forum", "=", FORUM], ["start_date", "<=", date]],
+        /* A null end date is an open seat. The framework's "not set" operator
+           compares a date column to an empty string, which this database
+           refuses, so the comparison is written against null directly. */
+        or_filters: [["end_date", "=", null], ["end_date", ">=", date]],
+        order_by: "forum_role asc",
+        limit_page_length: 200
+      })
+      .then(function (rows) {
+        var voting = rows.filter(function (r) { return r.votes; }).length;
+        var vacant = rows.filter(function (r) { return r.seat_type === "Position" && !r.member; }).length;
+        summary.textContent = rows.length + " seat" + (rows.length === 1 ? "" : "s") +
+          " on " + Consilium.util.formatDate(date, false) + ": " + voting + " voting" +
+          (vacant ? ", " + vacant + " vacant" : "") + ".";
+        if (membersTable) {
+          membersTable.setData(rows);
+        } else {
+          membersTable = Consilium.Table.create({
+            target: "#members-table",
+            data: rows,
+                  caption: "Forum membership",
+            storageKey: "forum-membership",
+            rowKey: "name",
+            pageSize: 25,
+            compact: true,
+            searchFields: ["member", "position_title", "forum_role"],
+            searchPlaceholder: "Search seats",
+            defaultSort: { field: "start_date", order: "desc" },
+            emptyTitle: "No seats on that date",
+            emptyMessage: "Nobody held a seat on this forum on the date chosen.",
+            columns: memberColumns()
+          });
+        }
+      })
+      .catch(function (error) {
+        summary.textContent = "";
+        document.getElementById("members-table").innerHTML =
+          '<div class="cns-state cns-state--error"><p class="cns-state-title">Membership could not be read</p>' +
+          '<p class="cns-state-message">' + escapeHtml(error.message || "") + "</p></div>";
+      });
+  }
+
+  asAt.addEventListener("change", function () {
+    loadMembers();
+    Consilium.announce("Membership shown as at " + (asAt.value || "today") + ".");
+  });
+  loaders.members = loadMembers;
+
+  /* ------------------------------ linkages ----------------------------- */
+
+  var linkRows = [];
+
+  function renderLinks(doc) {
+    var rows = [];
+    (doc.upstream_links || []).forEach(function (row) {
+      rows.push({ name: "up-" + row.name, forum: row.linked_forum, direction: "Upstream",
+                  relationship_type: row.relationship_type, notes: row.notes });
+    });
+    (doc.downstream_links || []).forEach(function (row) {
+      rows.push({ name: "down-" + row.name, forum: row.linked_forum, direction: "Downstream",
+                  relationship_type: row.relationship_type, notes: row.notes });
+    });
+    if (doc.parent_forum) {
+      rows.push({ name: "parent", forum: doc.parent_forum, direction: "Parent",
+                  relationship_type: "Hierarchy", notes: "The single parent in the forum hierarchy." });
+    }
+
+    Consilium.api
+      .list("Governance Forum", {
+        fields: ["name", "forum_name", "forum_type"],
+        filters: [["parent_forum", "=", FORUM]],
+        order_by: "forum_name asc",
+        limit_page_length: 100
+      })
+      .then(function (children) {
+        children.forEach(function (child) {
+          rows.push({ name: "child-" + child.name, forum: child.name, direction: "Sub-forum",
+                      relationship_type: "Hierarchy",
+                      notes: "Reports into this forum in the hierarchy." });
+        });
+        return rows;
+      })
+      .catch(function () { return rows; })
+      .then(function (all) {
+        linkRows = all;
+        return labelForums(all.map(function (r) { return r.forum; }));
+      })
+      .then(function (labels) {
+        linkRows.forEach(function (row) { row.forum_label = labels[row.forum] || row.forum; });
+        drawDiagram(doc, linkRows, labels);
+        buildLinksTable();
+      });
+  }
+
+  function labelForums(names) {
+    var unique = names.filter(function (n, i) { return n && names.indexOf(n) === i; });
+    if (!unique.length) return Promise.resolve({});
+    return Consilium.api
+      .list("Governance Forum", {
+        fields: ["name", "forum_name", "forum_type"],
+        filters: [["name", "in", unique]],
+        limit_page_length: 200
+      })
+      .then(function (rows) {
+        var map = {};
+        rows.forEach(function (row) { map[row.name] = row.forum_name; map[row.name + ":type"] = row.forum_type; });
+        return map;
+      })
+      .catch(function () { return {}; });
+  }
+
+  function buildLinksTable() {
+    Consilium.Table.create({
+      target: "#links-table",
+      data: linkRows,
+      caption: "Forums related to this one",
+      storageKey: "forum-links",
+      rowKey: "name",
+      pageSize: 25,
+      compact: true,
+      searchFields: ["forum_label", "direction", "relationship_type"],
+      searchPlaceholder: "Search related forums",
+      defaultSort: { field: "direction", order: "asc" },
+      emptyTitle: "No linkages recorded",
+      emptyMessage: "This forum has no parent, no sub-forums and no recorded links.",
+      columns: [
+        { field: "forum_label", label: "Forum", sortable: true,
+          formatter: function (v, row) { return forumLink(row.forum, v); } },
+        { field: "direction", label: "Relationship", sortable: true,
+          formatter: f.status({ Parent: "primary", "Sub-forum": "info",
+                                Upstream: "warning", Downstream: "neutral" }) },
+        { field: "relationship_type", label: "Nature", sortable: true },
+        { field: "notes", label: "Note", formatter: f.truncate(90) }
+      ]
+    });
+  }
+
+  /* The interconnectivity view. Plain SVG, sized by its viewBox so it scales
+     with the page, and coloured from the tokens so it follows the theme. */
+  function drawDiagram(doc, rows, labels) {
+    var W = 900, NW = 210, NH = 56;
+    var target = document.getElementById("forum-diagram");
+
+    function group(direction) {
+      return rows.filter(function (r) { return r.direction === direction; }).slice(0, 4);
+    }
+    var parent = rows.filter(function (r) { return r.direction === "Parent"; })[0];
+    var children = group("Sub-forum");
+    var up = group("Upstream");
+    var down = group("Downstream");
+
+    var rowsCount = 1 + (parent ? 1 : 0) + (children.length ? 1 : 0);
+    var sideCount = Math.max(up.length, down.length);
+    var H = Math.max(rowsCount * 110 + 20, sideCount * 80 + 120);
+
+    var centreY = parent ? 130 : 40;
+    var parts = [];
+
+    function node(x, y, label, kind, href, isSelf) {
+      var cls = "cns-node-box" + (isSelf ? " cns-node-box--self" : "");
+      var text = label.length > 30 ? label.slice(0, 29) + "…" : label;
+      var inner =
+        '<rect class="' + cls + '" x="' + x + '" y="' + y + '" width="' + NW + '" height="' + NH +
+        '" rx="6" stroke-width="1.5"></rect>' +
+        '<text class="cns-node-label" x="' + (x + 12) + '" y="' + (y + 24) + '">' +
+        escapeHtml(text) + "</text>" +
+        '<text class="cns-node-kind" x="' + (x + 12) + '" y="' + (y + 42) + '">' +
+        escapeHtml(kind) + "</text>";
+      if (href) {
+        return '<a href="' + escapeAttr(href) + '" aria-label="' + escapeAttr(label + ", " + kind) +
+          '">' + inner + "</a>";
+      }
+      return "<g>" + inner + "</g>";
+    }
+
+    function edge(x1, y1, x2, y2, label) {
+      var out = '<line class="cns-edge" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 +
+        '" y2="' + y2 + '"></line>';
+      if (label) {
+        out += '<text class="cns-edge-label" text-anchor="middle" x="' + ((x1 + x2) / 2) +
+          '" y="' + ((y1 + y2) / 2 - 4) + '">' + escapeHtml(label) + "</text>";
+      }
+      return out;
+    }
+
+    var selfX = (W - NW) / 2;
+    var selfCentreX = selfX + NW / 2;
+
+    if (parent) {
+      var py = centreY - 100;
+      parts.push(edge(selfCentreX, centreY, selfCentreX, py + NH, "reports to"));
+      parts.push(node(selfX, py, labels[parent.forum] || parent.forum, "Parent forum",
+                      "/forum?name=" + encodeURIComponent(parent.forum)));
+    }
+
+    up.forEach(function (row, i) {
+      var y = 20 + i * 80;
+      parts.push(edge(20 + NW, y + NH / 2, selfX, centreY + NH / 2, row.relationship_type || "upstream"));
+      parts.push(node(20, y, labels[row.forum] || row.forum, "Upstream",
+                      "/forum?name=" + encodeURIComponent(row.forum)));
+    });
+
+    down.forEach(function (row, i) {
+      var y = 20 + i * 80;
+      parts.push(edge(selfX + NW, centreY + NH / 2, W - 20 - NW, y + NH / 2,
+                      row.relationship_type || "downstream"));
+      parts.push(node(W - 20 - NW, y, labels[row.forum] || row.forum, "Downstream",
+                      "/forum?name=" + encodeURIComponent(row.forum)));
+    });
+
+    if (children.length) {
+      var cy = centreY + 110;
+      var span = W - 40;
+      children.forEach(function (row, i) {
+        var x = 20 + (span / children.length) * i + (span / children.length - NW) / 2;
+        parts.push(edge(selfCentreX, centreY + NH, x + NW / 2, cy, ""));
+        parts.push(node(Math.max(10, x), cy, labels[row.forum] || row.forum, "Sub-forum",
+                        "/forum?name=" + encodeURIComponent(row.forum)));
+      });
+      H = Math.max(H, cy + NH + 20);
+    }
+
+    parts.push(node(selfX, centreY, doc.forum_name || doc.name, "This forum", null, true));
+
+    var extra = rows.filter(function (r) { return r.direction !== "Parent"; }).length -
+      (children.length + up.length + down.length);
+
+    target.innerHTML =
+      '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Interconnectivity of ' +
+      escapeAttr(doc.forum_name || doc.name) + '">' + parts.join("") + "</svg>" +
+      (extra > 0
+        ? '<p class="cns-text-muted cns-text-xs">' + extra +
+          " further relationship(s) are listed in the table below.</p>"
+        : "");
+  }
+
+  /* ------------------------------ documents ---------------------------- */
+
+  loaders.docs = function () {
+    Consilium.Table.create({
+      target: "#docs-table",
+      doctype: "Governing Document",
+      caption: "Documents approved by this forum",
+      storageKey: "forum-documents",
+      pageSize: 10,
+      compact: true,
+      filters: [["approving_forum", "=", FORUM]],
+      searchFields: ["document_name", "name"],
+      searchPlaceholder: "Search documents",
+      defaultSort: { field: "modified", order: "desc" },
+      emptyTitle: "No documents",
+      emptyMessage: "No governing document names this forum as its approver.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono" },
+        { field: "document_name", label: "Document", sortable: true, formatter: f.truncate(60) },
+        { field: "document_type", label: "Type", sortable: true,
+          formatter: function (v) { return named("Governing Document Type", v); } },
+        { field: "lifecycle_phase", label: "Phase", sortable: true,
+          formatter: f.status({ Published: "success", Approved: "info", Draft: "neutral",
+                                Review: "warning", Implemented: "primary", Retired: "neutral" }) },
+        { field: "document_owner", label: "Owner", sortable: true },
+        { field: "effective_on", label: "Effective", sortable: true, formatter: f.date },
+        { field: "next_review_on", label: "Next review", sortable: true, formatter: f.date }
+      ]
+    });
+
+    Consilium.api
+      .list("Committee Charter", {
+        fields: ["name", "charter_title", "rgo_challenge_status", "effective_from",
+                 "effective_to", "next_charter_review_on", "current_version"],
+        filters: [["forum", "=", FORUM]],
+        order_by: "effective_from desc",
+        limit_page_length: 5
+      })
+      .then(function (rows) {
+        var node = document.getElementById("charter-body");
+        if (!rows.length) {
+          node.innerHTML = '<p class="cns-text-muted">No charter is recorded for this forum.</p>';
+          return;
+        }
+        node.innerHTML = rows.map(function (row) {
+          return '<dl class="cns-dl">' +
+            "<div><dt>Charter</dt><dd>" + escapeHtml(row.charter_title || row.name) + "</dd></div>" +
+            "<div><dt>Reference</dt><dd class=\"cns-mono\">" + escapeHtml(row.name) + "</dd></div>" +
+            "<div><dt>Challenge status</dt><dd>" + value(row.rgo_challenge_status) + "</dd></div>" +
+            "<div><dt>Effective from</dt><dd>" + dateValue(row.effective_from) + "</dd></div>" +
+            "<div><dt>Next charter review</dt><dd>" + dateValue(row.next_charter_review_on) + "</dd></div>" +
+            "</dl>";
+        }).join("");
+      })
+      .catch(function () {
+        document.getElementById("charter-body").innerHTML =
+          '<p class="cns-text-muted">The charter could not be read.</p>';
+      });
+  };
+
+  /* ------------------------------ decisions ---------------------------- */
+
+  loaders.decisions = function () {
+    Consilium.Table.create({
+      target: "#motions-table",
+      doctype: "Forum Motion",
+      caption: "Motions put to this forum",
+      storageKey: "forum-motions",
+      pageSize: 10,
+      compact: true,
+      filters: [["forum", "=", FORUM]],
+      searchFields: ["motion_reference", "motion_text"],
+      searchPlaceholder: "Search motions",
+      defaultSort: { field: "decision_date", order: "desc" },
+      emptyTitle: "No motions",
+      emptyMessage: "This forum has not recorded a motion.",
+      columns: [
+        { field: "motion_reference", label: "Motion", sortable: true },
+        { field: "motion_text", label: "What was put", formatter: f.truncate(90) },
+        { field: "outcome", label: "Outcome", sortable: true,
+          formatter: f.status({ Carried: "success", "Not Carried": "danger", Deferred: "warning",
+                                Withdrawn: "neutral", Inquorate: "danger" }) },
+        { field: "votes_for", label: "For", align: "end", formatter: f.number },
+        { field: "votes_against", label: "Against", align: "end", formatter: f.number },
+        { field: "abstentions", label: "Abstained", align: "end", formatter: f.number },
+        { field: "quorum_met", label: "Quorate", sortable: true,
+          formatter: function (v) { return v ? "Yes" : '<span class="cns-pill cns-status-danger">No</span>'; } },
+        { field: "decision_date", label: "Decided", sortable: true, formatter: f.date }
+      ]
+    });
+
+    Consilium.Table.create({
+      target: "#meetings-table",
+      doctype: "Forum Meeting",
+      caption: "Meetings of this forum",
+      storageKey: "forum-meetings",
+      pageSize: 10,
+      compact: true,
+      filters: [["forum", "=", FORUM]],
+      searchFields: ["meeting_reference", "location"],
+      searchPlaceholder: "Search sittings",
+      defaultSort: { field: "scheduled_on", order: "desc" },
+      emptyTitle: "No sittings",
+      emptyMessage: "No meeting has been recorded for this forum.",
+      columns: [
+        { field: "meeting_reference", label: "Sitting", sortable: true },
+        { field: "status", label: "Status", sortable: true,
+          formatter: f.status({ Held: "success", Scheduled: "info", Cancelled: "neutral",
+                                Adjourned: "warning" }) },
+        { field: "scheduled_on", label: "Scheduled", sortable: true, formatter: f.datetime },
+        { field: "held_on", label: "Held", sortable: true, formatter: f.datetime },
+        { field: "location", label: "Where" },
+        { field: "chaired_by", label: "Chaired by", sortable: true },
+        { field: "quorum_met", label: "Quorate", sortable: true,
+          formatter: function (v) { return v ? "Yes" : "No"; } }
+      ]
+    });
+  };
+
+  /* ------------------------------- history ----------------------------- */
+
+  loaders.history = function () {
+    Consilium.Table.create({
+      target: "#reviews-table",
+      doctype: "Forum Compliance Review",
+      caption: "Compliance reviews of this forum",
+      storageKey: "forum-reviews",
+      pageSize: 10,
+      compact: true,
+      filters: [["forum", "=", FORUM]],
+      searchFields: ["name", "comments"],
+      searchPlaceholder: "Search reviews",
+      defaultSort: { field: "decided_on", order: "desc" },
+      emptyTitle: "No compliance decision recorded",
+      emptyMessage: "This forum has not yet been reviewed.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono" },
+        { field: "review_type", label: "Kind", sortable: true },
+        { field: "decision", label: "Decision", sortable: true,
+          formatter: f.status({ Compliant: "success", "Non-Compliant": "danger",
+                                "Not Applicable": "info", "Returned To Creator": "warning" }) },
+        { field: "reviewer", label: "Reviewer", sortable: true },
+        { field: "comments", label: "Reason", formatter: f.truncate(90) },
+        { field: "decided_on", label: "Decided", sortable: true, formatter: f.datetime }
+      ]
+    });
+
+    Consilium.api
+      .list("Version", {
+        fields: ["name", "owner", "creation", "data"],
+        filters: [["ref_doctype", "=", "Governance Forum"], ["docname", "=", FORUM]],
+        order_by: "creation desc",
+        limit_page_length: 20
+      })
+      .then(function (rows) {
+        var list = document.getElementById("version-list");
+        if (!rows.length) {
+          list.innerHTML = '<li class="cns-text-muted">No change has been recorded against this record yet.</li>';
+          return;
+        }
+        list.innerHTML = rows.map(function (row) {
+          var changed = [];
+          try {
+            var data = JSON.parse(row.data || "{}");
+            changed = (data.changed || []).map(function (entry) { return entry[0]; });
+            if ((data.added || []).length) changed.push("rows added");
+            if ((data.removed || []).length) changed.push("rows removed");
+          } catch (e) { /* a version whose payload cannot be read is still a change */ }
+          return "<li>" +
+            (changed.length
+              ? "Changed " + escapeHtml(changed.slice(0, 6).join(", "))
+              : "Record updated") +
+            '<span class="cns-timeline-meta">' + escapeHtml(row.owner) + " &middot; " +
+            escapeHtml(Consilium.util.formatDate(row.creation, true)) + "</span></li>";
+        }).join("");
+      })
+      .catch(function () {
+        document.getElementById("version-list").innerHTML =
+          '<li class="cns-text-muted">The change log is not available to you. ' +
+          "The compliance decisions above are the record of how this forum's standing moved.</li>";
+      });
+  };
+
+  /* Open the tab named in the address, if there is one. */
+  var initial = (window.location.hash || "").replace("#", "");
+  var initialTab = document.getElementById("tab-" + initial);
+  selectTab(initialTab || tabs[0]);
+})();
+</script>
+{%- endif %}
+{% endblock %}

@@ -1,0 +1,289 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Administration.
+  Reference data is maintained here as a list; users, roles and permissions are
+  maintained on the framework's own screens, which already do that job properly.
+  This page links out to them rather than growing a second, weaker copy.
+-#}
+
+{% block page_content %}
+
+<div class="cns-alert cns-status-info">
+  <i class="bi bi-shield-lock" aria-hidden="true"></i>
+  <div>You are seeing this because you hold an administrator role. Every screen linked from here
+    applies its own permission check as well.</div>
+</div>
+
+<!-- --------------------------- people and access ---------------------- -->
+<section class="cns-card" aria-labelledby="people-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="people-heading">People and access</h2>
+      <p class="cns-card-subtitle">Accounts, roles and permission rules are maintained on the
+        framework's own screens.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <ul class="cns-link-list">
+      <li>
+        <a class="cns-link-card" href="/app/user">
+          <span class="cns-link-card-title">Users</span>
+          <span class="cns-link-card-desc">Create an account, enable or disable one, and set which
+            roles it holds.</span>
+        </a>
+      </li>
+      <li>
+        <a class="cns-link-card" href="/app/role">
+          <span class="cns-link-card-title">Roles</span>
+          <span class="cns-link-card-desc">The roles this application defines, and what each is for.</span>
+        </a>
+      </li>
+      <li>
+        <a class="cns-link-card" href="/app/role-profile">
+          <span class="cns-link-card-title">Role profiles</span>
+          <span class="cns-link-card-desc">Bundles of roles, for giving a new joiner the right access
+            in one step.</span>
+        </a>
+      </li>
+      {%- if is_system_manager %}
+      <li>
+        <a class="cns-link-card" href="/app/permission-manager">
+          <span class="cns-link-card-title">Permission rules</span>
+          <span class="cns-link-card-desc">What each role may read, write and submit, per record type.</span>
+        </a>
+      </li>
+      <li>
+        <a class="cns-link-card" href="/app/user-permission">
+          <span class="cns-link-card-title">Record-level restrictions</span>
+          <span class="cns-link-card-desc">Limit an account to particular organisational units or
+            legal entities.</span>
+        </a>
+      </li>
+      {%- endif %}
+    </ul>
+  </div>
+</section>
+
+<!-- --------------------------- reference data ------------------------- -->
+<section class="cns-card" aria-labelledby="ref-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="ref-heading">Reference data</h2>
+      <p class="cns-card-subtitle">The lists the rest of the portal chooses from. A value here is
+        never deleted once records point at it — it is made inactive instead.</p>
+    </div>
+    <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" id="refresh-counts">
+      <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Refresh counts
+    </button>
+  </div>
+  <div class="cns-card-body">
+    <div id="reference-table"></div>
+  </div>
+</section>
+
+<!-- ------------------------------ the guide --------------------------- -->
+<section class="cns-card" aria-labelledby="guide-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="guide-heading">The home-page guide</h2>
+      <p class="cns-card-subtitle">The guidance on the home page is held as records, so it can be
+        rewritten without a release. A section with no published article falls back to the built-in
+        wording.</p>
+    </div>
+    <a class="cns-btn cns-btn-secondary cns-btn-sm" href="/app/guide-article/new">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i> Write an article
+    </a>
+  </div>
+  <div class="cns-card-body">
+    <div id="guide-table"></div>
+  </div>
+</section>
+
+<!-- --------------------------- configuration -------------------------- -->
+<section class="cns-card" aria-labelledby="config-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="config-heading">Configuration and operations</h2>
+      <p class="cns-card-subtitle">Everything below is the framework's own, and is linked rather
+        than rebuilt.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <ul class="cns-link-list">
+      <li><a class="cns-link-card" href="/app/workflow">
+        <span class="cns-link-card-title">Workflows</span>
+        <span class="cns-link-card-desc">The states and transitions each record type moves through.</span></a></li>
+      <li><a class="cns-link-card" href="/app/workflow-state-flag">
+        <span class="cns-link-card-title">State flags</span>
+        <span class="cns-link-card-desc">Which states count as editable, active or awaiting review.
+          Add the row whenever you add a state.</span></a></li>
+      <li><a class="cns-link-card" href="/app/watched-field-set">
+        <span class="cns-link-card-title">Watched fields</span>
+        <span class="cns-link-card-desc">The changes that send a record back for review.</span></a></li>
+      <li><a class="cns-link-card" href="/app/notification-channel">
+        <span class="cns-link-card-title">Notification channels</span>
+        <span class="cns-link-card-desc">Where the system's notices are sent.</span></a></li>
+      <li><a class="cns-link-card" href="/app/sla-definition">
+        <span class="cns-link-card-title">Service levels</span>
+        <span class="cns-link-card-desc">The clocks that decide when something is late.</span></a></li>
+      <li><a class="cns-link-card" href="/app/retention-class">
+        <span class="cns-link-card-title">Retention classes</span>
+        <span class="cns-link-card-desc">How long each kind of record is kept.</span></a></li>
+      {%- if is_system_manager %}
+      <li><a class="cns-link-card" href="/app/scheduled-job-type">
+        <span class="cns-link-card-title">Scheduled jobs</span>
+        <span class="cns-link-card-desc">The background work, and when it last ran.</span></a></li>
+      <li><a class="cns-link-card" href="/app/error-log">
+        <span class="cns-link-card-title">Error log</span>
+        <span class="cns-link-card-desc">What has failed, with its traceback.</span></a></li>
+      <li><a class="cns-link-card" href="/app/system-settings">
+        <span class="cns-link-card-title">System settings</span>
+        <span class="cns-link-card-desc">Site-wide settings: time zone, formats, session policy.</span></a></li>
+      {%- endif %}
+      <li><a class="cns-link-card" href="/ui-kit">
+        <span class="cns-link-card-title">Interface reference</span>
+        <span class="cns-link-card-desc">Every shared component, in both themes and at every text size.</span></a></li>
+    </ul>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  var f = Consilium.Table.formatters;
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+
+  /* The reference lists an administrator maintains, in the order someone
+     setting a site up would work through them. */
+  var REFERENCE = [
+    ["Governance Forum Type", "governance-forum-type", "Forum types", "Governance",
+     "The kinds of forum, and what each may decide."],
+    ["Governance Forum Role", "governance-forum-role", "Forum roles", "Governance",
+     "Seat roles, and whether each votes, counts toward quorum or may attest."],
+    ["Governance Responsibility", "governance-responsibility", "Governance responsibilities", "Governance",
+     "Oversight, decision making, or both."],
+    ["Organization Unit", "organization-unit", "Organisational units", "Core",
+     "The one tree: operating groups, corporate support, lines of business and business units."],
+    ["Risk Category", "risk-category", "Risk categories", "Core",
+     "The primary risk category a forum or document carries."],
+    ["Risk Type", "risk-type", "Risk types", "Core", "The finer risk taxonomy."],
+    ["Legal Entity", "legal-entity", "Legal entities", "Core", "The entities in scope."],
+    ["Jurisdiction", "jurisdiction", "Jurisdictions", "Core", "Where an obligation applies."],
+    ["Regulatory Requirement", "regulatory-requirement", "Regulatory requirements", "Core",
+     "The obligations a forum or document can be required by."],
+    ["Governing Document Type", "governing-document-type", "Document types", "Policy",
+     "Policy, standard, procedure, framework, charter and the rest."],
+    ["Document Template", "document-template", "Document templates", "Policy",
+     "What a submission must carry, per document type and action."],
+    ["Escalation Type", "escalation-type", "Escalation types", "Escalation",
+     "The kinds of matter that can be escalated."],
+    ["Escalation Template", "escalation-template", "Escalation templates", "Escalation",
+     "The shape of an escalation, an action plan or a risk acceptance."],
+    ["Retention Class", "retention-class", "Retention classes", "Core",
+     "How long each class of record is kept."],
+    ["Line Of Defence", "line-of-defence", "Lines of defence", "Core",
+     "First, second and third line."]
+  ];
+
+  var rows = REFERENCE.map(function (entry) {
+    return {
+      name: entry[0], route: entry[1], label: entry[2], module: entry[3],
+      purpose: entry[4], count: null
+    };
+  });
+
+  var table = Consilium.Table.create({
+    target: "#reference-table",
+    data: rows,
+    caption: "Reference data maintained by an administrator",
+    storageKey: "admin-reference",
+    rowKey: "name",
+    pageSize: 25,
+    compact: true,
+    searchFields: ["label", "module", "purpose"],
+    searchPlaceholder: "Search reference lists",
+    defaultSort: { field: "module", order: "asc" },
+    columns: [
+      { field: "label", label: "List", sortable: true,
+        formatter: function (value, row) {
+          return '<a href="/app/' + escapeAttr(row.route) + '">' + escapeHtml(value) + "</a>";
+        } },
+      { field: "module", label: "Module", sortable: true,
+        formatter: f.status({ Core: "neutral", Governance: "primary", Policy: "info",
+                              Escalation: "warning" }) },
+      { field: "purpose", label: "What it is for" },
+      { field: "count", label: "Values", align: "end", sortable: true,
+        formatter: function (value) {
+          if (value === null) return '<span class="cns-text-muted">&hellip;</span>';
+          if (value === -1) return '<span class="cns-pill cns-status-neutral">No access</span>';
+          if (value === 0) return '<span class="cns-pill cns-status-warning">Empty</span>';
+          return escapeHtml(String(value));
+        } },
+      { field: "name", label: "Action",
+        formatter: function (value, row) {
+          /* The list's name reaches a screen reader through the link's label
+             rather than hidden text, which is positioned out of the page and
+             would widen it. */
+          return '<a class="cns-btn cns-btn-ghost cns-btn-sm" href="/app/' + escapeAttr(row.route) +
+            '/new" aria-label="Add a value to ' + escapeAttr(row.label) + '">Add a value</a>';
+        } }
+    ]
+  });
+
+  function loadCounts() {
+    rows.forEach(function (row) { row.count = null; });
+    table.setData(rows.slice());
+    Promise.all(rows.map(function (row) {
+      return Consilium.api
+        .count(row.name, { filters: [], trackLoading: false })
+        .then(function (n) { row.count = n; })
+        .catch(function () { row.count = -1; });
+    })).then(function () {
+      table.setData(rows.slice());
+      Consilium.announce("Reference list counts updated.");
+    });
+  }
+
+  document.getElementById("refresh-counts").addEventListener("click", loadCounts);
+  loadCounts();
+
+  /* The guide articles themselves. */
+  Consilium.Table.create({
+    target: "#guide-table",
+    doctype: "Guide Article",
+    caption: "Guide articles behind the home page",
+    storageKey: "admin-guide",
+    pageSize: 10,
+    compact: true,
+    searchFields: ["title", "slug"],
+    searchPlaceholder: "Search articles",
+    defaultSort: { field: "display_order", order: "asc" },
+    emptyTitle: "No articles yet",
+    emptyMessage: "The home page is showing its built-in wording. Write an article to replace a section.",
+    columns: [
+      { field: "title", label: "Title", sortable: true,
+        formatter: function (value, row) {
+          return '<a href="/app/guide-article/' + escapeAttr(encodeURIComponent(row.name)) + '">' +
+            escapeHtml(value || row.name) + "</a>";
+        } },
+      { field: "category", label: "Home-page section", sortable: true },
+      { field: "applies_to_module", label: "Module", sortable: true },
+      { field: "display_order", label: "Order", sortable: true, align: "end" },
+      { field: "is_published", label: "Shown", sortable: true,
+        formatter: function (value) {
+          return value
+            ? '<span class="cns-pill cns-status-success">Published</span>'
+            : '<span class="cns-pill cns-status-neutral">Draft</span>';
+        } },
+      { field: "modified", label: "Updated", sortable: true, formatter: f.datetime }
+    ]
+  });
+})();
+</script>
+{% endblock %}
