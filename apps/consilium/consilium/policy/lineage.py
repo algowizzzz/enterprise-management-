@@ -204,14 +204,41 @@ def parent_owner_approvals(doc) -> list[dict]:
     return [entry for entry in required.values() if entry.get("owner")]
 
 
+def _readable(names: list[str], user: str | None = None) -> set[str]:
+    """The documents in ``names`` this user may read, handling rules included.
+
+    ``has_permission`` on each one, not a query: the Governing Document
+    permission hook (``handling.has_permission``) is what decides whether a
+    Confidential or Restricted document is visible to this person, and a
+    query that bypassed it would be a second, weaker answer.
+    """
+    user = user or frappe.session.user
+    return {name for name in set(names) if frappe.has_permission(DOCTYPE, "read", doc=name, user=user)}
+
+
 @frappe.whitelist()
 def lineage_of(document: str) -> dict:
-    """The whole picture for one document, for the record view."""
+    """The whole picture for one document, for the record view.
+
+    The graph itself is walked in full — a restricted document in the middle of
+    a family still connects its parent to its children — but only documents the
+    viewer may read are *named*. A restricted child is not listed at all, not
+    even as a count: that it exists, and what it is called, is itself what its
+    handling protects.
+    """
     frappe.has_permission(DOCTYPE, "read", doc=document, throw=True)
-    return {
-        "document": document,
+    graph = {
         "parents": parents(document),
         "ancestors": ancestors(document),
         "children": children(document),
         "descendants": descendants(document),
+    }
+    names = graph["parents"] + graph["ancestors"] + graph["descendants"] + [row["document"] for row in graph["children"]]
+    visible = _readable(names)
+    return {
+        "document": document,
+        "parents": [name for name in graph["parents"] if name in visible],
+        "ancestors": [name for name in graph["ancestors"] if name in visible],
+        "children": [row for row in graph["children"] if row["document"] in visible],
+        "descendants": [name for name in graph["descendants"] if name in visible],
     }

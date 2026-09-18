@@ -12,7 +12,7 @@ Command mapping against upstream `bench`:
     bench schedule               -> winbench scheduler
     bench --site X console       -> winbench console
     bench --site X backup        -> winbench backup
-    bench setup supervisor/nginx -> (deleted; see winbench service install)
+    bench setup supervisor/nginx -> (deleted; see deploy/service/ and deploy/kit.py)
     bench doctor                 -> winbench doctor        (checks + compat report)
 """
 
@@ -451,7 +451,7 @@ def assets(export_to, import_from, use_copy, with_sourcemaps):
 		_export_assets(bench, Path(export_to), with_sourcemaps=with_sourcemaps)
 		return
 
-	_relink_assets(use_copy)
+	_relink_assets(use_copy, bench)
 
 
 # The build output each app keeps, relative to the app's package directory.
@@ -459,11 +459,66 @@ def assets(export_to, import_from, use_copy, with_sourcemaps):
 _ASSET_SUBDIR = "public"
 
 
+def _app_module_dir(bench: Bench, app: str) -> Path:
+	"""Where the app's Python package actually is.
+
+	On a development bench that is ``apps/<app>/<app>``. On an installation from
+	the offline bundle the app is a wheel in the environment's site-packages and
+	``apps/`` holds nothing, so the conventional path points nowhere and the
+	framework's compiled assets would be skipped as "not installed in this
+	bench". The framework itself locates an app's public directory (and its
+	``node_modules``, one level up) from the imported module, so do the same:
+	both layouts then resolve to the place the framework will serve from.
+	"""
+	import importlib.util
+
+	try:
+		spec = importlib.util.find_spec(app)
+	except (ImportError, ValueError):
+		spec = None
+	if spec and spec.origin:
+		return Path(spec.origin).resolve().parent
+	return bench.apps_dir / app / app
+
+
 def _app_public_dir(bench: Bench, app: str) -> Path:
-	return bench.apps_dir / app / app / _ASSET_SUBDIR
+	return _app_module_dir(bench, app) / _ASSET_SUBDIR
 
 
-def _relink_assets(use_copy: bool) -> None:
+def _app_node_modules_dir(bench: Bench, app: str) -> Path:
+	# frappe.build.generate_assets_map links /assets/<app>/node_modules from
+	# here: the directory above the package.
+	return _app_module_dir(bench, app).parent / "node_modules"
+
+
+# Libraries the desk does not bundle but fetches from
+# /assets/<app>/node_modules/... the first time a screen needs them: the code
+# editor behind every JSON and Code field, the Gantt view, the barcode scanner
+# and direct printing. `dist/` alone leaves them out, and the failure is quiet --
+# the field renders, the script request 404s, and the console fills with
+# "Unexpected token '<'" while nothing on the page says why. Only these paths are
+# carried, not node_modules wholesale, which would be hundreds of megabytes.
+_RUNTIME_NODE_MODULES = (
+	"ace-builds/src-min-noconflict",
+	"ace-builds/LICENSE",
+	"frappe-gantt/dist/frappe-gantt.css",
+	"frappe-gantt/dist/frappe-gantt.min.js",
+	"frappe-gantt/license.txt",
+	"html5-qrcode/html5-qrcode.min.js",
+	"html5-qrcode/LICENSE",
+	"qz-tray/qz-tray.js",
+	"qz-tray/package.json",  # its licence (LGPL-2.1) is declared only here
+	"js-sha256/build/sha256.min.js",
+	"js-sha256/LICENSE.txt",
+)
+
+# The desk asks for the unminified editor in developer mode and the minified one
+# otherwise. The two behave identically, so the bundle carries one and the
+# import supplies it under both names rather than doubling the archive.
+_NODE_MODULE_ALIASES = {"ace-builds/src-noconflict": "ace-builds/src-min-noconflict"}
+
+
+def _relink_assets(use_copy: bool, bench: Bench | None = None) -> None:
 	"""Recreate sites/assets/<app> from the local apps directory.
 
 	This is what `winbench build` does after compiling -- pulled out so it can
@@ -473,6 +528,29 @@ def _relink_assets(use_copy: bool) -> None:
 
 	frappe.build.setup()
 	frappe.build.make_asset_dirs(hard_link=use_copy)
+	_serve_shared_node_modules(bench or find_bench(), use_copy)
+
+
+def _serve_shared_node_modules(bench: Bench, use_copy: bool) -> None:
+	"""Serve runtime libraries for every app, when apps share one node_modules.
+
+	The framework maps ``<package>/../node_modules`` to
+	``sites/assets/<app>/node_modules``, in a dict keyed by the *source*. On a
+	development bench every app has its own directory, so every app gets its
+	own entry. Installed from wheels, every app's package sits in the same
+	site-packages, so they all name the same source, each overwrites the one
+	before, and only the last app listed gets its libraries served -- never the
+	framework, whose desk is the one that asks for them. The code editor then
+	fails to load in every JSON and Code field. So give each app that lacks the
+	directory a copy (or a link) of it.
+	"""
+	from frappe.build import link_assets_dir
+
+	for app in bench.apps():
+		source = _app_node_modules_dir(bench, app)
+		target = bench.sites_dir / "assets" / app / "node_modules"
+		if source.is_dir() and not target.exists() and target.parent.is_dir():
+			link_assets_dir(str(source), str(target), hard_link=use_copy)
 
 
 def _export_assets(bench: Bench, destination: Path, with_sourcemaps: bool = False) -> None:
@@ -499,6 +577,10 @@ def _export_assets(bench: Bench, destination: Path, with_sourcemaps: bool = Fals
 			members.append((dist, f"apps/{app}/dist"))
 		else:
 			click.echo(f"  note: {app} has no built dist/ -- run `winbench build --production` first")
+		node_modules = _app_node_modules_dir(bench, app)
+		for rel in _RUNTIME_NODE_MODULES:
+			if (node_modules / rel).exists():
+				members.append((node_modules / rel, f"apps/{app}/node_modules/{rel}"))
 
 	# The manifests and the shared css/js/locale trees live under sites/assets.
 	for name in ("assets.json", "assets-rtl.json", "css", "js", "locale"):
@@ -551,6 +633,7 @@ def _import_assets(bench: Bench, archive_path: Path) -> None:
 				shutil.rmtree(target)
 			shutil.copytree(app_dir / "dist" if (app_dir / "dist").is_dir() else app_dir, target)
 			click.echo(f"  {app_dir.name} -> {target}")
+			_import_node_modules(app_dir / "node_modules", _app_node_modules_dir(bench, app_dir.name))
 
 		sites_assets = bench.sites_dir / "assets"
 		sites_assets.mkdir(parents=True, exist_ok=True)
@@ -565,6 +648,31 @@ def _import_assets(bench: Bench, archive_path: Path) -> None:
 			else:
 				shutil.copy2(item, target)
 			click.echo(f"  {item.name} -> {target}")
+
+
+def _import_node_modules(staged: Path, target: Path) -> None:
+	"""Place the runtime libraries where the framework links them from.
+
+	`apps/<app>/node_modules` is what the relink step exposes as
+	/assets/<app>/node_modules, so the files go there -- merged package by
+	package, so a bench that does have a full node_modules keeps it.
+	"""
+	import shutil
+
+	if not staged.is_dir():
+		return
+	for package in staged.iterdir():
+		destination = target / package.name
+		if destination.exists():
+			shutil.rmtree(destination)
+		shutil.copytree(package, destination)
+	for alias, source in _NODE_MODULE_ALIASES.items():
+		alias_path, source_path = target / alias, target / source
+		if source_path.is_dir() and not alias_path.exists():
+			# A copy rather than a link: Windows needs a privilege for links
+			# that a locked-down workstation will not grant.
+			shutil.copytree(source_path, alias_path)
+	click.echo(f"  runtime libraries -> {target}")
 
 
 def _assert_safe_member(name: str) -> None:
@@ -642,20 +750,40 @@ def doctor():
 	click.echo(f"apps       : {', '.join(bench.apps()) or '(none)'}")
 	click.echo(f"sites      : {', '.join(bench.sites()) or '(none)'}\n")
 
+	site_config = None
+	sites = bench.sites()
+	if sites:
+		site = os.environ.get("FRAPPE_SITE") if os.environ.get("FRAPPE_SITE") in sites else sites[0]
+		site_config = json.loads((bench.sites_dir / site / "site_config.json").read_text())
+
 	failures = 0
-	for check in services.run_all(bench.read_common_config()):
+	for check in services.run_all(bench.read_common_config(), site_config):
 		click.echo(str(check))
 		if not check.ok and check.name in {"postgres", "redis_cache", "redis_queue"}:
 			failures += 1
 
-	install_compat(force=True)
 	click.echo("\ncompatibility patches:")
-	for name in APPLIED:
-		click.echo(f"  applied  {name}")
-	for name, reason in SKIPPED:
-		click.echo(f"  SKIPPED  {name}: {reason}")
-	if not APPLIED and not IS_WINDOWS:
+	if IS_WINDOWS:
+		install_compat()
+		for name in APPLIED:
+			click.echo(f"  applied  {name}")
+		for name, reason in SKIPPED:
+			click.echo(f"  SKIPPED  {name}: {reason}")
+	else:
+		# None is live here: every patch defers to the original on POSIX. They
+		# are still installed, inertly, to prove each one still finds what it
+		# replaces in this framework version -- so a framework upgrade that
+		# breaks a patch is caught on the Linux build machine, not on the first
+		# Windows workstation.
 		click.echo("  (none needed on this platform)")
+		install_compat(force=True)
+		click.echo(
+			f"  {len(APPLIED)} Windows patches install cleanly against this framework version "
+			"(inert here)"
+		)
+		for name, reason in SKIPPED:
+			click.echo(f"  would FAIL on Windows  {name}: {reason}")
+			failures += 1
 
 	sys.exit(1 if failures else 0)
 

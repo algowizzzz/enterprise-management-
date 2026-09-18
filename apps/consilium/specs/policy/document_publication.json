@@ -1,7 +1,7 @@
 {
   "name": "Document Publication",
   "module": "Policy",
-  "description": "P-19. The act of publishing one version to a stated audience, with the renditions allowed and the evidence that the affected parties were notified.",
+  "description": "The act of publishing one version to a stated audience, with the renditions allowed and the evidence that the affected parties were notified.",
   "autoname": "PPUB-.#####",
   "naming_rule": "Expression (old style)",
   "search_fields": "document,document_version",

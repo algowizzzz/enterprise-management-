@@ -1,7 +1,7 @@
 {
   "name": "Workflow State Flag",
   "module": "Consilium Core",
-  "description": "The configuration that turns a workflow state or status label into semantic flags. State names live here, as data. No business logic anywhere compares a state string; it reads the flags this table sets. That is what makes a state rename configuration rather than a rebuild. [Addition \u2014 the model states the rule and names the flags but defines no table to hold the mapping.]",
+  "description": "The configuration that turns a workflow state or status label into semantic flags. State names live here, as data. No business logic anywhere compares a state string; it reads the flags this table sets. That is what makes a state rename configuration rather than a rebuild.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -70,6 +70,13 @@
       "label": "Requires Statement",
       "default": "0",
       "description": "Whether a record in this state must carry a written statement \u2014 an attestation exception or a declination."
+    },
+    {
+      "fieldname": "phase",
+      "fieldtype": "Data",
+      "label": "Phase",
+      "in_list_view": 1,
+      "description": "For a record whose business-facing phase follows its workflow state (a governing document once its lifecycle runs on workflow_state): the phase this state belongs to, one of the phase field's fixed options. Adding a state is then a Workflow row plus this row, with no change to the phase field."
     },
     {
       "fieldname": "notes",

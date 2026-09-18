@@ -1,7 +1,7 @@
 {
   "name": "Monitoring Activity",
   "module": "Policy",
-  "description": "P-11. A recurring monitoring obligation against a document.",
+  "description": "A recurring monitoring obligation against a document.",
   "autoname": "PMON-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "activity_title",

@@ -1,0 +1,17 @@
+{#-
+  The analysis pages share the Reports tab, since the header has no room for a
+  tab each; this row moves between them. `analysis_page` names the one shown.
+  Rule-based pages work with no AI endpoint, so every link is always offered.
+-#}
+<nav class="cns-analysis-nav" aria-label="Analysis pages">
+  {%- for _id, _label, _url, _icon in [
+      ("reports", "Management reporting", "/reports", "bi-bar-chart"),
+      ("governance-gaps", "Gaps and risk", "/governance-gaps", "bi-shield-exclamation"),
+      ("emerging-risks", "Emerging risks", "/emerging-risks", "bi-graph-up-arrow"),
+      ("regulatory-updates", "Regulatory updates", "/regulatory-updates", "bi-journal-text")] %}
+  <a class="cns-btn cns-btn-sm {{ 'cns-btn-secondary' if analysis_page == _id else 'cns-btn-ghost' }}" href="{{ _url }}"
+     {%- if analysis_page == _id %} aria-current="page"{% endif %}>
+    <i class="bi {{ _icon }}" aria-hidden="true"></i> {{ _label }}
+  </a>
+  {%- endfor %}
+</nav>

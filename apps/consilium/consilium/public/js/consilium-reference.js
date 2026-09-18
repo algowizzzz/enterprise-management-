@@ -30,6 +30,7 @@
     "Risk Category": "risk_category_name",
     "Risk Type": "risk_type_name",
     "Organization Unit": "org_unit_name",
+    "Organizational Level": "organizational_level_name",
     "Legal Entity": "legal_entity_name",
     "Jurisdiction": "jurisdiction_name",
     "Regulatory Requirement": "regulatory_requirement_name",
@@ -45,6 +46,24 @@
   function loadOne(doctype) {
     if (cache[doctype]) return Promise.resolve(cache[doctype]);
     if (inFlight[doctype]) return inFlight[doctype];
+
+    // People are not a list most users may read, so their names come from a
+    // narrow endpoint that returns display names only.
+    if (doctype === "User") {
+      inFlight[doctype] = NS.api
+        .call("consilium.consilium_core.branding.people", {}, { method: "GET", trackLoading: false })
+        .then(function (map) {
+          cache[doctype] = map || {};
+          delete inFlight[doctype];
+          return cache[doctype];
+        })
+        .catch(function () {
+          cache[doctype] = {};
+          delete inFlight[doctype];
+          return cache[doctype];
+        });
+      return inFlight[doctype];
+    }
 
     var labelField = LABEL_FIELDS[doctype];
     if (!labelField) {
@@ -99,4 +118,58 @@
       return !!cache[doctype];
     }
   };
+
+  /* People. Records hold account IDs; readers want names. A person is written
+     as a tagged element carrying the ID, and the names are filled in when they
+     arrive — so a page does not have to load them before it renders, and rows
+     a table adds later (the next page, a new sort) are named as well. */
+  NS.person = function (id) {
+    if (!id) return "";
+    var escape = NS.util.escapeHtml;
+    var known = cache.User && cache.User[id];
+    return '<span data-cns-person="' + escape(id) + '" title="' + escape(id) + '">' +
+      escape(known || id) + "</span>";
+  };
+
+  function namePeople(root) {
+    var map = cache.User;
+    if (!map) return;
+    (root || document).querySelectorAll("[data-cns-person]").forEach(function (node) {
+      var name = map[node.getAttribute("data-cns-person")];
+      if (name && node.textContent !== name) node.textContent = name;
+    });
+  }
+
+  /* The inbox tab carries a count of what waits on the viewer, overdue first.
+     Read once per page; the inbox itself is the source of truth. */
+  var badge = document.querySelector("[data-cns-inbox-badge]");
+  if (badge && !document.body.classList.contains("cns-guest")) {
+    NS.api.call("consilium.consilium_core.inbox.my_task_count", {}, { trackLoading: false })
+      .then(function (r) {
+        if (!r || !r.count) return;
+        badge.textContent = r.count > 99 ? "99+" : String(r.count);
+        if (r.overdue) {
+          badge.setAttribute("data-overdue", "");
+          badge.title = r.overdue + " overdue";
+        }
+        badge.setAttribute("aria-label", r.count + " waiting" + (r.overdue ? ", " + r.overdue + " overdue" : ""));
+        badge.hidden = false;
+      })
+      .catch(function () { /* the tab still works without its count */ });
+  }
+
+  if (document.querySelector('meta[name="cns-time-zone"]') && !document.body.classList.contains("cns-guest")) {
+    loadOne("User").then(function () {
+      namePeople();
+      if (window.MutationObserver) {
+        new MutationObserver(function (changes) {
+          changes.forEach(function (change) {
+            change.addedNodes.forEach(function (node) {
+              if (node.nodeType === 1) namePeople(node.parentNode || node);
+            });
+          });
+        }).observe(document.body, { childList: true, subtree: true });
+      }
+    });
+  }
 })(window);

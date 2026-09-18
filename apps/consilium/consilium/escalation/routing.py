@@ -18,7 +18,7 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import getdate, nowdate
+from frappe.utils import getdate, now, nowdate
 
 FORUM_DOCTYPE = "Governance Forum"
 
@@ -31,6 +31,7 @@ CONDITION_FIELDS = (
     "organizational_level",
     "material_entity_impact",
     "risk_appetite_breach",
+    "systemic",
     "severity",
 )
 
@@ -122,6 +123,7 @@ def match_rule(matter, as_of: str | None = None) -> dict | None:
                 "severity": rule.resulting_severity,
                 "sla_definition": rule.sla_definition,
                 "route_to_role": rule.route_to_role,
+                "route_to_group": rule.get("route_to_group"),
                 "forums": [
                     {"governance_forum": route.governance_forum, "role_in_escalation": route.role_in_escalation}
                     for route in matrix.routes
@@ -196,6 +198,13 @@ def apply_routing(matter) -> None:
 
     add_destinations(matter, matched["forums"], rule_code=matched["rule_code"])
 
+    # The queue the rule names (E-5, E-8). Assignment is part of the route, so
+    # a matter re-routed — flagged systemic, or raised by a breach — moves to
+    # the new rule's queue with its forums.
+    from consilium.escalation import assignment
+
+    assignment.apply_assignment(matter, matched)
+
 
 def add_destinations(matter, forums: list[dict], rule_code: str | None = None) -> list[str]:
     """Append proposed forums to the pathway, without duplicating one already there."""
@@ -258,3 +267,160 @@ def raised_severity(severity: str | None) -> str | None:
         return severity
     index = SEVERITY_ORDER.index(severity)
     return SEVERITY_ORDER[min(index + 1, len(SEVERITY_ORDER) - 1)]
+
+
+# ------------------------------------------------ pathway participants (E-7)
+
+#: Seat-role flags that make a seat holder someone a matter on the forum's
+#: pathway must reach: the chair, the secretary, and every seat that attests for
+#: the forum. The flags are the seat role's configuration, read by name of flag.
+PARTICIPANT_FLAGS = ("is_chair_role", "is_secretary_role", "can_attest")
+
+
+def forum_participants(forum: str, on_date=None) -> list[dict]:
+    """The people holding the forum's officer and attesting seats on a date.
+
+    Membership is the Governance module's record and the only authority on who
+    sits where, so it is asked — as at the date — rather than the officer fields
+    on the forum, which are a denormalised copy of it. A standing delegate in
+    place on the date is included beside the seat holder: a delegate exists
+    precisely so the seat is reachable while its holder is not.
+
+    Returns ``[{"user", "forum", "seat_role", "capacity"}]``, one entry per
+    person per forum. Empty when the Governance module is not installed.
+    """
+    if not forum or not frappe.db.exists("DocType", "Forum Membership"):
+        return []
+    try:
+        from consilium.governance import membership
+    except ImportError:
+        return []
+
+    on_date = on_date or nowdate()
+    found: dict[str, dict] = {}
+    for seat in membership.members_as_at(forum, on_date):
+        if not seat.get("member"):
+            continue
+        role = membership.role_defaults(seat.get("forum_role")) or {}
+        capacities = [flag for flag in PARTICIPANT_FLAGS if role.get(flag)]
+        if not capacities:
+            continue
+        label = frappe.db.get_value("Governance Forum Role", seat.get("forum_role"),
+                                    "governance_forum_role_name") or seat.get("forum_role")
+        found.setdefault(seat["member"], {
+            "user": seat["member"], "forum": forum, "seat_role": seat.get("forum_role"),
+            "seat_role_name": label, "capacity": "holder",
+        })
+        if membership.delegate_active_on(seat, on_date) and seat.get("delegate"):
+            found.setdefault(seat["delegate"], {
+                "user": seat["delegate"], "forum": forum, "seat_role": seat.get("forum_role"),
+                "seat_role_name": label, "capacity": "delegate",
+            })
+    return list(found.values())
+
+
+def pathway_participants(matter, on_date=None) -> dict[str, list[dict]]:
+    """``{forum: participants}`` for every forum on the matter's pathway."""
+    return {
+        row.governance_forum: forum_participants(row.governance_forum, on_date)
+        for row in matter.get("governance_forums") or []
+        if row.governance_forum
+    }
+
+
+def stamp_notified(matter, forums) -> None:
+    """Record on each pathway row that its forum's participants were told.
+
+    Written straight to the row: the matter is not being edited, and a save
+    here would re-run routing and the template on a record nobody changed.
+    """
+    stamp = now()
+    for row in matter.get("governance_forums") or []:
+        if row.governance_forum in forums and row.name:
+            frappe.db.set_value("Escalation Forum Link", row.name, "notified_on", stamp, update_modified=False)
+            row.notified_on = stamp
+
+
+# ----------------------------------------------- the pathway, from the portal
+
+#: The roles that may change a matter's pathway, beyond the superuser.
+PATHWAY_ROLES = ("Escalation Owner",)
+
+
+@frappe.whitelist(methods=["POST"])
+def set_pathway(escalation_matter: str, forums) -> dict:
+    """Replace the forums on a matter's pathway (E-7, E17-S1). Escalation Owner.
+
+    ``forums`` is ``[{"governance_forum", "role_in_escalation"}]``. A row kept
+    from the present pathway keeps what it already carries (the rule that
+    proposed it, when its forum was notified, the motion that decided it).
+
+    A forum the matrix routes the matter to cannot be taken off: routing adds it
+    back on every save while its rule applies, so removing it would look as if
+    it had worked and then quietly not have. The request is refused instead, and
+    the role can still be changed.
+    """
+    from consilium.escalation import resolution
+
+    matter = resolution.load_matter(escalation_matter, "write")
+    resolution.authorise(matter, "change_pathway")
+    wanted = _loads(forums, default=[])
+    if not isinstance(wanted, list):
+        frappe.throw(_("The pathway is a list of forums."), title=_("Invalid Pathway"))
+
+    existing = {row.governance_forum: row for row in matter.get("governance_forums") or []}
+    proposed = {entry["governance_forum"] for entry in (match_rule(matter) or {}).get("forums", [])}
+    requested = [entry.get("governance_forum") for entry in wanted if entry.get("governance_forum")]
+    removed = [forum for forum in existing if forum not in requested]
+    locked = [forum for forum in removed if forum in proposed]
+    if locked:
+        frappe.throw(
+            _("{0} cannot be taken off the pathway: matrix rule {1} routes this matter there. "
+              "Change its role instead.").format(", ".join(locked), matter.matched_matrix_rule or ""),
+            title=_("Routed By The Matrix"),
+        )
+
+    role_field = frappe.get_meta("Escalation Forum Link").get_field("role_in_escalation")
+    roles = [o for o in (role_field.options or "").split("\n") if o]
+    rows = []
+    for entry in wanted:
+        forum = entry.get("governance_forum")
+        if not forum:
+            continue
+        if not frappe.db.exists(FORUM_DOCTYPE, forum):
+            frappe.throw(_("Forum {0} does not exist.").format(forum), title=_("Unknown Forum"))
+        role = entry.get("role_in_escalation") or role_field.default
+        if role not in roles:
+            frappe.throw(_("{0} is not a role a forum can play on a pathway.").format(role),
+                         title=_("Unknown Role"))
+        kept = existing.get(forum)
+        row = kept.as_dict() if kept else {}
+        row = {k: v for k, v in row.items() if k in ("proposed_by_rule", "notified_on", "decision_motion")}
+        rows.append({**row, "governance_forum": forum, "role_in_escalation": role})
+
+    matter.set("governance_forums", [])
+    for row in rows:
+        matter.append("governance_forums", row)
+    matter.save(ignore_permissions=True)
+    return resolution.workbench(matter.name)
+
+
+def selectable_forums() -> list[dict]:
+    """Active forums a person may put on a pathway, as ``{name, forum_name}``.
+
+    The forum register belongs to the Governance module and is readable by its
+    roles; an escalation owner often holds none of them and still has to name
+    where a matter goes — the pathway is a link to the forum, not a view of it.
+    So a reader of the register gets it through the permission engine, and
+    anyone else gets only the names of active forums that are not marked
+    confidential: enough to choose a destination, nothing about the forum.
+    """
+    if not frappe.db.exists("DocType", FORUM_DOCTYPE):
+        return []
+    if frappe.has_permission(FORUM_DOCTYPE, "read"):
+        return frappe.get_list(FORUM_DOCTYPE, filters={"is_active": 1}, fields=["name", "forum_name"],
+                               order_by="forum_name asc", limit_page_length=0)
+    filters = {"is_active": 1}
+    if frappe.get_meta(FORUM_DOCTYPE).has_field("confidential"):
+        filters["confidential"] = 0
+    return frappe.get_all(FORUM_DOCTYPE, filters=filters, fields=["name", "forum_name"], order_by="forum_name asc")

@@ -1,0 +1,23 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Standalone host for the policy-change Impact panel (O-6). The panel itself
+  is the include; this page only places it.
+-#}
+
+{% block page_actions %}
+{%- if record_name %}
+<a class="cns-btn cns-btn-ghost" href="/policy?name={{ record_name | urlencode }}">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to the document
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+{%- if record_name %}
+{% include "consilium/templates/includes/ai_impact_panel.html" %}
+{%- else %}
+<div class="cns-alert cns-status-info"><i class="bi bi-info-circle" aria-hidden="true"></i>
+  <div>There is no document here to assess. Open a governing document from <a href="/policies">Policies</a>.</div></div>
+{%- endif %}
+{% endblock %}

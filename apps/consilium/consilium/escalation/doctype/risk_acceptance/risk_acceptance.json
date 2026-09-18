@@ -4,7 +4,7 @@
  "allow_rename": 0,
  "autoname": "RACC-.#####",
  "creation": "2026-09-17 23:50:00.726264",
- "description": "A documented, approved and time-bounded decision to accept a risk rather than remediate it (E-6, E-9, E16-S4). Subject to periodic reassessment.",
+ "description": "A documented, approved and time-bounded decision to accept a risk rather than remediate it. Subject to periodic reassessment.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -186,13 +186,13 @@
    "read_only": 1
   },
   {
-   "description": "[Inferred] Risk acceptance is subject to periodic reassessment.",
+   "description": "Risk acceptance is subject to periodic reassessment.",
    "fieldname": "next_reassessment_on",
    "fieldtype": "Date",
    "label": "Next Reassessment On"
   },
   {
-   "description": "[Inferred]",
+   "description": "",
    "fieldname": "reassessment_frequency_months",
    "fieldtype": "Int",
    "label": "Reassessment Frequency (Months)"
@@ -213,7 +213,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.726274",
+ "modified": "2026-09-18 03:31:55.000000",
  "modified_by": "Administrator",
  "module": "Escalation",
  "name": "Risk Acceptance",

@@ -1,7 +1,7 @@
 {
   "name": "Glossary Term Link",
   "module": "Policy",
-  "description": "Term-to-document linkage, which is what lets a defined term be surfaced in context (E15-S4).",
+  "description": "Term-to-document linkage, which is what lets a defined term be surfaced in context.",
   "istable": 1,
   "fields": [
     {

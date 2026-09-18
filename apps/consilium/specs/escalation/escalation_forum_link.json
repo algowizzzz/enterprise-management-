@@ -1,7 +1,7 @@
 {
   "name": "Escalation Forum Link",
   "module": "Escalation",
-  "description": "One governance forum on a matter's escalation pathway (E-7, E17-S1). Plural by decision.",
+  "description": "One governance forum on a matter's escalation pathway.",
   "istable": 1,
   "permissions": [],
   "fields": [
@@ -27,7 +27,7 @@
       "fieldtype": "Small Text",
       "label": "Escalation Protocol",
       "read_only": 1,
-      "description": "Shown to the user, copied from the forum at the time the pathway was set (E17-S1)."
+      "description": "Shown to the user, copied from the forum at the time the pathway was set."
     },
     {
       "fieldname": "escalation_threshold",

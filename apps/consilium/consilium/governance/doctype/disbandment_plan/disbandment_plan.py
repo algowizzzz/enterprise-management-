@@ -46,6 +46,10 @@ class DisbandmentPlan(Document):
                 subject_name=self.name,
                 approval_step=row.approver_role,
                 step_sequence=row.idx,
+                # The required approvers of a disbandment sign in any order: the
+                # row order on the plan is how they were listed, not a route.
+                # Sequential steps are enforced by Core (E7-S4), so this says so.
+                mode="Parallel",
                 assigned_to=row.approver,
             )
             row.db_set("approval_decision", decision.name, update_modified=False)

@@ -8,15 +8,60 @@
   say — so the words are maintained by the governance office, not by a release.
 -#}
 
-{% block page_actions %}
-<a class="cns-btn cns-btn-secondary" href="/forums">
-  <i class="bi bi-table" aria-hidden="true"></i> Forum inventory
-</a>
-{%- if can_request %}
-<a class="cns-btn cns-btn-primary" href="/create-forum">
-  <i class="bi bi-plus-lg" aria-hidden="true"></i> Request a new forum
-</a>
-{%- endif %}
+{#- The home page opens on a banner rather than the standard title row: the
+    heading, text, buttons and image all come from Portal Branding, so a
+    deployment makes it its own without a release. #}
+{% block page_header %}
+{%- set hero_image = brand.hero_image_url %}
+<section class="cns-hero{% if hero_image %} cns-hero-has-image{% endif %}" aria-labelledby="hero-heading">
+  {%- if hero_image %}
+  <img class="cns-hero-image" src="{{ hero_image | e }}" alt="">
+  {%- endif %}
+  <div class="cns-hero-body">
+    <h1 class="cns-hero-title" id="hero-heading">{{ brand.hero_title | e }}</h1>
+    <p class="cns-hero-text">{{ brand.hero_text | e }}</p>
+    <div class="cns-hero-actions">
+      {%- if brand.hero_primary_label and brand.hero_primary_url %}
+      <a class="cns-hero-btn cns-hero-btn-primary" href="{{ brand.hero_primary_url | e }}">
+        {{ brand.hero_primary_label | e }} <i class="bi bi-arrow-right" aria-hidden="true"></i>
+      </a>
+      {%- endif %}
+      {%- if brand.hero_secondary_label and brand.hero_secondary_url
+            and (can_request or brand.hero_secondary_url != "/create-forum") %}
+      <a class="cns-hero-btn cns-hero-btn-secondary" href="{{ brand.hero_secondary_url | e }}">
+        {{ brand.hero_secondary_label | e }}
+      </a>
+      {%- endif %}
+    </div>
+  </div>
+</section>
+
+<nav class="cns-quick-grid" aria-label="Where to go next">
+  <a class="cns-quick-tile" href="/forums">
+    <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-people"></i></span>
+    <span><span class="cns-quick-title">Forums</span>
+      <span class="cns-quick-note">Committees, their members, meetings and decisions</span></span>
+  </a>
+  {%- if cns_can_read("Governing Document") %}
+  <a class="cns-quick-tile" href="/policies">
+    <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+    <span><span class="cns-quick-title">Policies</span>
+      <span class="cns-quick-note">Governing documents and where each stands</span></span>
+  </a>
+  {%- endif %}
+  {%- if cns_can_read("Escalation Matter") %}
+  <a class="cns-quick-tile" href="/escalations">
+    <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-exclamation-diamond"></i></span>
+    <span><span class="cns-quick-title">Escalations</span>
+      <span class="cns-quick-note">Matters raised, who owns them and how late they are</span></span>
+  </a>
+  {%- endif %}
+  <a class="cns-quick-tile" href="/reports">
+    <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-bar-chart"></i></span>
+    <span><span class="cns-quick-title">Reports</span>
+      <span class="cns-quick-note">The picture across all three, for management</span></span>
+  </a>
+</nav>
 {% endblock %}
 
 {% block page_content %}
@@ -95,6 +140,31 @@
       </div>
     </section>
   </div>
+
+  <!-- O-2: the organisation-wide interconnectivity map. Drawn from
+       `inventory.forum_map` as plain SVG; the same map is listed underneath
+       for anyone reading without the drawing. -->
+  <section class="cns-card" aria-labelledby="map-heading">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="map-heading">How the forums connect</h3>
+        <p class="cns-card-subtitle">Every active forum you may see, in its place in the hierarchy. Solid lines
+          are the parent a forum reports into; dashed arrows are the other recorded links &mdash; a forum
+          that escalates to, informs or reports to one outside its own line.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div class="cns-diagram cns-map" id="forum-map" role="group" aria-labelledby="map-heading">
+        <p class="cns-text-muted cns-text-sm">Drawing the map&hellip;</p>
+      </div>
+      <p class="cns-text-muted cns-text-xs" style="margin-top: var(--cns-space-3);">Each box opens that forum.
+        The map scrolls sideways when the hierarchy is wider than the page.</p>
+      <details class="cns-map-list" id="forum-map-list-wrap">
+        <summary>The same map as a list</summary>
+        <div id="forum-map-list"></div>
+      </details>
+    </div>
+  </section>
 
   <section class="cns-card" aria-labelledby="recent-heading">
     <div class="cns-card-header">
@@ -248,6 +318,12 @@
       <p class="cns-text-muted cns-text-xs" data-guide-note="Escalation Protocol" hidden></p>
     </div>
   </section>
+
+  {#- Published guide articles with no slot above — a category the page has no
+      card for (such as Policy Lifecycle), or a second article in a category —
+      are added here, so every published article is on the page the assistant
+      links it to. #}
+  <div id="guide-more"></div>
 </section>
 
 {% endblock %}
@@ -407,6 +483,124 @@
     .then(function (n) { setMetric("requests", n); })
     .catch(function () { setMetric("requests", "—"); });
 
+  /* --- the forum map (O-2) -------------------------------------------- */
+  /* A tidy tree: leaves take consecutive columns in hierarchy order, and a
+     parent sits centred over its children. Links that only repeat a parent
+     relationship are left to the solid line; the rest are drawn dashed with an
+     arrow, from the forum holding the link to the one it points at. */
+
+  function drawForumMap(data) {
+    var target = document.getElementById("forum-map");
+    var nodes = data.nodes || [];
+    if (!nodes.length) {
+      target.innerHTML = '<p class="cns-text-muted cns-text-sm">No forums are recorded yet.</p>';
+      document.getElementById("forum-map-list-wrap").hidden = true;
+      return;
+    }
+    var NW = 184, NH = 50, GX = 18, GY = 64, PAD = 16;
+    var byName = {};
+    nodes.forEach(function (n) { byName[n.name] = n; n.children = []; });
+    var roots = [];
+    nodes.forEach(function (n) {
+      if (n.parent_forum && byName[n.parent_forum]) byName[n.parent_forum].children.push(n);
+      else roots.push(n);
+    });
+    function byLabel(a, b) { return (a.forum_name || a.name).localeCompare(b.forum_name || b.name); }
+    roots.sort(byLabel);
+
+    var column = 0, maxDepth = 0, seen = {};
+    function place(n, depth) {
+      if (seen[n.name]) return; /* a cycle in the data is drawn once, not forever */
+      seen[n.name] = true;
+      n.depth = depth;
+      maxDepth = Math.max(maxDepth, depth);
+      n.children.sort(byLabel);
+      var kids = n.children.filter(function (c) { return !seen[c.name]; });
+      kids.forEach(function (c) { place(c, depth + 1); });
+      var placed = kids.filter(function (c) { return c.col !== undefined; });
+      n.col = placed.length ? (placed[0].col + placed[placed.length - 1].col) / 2 : column++;
+    }
+    roots.forEach(function (r) { place(r, 0); });
+
+    var W = PAD * 2 + column * NW + Math.max(0, column - 1) * GX;
+    var H = PAD * 2 + (maxDepth + 1) * NH + maxDepth * GY;
+    function x(n) { return PAD + n.col * (NW + GX); }
+    function y(n) { return PAD + n.depth * (NH + GY); }
+
+    var parts = ['<defs><marker id="map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" ' +
+                 'orient="auto-start-reverse"><path class="cns-map-arrow" d="M0,0 L10,5 L0,10 z"></path></marker></defs>'];
+
+    nodes.forEach(function (n) {
+      if (!n.parent_forum || !byName[n.parent_forum] || n.depth === undefined) return;
+      var p = byName[n.parent_forum];
+      var x1 = x(p) + NW / 2, y1 = y(p) + NH, x2 = x(n) + NW / 2, y2 = y(n), mid = y1 + GY / 2;
+      parts.push('<path class="cns-edge" d="M' + x1 + "," + y1 + " V" + mid + " H" + x2 + " V" + y2 + '"></path>');
+    });
+
+    var lateral = (data.links || []).filter(function (l) {
+      var s = byName[l.source], t = byName[l.target];
+      return s && t && s.depth !== undefined && t.depth !== undefined &&
+        s.parent_forum !== t.name && t.parent_forum !== s.name;
+    });
+    lateral.forEach(function (l) {
+      var s = byName[l.source], t = byName[l.target];
+      var x1 = x(s) + NW / 2, y1 = y(s) + (t.depth < s.depth ? 0 : NH);
+      var x2 = x(t) + NW / 2, y2 = y(t) + (t.depth < s.depth ? NH : 0);
+      if (t.depth === s.depth) { y1 = y(s); y2 = y(t); }
+      var bend = t.depth === s.depth ? -GY * 0.8 : 0;
+      var cx = (x1 + x2) / 2 + (x2 === x1 ? NW * 0.6 : 0), cy = (y1 + y2) / 2 + bend;
+      parts.push('<path class="cns-map-link" marker-end="url(#map-arrow)" d="M' + x1 + "," + y1 +
+        " Q" + cx + "," + cy + " " + x2 + "," + y2 + '"><title>' +
+        escapeHtml((s.forum_name || s.name) + " " + (l.relationship_type || "links to").toLowerCase() + " " +
+                   (t.forum_name || t.name)) + "</title></path>");
+    });
+
+    nodes.forEach(function (n) {
+      if (n.depth === undefined) return;
+      var label = n.forum_name || n.name;
+      var text = label.length > 26 ? label.slice(0, 25) + "…" : label;
+      var tone = STATUS_TONES[n.compliance_status] || "neutral";
+      var kind = (typeLabels[n.forum_type] || n.forum_type || "") ;
+      kind = kind.length > 30 ? kind.slice(0, 29) + "…" : kind;
+      parts.push('<a href="/forum?name=' + escapeAttr(encodeURIComponent(n.name)) + '" aria-label="' +
+        escapeAttr(label + ", " + (typeLabels[n.forum_type] || n.forum_type || "forum") + ", " + (n.compliance_status || "")) + '">' +
+        '<rect class="cns-node-box" x="' + x(n) + '" y="' + y(n) + '" width="' + NW + '" height="' + NH +
+        '" rx="6" stroke-width="1.5"></rect>' +
+        '<circle class="cns-map-dot cns-map-dot--' + escapeAttr(tone) + '" cx="' + (x(n) + NW - 12) + '" cy="' + (y(n) + 12) + '" r="4"></circle>' +
+        '<text class="cns-node-label" x="' + (x(n) + 10) + '" y="' + (y(n) + 21) + '">' + escapeHtml(text) + "</text>" +
+        '<text class="cns-node-kind" x="' + (x(n) + 10) + '" y="' + (y(n) + 38) + '">' + escapeHtml(kind) + "</text></a>");
+    });
+
+    target.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" style="min-width:' + Math.min(W, Math.max(320, W * 0.62)) +
+      'px" aria-hidden="false" focusable="false">' + parts.join("") + "</svg>";
+
+    /* The list: the hierarchy as nested lists, then every other link. */
+    function item(n) {
+      var kids = n.children.filter(function (c) { return c.depth === n.depth + 1; });
+      return '<li><a href="/forum?name=' + escapeAttr(encodeURIComponent(n.name)) + '">' + escapeHtml(n.forum_name || n.name) +
+        "</a> " + '<span class="cns-text-muted cns-text-xs">' + escapeHtml((typeLabels[n.forum_type] || n.forum_type || "") +
+        (n.compliance_status ? " · " + n.compliance_status : "")) + "</span>" +
+        (kids.length ? "<ul>" + kids.map(item).join("") + "</ul>" : "") + "</li>";
+    }
+    var list = '<ul class="cns-map-tree">' + roots.map(item).join("") + "</ul>";
+    if (lateral.length) {
+      list += '<p class="cns-eyebrow">Other recorded links</p><ul>' + lateral.map(function (l) {
+        var s = byName[l.source], t = byName[l.target];
+        return "<li>" + escapeHtml(s.forum_name || s.name) + " → " + escapeHtml((l.relationship_type || "links to").toLowerCase()) +
+          " → " + escapeHtml(t.forum_name || t.name) + "</li>";
+      }).join("") + "</ul>";
+    }
+    document.getElementById("forum-map-list").innerHTML = list;
+  }
+
+  Promise.all([Consilium.api.call("consilium.governance.inventory.forum_map", {}), typesPromise.catch(function () { return []; })])
+    .then(function (results) { drawForumMap(results[0]); })
+    .catch(function (error) {
+      document.getElementById("forum-map").innerHTML =
+        '<p class="cns-text-muted cns-text-sm">The map could not be drawn. ' + escapeHtml(error.message || "") + "</p>";
+      document.getElementById("forum-map-list-wrap").hidden = true;
+    });
+
   /* --- templates -------------------------------------------------------- */
 
   function renderTemplates(id, promise, format) {
@@ -503,19 +697,56 @@
       limit_page_length: 50
     })
     .then(function (articles) {
+      /* An article fills the card for its category when the page has one and
+         no earlier article has taken it; otherwise it gets a card of its own
+         below. Matching by category alone used to drop the rest: an article in
+         a category with no card (Policy Lifecycle) never appeared, and a
+         second article in a category silently replaced the first. Each
+         article is reachable at #guide-<name>, the anchor the assistant links
+         to (assistant/corpus.py, guide_anchor). */
+      var filled = {};
+      var more = document.getElementById("guide-more");
+      function anchor(name) {
+        return "guide-" + String(name || "").toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+      }
+      function edited(article) {
+        return "Maintained in the guide, last edited " + Consilium.util.formatDate(article.modified, false) + ".";
+      }
       articles.forEach(function (article) {
+        if (!article.body) return;
         var target = document.querySelector('[data-guide-category="' + article.category + '"]');
-        if (!target || !article.body) return;
-        target.innerHTML = sanitize(article.body);
-        var heading = document.querySelector('[data-guide-title="' + article.category + '"]');
-        if (heading && article.title) heading.textContent = article.title;
-        var note = document.querySelector('[data-guide-note="' + article.category + '"]');
-        if (note) {
-          note.textContent = "Maintained in the guide, last edited " +
-            Consilium.util.formatDate(article.modified, false) + ".";
-          note.hidden = false;
+        if (target && !filled[article.category]) {
+          filled[article.category] = true;
+          target.innerHTML = sanitize(article.body);
+          var card = target.closest(".cns-card");
+          if (card) card.id = anchor(article.name);
+          var heading = document.querySelector('[data-guide-title="' + article.category + '"]');
+          if (heading && article.title) heading.textContent = article.title;
+          var note = document.querySelector('[data-guide-note="' + article.category + '"]');
+          if (note) {
+            note.textContent = edited(article);
+            note.hidden = false;
+          }
+          return;
         }
+        if (!more) return;
+        var id = anchor(article.name);
+        var section = document.createElement("section");
+        section.className = "cns-card";
+        section.id = id;
+        section.setAttribute("aria-labelledby", id + "-title");
+        section.innerHTML =
+          '<div class="cns-card-header"><h3 class="cns-card-title" id="' + escapeAttr(id) + '-title">' +
+          escapeHtml(article.title || article.category || "") + "</h3></div>" +
+          '<div class="cns-card-body"><div class="cns-prose">' + sanitize(article.body) + "</div>" +
+          '<p class="cns-text-muted cns-text-xs">' + escapeHtml(edited(article)) + "</p></div>";
+        more.appendChild(section);
       });
+      /* The cards were given their anchors after the page loaded, so a link to
+         one (from the assistant) has to be followed now. */
+      var wanted = (window.location.hash || "").replace("#", "");
+      var landing = wanted && document.getElementById(wanted);
+      if (landing && wanted.indexOf("guide-") === 0) landing.scrollIntoView();
     })
     .catch(function () {
       /* The built-in copy is already on the page; nothing to do. */

@@ -1,7 +1,7 @@
 {
   "name": "Approval Route",
   "module": "Policy",
-  "description": "Conditional approval routing as configuration (E12-S3). The most specific active route wins; its steps are resolved against the record so the path can be shown before the record is submitted. [Addition \u2014 the data model requires conditional routing but defines no entity to hold it.]",
+  "description": "Conditional approval routing as configuration. The most specific active route wins; its steps are resolved against the record so the path can be shown before the record is submitted.",
   "autoname": "field:route_title",
   "allow_rename": 1,
   "title_field": "route_title",

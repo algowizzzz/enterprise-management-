@@ -8,7 +8,8 @@
     opening a firewall hole, because the same step will fail on a stricter host.
 
     Prerequisites, which this checks and does not install:
-      - Python 3.10 or newer, on PATH, with the venv module
+      - Python of the version the bundle was built for (MANIFEST.json says;
+        3.11 for the current requirement set), via the py launcher or on PATH
       - PostgreSQL 13 or newer, reachable, with either a superuser login or a
         database and owner role provisioned in advance (see -NoSetupDb)
       - A Redis-compatible service reachable on the configured port
@@ -44,16 +45,26 @@ function Fail { param($Message) Write-Host "FAILED: $Message" -ForegroundColor R
 # ---------------------------------------------------------------- prerequisites
 Write-Step "Checking prerequisites"
 
-$python = Get-Command python -ErrorAction SilentlyContinue
-if (-not $python) { Fail "python is not on PATH" }
-
-$version = & python -c "import sys; print('%d.%d' % sys.version_info[:2])"
-$ok = & python -c "import sys; print(1 if sys.version_info >= (3,10) else 0)"
-if ($ok -ne "1") { Fail "Python 3.10 or newer is required; found $version" }
-Write-Host "  Python $version"
-
-& python -c "import venv" 2>$null
-if ($LASTEXITCODE -ne 0) { Fail "the Python venv module is missing" }
+# The bundle's wheels are built for one Python minor version and one platform;
+# MANIFEST.json says which. A mismatch otherwise surfaces as a cryptic pip
+# "no matching distribution" for whichever compiled package comes first.
+$manifest = Get-Content (Join-Path $BundleRoot "MANIFEST.json") -Raw | ConvertFrom-Json
+if ($manifest.platform -ne "win32") {
+    Fail "this bundle was built for $($manifest.platform)/$($manifest.machine), not Windows. Build one with make_bundle.py --target-platform win_amd64 --target-python $($manifest.python)."
+}
+$want = $manifest.python
+$pythonExe = $null
+foreach ($candidate in @(@("py", "-$want"), @("python"))) {
+    $exe = Get-Command $candidate[0] -ErrorAction SilentlyContinue
+    if (-not $exe) { continue }
+    $args0 = @($candidate | Select-Object -Skip 1)
+    $got = & $exe.Source @args0 -c "import sys, venv; print('%d.%d' % sys.version_info[:2])" 2>$null
+    if ($LASTEXITCODE -eq 0 -and $got -eq $want) { $pythonExe = @($exe.Source) + $args0; break }
+}
+if (-not $pythonExe) {
+    Fail "the bundle's wheels are for Python $want, and no Python $want with the venv module was found (tried the py launcher and python on PATH). Install Python $want."
+}
+Write-Host "  Python $want ($($pythonExe -join ' '))"
 
 # Corporate machines frequently redirect the user profile to OneDrive, and a
 # database or site directory inside a syncing folder corrupts in ways that are
@@ -104,15 +115,33 @@ Write-Host "  $((Get-ChildItem $wheelhouse -Filter *.whl).Count) wheels availabl
 # --------------------------------------------------------------- environment
 Write-Step "Creating the Python environment at $Target"
 New-Item -ItemType Directory -Force -Path $Target | Out-Null
-& python -m venv (Join-Path $Target "env")
+$venvPython = $pythonExe[0]
+$venvArgs = @($pythonExe | Select-Object -Skip 1) + @("-m", "venv", (Join-Path $Target "env"))
+& $venvPython @venvArgs
 $py = Join-Path $Target "env\Scripts\python.exe"
 
-# --no-index is the point of the exercise: pip must not reach out.
-& $py -m pip install --quiet --no-index --find-links $wheelhouse --upgrade pip setuptools wheel
+# --no-index is the point of the exercise: pip must not reach out. Every proxy
+# variable points at a dead port too, so a request that should never be made
+# fails at once instead of going out through a corporate proxy.
+foreach ($var in "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY") { Set-Item "env:$var" "http://127.0.0.1:9" }
+$env:PIP_NO_INDEX = "1"
+$pipLog = Join-Path $Target "logs\pip-install.log"
+New-Item -ItemType Directory -Force -Path (Join-Path $Target "logs") | Out-Null
+$pip = @("-m", "pip", "install", "--quiet", "--no-index", "--find-links", $wheelhouse, "--log", $pipLog)
+& $py @pip --upgrade pip setuptools wheel
 if ($LASTEXITCODE -ne 0) { Fail "could not install packaging tools from the bundle" }
-& $py -m pip install --quiet --no-index --find-links $wheelhouse frappe consilium
+# Step one: the pinned dependency set, plus the framework's fork of PyPika.
+& $py @pip -r (Join-Path $BundleRoot "install\requirements.txt") "PyPika==0.48.9"
+if ($LASTEXITCODE -ne 0) { Fail "could not install the dependencies from the bundle" }
+# Step two: the framework, the application and the launcher WITHOUT their
+# declared dependencies. The framework's metadata names two by git URL, which
+# pip follows even under --no-index; step one has installed what they need.
+& $py @pip --no-deps frappe consilium winbench
 if ($LASTEXITCODE -ne 0) { Fail "could not install the application from the bundle" }
-Write-Host "  installed from local files only"
+$networkLines = Select-String -Path $pipLog -Pattern "https?://|git clone|Downloading " |
+    Where-Object { $_.Line -notmatch "Ignoring indexes:" }
+if ($networkLines) { Fail "the pip log shows network access: $($networkLines[0].Line)" }
+Write-Host "  installed from local files only (pip log: $pipLog)"
 
 # -------------------------------------------------------------------- layout
 Write-Step "Laying out the site directory"
@@ -128,9 +157,19 @@ New-Item -ItemType Directory -Force -Path (Join-Path $Target "sites"), (Join-Pat
   "redis_socketio": "$RedisUrl",
   "socketio_port": 9000,
   "webserver_port": 8000,
-  "developer_mode": 0
+  "developer_mode": 0,
+  "assistant_docs_path": "$(($Target + '\docs') -replace '\\', '\\')"
 }
 "@ | Set-Content -Encoding utf8 (Join-Path $Target "sites\common_site_config.json")
+
+# The guides the help assistant answers from: read at runtime, not in any wheel.
+$docs = Join-Path $Target "docs"
+if (Test-Path $docs) { Remove-Item -Recurse -Force $docs }
+Copy-Item -Recurse (Join-Path $BundleRoot "docs") $docs
+# The deployment tooling, kept with the installation for later operations.
+$deployDir = Join-Path $Target "deploy"
+New-Item -ItemType Directory -Force -Path $deployDir | Out-Null
+Copy-Item -Recurse -Force (Join-Path $BundleRoot "install\*") $deployDir
 
 "frappe`nconsilium" | Set-Content -Encoding ascii (Join-Path $Target "sites\apps.txt")
 

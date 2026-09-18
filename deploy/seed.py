@@ -67,8 +67,19 @@ def complete_setup(frappe) -> str:
     Completion is tracked per application on `Installed Application`, not in
     System Settings, which is the non-obvious part.
     """
+    # The wizard also leaves the desk's landing page pointing at itself until it
+    # finishes, and resets it on completion. Skipping the wizard means doing that
+    # here too, or every visit to /app still opens a blank wizard even though
+    # setup reports complete. Checked on every run so an already-seeded site
+    # recovers as well.
+    home_page_fixed = frappe.db.get_default("desktop:home_page") == "setup-wizard"
+    if home_page_fixed:
+        frappe.db.set_default("desktop:home_page", "workspace")
+        frappe.db.commit()
+        frappe.clear_cache()
+
     if frappe.is_setup_complete():
-        return "already complete"
+        return "completed (landing page reset)" if home_page_fixed else "already complete"
 
     frappe.db.set_value("Installed Application", {"app_name": "frappe"},
                         "is_setup_complete", 1)

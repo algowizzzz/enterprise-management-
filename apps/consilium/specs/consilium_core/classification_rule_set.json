@@ -59,7 +59,8 @@
       "fieldtype": "Check",
       "label": "Sealed",
       "read_only": 1,
-      "description": "Set the first time this rule set classifies a record. A sealed rule set cannot be edited; a change is a new version. (Named is_sealed, not is_locked: the framework's Document class already has an is_locked property and it would shadow the field.)"
+      "description": "Set the first time this rule set classifies a record. A sealed rule set cannot be edited; a change is a new version. (Named is_sealed, not is_locked: the framework's Document class already has an is_locked property and it would shadow the field.) Never copied: a duplicate is a new rule set that has classified nothing, so it starts unsealed.",
+      "no_copy": 1
     },
     {
       "fieldname": "default_outcome",
@@ -121,5 +122,5 @@
   "naming_rule": "Expression (old style)",
   "title_field": "rule_set_title",
   "search_fields": "rule_set_title,version_label",
-  "provenance": "02-data-model.md \u00a75.2"
+  "provenance": "02-data-model.md §5.2"
 }

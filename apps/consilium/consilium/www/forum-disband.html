@@ -1,0 +1,436 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  A forum's disbandment (E8-S5, G-11).
+  The forum as it stands, every disbandment plan raised against it with the
+  approvals G-11 names and where each stands, and — for the governance office —
+  the form that raises a plan and the control that executes one once nothing is
+  outstanding. An approver, or their delegate, decides their own approval here.
+  What the viewer may do is the server's answer (`lifecycle.get_disbandment`),
+  and every action is checked again on the way in.
+-#}
+
+{% block page_actions %}
+{%- if allowed and can_open_forum %}
+<a class="cns-btn cns-btn-secondary" href="/forum?name={{ forum | urlencode }}">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to the forum
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not forum %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-signpost" aria-hidden="true"></i></span>
+    <p class="cns-state-title">No forum was named</p>
+    <p class="cns-state-message">Open the disbandment from a forum's page.</p>
+    <a class="cns-btn cns-btn-primary" href="/forums">Go to the inventory</a>
+  </div>
+</div>
+{%- elif not found %}
+<div class="cns-card">
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">That forum is not on the inventory</p>
+    <p class="cns-state-message">Reference <span class="cns-mono">{{ forum | e }}</span> does not exist.</p>
+    <a class="cns-btn cns-btn-secondary" href="/forums">Back to the inventory</a>
+  </div>
+</div>
+{%- elif not allowed %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
+    <p class="cns-state-title">This disbandment is not open to you</p>
+    <p class="cns-state-message">It is followed by the governance office and decided by the approvers each
+      plan names. Ask the governance office if you need to see it.</p>
+    <a class="cns-btn cns-btn-secondary" href="/forums">Back to the inventory</a>
+  </div>
+</div>
+{%- else %}
+
+<div id="forum-summary" class="cns-card">
+  <div class="cns-card-body"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div>
+</div>
+
+<div class="cns-alert cns-status-info" style="margin-bottom: var(--cns-space-4);">
+  <i class="bi bi-info-circle" aria-hidden="true"></i>
+  <div>A disbanded forum becomes inactive. Nothing is deleted: its record, membership history, decisions and
+    documents remain, and remain subject to retention. Every seat is closed on the effective date.</div>
+</div>
+
+<section aria-labelledby="plans-heading">
+  <h2 class="cns-eyebrow" id="plans-heading">Disbandment plans</h2>
+  <div id="plans"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div>
+</section>
+
+<section class="cns-card" id="raise-card" aria-labelledby="raise-heading" hidden>
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="raise-heading">Raise a disbandment plan</h2>
+      <p class="cns-card-subtitle">G-11 requires approval from the delegating authority, the sponsor and the chair,
+        and from the jurisdictional chief risk officer where one applies. Each is asked as soon as the plan is
+        raised.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <form id="raise-form" novalidate>
+      <div class="cns-alert cns-status-danger" role="alert" data-form-error hidden></div>
+      <div class="cns-form-grid">
+        <div class="cns-field">
+          <label class="cns-label" for="trigger">Why the forum is being disbanded<span class="cns-required" aria-hidden="true">*</span></label>
+          <select class="cns-select" id="trigger" required></select>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="successor">Successor forum</label>
+          <select class="cns-select" id="successor" aria-describedby="successor-help">
+            <option value="">No successor</option>
+          </select>
+          <span class="cns-help" id="successor-help">The forum that takes on this one's remaining business.</span>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="effective">Effective on</label>
+          <input class="cns-input" type="date" id="effective" aria-describedby="effective-help">
+          <span class="cns-help" id="effective-help">Leave empty to take effect on the day it is executed.</span>
+        </div>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="disposition">What happens to the forum's records<span class="cns-required" aria-hidden="true">*</span></label>
+        <textarea class="cns-textarea" id="disposition" rows="3" required aria-describedby="disposition-help"></textarea>
+        <span class="cns-help" id="disposition-help">For example: retained under the forum's retention class, open
+          actions transferred to the successor.</span>
+      </div>
+      <fieldset class="cns-fieldset">
+        <legend>Approvals</legend>
+        <div class="cns-form-grid" id="approver-fields"></div>
+      </fieldset>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-primary">
+          <i class="bi bi-send" aria-hidden="true"></i> Raise the plan and ask for approval
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if allowed %}
+<script>
+(function () {
+  "use strict";
+
+  var FORUM = {{ forum | tojson }};
+  var API = "consilium.governance.lifecycle.";
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var person = Consilium.Table.formatters.person;
+  var ctx = null;
+  var people = null;
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+  function value(v) { return (v === null || v === undefined || v === "") ? dash() : escapeHtml(v); }
+  function dateValue(v, withTime) { return v ? escapeHtml(Consilium.util.formatDate(v, !!withTime)) : dash(); }
+  function pill(text, tone) {
+    return '<span class="cns-pill cns-status-' + escapeAttr(tone || "neutral") + '">' + escapeHtml(text) + "</span>";
+  }
+
+  function formError(form, message) {
+    var box = form.querySelector("[data-form-error]");
+    if (!message) { box.hidden = true; box.textContent = ""; return; }
+    box.innerHTML = '<i class="bi bi-x-octagon" aria-hidden="true"></i><div>' + escapeHtml(message) + "</div>";
+    box.hidden = false;
+    Consilium.announce(message);
+  }
+
+  function post(method, args) {
+    return Consilium.api.call(API + method, args, { method: "POST" });
+  }
+
+  /* ------------------------------- loading ----------------------------- */
+
+  function load() {
+    return Consilium.api.call(API + "get_disbandment", { forum: FORUM })
+      .then(render)
+      .catch(function (error) {
+        document.getElementById("plans").innerHTML =
+          '<div class="cns-state cns-state--error"><p class="cns-state-title">The disbandment could not be read</p>' +
+          '<p class="cns-state-message">' + escapeHtml(error.message || "") + "</p></div>";
+      });
+  }
+
+  function render(next) {
+    ctx = next;
+    renderSummary(ctx.forum);
+    renderPlans(ctx.plans);
+    renderRaise();
+  }
+
+  function renderSummary(forum) {
+    var standing = forum.is_active ? pill("Active", "success") : pill("Disbanded", "neutral");
+    document.getElementById("forum-summary").innerHTML =
+      '<div class="cns-card-body">' +
+      '<p style="margin-bottom: var(--cns-space-3);"><strong>' + escapeHtml(forum.forum_name || forum.name) + "</strong> " +
+      standing + " " + pill(forum.compliance_status || "", "neutral") + "</p>" +
+      '<dl class="cns-dl">' +
+      '<div><dt>Reference</dt><dd class="cns-mono">' + escapeHtml(forum.name) + "</dd></div>" +
+      "<div><dt>Chair</dt><dd>" + (forum.committee_chair ? person(forum.committee_chair) : dash()) + "</dd></div>" +
+      "<div><dt>Sponsor</dt><dd>" + (forum.sponsor ? person(forum.sponsor) : dash()) + "</dd></div>" +
+      "<div><dt>Disbanded on</dt><dd>" + dateValue(forum.disbanded_on) + "</dd></div>" +
+      "<div><dt>Disbandment plan</dt><dd>" + value(forum.disbandment_plan) + "</dd></div>" +
+      "</dl></div>";
+  }
+
+  /* -------------------------------- plans ------------------------------ */
+
+  function approvalStanding(row) {
+    if (row.refused) return pill(row.decision || "Refused", "danger");
+    if (row.is_open) return pill("Awaiting decision", "warning");
+    return pill(row.decision || "Decided", "success");
+  }
+
+  function planCard(plan) {
+    var standing = plan.executed_on ? pill("Executed", "neutral")
+      : plan.live ? pill("In progress", "info") : pill("Refused", "danger");
+    var rows = plan.approvals.map(function (row, i) {
+      var who = person(row.approver);
+      if (row.acted_by && row.acted_by !== row.approver) {
+        who += '<br><span class="cns-text-muted cns-text-xs">Decided by ' + person(row.acted_by) +
+          (row.acting_delegation ? " under delegation " + escapeHtml(row.acting_delegation) : "") + "</span>";
+      }
+      var form = row.can_decide
+        ? '<form class="cns-inline-form" data-decide="' + escapeAttr(row.approval_decision) + '" data-plan="' +
+          escapeAttr(plan.name) + '" novalidate>' +
+          '<div class="cns-alert cns-status-danger" role="alert" data-form-error hidden></div>' +
+          '<label class="cns-label" for="decision-' + escapeAttr(plan.name) + "-" + i + '">Your decision</label>' +
+          '<select class="cns-select" id="decision-' + escapeAttr(plan.name) + "-" + i + '" name="decision">' +
+          ctx.decisions.map(function (d) {
+            return '<option value="' + escapeAttr(d.decision) + '" data-needs-reason="' + (d.needs_reason ? 1 : 0) + '">' +
+              escapeHtml(d.decision) + (d.needs_reason ? " (with reason)" : "") + "</option>";
+          }).join("") + "</select>" +
+          '<label class="cns-label" for="reason-' + escapeAttr(plan.name) + "-" + i + '">Reason</label>' +
+          '<textarea class="cns-textarea" rows="2" name="comments" id="reason-' + escapeAttr(plan.name) + "-" + i + '"></textarea>' +
+          '<button type="submit" class="cns-btn cns-btn-primary cns-btn-sm">Record the decision</button></form>'
+        : "";
+      return "<tr><th scope=\"row\">" + escapeHtml(row.approver_role) + (row.required ? "" : " (optional)") + "</th>" +
+        "<td>" + who + "</td><td>" + approvalStanding(row) + "</td>" +
+        "<td>" + dateValue(row.decided_on, true) + "</td><td>" + value(row.comments) + form + "</td></tr>";
+    }).join("");
+
+    var blockers = plan.executed_on ? "" : plan.blockers.length
+      ? '<div class="cns-alert cns-status-warning"><i class="bi bi-hourglass-split" aria-hidden="true"></i><div>' +
+        "<strong>Not ready to execute.</strong><ul>" +
+        plan.blockers.map(function (b) { return "<li>" + escapeHtml(b) + "</li>"; }).join("") + "</ul></div></div>"
+      : '<div class="cns-alert cns-status-success"><i class="bi bi-check2-circle" aria-hidden="true"></i>' +
+        "<div>Every required approval is given. The plan can be executed.</div></div>";
+
+    var execute = plan.can_execute
+      ? '<form class="cns-fieldset" data-execute="' + escapeAttr(plan.name) + '" novalidate>' +
+        '<div class="cns-alert cns-status-danger" role="alert" data-form-error hidden></div>' +
+        '<div class="cns-check"><input type="checkbox" id="confirm-' + escapeAttr(plan.name) + '" required>' +
+        '<label for="confirm-' + escapeAttr(plan.name) + '">I understand the forum becomes inactive and every seat on it ' +
+        "is closed. This is not undone from here.</label></div>" +
+        '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-danger">' +
+        '<i class="bi bi-archive" aria-hidden="true"></i> Execute the disbandment</button></div></form>'
+      : "";
+
+    var attach = plan.can_attach
+      ? '<form class="cns-inline-form" data-attach="' + escapeAttr(plan.name) + '" novalidate>' +
+        '<div class="cns-alert cns-status-danger" role="alert" data-form-error hidden></div>' +
+        '<label class="cns-label" for="file-' + escapeAttr(plan.name) + '">' +
+        (plan.plan_file ? "Replace the plan document" : "Upload the plan document") + "</label>" +
+        '<input class="cns-input" type="file" id="file-' + escapeAttr(plan.name) + '" required>' +
+        '<button type="submit" class="cns-btn cns-btn-secondary cns-btn-sm">Upload</button></form>'
+      : "";
+
+    return '<section class="cns-card" aria-labelledby="plan-' + escapeAttr(plan.name) + '">' +
+      '<div class="cns-card-header"><div>' +
+      '<h3 class="cns-card-title" id="plan-' + escapeAttr(plan.name) + '">Plan <span class="cns-mono">' +
+      escapeHtml(plan.name) + "</span> " + standing + "</h3>" +
+      '<p class="cns-card-subtitle">Raised ' + dateValue(plan.creation, true) + " by " + person(plan.owner) + "</p>" +
+      "</div></div><div class=\"cns-card-body\">" +
+      '<dl class="cns-dl">' +
+      "<div><dt>Trigger</dt><dd>" + value(plan.trigger_scenario) + "</dd></div>" +
+      "<div><dt>Successor forum</dt><dd>" + (plan.successor_forum
+        ? '<a href="/forum?name=' + escapeAttr(encodeURIComponent(plan.successor_forum)) + '">' +
+          escapeHtml(plan.successor_forum_name || plan.successor_forum) + "</a>" : dash()) + "</dd></div>" +
+      "<div><dt>Effective on</dt><dd>" + (plan.effective_on ? dateValue(plan.effective_on) : "The day it is executed") + "</dd></div>" +
+      "<div><dt>Executed</dt><dd>" + dateValue(plan.executed_on, true) + "</dd></div>" +
+      "<div><dt>Records disposition</dt><dd>" + value(plan.records_disposition_note) + "</dd></div>" +
+      "<div><dt>Plan document</dt><dd>" + (plan.plan_file
+        ? '<a href="' + escapeAttr(plan.plan_file) + '" target="_blank" rel="noopener">' +
+          escapeHtml(decodeURIComponent(String(plan.plan_file).split("/").pop())) + "</a>" : dash()) + "</dd></div>" +
+      "</dl>" + attach +
+      '<div class="cns-table-wrap" style="margin-top: var(--cns-space-4);"><table class="cns-table cns-table--compact">' +
+      '<caption class="cns-visually-hidden">Approvals required by plan ' + escapeHtml(plan.name) + "</caption>" +
+      '<thead><tr><th scope="col">Approval</th><th scope="col">Approver</th><th scope="col">Standing</th>' +
+      '<th scope="col">Decided</th><th scope="col">Reason</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+      blockers + execute + "</div></section>";
+  }
+
+  function renderPlans(plans) {
+    var holder = document.getElementById("plans");
+    holder.innerHTML = plans.length ? plans.map(planCard).join("")
+      : '<div class="cns-card"><div class="cns-card-body"><p class="cns-text-muted">No disbandment plan has been raised ' +
+        "for this forum.</p></div></div>";
+  }
+
+  /* The forms inside plan cards are rebuilt on every render, so their
+     submissions are handled here, once, by delegation. */
+  document.getElementById("plans").addEventListener("submit", function (event) {
+    var form = event.target;
+    event.preventDefault();
+    var button = form.querySelector("button[type=submit]");
+
+    if (form.hasAttribute("data-decide")) {
+      var select = form.querySelector("select[name=decision]");
+      var comments = form.querySelector("textarea[name=comments]").value.trim();
+      var needsReason = select.options[select.selectedIndex].getAttribute("data-needs-reason") === "1";
+      if (needsReason && !comments) { formError(form, "Give the reason for this decision."); return; }
+      formError(form, null);
+      button.disabled = true;
+      post("record_disbandment_decision", {
+        plan: form.getAttribute("data-plan"),
+        approval_decision: form.getAttribute("data-decide"), decision: select.value, comments: comments
+      })
+        .then(function (next) { render(next); Consilium.toast.success("Decision recorded.", { title: "Recorded" }); })
+        .catch(function (error) { button.disabled = false; formError(form, error.message || "Not recorded."); });
+      return;
+    }
+
+    if (form.hasAttribute("data-execute")) {
+      if (!form.querySelector("input[type=checkbox]").checked) {
+        formError(form, "Confirm that you understand what execution does.");
+        return;
+      }
+      formError(form, null);
+      button.disabled = true;
+      post("execute_forum_disbandment", { plan: form.getAttribute("data-execute") })
+        .then(function (next) {
+          render(next);
+          Consilium.toast.success("The forum is disbanded with effect from " + next.executed.effective_on + ". " +
+            next.executed.seats_closed.length + " seat(s) closed.", { title: "Disbanded", timeout: 10000 });
+        })
+        .catch(function (error) { button.disabled = false; formError(form, error.message || "Not executed."); });
+      return;
+    }
+
+    if (form.hasAttribute("data-attach")) {
+      var input = form.querySelector("input[type=file]");
+      var file = input.files && input.files[0];
+      if (!file) { formError(form, "Choose the file to upload."); return; }
+      formError(form, null);
+      button.disabled = true;
+      var plan = form.getAttribute("data-attach");
+      uploadPlanFile(file, plan)
+        .then(function (url) { return post("attach_disbandment_file", { plan: plan, file_url: url }); })
+        .then(function (next) { render(next); Consilium.toast.success("Plan document uploaded.", { title: "Uploaded" }); })
+        .catch(function (error) { button.disabled = false; formError(form, error.message || "Not uploaded."); });
+    }
+  });
+
+  /* The framework's own upload, attached to the plan and private; the server
+     accepts the file only because it is attached there. */
+  function uploadPlanFile(file, plan) {
+    var data = new FormData();
+    data.append("file", file, file.name);
+    data.append("is_private", "1");
+    data.append("doctype", "Disbandment Plan");
+    data.append("docname", plan);
+    var headers = { Accept: "application/json" };
+    var token = (window.frappe && window.frappe.csrf_token) ||
+      (document.querySelector('meta[name="csrf-token"]') || { getAttribute: function () { return null; } }).getAttribute("content");
+    if (token && token !== "None") headers["X-Frappe-CSRF-Token"] = token;
+    return window.fetch("/api/method/upload_file", { method: "POST", body: data, headers: headers, credentials: "same-origin" })
+      .then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (payload) {
+          if (!response.ok || !payload.message || !payload.message.file_url) {
+            throw new Error("The file could not be uploaded (" + response.status + ").");
+          }
+          return payload.message.file_url;
+        });
+      });
+  }
+
+  /* ------------------------------- raising ----------------------------- */
+
+  var raiseCard = document.getElementById("raise-card");
+  var raiseForm = document.getElementById("raise-form");
+  var successorsLoaded = false;
+
+  function option(value, label, selected) {
+    return '<option value="' + escapeAttr(value) + '"' + (selected ? " selected" : "") + ">" + escapeHtml(label) + "</option>";
+  }
+
+  function renderRaise() {
+    raiseCard.hidden = !ctx.may_raise;
+    if (!ctx.may_raise) return;
+    document.getElementById("trigger").innerHTML = ctx.trigger_options.map(function (o) { return option(o, o); }).join("");
+
+    if (!successorsLoaded) {
+      successorsLoaded = true;
+      Consilium.api.list("Governance Forum", {
+        fields: ["name", "forum_name"], filters: [["is_active", "=", 1], ["name", "!=", FORUM]],
+        order_by: "forum_name asc", limit_page_length: 500
+      }).then(function (rows) {
+        document.getElementById("successor").insertAdjacentHTML("beforeend",
+          rows.map(function (r) { return option(r.name, r.forum_name + " (" + r.name + ")"); }).join(""));
+      }).catch(function () { /* the plan can be raised without a successor */ });
+    }
+
+    var peoplePromise = people ? Promise.resolve(people) : Consilium.api.call(API + "disbandment_people", {});
+    peoplePromise.then(function (rows) {
+      people = rows;
+      document.getElementById("approver-fields").innerHTML = ctx.approver_roles.map(function (role, i) {
+        var required = ctx.required_roles.indexOf(role) !== -1;
+        var chosen = (ctx.default_approvers || {})[role] || "";
+        return '<div class="cns-field"><label class="cns-label" for="approver-' + i + '">' + escapeHtml(role) +
+          (required ? '<span class="cns-required" aria-hidden="true">*</span>' : " (where applicable)") + "</label>" +
+          '<select class="cns-select" id="approver-' + i + '" data-role="' + escapeAttr(role) + '"' +
+          (required ? " required" : "") + ">" + option("", required ? "Choose a person" : "Not applicable") +
+          people.map(function (p) { return option(p.name, (p.full_name || p.name) + " (" + p.name + ")", p.name === chosen); }).join("") +
+          "</select></div>";
+      }).join("");
+    }).catch(function (error) { formError(raiseForm, error.message || "The list of people could not be read."); });
+  }
+
+  raiseForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var disposition = document.getElementById("disposition").value.trim();
+    var approvals = [];
+    var missing = [];
+    Array.prototype.forEach.call(raiseForm.querySelectorAll("select[data-role]"), function (select) {
+      var role = select.getAttribute("data-role");
+      if (select.value) approvals.push({ approver_role: role, approver: select.value });
+      else if (select.required) missing.push(role);
+    });
+    if (!disposition) { formError(raiseForm, "Say what happens to the forum's records."); document.getElementById("disposition").focus(); return; }
+    if (missing.length) { formError(raiseForm, "Name the approver for: " + missing.join(", ") + "."); return; }
+    formError(raiseForm, null);
+    var button = raiseForm.querySelector("button[type=submit]");
+    button.disabled = true;
+    post("raise_disbandment_plan", {
+      forum: FORUM,
+      trigger_scenario: document.getElementById("trigger").value,
+      successor_forum: document.getElementById("successor").value,
+      effective_on: document.getElementById("effective").value,
+      records_disposition_note: disposition,
+      approvals: approvals
+    })
+      .then(function (next) {
+        button.disabled = false;
+        raiseForm.reset();
+        render(next);
+        Consilium.toast.success("Plan raised. Each approver has been asked for their decision.", { title: "Plan raised" });
+      })
+      .catch(function (error) { button.disabled = false; formError(raiseForm, error.message || "The plan was not raised."); });
+  });
+
+  load();
+})();
+</script>
+{%- endif %}
+{% endblock %}

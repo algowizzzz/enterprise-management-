@@ -1,0 +1,340 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Personal inbox (CS-10).
+  Everything waiting on the signed-in person, grouped by kind, most urgent
+  first. The server decides what belongs here (`consilium_core.inbox.my_tasks`);
+  the page only draws it. Attestations are answered and counter-signed in place,
+  through permission-checked endpoints that refuse anyone the task does not name.
+  Everything else links to the screen where it is worked.
+-#}
+
+{% block page_actions %}
+{%- if may_run_campaigns %}
+<a class="cns-btn cns-btn-secondary" href="/attestation-campaigns">
+  <i class="bi bi-clipboard-check" aria-hidden="true"></i> Attestation campaigns
+</a>
+{%- endif %}
+<button type="button" class="cns-btn cns-btn-ghost" id="inbox-refresh">
+  <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Refresh
+</button>
+{% endblock %}
+
+{% block page_content %}
+<section class="cns-card" aria-labelledby="inbox-filter-heading">
+  <div class="cns-card-body cns-inbox-toolbar">
+    <h2 class="cns-visually-hidden" id="inbox-filter-heading">What to show</h2>
+    <p class="cns-inbox-summary" id="inbox-summary" role="status" aria-live="polite">Reading what is waiting on you&hellip;</p>
+    <div class="cns-field cns-inbox-show">
+      <label class="cns-label" for="inbox-show">Show</label>
+      <select class="cns-select" id="inbox-show">
+        <option value="all">Everything waiting on me</option>
+        <option value="overdue">Only what is overdue</option>
+        <option value="soon">Overdue or due within a week</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<div id="inbox-groups" class="cns-inbox-groups" aria-busy="true">
+  <div class="cns-card"><div class="cns-card-body">
+    <div class="cns-skeleton-row"><span class="cns-skeleton" style="width: 40%"></span></div>
+    <div class="cns-skeleton-row"><span class="cns-skeleton" style="width: 70%"></span></div>
+    <div class="cns-skeleton-row"><span class="cns-skeleton" style="width: 55%"></span></div>
+  </div></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  var METHOD = "consilium.consilium_core.inbox.my_tasks";
+  var RESPOND = "consilium.consilium_core.attestation.respond_to_task";
+  var SECOND_SIGN = "consilium.consilium_core.attestation.second_sign_task";
+  var TAKE = "consilium.escalation.assignment.take_ownership";
+
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var groupsNode = document.getElementById("inbox-groups");
+  var summaryNode = document.getElementById("inbox-summary");
+  var showSelect = document.getElementById("inbox-show");
+
+  /* Display wording only. The server sends the answers a task accepts, read
+     from the flag map; this only words them as a person would. An answer the
+     map adds later is shown by its own name. */
+  var ANSWER_WORDS = {
+    "Attested": "Attest — the record is accurate",
+    "Attested With Exceptions": "Attest with exceptions",
+    "Declined": "Cannot attest"
+  };
+
+  var GROUP_ICONS = {
+    attestation: "bi-clipboard-check", second_signature: "bi-pen", approval: "bi-check2-square",
+    formation_step: "bi-diagram-3", formation_returned: "bi-reply", forum_compliance: "bi-shield-check",
+    forum_review: "bi-chat-square-text", document_review: "bi-file-earmark-text",
+    escalation_queue: "bi-inboxes", escalation_review: "bi-exclamation-diamond", action_plan: "bi-list-check", remediation: "bi-tools"
+  };
+
+  var state = { data: null };
+
+  try {
+    var asked = new URLSearchParams(window.location.search).get("show");
+    if (asked && showSelect.querySelector('option[value="' + asked + '"]')) showSelect.value = asked;
+  } catch (e) { /* the default applies */ }
+
+  function date(value) { return escapeHtml(Consilium.util.formatDate(value, false)); }
+
+  function duePill(item) {
+    if (!item.due_on) return "";
+    if (item.overdue) {
+      return '<span class="cns-pill cns-status-danger">Overdue since ' + date(item.due_on) + "</span>";
+    }
+    if (item.due_soon) return '<span class="cns-pill cns-status-warning">Due ' + date(item.due_on) + "</span>";
+    return '<span class="cns-pill cns-status-neutral">Due ' + date(item.due_on) + "</span>";
+  }
+
+  function visible(item) {
+    if (showSelect.value === "overdue") return item.overdue;
+    if (showSelect.value === "soon") return item.overdue || item.due_soon;
+    return true;
+  }
+
+  function domId(value) { return String(value).replace(/[^A-Za-z0-9_-]/g, ""); }
+
+  function answerForm(item) {
+    var id = "answer-" + domId(item.reference);
+    var choices = (state.data.response_choices || []).map(function (choice, index) {
+      var cid = id + "-" + index;
+      return '<div class="cns-check">' +
+        '<input type="radio" name="' + id + '-status" id="' + cid + '" value="' + escapeAttr(choice.status) + '"' +
+        ' data-needs-statement="' + (choice.requires_statement ? "1" : "0") + '"' + (index === 0 ? " checked" : "") + ">" +
+        '<label for="' + cid + '">' + escapeHtml(ANSWER_WORDS[choice.status] || choice.status) +
+        (choice.requires_statement ? ' <span class="cns-text-muted cns-text-sm">(needs a statement)</span>' : "") +
+        "</label></div>";
+    }).join("");
+    return '<form id="form-' + domId(item.reference) + '" class="cns-fieldset cns-inbox-form" data-task="' + escapeAttr(item.reference) + '" hidden novalidate>' +
+      "<legend>Your answer" + (item.acting_for ? " (acting under delegation)" : "") + "</legend>" +
+      '<div class="cns-field" role="radiogroup" aria-label="Answer">' + choices + "</div>" +
+      '<div class="cns-field"><label class="cns-label" for="' + id + '-statement">Statement</label>' +
+      '<textarea class="cns-textarea" id="' + id + '-statement" rows="3" data-role="statement" aria-describedby="' +
+      id + '-help"></textarea>' +
+      '<span class="cns-help" id="' + id + '-help">Say what is inaccurate, or why you cannot attest. ' +
+      "Optional when you attest without exceptions. Recorded against the task in your name.</span></div>" +
+      '<div class="cns-form-actions">' +
+      '<button type="submit" class="cns-btn cns-btn-primary">Record answer</button>' +
+      '<button type="button" class="cns-btn cns-btn-ghost" data-act="cancel">Cancel</button></div>' +
+      "</form>";
+  }
+
+  function renderItem(item) {
+    var meta = [];
+    if (item.context) meta.push(escapeHtml(item.context));
+    meta.push('<span class="cns-mono">' + escapeHtml(item.reference) + "</span>");
+    if (item.acting_for) meta.push("Acting for " + Consilium.person(item.acting_for));
+
+    var body = "";
+    if (item.kind === "second_signature") {
+      body = '<div class="cns-inbox-quote">' +
+        "<p>" + Consilium.person(item.first_signatory) + " answered <strong>" + escapeHtml(item.response_status) +
+        "</strong> on " + escapeHtml(Consilium.util.formatDate(item.responded_on, true)) + ".</p>" +
+        (item.response_statement ? "<blockquote>" + escapeHtml(item.response_statement) + "</blockquote>" : "") +
+        "</div>";
+    }
+
+    var actions = "";
+    if (item.action === "respond") {
+      actions = '<button type="button" class="cns-btn cns-btn-primary cns-btn-sm" data-act="answer" aria-expanded="false"' +
+        ' aria-controls="form-' + domId(item.reference) + '">Answer</button>';
+    } else if (item.action === "second_sign") {
+      actions = '<button type="button" class="cns-btn cns-btn-primary cns-btn-sm" data-act="second-sign">' +
+        "Counter-sign</button>";
+    } else if (item.action === "take_ownership") {
+      actions = '<button type="button" class="cns-btn cns-btn-primary cns-btn-sm" data-act="take">' +
+        "Take ownership</button>";
+    }
+    actions += '<a class="cns-btn cns-btn-secondary cns-btn-sm" href="' + escapeAttr(item.url) + '">Open</a>';
+
+    var form = item.action === "respond" ? answerForm(item) : "";
+
+    return '<li class="cns-inbox-item' + (item.overdue ? " cns-inbox-item--overdue" : "") + '" data-reference="' +
+      escapeAttr(item.reference) + '">' +
+      '<div class="cns-inbox-main">' +
+      '<div class="cns-inbox-title"><a href="' + escapeAttr(item.url) + '">' + escapeHtml(item.title) + "</a> " +
+      duePill(item) + "</div>" +
+      '<div class="cns-inbox-meta">' + meta.join(' <span aria-hidden="true">&middot;</span> ') + "</div>" +
+      body + "</div>" +
+      '<div class="cns-inbox-actions">' + actions + "</div>" + form + "</li>";
+  }
+
+  function render() {
+    var data = state.data;
+    groupsNode.setAttribute("aria-busy", "false");
+    if (!data) return;
+
+    var shown = 0;
+    var html = data.groups.map(function (group) {
+      var items = group.items.filter(visible);
+      if (!items.length) return "";
+      shown += items.length;
+      var headingId = "group-" + group.kind;
+      return '<section class="cns-card cns-inbox-group" aria-labelledby="' + headingId + '">' +
+        '<div class="cns-card-header"><div>' +
+        '<h2 class="cns-card-title" id="' + headingId + '"><i class="bi ' + (GROUP_ICONS[group.kind] || "bi-dot") +
+        '" aria-hidden="true"></i> ' + escapeHtml(group.label) +
+        ' <span class="cns-badge cns-badge--count" aria-label="' + items.length + ' items">' + items.length + "</span>" +
+        (group.overdue ? ' <span class="cns-badge cns-status-danger">' + group.overdue + " overdue</span>" : "") +
+        "</h2>" +
+        '<p class="cns-card-subtitle">' + escapeHtml(group.description) + "</p></div></div>" +
+        '<div class="cns-card-body"><ul class="cns-inbox-list">' + items.map(renderItem).join("") + "</ul></div>" +
+        "</section>";
+    }).join("");
+
+    if (!data.count) {
+      html = '<div class="cns-card"><div class="cns-state">' +
+        '<span class="cns-state-icon"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>' +
+        '<p class="cns-state-title">Nothing is waiting on you</p>' +
+        '<p class="cns-state-message">When you are asked to attest, decide, review or correct something, it appears here.</p>' +
+        "</div></div>";
+    } else if (!shown) {
+      html = '<div class="cns-card"><div class="cns-state">' +
+        '<span class="cns-state-icon"><i class="bi bi-funnel" aria-hidden="true"></i></span>' +
+        '<p class="cns-state-title">Nothing matches</p>' +
+        '<p class="cns-state-message">None of what is waiting on you is overdue or due this week. ' +
+        'Choose “Everything waiting on me” to see it all.</p></div></div>';
+    }
+    groupsNode.innerHTML = html;
+
+    summaryNode.textContent = data.count
+      ? data.count + (data.count === 1 ? " item is" : " items are") + " waiting on you" +
+        (data.overdue ? ", " + data.overdue + " overdue." : ", none overdue.")
+      : "Nothing is waiting on you.";
+  }
+
+  function load() {
+    groupsNode.setAttribute("aria-busy", "true");
+    return Consilium.api.call(METHOD, {})
+      .then(function (data) {
+        state.data = data;
+        render();
+      })
+      .catch(function (error) {
+        groupsNode.setAttribute("aria-busy", "false");
+        summaryNode.textContent = "Your inbox could not be read.";
+        groupsNode.innerHTML = '<div class="cns-card"><div class="cns-state cns-state--error">' +
+          '<span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>' +
+          '<p class="cns-state-title">Your inbox could not be read</p>' +
+          '<p class="cns-state-message">' + escapeHtml((error && error.message) || "The server did not answer.") + "</p>" +
+          "</div></div>";
+      });
+  }
+
+  function setError(node, message) {
+    var wrapper = node.closest(".cns-field");
+    var existing = wrapper.querySelector(".cns-error-text");
+    if (message) {
+      node.setAttribute("aria-invalid", "true");
+      if (!existing) {
+        existing = document.createElement("span");
+        existing.className = "cns-error-text";
+        existing.id = node.id + "-error";
+        wrapper.appendChild(existing);
+        node.setAttribute("aria-describedby", (node.getAttribute("aria-describedby") || "") + " " + existing.id);
+      }
+      existing.textContent = message;
+      return false;
+    }
+    node.removeAttribute("aria-invalid");
+    if (existing) existing.remove();
+    return true;
+  }
+
+  function done(message) {
+    Consilium.toast.success(message, { title: "Recorded" });
+    Consilium.announce(message);
+    return load();
+  }
+
+  function refused(button) {
+    return function (error) {
+      if (button) button.disabled = false;
+      Consilium.toast.error((error && error.message) || "The server refused the action.", { title: "Not done" });
+    };
+  }
+
+  groupsNode.addEventListener("click", function (event) {
+    var button = event.target.closest("button[data-act]");
+    if (!button) return;
+    var item = button.closest(".cns-inbox-item");
+    var reference = item.getAttribute("data-reference");
+    var act = button.getAttribute("data-act");
+
+    if (act === "answer") {
+      var form = item.querySelector("form");
+      var opening = form.hidden;
+      form.hidden = !opening;
+      button.setAttribute("aria-expanded", opening ? "true" : "false");
+      if (opening) form.querySelector("input[type=radio]:checked").focus();
+    } else if (act === "cancel") {
+      var owner = item.querySelector('[data-act="answer"]');
+      item.querySelector("form").hidden = true;
+      owner.setAttribute("aria-expanded", "false");
+      owner.focus();
+    } else if (act === "second-sign") {
+      if (!window.confirm("Counter-sign this answer? Your signature is recorded against the task in your name.")) return;
+      button.disabled = true;
+      Consilium.api.call(SECOND_SIGN, { task: reference }, { method: "POST" })
+        .then(function () { return done("Counter-signed."); })
+        .catch(refused(button));
+    } else if (act === "take") {
+      /* The server checks the queue, the role and the matter again; a matter
+         someone else took a moment ago is refused with their name. */
+      if (!window.confirm("Take ownership of this matter? You become its response owner and it leaves the queue.")) return;
+      button.disabled = true;
+      Consilium.api.call(TAKE, { escalation_matter: reference }, { method: "POST" })
+        .then(function () { return done("You now own the response to " + reference + "."); })
+        .catch(refused(button));
+    }
+  });
+
+  groupsNode.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    var chosen = form.querySelector("input[type=radio]:checked");
+    var statement = form.querySelector('[data-role="statement"]');
+    var text = statement.value.trim();
+    var needs = chosen && chosen.getAttribute("data-needs-statement") === "1";
+    if (!setError(statement, needs && !text ? "This answer needs a statement explaining it." : null)) {
+      statement.focus();
+      return;
+    }
+    var submit = form.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    Consilium.api.call(RESPOND, {
+      task: form.getAttribute("data-task"),
+      status: chosen.value,
+      statement: text
+    }, { method: "POST" })
+      .then(function () { return done("Your answer is recorded."); })
+      .catch(refused(submit));
+  });
+
+  showSelect.addEventListener("change", function () {
+    render();
+    try {
+      var params = new URLSearchParams(window.location.search);
+      if (showSelect.value === "all") params.delete("show"); else params.set("show", showSelect.value);
+      var query = params.toString();
+      window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : ""));
+    } catch (e) { /* the list still filters */ }
+  });
+
+  document.getElementById("inbox-refresh").addEventListener("click", function () {
+    load().then(function () { Consilium.announce("Inbox refreshed."); });
+  });
+
+  load();
+})();
+</script>
+{% endblock %}

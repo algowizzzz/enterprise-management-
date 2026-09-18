@@ -13,7 +13,7 @@ no_cache = 1
 
 def get_context(context):
 	context.no_cache = 1
-	context.page_title = "Governance portal"
+	context.page_title = "Home"
 	context.page_description = (
 		"How the governance record works, and where the inventory stands today."
 	)

@@ -1,7 +1,7 @@
 {
   "name": "Delegable Action",
   "module": "Consilium Core",
-  "description": "The actions an authority delegation may transfer \u2014 approve, review, attest, submit, edit, acknowledge. [Inferred \u2014",
+  "description": "The actions an authority delegation may transfer \u2014 approve, review, attest, submit, edit, acknowledge.",
   "autoname": "field:delegable_action_code",
   "allow_rename": 1,
   "allow_import": 1,
@@ -50,7 +50,7 @@
       "fieldname": "external_code",
       "fieldtype": "Data",
       "label": "External Code",
-      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014",
+      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration.",
       "provenance": "02-data-model.md \u00a711 I-2.]"
     },
     {

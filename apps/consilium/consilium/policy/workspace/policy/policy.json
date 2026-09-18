@@ -1,0 +1,292 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"84bba59eb4\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Policy</b></span>\", \"col\": 12}}, {\"id\": \"7298423147\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Governing Documents\", \"col\": 3}}, {\"id\": \"4f780fdc8e\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Intake Requests\", \"col\": 3}}, {\"id\": \"b623a58088\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Review Cycles\", \"col\": 3}}, {\"id\": \"a59e730d59\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Policy Library (portal)\", \"col\": 3}}, {\"id\": \"2ce046531b\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"54ad6ab6a4\", \"type\": \"card\", \"data\": {\"card_name\": \"Documents\", \"col\": 4}}, {\"id\": \"97672f43d7\", \"type\": \"card\", \"data\": {\"card_name\": \"Intake and Review\", \"col\": 4}}, {\"id\": \"06d35ae3be\", \"type\": \"card\", \"data\": {\"card_name\": \"Monitoring\", \"col\": 4}}, {\"id\": \"59dce08315\", \"type\": \"card\", \"data\": {\"card_name\": \"Horizon Scanning\", \"col\": 4}}, {\"id\": \"e4da52f803\", \"type\": \"card\", \"data\": {\"card_name\": \"Configuration\", \"col\": 4}}]",
+ "creation": "2026-09-18 03:45:10.390601",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "file",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Policy",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Documents",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Governing Document",
+   "link_count": 0,
+   "link_to": "Governing Document",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Document Version",
+   "link_count": 0,
+   "link_to": "Document Version",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Document Publication",
+   "link_count": 0,
+   "link_to": "Document Publication",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Glossary Term",
+   "link_count": 0,
+   "link_to": "Glossary Term",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Intake and Review",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Document Intake Request",
+   "link_count": 0,
+   "link_to": "Document Intake Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Document Review Cycle",
+   "link_count": 0,
+   "link_to": "Document Review Cycle",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Implementation Plan",
+   "link_count": 0,
+   "link_to": "Implementation Plan",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Applicability Exemption",
+   "link_count": 0,
+   "link_to": "Applicability Exemption",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monitoring",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monitoring Activity",
+   "link_count": 0,
+   "link_to": "Monitoring Activity",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monitoring Result",
+   "link_count": 0,
+   "link_to": "Monitoring Result",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Policy Violation",
+   "link_count": 0,
+   "link_to": "Policy Violation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Metadata Remediation Task",
+   "link_count": 0,
+   "link_to": "Metadata Remediation Task",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Horizon Scanning",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Horizon Scan",
+   "link_count": 0,
+   "link_to": "Horizon Scan",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Horizon Scan Finding",
+   "link_count": 0,
+   "link_to": "Horizon Scan Finding",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Horizon Scanning Coverage Area",
+   "link_count": 0,
+   "link_to": "Horizon Scanning Coverage Area",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Configuration",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Governing Document Type",
+   "link_count": 0,
+   "link_to": "Governing Document Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Document Template",
+   "link_count": 0,
+   "link_to": "Document Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Approval Route",
+   "link_count": 0,
+   "link_to": "Approval Route",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Document Lifecycle Gate",
+   "link_count": 0,
+   "link_to": "Document Lifecycle Gate",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-09-18 03:45:10.390601",
+ "modified_by": "Administrator",
+ "module": "Policy",
+ "name": "Policy",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 2.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Governing Documents",
+   "link_to": "Governing Document",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Intake Requests",
+   "link_to": "Document Intake Request",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Review Cycles",
+   "link_to": "Document Review Cycle",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "",
+   "label": "Policy Library (portal)",
+   "type": "URL",
+   "url": "/policies"
+  }
+ ],
+ "title": "Policy"
+}

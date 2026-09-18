@@ -1,0 +1,160 @@
+{
+  "name": "Document Disposition",
+  "module": "Policy",
+  "description": "The recorded outcome of a governing document leaving a stage for good: a review round returned or accepted, or the document retired. Who decided, when, why, and — on retirement — what retention now holds it to. Written once and never changed; nothing is deleted. Read on the document's own page, which checks the document's handling; the list itself is open only to oversight.",
+  "provenance": "01-requirements-baseline.md P-26 (disposition record and its notification); G-16 (retention outcome on retirement)",
+  "autoname": "PDSP-.#####",
+  "naming_rule": "Expression (old style)",
+  "search_fields": "document,disposition_kind,decided_by",
+  "allow_copy": 1,
+  "fields": [
+    {
+      "fieldname": "document",
+      "fieldtype": "Link",
+      "label": "Document",
+      "options": "Governing Document",
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "disposition_kind",
+      "fieldtype": "Select",
+      "label": "Disposition",
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "options": "Review Returned\nReview Accepted\nRetired",
+      "description": "What the disposition records. Written by the application from the document's semantic flags as it moves."
+    },
+    {
+      "fieldname": "document_version",
+      "fieldtype": "Link",
+      "label": "Version",
+      "options": "Document Version",
+      "read_only": 1
+    },
+    {
+      "fieldname": "version_label",
+      "fieldtype": "Data",
+      "label": "Version Label",
+      "read_only": 1
+    },
+    {
+      "fieldname": "from_phase",
+      "fieldtype": "Data",
+      "label": "From Phase",
+      "read_only": 1,
+      "description": "The phase label at the time, kept for the reader. Nothing reads it to decide anything."
+    },
+    {
+      "fieldname": "to_phase",
+      "fieldtype": "Data",
+      "label": "To Phase",
+      "read_only": 1
+    },
+    {
+      "fieldname": "decided_by",
+      "fieldtype": "Link",
+      "label": "Decided By",
+      "options": "User",
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "decided_on",
+      "fieldtype": "Datetime",
+      "label": "Decided On",
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "reason",
+      "fieldtype": "Text",
+      "label": "Reason and Comments",
+      "read_only": 1
+    },
+    {
+      "fieldname": "originator",
+      "fieldtype": "Link",
+      "label": "Originator Told",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "notified_count",
+      "fieldtype": "Int",
+      "label": "Notifications Dispatched",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sb_retention",
+      "fieldtype": "Section Break",
+      "label": "Retention Outcome"
+    },
+    {
+      "fieldname": "retention_class",
+      "fieldtype": "Link",
+      "label": "Retention Class",
+      "options": "Retention Class",
+      "read_only": 1
+    },
+    {
+      "fieldname": "disposition_action",
+      "fieldtype": "Data",
+      "label": "Disposition Action When Due",
+      "read_only": 1
+    },
+    {
+      "fieldname": "disposition_due_on",
+      "fieldtype": "Date",
+      "label": "Retention Ends On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "legal_hold",
+      "fieldtype": "Link",
+      "label": "Legal Hold",
+      "options": "Legal Hold",
+      "read_only": 1
+    },
+    {
+      "fieldname": "retention_outcome",
+      "fieldtype": "Small Text",
+      "label": "Retention Outcome",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Enterprise Policy Office",
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

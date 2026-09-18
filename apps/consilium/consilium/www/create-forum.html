@@ -34,9 +34,9 @@
       <i class="bi bi-info-circle" aria-hidden="true"></i>
       <div>
         <strong>This form does not create a forum.</strong> It raises a formation request. The forum
-        comes into existence only when the request is approved — and <strong>a compliance review is
-        required before that can happen</strong>. Expect questions back; that exchange stays on the
-        record.
+        comes into existence only when the request is <strong>evaluated against the governance criteria
+        and approved</strong>; it then starts in draft and <strong>must pass a compliance review</strong>
+        before it counts as compliant. Expect questions back; that exchange stays on the record.
       </div>
     </div>
 
@@ -48,13 +48,13 @@
         <span class="cns-workflow-marker" aria-hidden="true">2</span> Submitted
       </li>
       <li class="cns-workflow-step" data-state="pending">
-        <span class="cns-workflow-marker" aria-hidden="true">3</span> Evaluated and compliance review
+        <span class="cns-workflow-marker" aria-hidden="true">3</span> Evaluated
       </li>
       <li class="cns-workflow-step" data-state="pending">
         <span class="cns-workflow-marker" aria-hidden="true">4</span> Approved
       </li>
       <li class="cns-workflow-step" data-state="pending">
-        <span class="cns-workflow-marker" aria-hidden="true">5</span> Forum created
+        <span class="cns-workflow-marker" aria-hidden="true">5</span> Forum created, then reviewed
       </li>
     </ol>
 
@@ -88,6 +88,43 @@
   </div>
 </section>
 
+<!-- -------------- questions back from the governance office ------------ -->
+{%- if request_status and request_status.can_respond %}
+<section class="cns-card" id="response-card" aria-labelledby="response-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="response-heading">The governance office has questions</h2>
+      <p class="cns-card-subtitle">Your request {{ request_status.name }} was returned to you. Answer
+        the questions below; you may also amend the request itself before you send your answer.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-alert cns-status-warning">
+      <i class="bi bi-question-circle" aria-hidden="true"></i>
+      <div>
+        <strong>Questions{% if request_status.returned_by %} from {{ request_status.returned_by }}{% endif %}</strong>
+        <span class="cns-text-muted cns-text-sm" id="returned-on"></span>
+        <p class="cns-prose" style="margin-top: var(--cns-space-2); white-space: pre-line;">{{ request_status.return_questions or "" }}</p>
+      </div>
+    </div>
+    <div class="cns-field">
+      <label class="cns-label" for="originator_response">Your answer<span class="cns-required" aria-hidden="true">*</span></label>
+      <textarea class="cns-textarea" id="originator_response" rows="5" required
+                data-required-message="Enter your answer to the questions."
+                aria-describedby="response-help">{{ request_status.originator_response or "" }}</textarea>
+      <span class="cns-help" id="response-help">It stays on the record beside the questions. Sending
+        it saves any changes below and hands the request back for evaluation.</span>
+    </div>
+    <div class="cns-form-actions">
+      <button type="button" class="cns-btn cns-btn-primary" id="send-response">
+        <i class="bi bi-send" aria-hidden="true"></i> Send your answer
+      </button>
+      <a class="cns-btn cns-btn-ghost" href="/formation-request?name={{ request_status.name | urlencode }}">Follow its progress</a>
+    </div>
+  </div>
+</section>
+{%- endif %}
+
 <!-- ------------------------------ the form ---------------------------- -->
 <form id="formation-form" novalidate>
   <div id="form-status" role="status" aria-live="polite"></div>
@@ -105,7 +142,7 @@
     <div class="cns-form-grid">
       <div class="cns-field">
         <label class="cns-label" for="request_type">Kind of request<span class="cns-required" aria-hidden="true">*</span></label>
-        <select class="cns-select" id="request_type" name="request_type" required>
+        <select class="cns-select" id="request_type" name="request_type" required data-required-message="Choose the kind of request.">
           {%- for option in request_types %}
           <option value="{{ option }}">{{ option }}</option>
           {%- endfor %}
@@ -114,7 +151,7 @@
       </div>
       <div class="cns-field" id="subject-field" hidden>
         <label class="cns-label" for="subject_forum">Forum this concerns<span class="cns-required" aria-hidden="true">*</span></label>
-        <select class="cns-select" id="subject_forum" name="subject_forum">
+        <select class="cns-select" id="subject_forum" name="subject_forum" data-required-message="Choose the forum this concerns.">
           <option value="">Choose a forum</option>
         </select>
         <span class="cns-help">Required for a change or a retirement.</span>
@@ -122,19 +159,19 @@
     </div>
     <div class="cns-field">
       <label class="cns-label" for="rationale">Why it is needed<span class="cns-required" aria-hidden="true">*</span></label>
-      <textarea class="cns-textarea" id="rationale" name="rationale" rows="4" required
+      <textarea class="cns-textarea" id="rationale" name="rationale" rows="4" required data-required-message="Enter why it is needed."
                 data-min="40" aria-describedby="rationale-help"></textarea>
       <span class="cns-help" id="rationale-help">The gap in oversight this closes. Evaluators read this first.</span>
     </div>
     <div class="cns-field">
       <label class="cns-label" for="purpose_scope">Purpose and scope<span class="cns-required" aria-hidden="true">*</span></label>
-      <textarea class="cns-textarea" id="purpose_scope" name="purpose_scope" rows="4" required
+      <textarea class="cns-textarea" id="purpose_scope" name="purpose_scope" rows="4" required data-required-message="Enter the purpose and scope."
                 data-min="40" aria-describedby="purpose-help"></textarea>
       <span class="cns-help" id="purpose-help">What it will cover — and, just as usefully, what it will not.</span>
     </div>
     <div class="cns-field">
       <label class="cns-label" for="proposed_responsibilities">Proposed responsibilities<span class="cns-required" aria-hidden="true">*</span></label>
-      <textarea class="cns-textarea" id="proposed_responsibilities" name="proposed_responsibilities"
+      <textarea class="cns-textarea" id="proposed_responsibilities" name="proposed_responsibilities" data-required-message="Enter the proposed responsibilities."
                 rows="4" required data-min="40" aria-describedby="resp-help"></textarea>
       <span class="cns-help" id="resp-help">What it will decide, what it will only review, and what it must escalate.</span>
     </div>
@@ -145,13 +182,13 @@
     <div class="cns-form-grid">
       <div class="cns-field">
         <label class="cns-label" for="forum_name">Proposed name<span class="cns-required" aria-hidden="true">*</span></label>
-        <input class="cns-input" type="text" id="forum_name" name="forum_name" required
+        <input class="cns-input" type="text" id="forum_name" name="forum_name" required data-required-message="Enter a proposed name."
                maxlength="140" aria-describedby="forum-name-help">
         <span class="cns-help" id="forum-name-help">Name it as it will be referred to in minutes.</span>
       </div>
       <div class="cns-field">
         <label class="cns-label" for="forum_type">Forum type<span class="cns-required" aria-hidden="true">*</span></label>
-        <select class="cns-select" id="forum_type" name="forum_type" required
+        <select class="cns-select" id="forum_type" name="forum_type" required data-required-message="Choose a forum type."
                 aria-describedby="forum-type-help">
           <option value="">Choose a type</option>
         </select>
@@ -193,7 +230,7 @@
     <div class="cns-form-grid">
       <div class="cns-field">
         <label class="cns-label" for="owning_operating_group">Owning operating group<span class="cns-required" aria-hidden="true">*</span></label>
-        <select class="cns-select" id="owning_operating_group" name="owning_operating_group" required>
+        <select class="cns-select" id="owning_operating_group" name="owning_operating_group" required data-required-message="Choose the owning operating group.">
           <option value="">Choose an operating group</option>
         </select>
         <span class="cns-help">One accountable line. A line of business may sit beneath it.</span>
@@ -206,14 +243,14 @@
       </div>
       <div class="cns-field">
         <label class="cns-label" for="delegating_authority">Delegating authority<span class="cns-required" aria-hidden="true">*</span></label>
-        <select class="cns-select" id="delegating_authority" name="delegating_authority" required>
+        <select class="cns-select" id="delegating_authority" name="delegating_authority" required data-required-message="Choose the delegating authority.">
           <option value="">Choose a person</option>
         </select>
         <span class="cns-help">Whose authority the forum will act under.</span>
       </div>
       <div class="cns-field">
         <label class="cns-label" for="forum_sponsor">Sponsor<span class="cns-required" aria-hidden="true">*</span></label>
-        <select class="cns-select" id="forum_sponsor" name="forum_sponsor" required>
+        <select class="cns-select" id="forum_sponsor" name="forum_sponsor" required data-required-message="Choose a sponsor.">
           <option value="">Choose a person</option>
         </select>
       </div>
@@ -232,8 +269,8 @@
     <div class="cns-form-grid">
       <div class="cns-field">
         <label class="cns-label" for="proposed_timeline">Needed in place by<span class="cns-required" aria-hidden="true">*</span></label>
-        <input class="cns-input" type="date" id="proposed_timeline" name="proposed_timeline" required>
-        <span class="cns-help">Allow time for evaluation and the compliance review.</span>
+        <input class="cns-input" type="date" id="proposed_timeline" name="proposed_timeline" required data-required-message="Enter the date it is needed in place by.">
+        <span class="cns-help">Allow time for evaluation and approval.</span>
       </div>
       <div class="cns-field">
         <label class="cns-label" for="first_meeting_date">Intended first meeting</label>
@@ -274,6 +311,9 @@
   var escapeHtml = Consilium.util.escapeHtml;
   var LOCAL_KEY = "cns:draft:formation";
   var requestName = {{ existing | tojson }} || null;
+  /* Where an existing request stands, settled on the server from its flags. */
+  var STATUS = {{ request_status | tojson }};
+  var responding = !!(STATUS && STATUS.can_respond);
   var dirty = false;
 
   var FIELDS = ["request_type", "subject_forum", "rationale", "purpose_scope",
@@ -326,11 +366,18 @@
     var value = node.value.trim();
     var required = node.required && !node.hidden && !node.closest("[hidden]");
     var message = null;
+    /* A required-field message names its field ("Enter why it is needed.");
+       the others do not, so the summary above the form prefixes them with the
+       field's label — otherwise "at least 40 characters" could be any of three
+       boxes. The message beside the field needs no prefix: it is beside it. */
+    var namesField = false;
 
     if (required && !value) {
-      message = label + " is needed before this can be sent.";
+      message = node.dataset.requiredMessage ||
+        ("Enter " + label.charAt(0).toLowerCase() + label.slice(1) + ".");
+      namesField = true;
     } else if (value && node.dataset.min && value.length < Number(node.dataset.min)) {
-      message = "Please give a little more detail — at least " + node.dataset.min +
+      message = "Give a little more detail: at least " + node.dataset.min +
         " characters. You have " + value.length + ".";
     } else if (value && node.type === "date") {
       var chosen = new Date(value + "T00:00:00");
@@ -338,7 +385,8 @@
       if (chosen < today) message = "That date has passed. Choose one in the future.";
     }
     setError(node, message);
-    return message ? { id: node.id, message: message } : null;
+    if (!message) return null;
+    return { id: node.id, message: namesField ? message : label + ": " + message };
   }
 
   function validateAll() {
@@ -471,6 +519,17 @@
     });
   }
 
+  function progressLink(name) {
+    return '<a href="/formation-request?name=' + Consilium.util.escapeAttr(encodeURIComponent(name)) +
+      '">Follow its progress</a>';
+  }
+
+  function lockForm() {
+    form.querySelectorAll("input, select, textarea, button").forEach(function (node) {
+      node.disabled = true;
+    });
+  }
+
   document.getElementById("save-draft").addEventListener("click", function () {
     /* A draft is allowed to be incomplete — but the record still needs the
        handful of fields it cannot be stored without. */
@@ -486,9 +545,15 @@
       );
       return;
     }
-    save("Draft")
+    /* Only a new request is written as a draft. An existing one keeps the state
+       its transitions gave it: writing "Draft" over a request that was returned
+       with questions would move it without the transition, and the questions
+       would be left unanswered on a record that no longer asks for an answer. */
+    save(requestName ? null : "Draft")
       .then(function (doc) {
-        Consilium.toast.success("Draft saved as " + doc.name + ". You can come back to it.");
+        Consilium.toast.success(responding
+          ? "Changes to " + doc.name + " saved. Send your answer when you are ready."
+          : "Draft saved as " + doc.name + ". You can come back to it.");
       })
       .catch(function (error) {
         Consilium.toast.error(error.message || "The draft could not be saved.", { title: "Not saved" });
@@ -497,6 +562,8 @@
 
   form.addEventListener("submit", function (event) {
     event.preventDefault();
+    if (responding) { sendResponse(); return; }
+    if (STATUS && !STATUS.can_submit) return;
     var problems = validateAll();
     if (problems.length) {
       var first = document.getElementById(problems[0].id);
@@ -509,17 +576,16 @@
     submitRequest()
       .then(function (doc) {
         Consilium.toast.success(
-          "Request " + doc.name + " has been submitted. The governance office will evaluate it and " +
-          "a compliance review will follow.",
+          "Request " + doc.name + " has been submitted. The governance office will evaluate it; " +
+          "once it is approved the forum is created and then reviewed for compliance.",
           { title: "Submitted", timeout: 9000 }
         );
         document.getElementById("form-status").innerHTML =
           '<div class="cns-alert cns-status-success"><i class="bi bi-check-circle" aria-hidden="true"></i>' +
           "<div><strong>Submitted as " + escapeHtml(doc.name) + ".</strong> It is locked while it is " +
-          "evaluated. You will be asked if anything is unclear.</div></div>";
-        form.querySelectorAll("input, select, textarea, button").forEach(function (node) {
-          node.disabled = true;
-        });
+          "evaluated. You will be asked if anything is unclear. " + progressLink(doc.name) +
+          ', or go <a href="/forums">back to the inventory</a>.</div></div>';
+        lockForm();
       })
       .catch(function (error) {
         button.disabled = false;
@@ -527,6 +593,67 @@
                               { title: "Not submitted" });
       });
   });
+
+  /* --- answering a returned request ------------------------------------ */
+
+  // The answer goes through the server's transition, like submission does: it
+  // saves the originator's reply beside the questions and moves the request
+  // back into evaluation. Any amendment to the request is saved first, without
+  // touching its state.
+  function sendResponse() {
+    var box = field("originator_response");
+    var text = box.value.trim();
+    var problems = validateAll();
+    setError(box, text ? null : box.dataset.requiredMessage);
+    if (!text) problems.unshift({ id: box.id, message: box.dataset.requiredMessage });
+    if (problems.length) {
+      var list = document.getElementById("form-errors-list");
+      list.innerHTML = problems.map(function (p) {
+        return '<li><a href="#' + p.id + '">' + escapeHtml(p.message) + "</a></li>";
+      }).join("");
+      document.getElementById("form-errors").hidden = false;
+      var first = document.getElementById(problems[0].id);
+      if (first) first.focus();
+      Consilium.announce(problems.length + " field(s) need attention before your answer can be sent.");
+      return;
+    }
+    var button = document.getElementById("send-response");
+    button.disabled = true;
+    save(null)
+      .then(function (doc) {
+        return Consilium.api.call("consilium.governance.formation.respond_to_returned_request",
+                                  { request: doc.name, response: text }, { method: "POST" })
+          .then(function () { return doc; });
+      })
+      .then(function (doc) {
+        responding = false;
+        Consilium.toast.success("Your answer is on " + doc.name + ", and the request is back with the " +
+                                "governance office.", { title: "Answer sent", timeout: 9000 });
+        document.getElementById("form-status").innerHTML =
+          '<div class="cns-alert cns-status-success"><i class="bi bi-check-circle" aria-hidden="true"></i>' +
+          "<div><strong>Answer sent.</strong> " + escapeHtml(doc.name) + " is back in evaluation and locked " +
+          "again. " + progressLink(doc.name) + ".</div></div>";
+        lockForm();
+        box.disabled = true;
+        button.hidden = true;
+      })
+      .catch(function (error) {
+        button.disabled = false;
+        Consilium.toast.error(error.message || "Your answer could not be sent.", { title: "Not sent" });
+      });
+  }
+
+  if (responding) {
+    document.getElementById("send-response").addEventListener("click", sendResponse);
+    field("originator_response").addEventListener("input", function () {
+      markDirty();
+      if (this.getAttribute("aria-invalid")) setError(this, null);
+    });
+    if (STATUS.returned_on) {
+      document.getElementById("returned-on").textContent =
+        " · " + Consilium.util.formatDate(STATUS.returned_on, true);
+    }
+  }
 
   window.addEventListener("beforeunload", function (event) {
     if (!dirty) return;
@@ -559,6 +686,30 @@
       });
   }
 
+  /* The people a request may name. A server method rather than the User list:
+     that list is readable only by system managers, and read unfiltered it
+     offered the pseudo-users Guest and Administrator and disabled accounts. */
+  var people = Consilium.api.call("consilium.governance.formation.named_people", {});
+
+  function fillPeople(id) {
+    var select = field(id);
+    return people
+      .then(function (rows) {
+        rows.forEach(function (row) {
+          var option = document.createElement("option");
+          option.value = row.name;
+          option.textContent = row.full_name && row.full_name !== row.name
+            ? row.full_name + " (" + row.name + ")"
+            : row.name;
+          select.appendChild(option);
+        });
+      })
+      .catch(function () {
+        select.disabled = true;
+        setError(select, "This list could not be read, so the field cannot be filled in here.");
+      });
+  }
+
   var ready = Promise.all([
     fill("forum_type", "Governance Forum Type", "forum_type_name", [["is_active", "=", 1]]),
     fill("primary_risk_category", "Risk Category", "risk_category_name", [["is_active", "=", 1]]),
@@ -568,16 +719,28 @@
          [["is_active", "=", 1], ["unit_level", "=", "Line of Business"]]),
     fill("parent_forum", "Governance Forum", "forum_name", [["is_active", "=", 1]]),
     fill("subject_forum", "Governance Forum", "forum_name", [["is_active", "=", 1]]),
-    fill("delegating_authority", "User", "full_name", [["enabled", "=", 1]]),
-    fill("forum_sponsor", "User", "full_name", [["enabled", "=", 1]])
+    fillPeople("delegating_authority"),
+    fillPeople("forum_sponsor")
   ]);
 
   function apply(data) {
     FIELDS.forEach(function (name) {
       var node = field(name);
       if (!node || data[name] === undefined || data[name] === null) return;
-      if (node.type === "checkbox") node.checked = !!data[name];
-      else node.value = data[name];
+      if (node.type === "checkbox") {
+        node.checked = !!data[name];
+        return;
+      }
+      /* A value recorded before the lists were narrowed (or one the viewer's
+         list no longer offers) is still shown truthfully, not blanked. */
+      if (node.tagName === "SELECT" && data[name] &&
+          !Array.prototype.some.call(node.options, function (o) { return o.value === data[name]; })) {
+        var kept = document.createElement("option");
+        kept.value = data[name];
+        kept.textContent = data[name] + " (as recorded)";
+        node.appendChild(kept);
+      }
+      node.value = data[name];
     });
     syncRequestType();
   }
@@ -588,15 +751,36 @@
         .get("Committee Formation Request", requestName)
         .then(function (doc) {
           apply(doc);
-          document.getElementById("draft-state").textContent = "Draft " + doc.name + " loaded.";
-          if (!doc.is_editable) {
-            document.getElementById("form-status").innerHTML =
-              '<div class="cns-alert cns-status-info"><i class="bi bi-lock" aria-hidden="true"></i>' +
-              "<div>This request is with the governance office and cannot be changed here.</div></div>";
-            form.querySelectorAll("input, select, textarea, button").forEach(function (node) {
-              node.disabled = true;
-            });
+          var state = (STATUS && STATUS.workflow_state) || doc.workflow_state || "";
+          if (responding) {
+            document.getElementById("draft-state").textContent =
+              doc.name + " loaded. Amend it if you need to, then send your answer above.";
+            document.getElementById("submit-request").hidden = true;
+            document.getElementById("save-draft").innerHTML =
+              '<i class="bi bi-save" aria-hidden="true"></i> Save changes';
+            return;
           }
+          if (doc.is_editable && (!STATUS || STATUS.can_submit)) {
+            document.getElementById("draft-state").textContent = "Draft " + doc.name + " loaded.";
+            return;
+          }
+          /* Read-only: say where it stands and where to follow it. */
+          document.getElementById("draft-state").textContent = doc.name + " is " + state + ".";
+          document.getElementById("form-status").innerHTML =
+            '<div class="cns-alert cns-status-info"><i class="bi bi-lock" aria-hidden="true"></i>' +
+            "<div><strong>" + escapeHtml(doc.name) + " is " + escapeHtml(state) + ".</strong> " +
+            (STATUS && (STATUS.stage === "approved" || STATUS.stage === "closed")
+              ? "It has been decided and can no longer be changed. "
+              : doc.is_editable
+                ? "It is waiting on its originator and cannot be changed by you here. "
+                : "It is with the governance office and cannot be changed here. ") +
+            progressLink(doc.name) +
+            (STATUS && STATUS.created_forum
+              ? ', or <a href="/forum?name=' + Consilium.util.escapeAttr(encodeURIComponent(STATUS.created_forum)) +
+                '">open the forum it created</a>'
+              : "") +
+            ', or go <a href="/forums">back to the inventory</a>.</div></div>';
+          lockForm();
         })
         .catch(function (error) {
           Consilium.toast.error(error.message || "That draft could not be opened.");

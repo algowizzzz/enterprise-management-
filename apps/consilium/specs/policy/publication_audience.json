@@ -1,7 +1,7 @@
 {
   "name": "Publication Audience",
   "module": "Policy",
-  "description": "One audience a publication targeted (P-19).",
+  "description": "One audience a publication targeted.",
   "istable": 1,
   "fields": [
     {

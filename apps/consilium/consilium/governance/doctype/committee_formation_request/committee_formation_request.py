@@ -27,6 +27,13 @@ class CommitteeFormationRequest(Document):
         self._validate_subject()
         self._validate_findings()
 
+    def on_update(self):
+        # The originator reads, answers and withdraws their own request whatever
+        # roles they hold (see formation.share_with_originator). Run on every
+        # save so a request re-pointed at a new originator follows them; a
+        # share already in place costs one lookup.
+        formation.share_with_originator(self)
+
     def _guard_editability(self):
         if self.flags.consilium_formation or self.is_new():
             return

@@ -1,0 +1,117 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "RMDL-.#####",
+ "creation": "2026-09-18 05:28:03.970457",
+ "description": "One row per scheduled reminder sent, so the daily job can tell what it has already said and never repeats itself on the same day.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "reminder_key",
+  "event_code",
+  "subject_doctype",
+  "subject_name",
+  "recipient",
+  "due_on",
+  "sent_for_date",
+  "dispatch"
+ ],
+ "fields": [
+  {
+   "description": "Event, record, recipient, due date and day sent. Unique, so two scheduler runs racing each other cannot both send.",
+   "fieldname": "reminder_key",
+   "fieldtype": "Data",
+   "label": "Reminder Key",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "event_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Event",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Record DocType",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Record",
+   "options": "subject_doctype"
+  },
+  {
+   "fieldname": "recipient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Recipient",
+   "options": "User"
+  },
+  {
+   "fieldname": "due_on",
+   "fieldtype": "Date",
+   "label": "Due On"
+  },
+  {
+   "fieldname": "sent_for_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Sent On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dispatch",
+   "fieldtype": "Link",
+   "label": "Dispatch",
+   "options": "Notification Dispatch"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-18 05:28:03.970467",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Reminder Log",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

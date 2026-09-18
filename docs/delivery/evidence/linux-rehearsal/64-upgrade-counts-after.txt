@@ -1,0 +1,129 @@
+# Rows per table (tables named without the framework's "tab" prefix), non-empty tables only
+__Auth | 1
+Approval Decision | 28
+Approval Route | 3
+Approval Route Step | 6
+Attestation Campaign | 4
+Attestation Reminder | 3
+Authority Delegation | 1
+Block Module | 168
+Business Calendar | 1
+Classification Answer Option | 6
+Classification Assessment | 4
+Classification Assessment Answer | 12
+Classification Question | 3
+Classification Rule | 2
+Classification Rule Set | 1
+Comment | 69
+Contact | 23
+Contact Email | 23
+Country | 250
+Currency | 149
+DefaultValue | 90
+Delegable Action | 6
+Delegated Action Item | 1
+Deleted Document | 1
+DocField | 4556
+DocPerm | 692
+DocShare | 23
+DocType | 418
+DocType Action | 4
+DocType Link | 51
+DocType State | 17
+Document Accountability Role | 60
+Document Applicability | 21
+Document Intake Request | 6
+Document Jurisdiction | 15
+Document Legal Entity | 4
+Document Lifecycle Gate | 5
+Document Material Entity | 5
+Document Organization Unit | 2
+Document Publication | 11
+Document Regulatory Reference | 9
+Document Risk Type | 27
+Document Role | 8
+Document Template | 5
+Document Version | 30
+Escalation Type | 8
+External System | 4
+File | 2
+Form Tour | 4
+Form Tour Step | 17
+Formation Approval Route | 1
+Formation Approval Route Step | 3
+Glossary Synonym | 7
+Glossary Term | 12
+Glossary Term Link | 13
+Governance Forum Role | 10
+Governance Forum Type | 8
+Governance Responsibility | 3
+Governing Document | 15
+Governing Document Type | 7
+Guide Article | 6
+Has Role | 143
+Horizon Scanning Coverage Area | 8
+Import Field Mapping | 19
+Import Profile | 2
+Installed Application | 2
+Intake Party | 9
+Jurisdiction | 3
+Language | 84
+Legal Entity | 6
+Line Of Defence | 3
+Material Entity | 3
+Metadata Remediation Task | 1
+Module Def | 16
+Module Onboarding | 2
+Module Profile | 1
+Navbar Item | 13
+Notification Channel | 4
+Notification Dispatch | 65
+Notification Settings | 25
+Notification Template | 44
+Notification Type | 5
+Notification Type Preference | 92
+Onboarding Permission | 2
+Onboarding Step | 12
+Onboarding Step Map | 12
+Organization Unit | 17
+Organizational Level | 4
+Page | 10
+Patch Log | 251
+Print Style | 4
+Publication Audience | 2
+Regulatory Requirement | 12
+Report | 9
+Retention Class | 5
+Risk Category | 15
+Risk Type | 18
+Role | 43
+SLA Clock | 4
+SLA Definition | 10
+Scheduled Job Type | 59
+Series | 16
+Singles | 491
+Template Section | 17
+User | 25
+User Group | 5
+User Group Member | 22
+User Social Login | 23
+User Type | 2
+Version | 138
+Watched Field | 7
+Watched Field Set | 1
+Web Form | 3
+Web Form Field | 13
+Web Template | 23
+Web Template Field | 153
+Website Theme | 1
+Workflow | 1
+Workflow Action | 60
+Workflow Action Master | 11
+Workflow Action Permitted Role | 91
+Workflow Document State | 6
+Workflow State | 8
+Workflow State Flag | 130
+Workflow Transition | 11
+Workspace | 10
+Workspace Link | 216
+Workspace Shortcut | 36

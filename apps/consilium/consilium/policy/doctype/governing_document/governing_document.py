@@ -13,7 +13,7 @@ from frappe.model.document import Document
 from frappe.utils import add_months, getdate, nowdate
 
 from consilium.consilium_core.state_flags import apply_state_flags
-from consilium.policy import applicability, lineage, metadata
+from consilium.policy import applicability, glossary, handling, lineage, metadata, naming
 
 #: Handling classifications that close the three named actions by default. An
 #: administrator may reopen them on a record; this only supplies the default.
@@ -22,18 +22,69 @@ _RESTRICTED_HANDLING = ("Confidential", "Restricted")
 
 class GoverningDocument(Document):
     def validate(self):
+        # Where the lifecycle runs on workflow_state, the phase follows the
+        # state; written first, so the gates below see the phase being entered.
+        from consilium.policy import lifecycle
+
+        lifecycle.sync_phase(self)
+        self._enforce_lifecycle_gates()
         apply_state_flags(self)
         lineage.validate_lineage(self)
         self._derive_handling_defaults()
+        # P-1/P-13: who may loosen the handling, and private storage for the
+        # attachments of a confidential or restricted document.
+        handling.secure_on_save(self)
         self._validate_applicability()
         self._validate_conditional_fields()
+        # P-15 naming convention and P-24 glossary wording; both refuse and log.
+        naming.enforce_on_document(self)
+        glossary.enforce_on_document(self)
         self._derive_review_date()
         self._derive_retirement_date()
 
     def on_update(self):
         self._raise_remediation_on_deactivation()
+        # P-26 dispositions, E11-S5 change and retirement notices, and the
+        # fulfilment of change and retirement intake requests: all read the
+        # flags before and after this save. See consilium.policy.disposition.
+        from consilium.policy import disposition
+
+        disposition.on_document_update(self)
 
     # ------------------------------------------------------------------ rules
+
+    def _enforce_lifecycle_gates(self) -> None:
+        """P-25: no phase is entered past a failing gate, by any route.
+
+        The gates used to run only inside ``lifecycle.perform``. The workspace's
+        workflow menu calls the framework's ``apply_workflow`` directly, and a
+        REST write can set the phase field outright; both saved the document
+        without asking, so a document could be published with no approval chain
+        at all. Checking here puts every route through the same gate.
+        ``perform`` has already checked (and may hold a written exception), so
+        it marks the transition it cleared and this steps aside for that one.
+        """
+        from consilium.consilium_core import audit
+        from consilium.policy import lifecycle
+
+        if self.is_new():
+            return
+        before = self.get_doc_before_save()
+        if before is None or before.lifecycle_phase == self.lifecycle_phase:
+            return
+        if frappe.flags.get("consilium_gates_cleared") == (self.name, self.lifecycle_phase):
+            return
+        failures = lifecycle.check_gates(self, "lifecycle_phase", self.lifecycle_phase)
+        if failures:
+            audit.refuse(
+                _("Moving {0} to {1} is refused. {2}").format(self.name, self.lifecycle_phase, " | ".join(failures)),
+                subject_doctype=self.doctype,
+                subject_name=self.name,
+                attempted_action="Other",
+                control="lifecycle gate",
+                context={"next_state": self.lifecycle_phase, "failures": failures, "route": "direct save"},
+                exc=frappe.ValidationError,
+            )
 
     def _derive_handling_defaults(self) -> None:
         """P-1/P-13: a confidential document is not downloadable, printable or
@@ -88,7 +139,13 @@ class GoverningDocument(Document):
     def _derive_retirement_date(self) -> None:
         """The retirement date follows the flags, not a state name: a document
         that has left force for the last time is retired as of today."""
-        if self.is_active or self.is_editable or self.is_new():
+        if self.is_active or self.is_editable:
+            # Reinstated or back in force: a retirement date left behind would
+            # show a live document as retired on every report that reads it.
+            if self.retired_on and not self.is_new():
+                self.retired_on = None
+            return
+        if self.is_new():
             return
         before = self.get_doc_before_save()
         if before is None or int(before.get("is_active") or 0) != 1:
@@ -101,7 +158,12 @@ class GoverningDocument(Document):
         before = self.get_doc_before_save()
         if before is None:
             return
-        if int(before.get("is_active") or 0) == 1 and not int(self.is_active or 0):
+        # Reopening for change also takes a document out of force, but into an
+        # editable draft that is coming back; its children's parent link is
+        # still good. Only a document leaving force for good (not editable, as
+        # on retirement) invalidates it.
+        if int(before.get("is_active") or 0) == 1 and not int(self.is_active or 0) \
+                and not int(self.is_editable or 0):
             metadata.raise_tasks_for_deactivated_parent(self)
 
     # -------------------------------------------------------------- convenience

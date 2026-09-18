@@ -1,7 +1,7 @@
 {
   "name": "Formation Approval Route",
   "module": "Governance",
-  "description": "The configurable multi-step approval a committee formation request follows (E7-S4). Not named in",
+  "description": "The configurable multi-step approval a committee formation request follows.",
   "autoname": "field:route_title",
   "allow_rename": 1,
   "track_changes": 1,

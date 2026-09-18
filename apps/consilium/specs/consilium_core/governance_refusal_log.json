@@ -1,7 +1,7 @@
 {
   "name": "Governance Refusal Log",
   "module": "Consilium Core",
-  "description": "Every refusal a Core control issued: what was attempted, on which record, why it was refused, by whom and when. Written on an out-of-band connection so that the refusal survives the rollback of the operation it refused. Append-only. [Addition \u2014 the model requires refusals to be audited but names no artefact.]",
+  "description": "Every refusal a Core control issued: what was attempted, on which record, why it was refused, by whom and when. Written on an out-of-band connection so that the refusal survives the rollback of the operation it refused. Append-only.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",

@@ -1,7 +1,7 @@
 {
   "name": "Document Lifecycle Gate",
   "module": "Policy",
-  "description": "A precondition a record must satisfy before it may enter a state. Gates are named, not coded: publication without a complete approval chain is refused because a gate row says so, and the same mechanism covers the other preconditions without a second code path. [Addition \u2014 the data model states the rule but defines no entity to hold it.]",
+  "description": "A precondition a record must satisfy before it may enter a state. Gates are named, not coded: publication without a complete approval chain is refused because a gate row says so, and the same mechanism covers the other preconditions without a second code path.",
   "autoname": "PLGT-.#####",
   "naming_rule": "Expression (old style)",
   "search_fields": "target_doctype,state_value",

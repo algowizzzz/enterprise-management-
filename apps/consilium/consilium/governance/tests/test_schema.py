@@ -25,17 +25,28 @@ def indexes_on(table: str) -> set[str]:
 
 
 class TestSchemaObjects(GovernanceTestCase):
+    def _apply_and_commit(self):
+        """Apply the constraint statements and commit them — and only them.
+
+        The base class makes a person for every test. A bare commit here would
+        keep that person too, and each run of this class left five more behind.
+        Rolling back first discards them; the configuration the base class also
+        applied is idempotent and already on the site.
+        """
+        frappe.db.rollback()
+        applied = constraints.apply()
+        frappe.db.commit()
+        return applied
+
     def test_the_database_is_postgres(self):
         self.assertEqual(frappe.conf.db_type, "postgres")
 
     def test_the_constraint_statements_apply(self):
-        applied = constraints.apply()
+        applied = self._apply_and_commit()
         self.assertTrue(applied)
-        frappe.db.commit()
 
     def test_parent_tables_get_the_modified_index_the_builder_omits(self):
-        constraints.apply()
-        frappe.db.commit()
+        self._apply_and_commit()
         for table in constraints.MODIFIED_INDEX_TABLES:
             with self.subTest(table=table):
                 self.assertIn(
@@ -43,8 +54,7 @@ class TestSchemaObjects(GovernanceTestCase):
                 )
 
     def test_child_tables_get_the_parent_index_the_builder_omits(self):
-        constraints.apply()
-        frappe.db.commit()
+        self._apply_and_commit()
         for table in constraints.CHILD_TABLES:
             with self.subTest(table=table):
                 self.assertIn(
@@ -67,13 +77,11 @@ class TestSchemaObjects(GovernanceTestCase):
                                 or statement.split('"')[1].startswith("ux_governance_"))
 
     def test_the_membership_as_at_index_exists(self):
-        constraints.apply()
-        frappe.db.commit()
+        self._apply_and_commit()
         self.assertIn("ix_governance_membership__as_at", indexes_on("tabForum Membership"))
 
     def test_one_entitlement_row_per_seat_per_motion(self):
-        constraints.apply()
-        frappe.db.commit()
+        self._apply_and_commit()
         self.assertIn("ux_governance_forum_vote__entitlement", indexes_on("tabForum Vote"))
 
     def test_the_forum_carries_the_standard_columns(self):

@@ -1,0 +1,223 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-18 03:36:53.130413",
+ "description": "How the portal looks to the people who use it: its name, logo, colours, typeface and home page. Brand assets are uploaded here by the deploying organisation, so none of them live in the code.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "identity_section",
+  "portal_name",
+  "organisation_name",
+  "identity_col",
+  "logo",
+  "favicon",
+  "colour_section",
+  "primary_colour",
+  "accent_colour",
+  "colour_col",
+  "header_style",
+  "type_section",
+  "font_family",
+  "type_col",
+  "font_regular",
+  "font_bold",
+  "home_section",
+  "hero_title",
+  "hero_text",
+  "hero_image",
+  "home_col",
+  "hero_primary_label",
+  "hero_primary_url",
+  "hero_secondary_label",
+  "hero_secondary_url",
+  "footer_section",
+  "footer_text"
+ ],
+ "fields": [
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "default": "Governance Portal",
+   "description": "Shown in the header, the browser tab, the sign-in page and the workspace.",
+   "fieldname": "portal_name",
+   "fieldtype": "Data",
+   "label": "Portal Name",
+   "reqd": 1
+  },
+  {
+   "description": "Used in the footer. Leave blank to show the portal name alone.",
+   "fieldname": "organisation_name",
+   "fieldtype": "Data",
+   "label": "Organisation Name"
+  },
+  {
+   "fieldname": "identity_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "SVG or PNG, wide rather than square, readable on the header colour. Replaces the built-in mark.",
+   "fieldname": "logo",
+   "fieldtype": "Attach Image",
+   "label": "Logo"
+  },
+  {
+   "description": "Square SVG, PNG or ICO.",
+   "fieldname": "favicon",
+   "fieldtype": "Attach Image",
+   "label": "Browser Tab Icon"
+  },
+  {
+   "fieldname": "colour_section",
+   "fieldtype": "Section Break",
+   "label": "Colours"
+  },
+  {
+   "default": "#1d3557",
+   "description": "The main brand colour: buttons, links and the active tab. Lighter and darker shades are derived from it.",
+   "fieldname": "primary_colour",
+   "fieldtype": "Color",
+   "label": "Primary Colour",
+   "reqd": 1
+  },
+  {
+   "default": "#0f6c8c",
+   "description": "A second colour for highlights such as the home page banner's call to action.",
+   "fieldname": "accent_colour",
+   "fieldtype": "Color",
+   "label": "Accent Colour"
+  },
+  {
+   "fieldname": "colour_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Primary colour",
+   "description": "A white header with a coloured logo suits a brand whose logo is designed for a light background.",
+   "fieldname": "header_style",
+   "fieldtype": "Select",
+   "label": "Header Style",
+   "options": "Primary colour\nWhite"
+  },
+  {
+   "fieldname": "type_section",
+   "fieldtype": "Section Break",
+   "label": "Typeface"
+  },
+  {
+   "description": "The name to give the uploaded font files, for example the brand typeface's name. Leave blank to use the operating system's interface font.",
+   "fieldname": "font_family",
+   "fieldtype": "Data",
+   "label": "Font Family Name"
+  },
+  {
+   "fieldname": "type_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "WOFF2 preferred. Only upload a font your organisation is licensed to serve.",
+   "fieldname": "font_regular",
+   "fieldtype": "Attach",
+   "label": "Font File \u2014 Regular"
+  },
+  {
+   "description": "Optional. Without it the browser emboldens the regular weight.",
+   "fieldname": "font_bold",
+   "fieldtype": "Attach",
+   "label": "Font File \u2014 Bold"
+  },
+  {
+   "fieldname": "home_section",
+   "fieldtype": "Section Break",
+   "label": "Home Page Banner"
+  },
+  {
+   "default": "Governance, risk and policy in one place",
+   "description": "The large heading at the top of the home page.",
+   "fieldname": "hero_title",
+   "fieldtype": "Data",
+   "label": "Banner Heading"
+  },
+  {
+   "default": "Find a forum, check where a policy stands, or raise a matter that needs attention \u2014 every record with its owner, its history and its next step.",
+   "fieldname": "hero_text",
+   "fieldtype": "Small Text",
+   "label": "Banner Text"
+  },
+  {
+   "description": "A wide photograph or illustration, at least 1600 pixels across. The text sits on the left, so keep the subject to the right.",
+   "fieldname": "hero_image",
+   "fieldtype": "Attach Image",
+   "label": "Banner Image"
+  },
+  {
+   "fieldname": "home_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Browse the forum inventory",
+   "fieldname": "hero_primary_label",
+   "fieldtype": "Data",
+   "label": "Main Button Label"
+  },
+  {
+   "default": "/forums",
+   "fieldname": "hero_primary_url",
+   "fieldtype": "Data",
+   "label": "Main Button Link"
+  },
+  {
+   "default": "Request a new forum",
+   "fieldname": "hero_secondary_label",
+   "fieldtype": "Data",
+   "label": "Second Button Label"
+  },
+  {
+   "default": "/create-forum",
+   "fieldname": "hero_secondary_url",
+   "fieldtype": "Data",
+   "label": "Second Button Link"
+  },
+  {
+   "fieldname": "footer_section",
+   "fieldtype": "Section Break",
+   "label": "Footer"
+  },
+  {
+   "description": "A line such as a classification notice or a support contact. Plain text.",
+   "fieldname": "footer_text",
+   "fieldtype": "Small Text",
+   "label": "Footer Text"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-18 03:36:53.130570",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Portal Branding",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

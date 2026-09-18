@@ -69,6 +69,16 @@ def _patch_execute_in_shell() -> None:
 		if isinstance(cmd, list):
 			cmd = subprocess.list2cmdline(cmd) if IS_WINDOWS else shlex.join(cmd)
 
+		if IS_WINDOWS and isinstance(cmd, str) and cmd.startswith("file "):
+			# `bench restore` asks the Unix `file` utility what a backup is --
+			# gzip, encrypted, or plain SQL -- before it does anything else.
+			# Windows has no `file`, so every restore failed at that first
+			# step. Answer the one question it asks, from the file's first bytes.
+			err, out = _describe_file(cmd[5:].strip().strip('"'))
+			if check_exit_code and err:
+				raise Exception("Command failed")
+			return err, out
+
 		with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
 			kwargs = {"shell": True, "stdout": stdout, "stderr": stderr}
 
@@ -109,6 +119,29 @@ def _patch_execute_in_shell() -> None:
 	execute_in_shell._winbench_patched = True
 	frappe.utils.execute_in_shell = execute_in_shell
 	_record("frappe.utils.execute_in_shell")
+
+
+def _describe_file(path: str) -> tuple[bytes, bytes]:
+	"""What `file <path>` would say, for the three kinds of backup frappe restores.
+
+	Frappe reads only two things from the answer: whether the part after the
+	last colon mentions AES (an encrypted backup, which it decrypts first), and
+	otherwise nothing -- it decompresses by file extension. So the wording
+	matches `file`'s for those cases and is plain otherwise.
+	"""
+	try:
+		with open(path, "rb") as fh:
+			head = fh.read(4)
+	except OSError as e:
+		return f"{path}: cannot open ({e})".encode(), b""
+	if head[:2] == b"\x1f\x8b":
+		kind = "gzip compressed data"
+	elif head[:1] in (b"\x8c", b"\xc3"):
+		# OpenPGP symmetric-key packet: `gpg -c`, which is how frappe encrypts.
+		kind = "GPG symmetrically encrypted data (AES256 cipher)"
+	else:
+		kind = "ASCII text"
+	return b"", f"{path}: {kind}".encode()
 
 
 def _patch_set_niceness() -> None:

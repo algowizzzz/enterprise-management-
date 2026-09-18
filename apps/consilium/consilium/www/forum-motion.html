@@ -1,0 +1,374 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  The voting screen.
+  One motion: what was put, who was entitled to vote on its decision date and
+  how each voted, where quorum stands, and — for the forum's secretary — the
+  control that records the outcome and freezes the motion. An entitled member
+  (or their seat's standing delegate) casts their own ballot here.
+  With ?forum= instead of ?name=, the secretary puts a new motion to the forum.
+  What the viewer may do is the server's answer (`voting.get_motion`), and
+  every action is checked again on the way in.
+-#}
+
+{% block page_actions %}
+{%- if allowed and forum %}
+<a class="cns-btn cns-btn-secondary" href="/forum?name={{ forum | urlencode }}#decisions">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to the forum
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not found %}
+<div class="cns-card">
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">No such motion or forum</p>
+    <p class="cns-state-message">Open a motion from the Decisions tab of its forum.</p>
+    <a class="cns-btn cns-btn-secondary" href="/forums">Back to the inventory</a>
+  </div>
+</div>
+{%- elif not allowed %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
+    <p class="cns-state-title">This motion is not open to you</p>
+    <p class="cns-state-message">A motion is open to the forum's members entitled to vote on it and to
+      those who may read the forum's decisions.</p>
+    <a class="cns-btn cns-btn-secondary" href="/forums">Back to the inventory</a>
+  </div>
+</div>
+{%- elif not motion %}
+{#- Putting a new motion. -#}
+{%- if may_propose %}
+<section class="cns-card" aria-labelledby="propose-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="propose-heading">Put a motion to {{ forum_name | e }}</h2>
+      <p class="cns-card-subtitle">Who may vote is drawn from the forum's seats as they stood on the decision
+        date, and recorded when the motion is put. A seat added later does not vote on it.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <form id="propose-form" novalidate>
+      <div class="cns-form-grid">
+        <div class="cns-field">
+          <label class="cns-label" for="motion_reference">Reference<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" type="text" id="motion_reference" required>
+          <span class="cns-help">As the minutes will cite it, such as the agenda item.</span>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="decision_date">Decision date<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" type="date" id="decision_date" required>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="meeting">Sitting</label>
+          <select class="cns-select" id="meeting">
+            <option value="">Not at a sitting</option>
+            {%- for m in meetings %}
+            <option value="{{ m.name | e }}">{{ m.meeting_reference | e }} ({{ m.name | e }})</option>
+            {%- endfor %}
+          </select>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="voting_mode">How it is voted</label>
+          <select class="cns-select" id="voting_mode">
+            <option value="In Meeting">In Meeting</option>
+            <option value="Written Resolution">Written Resolution</option>
+            <option value="Electronic">Electronic</option>
+          </select>
+        </div>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="motion_text">What is put<span class="cns-required" aria-hidden="true">*</span></label>
+        <textarea class="cns-textarea" id="motion_text" rows="4" required></textarea>
+      </div>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-primary">
+          <i class="bi bi-hand-index" aria-hidden="true"></i> Put the motion
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{%- else %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
+    <p class="cns-state-title">Motions are put by the forum's secretary</p>
+    <p class="cns-state-message">The motions already put to this forum are on its Decisions tab.</p>
+    <a class="cns-btn cns-btn-secondary" href="/forum?name={{ forum | urlencode }}#decisions">Back to the forum</a>
+  </div>
+</div>
+{%- endif %}
+{%- else %}
+{#- One motion. -#}
+<div id="motion-summary" class="cns-card">
+  <div class="cns-card-body"><p class="cns-text-muted cns-text-sm">Loading the motion&hellip;</p></div>
+</div>
+
+<section class="cns-card" id="vote-card" aria-labelledby="vote-heading" hidden>
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="vote-heading">Your vote</h2>
+      <p class="cns-card-subtitle">You may change it until the secretary records the outcome.</p>
+    </div>
+  </div>
+  <div class="cns-card-body"><div id="vote-forms"></div></div>
+</section>
+
+<section class="cns-card" aria-labelledby="ballots-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="ballots-heading">Entitled voters</h2>
+      <p class="cns-card-subtitle">Every seat that could vote on the decision date, whether or not it voted.</p>
+    </div>
+  </div>
+  <div class="cns-card-body"><div id="ballots"></div></div>
+</section>
+
+<section class="cns-card" id="outcome-card" aria-labelledby="outcome-heading" hidden>
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="outcome-heading">Record the outcome</h2>
+      <p class="cns-card-subtitle">Quorum is evaluated once, now, from the seats that voted, and stored with the
+        outcome. The motion is then closed and its ballots can no longer change.</p>
+    </div>
+  </div>
+  <div class="cns-card-body"><div id="outcome-form-holder"></div></div>
+</section>
+{%- endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{%- if allowed %}
+<script>
+(function () {
+  "use strict";
+
+  var MOTION = {{ motion | tojson }};
+  var FORUM = {{ forum | tojson }};
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var person = Consilium.Table.formatters.person;
+
+  /* Display only: the colour an outcome or ballot is shown in. */
+  var OUTCOME_TONES = { Carried: "success", "Not Carried": "danger", Deferred: "warning",
+                        Withdrawn: "neutral", Inquorate: "danger" };
+  var BALLOT_TONES = { For: "success", Against: "danger", Abstain: "info", Recused: "neutral", "Not Cast": "neutral" };
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+  function value(v) { return (v === null || v === undefined || v === "") ? dash() : escapeHtml(v); }
+  function pill(text, tone) {
+    return '<span class="cns-pill cns-status-' + escapeAttr(tone || "neutral") + '">' + escapeHtml(text) + "</span>";
+  }
+  function when(v) { return v ? escapeHtml(Consilium.util.formatDate(v, true)) : dash(); }
+  function day(v) { return v ? escapeHtml(Consilium.util.formatDate(v, false)) : dash(); }
+
+  function fail(title) {
+    return function (error) {
+      Consilium.toast.error(error.message || "That could not be done.", { title: title });
+    };
+  }
+
+  /* ----------------------------- a new motion -------------------------- */
+
+  var propose = document.getElementById("propose-form");
+  if (propose) {
+    propose.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var ref = document.getElementById("motion_reference");
+      var text = document.getElementById("motion_text");
+      var date = document.getElementById("decision_date");
+      var missing = [ref, text, date].filter(function (node) { return !node.value.trim(); });
+      [ref, text, date].forEach(function (node) {
+        if (missing.indexOf(node) >= 0) node.setAttribute("aria-invalid", "true");
+        else node.removeAttribute("aria-invalid");
+      });
+      if (missing.length) {
+        missing[0].focus();
+        Consilium.announce("A motion needs its reference, its wording and its decision date.");
+        return;
+      }
+      var button = propose.querySelector("button[type=submit]");
+      button.disabled = true;
+      Consilium.api.call("consilium.governance.voting.propose_motion", {
+        forum: FORUM, motion_reference: ref.value.trim(), motion_text: text.value.trim(),
+        decision_date: date.value, meeting: document.getElementById("meeting").value || null,
+        voting_mode: document.getElementById("voting_mode").value
+      }, { method: "POST" })
+        .then(function (ctx) {
+          window.location.href = "/forum-motion?name=" + encodeURIComponent(ctx.created);
+        })
+        .catch(function (error) { button.disabled = false; fail("Motion not put")(error); });
+    });
+    return;
+  }
+
+  /* ------------------------------ one motion --------------------------- */
+
+  if (!MOTION) return;
+
+  function renderSummary(ctx) {
+    var m = ctx.motion;
+    var t = ctx.tally;
+    var q = ctx.quorum;
+    var status = m.outcome ? pill(m.outcome, OUTCOME_TONES[m.outcome]) : pill("Open for votes", "info");
+    var quorumLine = m.outcome
+      ? (m.quorum_met ? pill("Quorate", "success") : pill("Not quorate", "danger")) + " " +
+        '<span class="cns-text-muted cns-text-sm">' + value(m.quorum_basis) + "</span>"
+      : (q.met ? pill("Quorate so far", "success") : pill("Not yet quorate", "warning")) + " " +
+        '<span class="cns-text-muted cns-text-sm">' + escapeHtml(q.basis || "") + "</span>";
+    document.getElementById("motion-summary").innerHTML =
+      '<div class="cns-card-body">' +
+      '<p class="cns-eyebrow">' + escapeHtml(ctx.forum_name || m.forum) + "</p>" +
+      '<p style="margin-bottom: var(--cns-space-3);"><strong>' + escapeHtml(m.motion_reference || m.name) + "</strong> " +
+      status + "</p>" +
+      '<p class="cns-prose">' + escapeHtml(m.motion_text || "") + "</p>" +
+      '<dl class="cns-dl">' +
+      '<div><dt>Reference</dt><dd class="cns-mono">' + escapeHtml(m.name) + "</dd></div>" +
+      "<div><dt>Decision date</dt><dd>" + day(m.decision_date) + "</dd></div>" +
+      "<div><dt>How it is voted</dt><dd>" + value(m.voting_mode) + "</dd></div>" +
+      "<div><dt>Sitting</dt><dd>" + value(m.meeting) + "</dd></div>" +
+      "<div><dt>For / against / abstained</dt><dd>" + escapeHtml(String(t.votes_for)) + " / " +
+        escapeHtml(String(t.votes_against)) + " / " + escapeHtml(String(t.abstentions)) + "</dd></div>" +
+      "<div><dt>Ballots cast</dt><dd>" + escapeHtml(String(t.votes_cast)) + " of " +
+        escapeHtml(String(t.eligible_voter_count)) + " entitled</dd></div>" +
+      "<div><dt>Quorum</dt><dd>" + quorumLine + "</dd></div>" +
+      (m.outcome ? "<div><dt>Outcome recorded by</dt><dd>" + (m.outcome_recorded_by ? person(m.outcome_recorded_by) : dash()) +
+        " &middot; " + when(m.closed_on) + "</dd></div>" : "") +
+      "</dl></div>";
+  }
+
+  function renderBallots(ctx) {
+    var rows = ctx.ballots;
+    if (!rows.length) {
+      document.getElementById("ballots").innerHTML =
+        '<p class="cns-text-muted">No seat on this forum could vote on the decision date.</p>';
+      return;
+    }
+    document.getElementById("ballots").innerHTML =
+      '<div class="cns-table-wrap"><table class="cns-table cns-table--compact">' +
+      '<caption class="cns-visually-hidden">Entitled voters and their ballots</caption>' +
+      '<thead><tr><th scope="col">Seat</th><th scope="col">Member</th><th scope="col">Ballot</th>' +
+      '<th scope="col">Cast by</th><th scope="col">Cast on</th></tr></thead><tbody>' +
+      rows.map(function (b) {
+        var castBy = b.cast ? person(b.voter) + (b.voted_as === "Delegate" ? ' <span class="cns-text-muted cns-text-sm">(delegate)</span>' : "") : dash();
+        return '<tr><td class="cns-mono">' + escapeHtml(b.membership) + "</td>" +
+          "<td>" + (b.member ? person(b.member) : dash()) + (b.mine ? " " + pill("You", "info") : "") + "</td>" +
+          "<td>" + pill(b.position, BALLOT_TONES[b.position]) + "</td>" +
+          "<td>" + castBy + "</td><td>" + when(b.cast_on) + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+
+  function renderVote(ctx) {
+    var card = document.getElementById("vote-card");
+    var mine = ctx.ballots.filter(function (b) { return b.mine; });
+    card.hidden = !ctx.may_vote;
+    if (!ctx.may_vote) return;
+    document.getElementById("vote-forms").innerHTML = mine.map(function (b, i) {
+      var legend = b.as_delegate ? "As delegate for " + escapeHtml(b.member || "") + " (seat " + escapeHtml(b.membership) + ")"
+        : "Seat " + escapeHtml(b.membership);
+      return '<form class="cns-fieldset" data-membership="' + escapeAttr(b.membership) + '" novalidate' +
+        (i ? ' style="margin-top: var(--cns-space-4);"' : "") + ">" +
+        "<legend>" + legend + "</legend>" +
+        '<div class="cns-form-grid"><div class="cns-field"><label class="cns-label" for="position-' + i + '">Ballot</label>' +
+        '<select class="cns-select" id="position-' + i + '">' + ctx.positions.map(function (p) {
+          return '<option value="' + escapeAttr(p) + '"' + (p === b.position ? " selected" : "") + ">" + escapeHtml(p) + "</option>";
+        }).join("") + "</select></div></div>" +
+        '<div class="cns-field"><label class="cns-label" for="rationale-' + i + '">Reason (optional)</label>' +
+        '<textarea class="cns-textarea" id="rationale-' + i + '" rows="2"></textarea></div>' +
+        '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">' +
+        (b.cast ? "Change my ballot" : "Cast my ballot") + "</button></div></form>";
+    }).join("");
+  }
+
+  function renderOutcome(ctx) {
+    var card = document.getElementById("outcome-card");
+    card.hidden = !ctx.may_record_outcome;
+    if (!ctx.may_record_outcome) return;
+    var q = ctx.quorum;
+    document.getElementById("outcome-form-holder").innerHTML =
+      (q.met ? "" : '<div class="cns-alert cns-status-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>' +
+        "<div>The sitting is not quorate on the ballots cast (" + escapeHtml(q.basis || "") + "). A decision that " +
+        "would stand as the forum's — carried or not carried — will be refused; record it as inquorate or deferred.</div></div>") +
+      '<form id="outcome-form" novalidate><div class="cns-form-grid">' +
+      '<div class="cns-field"><label class="cns-label" for="outcome">Outcome<span class="cns-required" aria-hidden="true">*</span></label>' +
+      '<select class="cns-select" id="outcome">' + ctx.outcomes.map(function (o) {
+        var off = o.standing_decision && !q.met;
+        return '<option value="' + escapeAttr(o.outcome) + '"' + (off ? " disabled" : "") + ">" + escapeHtml(o.outcome) +
+          (off ? " (needs quorum)" : "") + "</option>";
+      }).join("") + "</select></div>" +
+      '<div class="cns-field"><div class="cns-check" style="margin-top: var(--cns-space-5);">' +
+      '<input type="checkbox" id="casting"><label for="casting">The chair used a casting vote</label></div></div>' +
+      "</div>" +
+      '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-danger">' +
+      '<i class="bi bi-lock" aria-hidden="true"></i> Record the outcome and close the motion</button></div></form>';
+    var select = document.getElementById("outcome");
+    var firstOpen = Array.prototype.filter.call(select.options, function (o) { return !o.disabled; })[0];
+    if (firstOpen) select.value = firstOpen.value;
+  }
+
+  function render(ctx) {
+    renderSummary(ctx);
+    renderBallots(ctx);
+    renderVote(ctx);
+    renderOutcome(ctx);
+  }
+
+  function load() {
+    return Consilium.api.call("consilium.governance.voting.get_motion", { motion: MOTION })
+      .then(render)
+      .catch(function (error) {
+        document.getElementById("motion-summary").innerHTML =
+          '<div class="cns-state cns-state--error"><span class="cns-state-icon">' +
+          '<i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>' +
+          '<p class="cns-state-title">The motion could not be read</p>' +
+          '<p class="cns-state-message">' + escapeHtml(error.message || "") + "</p></div>";
+      });
+  }
+
+  document.getElementById("vote-forms").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    var button = form.querySelector("button[type=submit]");
+    var select = form.querySelector("select");
+    var reason = form.querySelector("textarea");
+    button.disabled = true;
+    Consilium.api.call("consilium.governance.voting.cast_my_vote", {
+      motion: MOTION, membership: form.getAttribute("data-membership"), position: select.value,
+      rationale: reason.value.trim()
+    }, { method: "POST" })
+      .then(function (ctx) {
+        render(ctx);
+        Consilium.toast.success("Your ballot is recorded: " + select.value + ".", { title: "Ballot cast" });
+        Consilium.announce("Ballot recorded.");
+      })
+      .catch(function (error) { button.disabled = false; fail("Ballot not cast")(error); });
+  });
+
+  document.getElementById("outcome-form-holder").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    var button = form.querySelector("button[type=submit]");
+    var outcome = document.getElementById("outcome").value;
+    button.disabled = true;
+    Consilium.api.call("consilium.governance.voting.record_motion_outcome", {
+      motion: MOTION, outcome: outcome, chair_casting_vote_used: document.getElementById("casting").checked ? 1 : 0
+    }, { method: "POST" })
+      .then(function (ctx) {
+        render(ctx);
+        Consilium.toast.success("The motion is closed as " + outcome + ".", { title: "Outcome recorded" });
+        Consilium.announce("Outcome recorded.");
+      })
+      .catch(function (error) { button.disabled = false; fail("Outcome not recorded")(error); });
+  });
+
+  load();
+})();
+</script>
+{%- endif %}
+{% endblock %}

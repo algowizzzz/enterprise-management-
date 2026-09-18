@@ -43,6 +43,24 @@ winbench assets --export assets/frappe-assets-<version>.tar.gz
 - `sites/assets.json`, `assets-rtl.json`, `css/`, `js/`, `locale/` — manifests
   and shared trees
 
+- `apps/frappe/node_modules/` — only the libraries the Desk fetches on demand
+  rather than bundling, so they must be present on disk:
+
+  | Library | Version | Licence | Used by |
+  |---|---|---|---|
+  | ace-builds (`src-min-noconflict` only) | 1.31.2 | BSD-3-Clause | every JSON and Code field |
+  | frappe-gantt | 0.6.1 | MIT | Gantt view |
+  | html5-qrcode | 2.3.8 | Apache-2.0 | barcode scanner |
+  | qz-tray | 2.2.3 | LGPL-2.1 (declared in its `package.json`) | direct printing |
+  | js-sha256 | 0.9.0 | MIT | direct printing |
+
+  Versions are the ones frappe v15.121.0's `yarn.lock` resolves. Each package
+  archive was checked against the registry's published sha512 integrity before
+  its files were taken. Without these the fields still render, the script
+  request returns 404, and the console reports `Unexpected token '<'` — nothing
+  on the page says why. `--import` also supplies the minified editor under the
+  unminified path that developer mode asks for.
+
 Source maps are **excluded**: they were ~75% of the bytes and are only ever
 fetched by browser devtools. Pass `--with-sourcemaps` to `--export` if you want
 them for front-end debugging.

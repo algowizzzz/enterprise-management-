@@ -1,0 +1,652 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Document intake (P-16).
+  Without a request named: the requests the viewer may read, and the form that
+  raises one. With ?name=: that request — its classification questions, drawn
+  from the rule set in force rather than written here; the outcome, the rule
+  that produced it and the full trace; the requester's challenge; and, for the
+  policy office, the override and the creation of the document.
+
+  The page never decides what may be done: the request's payload says, and
+  each button posts to an entry point that checks again.
+-#}
+
+{% block page_actions %}
+{%- if request_name %}
+<a class="cns-btn cns-btn-secondary" href="/policy-intake">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> All requests
+</a>
+{%- else %}
+<a class="cns-btn cns-btn-secondary" href="/policies">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to inventory
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not request_name %}
+
+{%- if can_raise %}
+<section class="cns-card" aria-labelledby="raise-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="raise-heading">Request a document</h2>
+      <p class="cns-card-subtitle">Say what you need and why. You answer the classification questions on the
+        next screen.</p>
+    </div>
+  </div>
+  <div class="cns-card-body" id="raise-body">
+    <p class="cns-text-muted cns-text-sm">Loading the form&hellip;</p>
+  </div>
+</section>
+{%- else %}
+<div class="cns-alert cns-status-info" style="margin-bottom: var(--cns-space-4);">
+  <i class="bi bi-info-circle" aria-hidden="true"></i>
+  <div>You can follow document requests here. Raising one is open to document owners and the policy office.</div>
+</div>
+{%- endif %}
+
+<div id="intake-table"></div>
+
+{%- elif not found %}
+<div class="cns-card">
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">That request is not on record</p>
+    <p class="cns-state-message">Reference <span class="cns-mono">{{ request_name | e }}</span> does not exist.</p>
+    <a class="cns-btn cns-btn-secondary" href="/policy-intake">Back to the requests</a>
+  </div>
+</div>
+{%- else %}
+
+<div id="request-summary" class="cns-card">
+  <div class="cns-card-body"><p class="cns-text-muted cns-text-sm">Loading the request&hellip;</p></div>
+</div>
+
+<div id="outcome" role="status" aria-live="polite"></div>
+
+<section class="cns-card" id="actions-card" aria-labelledby="actions-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="actions-heading">What you can do now</h2>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-btn-group" id="action-buttons"></div>
+    <div id="action-notes"></div>
+  </div>
+</section>
+
+<section class="cns-card" aria-labelledby="classify-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="classify-heading">Classification</h2>
+      <p class="cns-card-subtitle" id="classify-subtitle">The answers decide whether the change is major or
+        minor, which decides its approval route and service level.</p>
+    </div>
+  </div>
+  <div class="cns-card-body" id="classify-body"></div>
+</section>
+
+<section class="cns-card" aria-labelledby="challenge-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="challenge-heading">Challenge and override</h2>
+      <p class="cns-card-subtitle">A challenge is recorded, not acted on. Only the policy office can change an
+        outcome, by an override that keeps the original and records why.</p>
+    </div>
+  </div>
+  <div class="cns-card-body" id="challenge-body"></div>
+</section>
+
+<section class="cns-card" id="fulfil-card" aria-labelledby="fulfil-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="fulfil-heading">The document</h2>
+    </div>
+  </div>
+  <div class="cns-card-body" id="fulfil-body"></div>
+</section>
+
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  var REQUEST = {{ request_name | tojson }};
+  var FOUND = {{ (found and true or false) | tojson }};
+  var HANDLING = {{ handling_options | tojson }};
+  var METHOD = "consilium.policy.intake.";
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var f = Consilium.Table.formatters;
+
+  /* Display tones only. */
+  var OUTCOME_TONES = { Major: "warning", Minor: "info" };
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+  function value(v) { return (v === null || v === undefined || v === "") ? dash() : escapeHtml(v); }
+  function prose(v) { return v ? '<span style="white-space: pre-line;">' + escapeHtml(v) + "</span>" : dash(); }
+  function person(v) { return v ? f.person(v) : dash(); }
+  function pill(text, tone) {
+    return '<span class="cns-pill cns-status-' + escapeAttr(tone || "neutral") + '">' + escapeHtml(text) + "</span>";
+  }
+  function docLink(name, text) {
+    if (!name) return dash();
+    return '<a href="/policy?name=' + escapeAttr(encodeURIComponent(name)) + '">' + escapeHtml(text || name) + "</a>";
+  }
+  function stateCard(title, message) {
+    return '<div class="cns-state cns-state--error"><p class="cns-state-title">' + escapeHtml(title) +
+      '</p><p class="cns-state-message">' + escapeHtml(message || "") + "</p></div>";
+  }
+
+  /** Show or clear a field's error. Returns true when the field is valid. */
+  function setError(node, message) {
+    var wrapper = node.closest(".cns-field");
+    var existing = wrapper.querySelector(".cns-error-text");
+    if (message) {
+      node.setAttribute("aria-invalid", "true");
+      if (!existing) {
+        existing = document.createElement("span");
+        existing.className = "cns-error-text";
+        existing.id = (node.id || "field") + "-error";
+        wrapper.appendChild(existing);
+      }
+      existing.textContent = message;
+      node.setAttribute("aria-describedby", existing.id);
+      return false;
+    }
+    node.removeAttribute("aria-invalid");
+    if (existing) existing.remove();
+    return true;
+  }
+
+  function required(form, name, message) {
+    var node = form.querySelector('[name="' + name + '"]');
+    var v = (node.value || "").trim();
+    if (!setError(node, v ? null : message)) { node.focus(); return null; }
+    return v;
+  }
+
+  /* Taxonomies carry is_active: a retired value must not be offered for a new
+     record. A value the request already holds is still shown as it is. */
+  var TAXONOMIES = { "Governing Document Type": 1, "Risk Category": 1, "Organization Unit": 1 };
+
+  /** Fill a select from a readable reference list. */
+  function fillSelect(select, doctype, labelField, chosen) {
+    var options = {
+      fields: ["name", labelField], order_by: labelField + " asc", limit_page_length: 500, trackLoading: false
+    };
+    if (TAXONOMIES[doctype]) options.filters = [["is_active", "=", 1]];
+    return Consilium.api.list(doctype, options).then(function (rows) {
+      if (chosen && !rows.some(function (row) { return row.name === chosen; })) {
+        rows = [{ name: chosen, retired: true }].concat(rows);
+        rows[0][labelField] = chosen;
+      }
+      rows.forEach(function (row) {
+        var option = document.createElement("option");
+        option.value = row.name;
+        option.textContent = (row[labelField] || row.name) + (row.retired ? " (no longer offered)" : "");
+        if (chosen && chosen === row.name) option.selected = true;
+        select.appendChild(option);
+      });
+    }).catch(function () {
+      select.disabled = true;
+      select.title = "This list could not be read.";
+    });
+  }
+
+  /* ============================ the register ============================ */
+
+  if (!REQUEST) {
+    Consilium.Table.create({
+      target: "#intake-table",
+      doctype: "Document Intake Request",
+      title: "Document requests",
+      caption: "Document intake requests",
+      storageKey: "policy-intake",
+      rowKey: "name",
+      searchPlaceholder: "Search by reference, proposed name or justification",
+      searchFields: ["name", "proposed_document_name", "business_justification"],
+      defaultSort: { field: "creation", order: "desc" },
+      pageSize: 25,
+      onRowClick: function (row) { window.location.href = "/policy-intake?name=" + encodeURIComponent(row.name); },
+      emptyTitle: "No requests", emptyMessage: "No document request has been raised yet.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono", formatter: f.link("/policy-intake?name=") },
+        { field: "request_type", label: "Kind", sortable: true },
+        { field: "proposed_document_name", label: "Proposed document", sortable: true, formatter: f.truncate(60) },
+        { field: "subject_document", label: "Concerns", sortable: true, formatter: function (v) { return docLink(v); } },
+        { field: "requester", label: "Raised by", sortable: true, formatter: f.person },
+        { field: "change_classification", label: "Classified", sortable: true,
+          formatter: function (v) { return v ? pill(v, OUTCOME_TONES[v]) : '<span class="cns-text-muted">Not yet</span>'; } },
+        { field: "is_open", label: "Open", sortable: true,
+          formatter: function (v) { return v ? pill("Open", "info") : pill("Closed", "neutral"); } },
+        { field: "created_document", label: "Document", sortable: true, formatter: function (v) { return docLink(v); } },
+        { field: "creation", label: "Raised", sortable: true, formatter: f.datetime }
+      ]
+    });
+
+    var raiseBody = document.getElementById("raise-body");
+    if (raiseBody) {
+      Consilium.api.call(METHOD + "form_options", {}).then(function (opts) {
+        raiseBody.innerHTML =
+          '<form id="raise-form" novalidate>' +
+          '<div class="cns-form-grid">' +
+          '<div class="cns-field"><label class="cns-label" for="r-type">Kind of request<span class="cns-required" aria-hidden="true">*</span></label>' +
+          '<select class="cns-select" id="r-type" name="request_type">' + opts.request_types.map(function (t) {
+            return '<option value="' + escapeAttr(t) + '">' + escapeHtml(t) + "</option>"; }).join("") + "</select></div>" +
+          '<div class="cns-field" data-when="create"><label class="cns-label" for="r-name">Proposed document name<span class="cns-required" aria-hidden="true">*</span></label>' +
+          '<input class="cns-input" id="r-name" name="proposed_document_name" type="text"></div>' +
+          '<div class="cns-field" data-when="create"><label class="cns-label" for="r-doctype">Document type<span class="cns-required" aria-hidden="true">*</span></label>' +
+          '<select class="cns-select" id="r-doctype" name="proposed_document_type"><option value="">Choose a type</option></select></div>' +
+          '<div class="cns-field" data-when="subject" hidden><label class="cns-label" for="r-subject">Document it concerns<span class="cns-required" aria-hidden="true">*</span></label>' +
+          '<select class="cns-select" id="r-subject" name="subject_document"><option value="">Choose a document</option></select></div>' +
+          '<div class="cns-field"><label class="cns-label" for="r-risk">Primary risk category</label>' +
+          '<select class="cns-select" id="r-risk" name="primary_risk_category"><option value="">Not stated</option></select></div>' +
+          '<div class="cns-field"><label class="cns-label" for="r-date">Wanted in effect by</label>' +
+          '<input class="cns-input" id="r-date" name="proposed_effective_date" type="date"></div>' +
+          "</div>" +
+          '<div class="cns-field"><label class="cns-label" for="r-why">Why it is needed<span class="cns-required" aria-hidden="true">*</span></label>' +
+          '<textarea class="cns-textarea" id="r-why" name="business_justification" rows="4"></textarea>' +
+          '<span class="cns-help">The policy office reads this first.</span></div>' +
+          '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">Raise the request</button></div>' +
+          "</form>";
+        var form = document.getElementById("raise-form");
+        fillSelect(form.querySelector("#r-doctype"), "Governing Document Type", "document_type_name");
+        fillSelect(form.querySelector("#r-risk"), "Risk Category", "risk_category_name");
+        fillSelect(form.querySelector("#r-subject"), "Governing Document", "document_name");
+        function sync() {
+          var creating = form.querySelector("#r-type").value === opts.create_type;
+          Array.prototype.forEach.call(form.querySelectorAll('[data-when="create"]'), function (n) { n.hidden = !creating; });
+          Array.prototype.forEach.call(form.querySelectorAll('[data-when="subject"]'), function (n) { n.hidden = creating; });
+        }
+        form.querySelector("#r-type").addEventListener("change", sync);
+        sync();
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+          var creating = form.querySelector("#r-type").value === opts.create_type;
+          var args = { request_type: form.querySelector("#r-type").value };
+          if (creating) {
+            if ((args.proposed_document_name = required(form, "proposed_document_name", "Propose a name.")) === null) return;
+            if ((args.proposed_document_type = required(form, "proposed_document_type", "Choose the type.")) === null) return;
+          } else if ((args.subject_document = required(form, "subject_document", "Choose the document.")) === null) {
+            return;
+          }
+          if ((args.business_justification = required(form, "business_justification", "Say why it is needed.")) === null) return;
+          args.primary_risk_category = form.querySelector("#r-risk").value || null;
+          args.proposed_effective_date = form.querySelector("#r-date").value || null;
+          form.querySelector("button[type=submit]").disabled = true;
+          Consilium.api.call(METHOD + "raise_request", args, { method: "POST" })
+            .then(function (ctx) {
+              window.location.href = "/policy-intake?name=" + encodeURIComponent(ctx.request.name) + "#classify";
+            })
+            .catch(function (error) {
+              form.querySelector("button[type=submit]").disabled = false;
+              Consilium.toast.error(error.message || "The request was not raised.", { title: "Not raised" });
+            });
+        });
+      }).catch(function (error) {
+        raiseBody.innerHTML = stateCard("The form could not be loaded", error.message);
+      });
+    }
+    return;
+  }
+
+  if (!FOUND) return;
+
+  /* ============================ one request ============================ */
+
+  var ctx = null;
+
+  function act(method, args, success) {
+    var buttons = document.querySelectorAll("main button, .cns-card button");
+    Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+    document.getElementById("outcome").innerHTML = "";
+    return Consilium.api.call(METHOD + method, Object.assign({ request: REQUEST }, args), { method: "POST" })
+      .then(function (next) {
+        render(next);
+        Consilium.toast.success(success, { title: "Recorded" });
+        Consilium.announce(success);
+        return next;
+      })
+      .catch(function (error) {
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+        var message = (error && error.message) || "The server refused the action.";
+        document.getElementById("outcome").innerHTML =
+          '<div class="cns-alert cns-status-danger" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i>' +
+          "<div><strong>Not done.</strong> " + escapeHtml(message) + "</div></div>";
+        Consilium.toast.error(message, { title: "Not done" });
+        throw error;
+      });
+  }
+
+  function render(next) {
+    ctx = next;
+    renderSummary();
+    renderActions();
+    renderClassification();
+    renderChallenge();
+    renderFulfilment();
+  }
+
+  function renderSummary() {
+    var r = ctx.request;
+    var flags = [];
+    flags.push(r.is_open ? pill("Open", "info") : pill("Closed", "neutral"));
+    if (r.change_classification) flags.push(pill(r.change_classification + " change", OUTCOME_TONES[r.change_classification]));
+    if (r.classification_challenge) flags.push(pill("Challenged", "warning"));
+    if (ctx.is_requester) flags.push(pill("You raised this", "info"));
+    var clock = ctx.sla_clock;
+    document.getElementById("request-summary").innerHTML =
+      '<div class="cns-card-body">' +
+      '<p class="cns-eyebrow">' + escapeHtml(r.request_type || "") + " request &middot; " +
+      '<span class="cns-mono">' + escapeHtml(r.name) + "</span></p>" +
+      '<p style="margin-bottom: var(--cns-space-3);">' + flags.join(" ") + "</p>" +
+      '<dl class="cns-dl">' +
+      "<div><dt>Raised by</dt><dd>" + person(r.requester) + "</dd></div>" +
+      "<div><dt>Raised on</dt><dd>" + value(Consilium.util.formatDate(r.creation, true)) + "</dd></div>" +
+      "<div><dt>Proposed document</dt><dd>" + value(r.proposed_document_name) + "</dd></div>" +
+      "<div><dt>Document type</dt><dd>" + value(r.proposed_document_type) + "</dd></div>" +
+      "<div><dt>Concerns</dt><dd>" + (r.subject_document ? docLink(r.subject_document, ctx.subject_document_name) : dash()) + "</dd></div>" +
+      "<div><dt>Wanted in effect by</dt><dd>" + value(r.proposed_effective_date ? Consilium.util.formatDate(r.proposed_effective_date, false) : "") + "</dd></div>" +
+      "<div><dt>Service level</dt><dd>" + (clock
+        ? escapeHtml(clock.status || "") + (clock.target_on ? " &middot; due " + escapeHtml(Consilium.util.formatDate(clock.target_on, true)) : "")
+        : '<span class="cns-text-muted">Starts when the request is classified</span>') + "</dd></div>" +
+      "</dl>" +
+      '<dl class="cns-dl cns-dl--stacked" style="margin-top: var(--cns-space-3);"><div><dt>Why it is needed</dt><dd>' +
+      prose(r.business_justification) + "</dd></div></dl></div>";
+  }
+
+  var SHORTCUTS = [
+    { key: "classify", target: "classify-heading", icon: "bi-ui-checks", primary: true },
+    { key: "challenge", target: "challenge-heading", icon: "bi-chat-left-quote" },
+    { key: "override", target: "challenge-heading", icon: "bi-shield-exclamation" },
+    { key: "create_document", target: "fulfil-heading", icon: "bi-file-earmark-plus", primary: true },
+    { key: "withdraw", target: "withdraw-form", icon: "bi-box-arrow-left" }
+  ];
+
+  function renderActions() {
+    var offered = SHORTCUTS.filter(function (s) { return ctx.actions[s.key]; });
+    document.getElementById("action-buttons").innerHTML = offered.map(function (s) {
+      return '<button type="button" class="cns-btn ' + (s.primary ? "cns-btn-primary" : "cns-btn-secondary") +
+        '" data-goto="' + s.target + '"><i class="bi ' + s.icon + '" aria-hidden="true"></i> ' +
+        escapeHtml(ctx.action_labels[s.key]) + "</button>";
+    }).join("");
+    var withdraw = ctx.actions.withdraw
+      ? '<form class="cns-fieldset" id="withdraw-form" novalidate style="margin-top: var(--cns-space-4);" hidden>' +
+        "<legend>" + escapeHtml(ctx.action_labels.withdraw) + "</legend>" +
+        '<div class="cns-field"><label class="cns-label" for="w-reason">Why<span class="cns-required" aria-hidden="true">*</span></label>' +
+        '<textarea class="cns-textarea" id="w-reason" name="reason" rows="3"></textarea></div>' +
+        '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-danger">Withdraw the request</button></div></form>'
+      : "";
+    document.getElementById("action-notes").innerHTML = (offered.length ? "" :
+      '<p class="cns-text-muted">Nothing here is yours to do now.</p>') + withdraw;
+    var form = document.getElementById("withdraw-form");
+    if (form) {
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        var reason = required(form, "reason", "A withdrawal is recorded with its reason.");
+        if (reason === null) return;
+        act("withdraw_request", { reason: reason }, "Request withdrawn.").catch(function () {});
+      });
+    }
+  }
+
+  document.getElementById("action-buttons").addEventListener("click", function (event) {
+    var button = event.target.closest("[data-goto]");
+    if (!button) return;
+    var target = document.getElementById(button.getAttribute("data-goto"));
+    if (!target) return;
+    target.hidden = false;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    var focusable = target.querySelector ? target.querySelector("textarea, select, input") : null;
+    if (focusable) focusable.focus();
+  });
+
+  /* --- classification ---------------------------------------------------- */
+
+  function questionHtml(q) {
+    var id = "q-" + q.code;
+    var req = q.required ? '<span class="cns-required" aria-hidden="true">*</span>' : "";
+    var body;
+    if (q.mode === "Single" || q.mode === "Multiple") {
+      var type = q.mode === "Single" ? "radio" : "checkbox";
+      body = q.options.map(function (o, i) {
+        return '<div class="cns-check"><input type="' + type + '" name="' + escapeAttr(q.code) + '" id="' + id + "-" + i +
+          '" value="' + escapeAttr(o.code) + '"><label for="' + id + "-" + i + '">' + escapeHtml(o.text) + "</label></div>";
+      }).join("");
+    } else if (q.mode === "Boolean") {
+      body = ['true', 'false'].map(function (v, i) {
+        return '<div class="cns-check"><input type="radio" name="' + escapeAttr(q.code) + '" id="' + id + "-" + i +
+          '" value="' + v + '"><label for="' + id + "-" + i + '">' + (v === "true" ? "Yes" : "No") + "</label></div>";
+      }).join("");
+    } else {
+      body = '<input class="cns-input" type="number" name="' + escapeAttr(q.code) + '" id="' + id + '">';
+    }
+    return '<fieldset class="cns-field" data-question="' + escapeAttr(q.code) + '"' +
+      (q.depends_on_question ? ' data-depends="' + escapeAttr(q.depends_on_question) + '" data-depends-answer="' +
+        escapeAttr(q.depends_on_answer || "") + '" hidden' : "") + '>' +
+      '<legend class="cns-label">' + escapeHtml(q.text) + req + "</legend>" + body + "</fieldset>";
+  }
+
+  function answerOf(form, q) {
+    if (q.mode === "Numeric") {
+      var n = form.querySelector('[name="' + q.code + '"]').value;
+      return n === "" ? null : Number(n);
+    }
+    var checked = Array.prototype.filter.call(form.querySelectorAll('[name="' + q.code + '"]'), function (i) { return i.checked; });
+    if (q.mode === "Multiple") return checked.map(function (i) { return i.value; });
+    if (!checked.length) return null;
+    if (q.mode === "Boolean") return checked[0].value === "true";
+    return checked[0].value;
+  }
+
+  function renderClassification() {
+    var body = document.getElementById("classify-body");
+    var qs = ctx.questions;
+    var ex = ctx.explanation;
+    if (ex) {
+      var answered = qs ? qs.questions.map(function (q) {
+        var given = ex.answers[q.code];
+        var text = given;
+        if (q.options && q.options.length) {
+          var list = Array.isArray(given) ? given : [given];
+          text = list.map(function (g) {
+            var o = q.options.filter(function (x) { return x.code === g; })[0];
+            return o ? o.text : g;
+          }).join(", ");
+        }
+        return "<div><dt>" + escapeHtml(q.text) + "</dt><dd>" + value(text === undefined ? "" : String(text)) + "</dd></div>";
+      }).join("") : "";
+      body.innerHTML =
+        '<div class="cns-alert cns-status-' + (OUTCOME_TONES[ex.effective_outcome] || "info") + '">' +
+        '<i class="bi bi-clipboard-check" aria-hidden="true"></i><div>' +
+        "<strong>Classified " + escapeHtml(ex.effective_outcome || "") + ".</strong> " +
+        (ex.overridden
+          ? "Overridden from " + escapeHtml(ex.outcome || "") + " by " + person(ex.override_approved_by) + ": “" +
+            escapeHtml(ex.override_justification || "") + "” "
+          : "") +
+        (ex.matched_rule_code ? "Rule " + escapeHtml(ex.matched_rule_code) + " matched: " : "") +
+        escapeHtml(ex.outcome_rationale || "") +
+        '<br><span class="cns-text-muted cns-text-xs">Rule set ' + escapeHtml(ex.rule_set || "") + " version " +
+        escapeHtml(ex.rule_set_version_label || "") + ", evaluated by " + escapeHtml(ex.evaluated_by || "") + " on " +
+        escapeHtml(Consilium.util.formatDate(ex.evaluated_on, true)) + ". A later change to the rules does not change this.</span>" +
+        "</div></div>" +
+        '<dl class="cns-dl cns-dl--stacked">' + answered + "</dl>" +
+        '<details style="margin-top: var(--cns-space-3);"><summary>How each rule was evaluated</summary>' +
+        '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><caption class="cns-visually-hidden">Evaluation trace</caption>' +
+        '<thead><tr><th scope="col">Rule</th><th scope="col">Priority</th><th scope="col">Matched</th><th scope="col">Why</th></tr></thead><tbody>' +
+        (ex.rules || []).map(function (r) {
+          return "<tr><th scope=\"row\">" + escapeHtml(r.rule_code) + "</th><td>" + escapeHtml(String(r.priority)) + "</td><td>" +
+            (r.matched ? pill("Matched", "success") : "No") + "</td><td>" + escapeHtml(r.reason || "") + "</td></tr>";
+        }).join("") + "</tbody></table></div></details>";
+      return;
+    }
+    if (!qs) {
+      body.innerHTML = '<p class="cns-text-muted">No classification rule set is in force, so this request cannot be classified yet.</p>';
+      return;
+    }
+    if (!ctx.actions.classify) {
+      body.innerHTML = '<p class="cns-text-muted">Not classified yet. The requester answers the questions, or the policy office on their behalf.</p>';
+      return;
+    }
+    body.innerHTML = '<form id="classify-form" novalidate>' +
+      '<p class="cns-help" style="margin-bottom: var(--cns-space-3);">Questions from “' + escapeHtml(qs.title || "") +
+      "”, version " + escapeHtml(qs.version_label || "") + ".</p>" +
+      qs.questions.map(questionHtml).join("") +
+      '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">Classify</button></div></form>';
+    var form = document.getElementById("classify-form");
+    function syncDepends() {
+      Array.prototype.forEach.call(form.querySelectorAll("[data-depends]"), function (set) {
+        var parent = qs.questions.filter(function (q) { return q.code === set.getAttribute("data-depends"); })[0];
+        var given = parent ? answerOf(form, parent) : null;
+        set.hidden = String(given) !== set.getAttribute("data-depends-answer");
+      });
+    }
+    form.addEventListener("change", syncDepends);
+    syncDepends();
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var answers = {};
+      var firstBad = null;
+      qs.questions.forEach(function (q) {
+        var set = form.querySelector('[data-question="' + q.code + '"]');
+        if (set.hidden) return;
+        var a = answerOf(form, q);
+        var empty = a === null || (Array.isArray(a) && !a.length);
+        var input = set.querySelector("input");
+        if (q.required && empty) {
+          setError(input, "Answer this question.");
+          if (!firstBad) firstBad = input;
+        } else {
+          setError(input, null);
+        }
+        if (!empty) answers[q.code] = a;
+      });
+      if (firstBad) { firstBad.focus(); return; }
+      act("classify_request", { answers: answers }, "Classified.").catch(function () {});
+    });
+  }
+
+  /* --- challenge and override --------------------------------------------- */
+
+  function renderChallenge() {
+    var r = ctx.request;
+    var parts = [];
+    if (r.classification_challenge) {
+      parts.push('<dl class="cns-dl cns-dl--stacked"><div><dt>Challenge by ' + escapeHtml(r.challenged_by || "") + " on " +
+        escapeHtml(Consilium.util.formatDate(r.challenged_on, true)) + "</dt><dd>" + prose(r.classification_challenge) +
+        "</dd></div></dl>");
+    }
+    if (ctx.actions.challenge) {
+      parts.push('<form class="cns-fieldset" id="challenge-form" novalidate><legend>' + escapeHtml(ctx.action_labels.challenge) +
+        '</legend><div class="cns-field"><label class="cns-label" for="c-text">Why the outcome is wrong<span class="cns-required" aria-hidden="true">*</span></label>' +
+        '<textarea class="cns-textarea" id="c-text" name="statement" rows="3"></textarea>' +
+        '<span class="cns-help">The policy office sees this and may override the outcome.</span></div>' +
+        '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-secondary">Record the challenge</button></div></form>');
+    }
+    if (ctx.actions.override && ctx.questions) {
+      parts.push('<form class="cns-fieldset" id="override-form" novalidate><legend>' + escapeHtml(ctx.action_labels.override) + "</legend>" +
+        '<div class="cns-form-grid"><div class="cns-field"><label class="cns-label" for="o-outcome">Outcome</label>' +
+        '<select class="cns-select" id="o-outcome" name="outcome">' + ctx.questions.outcomes.map(function (o) {
+          return '<option value="' + escapeAttr(o) + '">' + escapeHtml(o) + "</option>"; }).join("") + "</select></div></div>" +
+        '<div class="cns-field"><label class="cns-label" for="o-why">Justification<span class="cns-required" aria-hidden="true">*</span></label>' +
+        '<textarea class="cns-textarea" id="o-why" name="justification" rows="3"></textarea>' +
+        '<span class="cns-help">The original outcome, rule and trace are kept; this is recorded beside them in your name.</span></div>' +
+        '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-danger">Override</button></div></form>');
+    }
+    document.getElementById("challenge-body").innerHTML = parts.join("") ||
+      '<p class="cns-text-muted">' + (ctx.explanation ? "No challenge has been made." : "Nothing to challenge until the request is classified.") + "</p>";
+    var c = document.getElementById("challenge-form");
+    if (c) c.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var statement = required(c, "statement", "Say why the outcome is wrong.");
+      if (statement === null) return;
+      act("challenge_request", { statement: statement }, "Challenge recorded.").catch(function () {});
+    });
+    var o = document.getElementById("override-form");
+    if (o) o.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var why = required(o, "justification", "An override carries its justification.");
+      if (why === null) return;
+      act("override_request", { outcome: o.querySelector("#o-outcome").value, justification: why }, "Outcome overridden.")
+        .catch(function () {});
+    });
+  }
+
+  /* --- the document ------------------------------------------------------- */
+
+  function renderFulfilment() {
+    var r = ctx.request;
+    var body = document.getElementById("fulfil-body");
+    if (r.created_document) {
+      body.innerHTML = '<div class="cns-alert cns-status-success"><i class="bi bi-check-circle" aria-hidden="true"></i><div>' +
+        "Created as " + docLink(r.created_document, (ctx.created_document_name || r.created_document) + " (" + r.created_document + ")") +
+        ". Its approval route follows this request's classification.</div></div>";
+      return;
+    }
+    if (r.subject_document) {
+      body.innerHTML = '<p class="cns-text-secondary">This request concerns ' + docLink(r.subject_document, ctx.subject_document_name) +
+        ". The change is made on that document: its owner reopens it for change, and its approval route follows this classification.</p>";
+      return;
+    }
+    if (!ctx.actions.create_document) {
+      body.innerHTML = '<p class="cns-text-muted">' + (ctx.explanation
+        ? "The policy office creates the document from a classified request."
+        : "The document is created once the request is classified.") + "</p>";
+      return;
+    }
+    body.innerHTML = '<form id="create-form" novalidate>' +
+      '<p class="cns-help" style="margin-bottom: var(--cns-space-3);">The new record starts in drafting, linked to this request.</p>' +
+      '<div class="cns-form-grid">' +
+      '<div class="cns-field"><label class="cns-label" for="d-name">Document name<span class="cns-required" aria-hidden="true">*</span></label>' +
+      '<input class="cns-input" id="d-name" name="document_name" type="text" value="' + escapeAttr(r.proposed_document_name || "") + '"></div>' +
+      '<div class="cns-field"><label class="cns-label" for="d-type">Document type<span class="cns-required" aria-hidden="true">*</span></label>' +
+      '<select class="cns-select" id="d-type" name="document_type"><option value="">Choose a type</option></select></div>' +
+      '<div class="cns-field"><label class="cns-label" for="d-group">Owning operating group<span class="cns-required" aria-hidden="true">*</span></label>' +
+      '<select class="cns-select" id="d-group" name="owning_operating_group"><option value="">Choose a group</option></select></div>' +
+      '<div class="cns-field"><label class="cns-label" for="d-risk">Primary risk category<span class="cns-required" aria-hidden="true">*</span></label>' +
+      '<select class="cns-select" id="d-risk" name="primary_risk_category"><option value="">Choose a category</option></select></div>' +
+      '<div class="cns-field"><label class="cns-label" for="d-owner">Owner<span class="cns-required" aria-hidden="true">*</span></label>' +
+      '<input class="cns-input" id="d-owner" name="document_owner" type="text" value="' + escapeAttr(r.requester || "") + '"></div>' +
+      '<div class="cns-field"><label class="cns-label" for="d-approver">Approver<span class="cns-required" aria-hidden="true">*</span></label>' +
+      '<input class="cns-input" id="d-approver" name="document_approver" type="text" value="' + escapeAttr(r.requester || "") + '"></div>' +
+      '<div class="cns-field"><label class="cns-label" for="d-handling">Handling</label>' +
+      '<select class="cns-select" id="d-handling" name="handling_classification">' + HANDLING.map(function (h) {
+        return '<option value="' + escapeAttr(h) + '"' + (h === "Internal" ? " selected" : "") + ">" + escapeHtml(h) + "</option>"; }).join("") +
+      "</select></div></div>" +
+      '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">Create the document</button></div></form>';
+    var form = document.getElementById("create-form");
+    fillSelect(form.querySelector("#d-type"), "Governing Document Type", "document_type_name", r.proposed_document_type);
+    fillSelect(form.querySelector("#d-group"), "Organization Unit", "org_unit_name");
+    fillSelect(form.querySelector("#d-risk"), "Risk Category", "risk_category_name", r.primary_risk_category);
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var args = {};
+      var names = [["document_name", "Name the document."], ["document_type", "Choose the type."],
+                   ["owning_operating_group", "Choose the operating group."], ["primary_risk_category", "Choose the category."],
+                   ["document_owner", "Name the owner."], ["document_approver", "Name the approver."]];
+      for (var i = 0; i < names.length; i++) {
+        var v = required(form, names[i][0], names[i][1]);
+        if (v === null) return;
+        args[names[i][0]] = v;
+      }
+      args.handling_classification = form.querySelector("#d-handling").value;
+      act("create_from_request", args, "Document created.").catch(function () {});
+    });
+  }
+
+  Consilium.api.call(METHOD + "request_context", { request: REQUEST })
+    .then(render)
+    .catch(function (error) {
+      document.getElementById("request-summary").innerHTML = stateCard("The request could not be read", error.message);
+    });
+})();
+</script>
+{% endblock %}

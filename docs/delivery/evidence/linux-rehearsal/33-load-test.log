@@ -1,0 +1,32 @@
+Load rehearsal against migrated.example.internal at http://127.0.0.1:8001
+  client and hardware: {'system': 'Linux 6.10.14-linuxkit', 'machine': 'x86_64', 'cpu_count': 8, 'python': '3.11.13', 'memory_gb': 7.7}
+  20 signed-in users; 16 requests in the mix; 30s per level; no think time
+  note: one waitress process, 8 threads, as consilium-web.service runs it; x86_64 Python under Rosetta emulation; PostgreSQL 16 and Redis 7 in separate native arm64 containers on the same laptop
+
+  threads requests   req/s   p50 ms   p95 ms   p99 ms   max ms errors denied
+        1      299    9.92    109.2    225.2    262.6    309.0      0     55
+        5      323   10.65    544.9    815.4   1173.9   1336.4      0     20
+       10      357   11.66    882.4   1555.7   2122.7   2348.9      0     32
+       25      401   12.48   1981.6   2722.0   3078.7   3428.6      0     28
+
+  Refused by the permission layer (HTTP 403; the persona's role may not see it): page /policy x49, api list Governing Document x46, api list Escalation Matter x38, page /forum x1, api list Governance Forum x1
+
+  Per request at 25 threads (p50 / p95 ms):
+    api get_logged_user                        1410.7 / 1820.7   n=25
+    api list Escalation Matter                 1452.8 / 1929.6   n=25
+    api list Governance Forum                  1454.0 / 1926.3   n=25
+    api list Governing Document                1554.4 / 2023.1   n=24
+    api list ToDo                              1435.5 / 2055.1   n=25
+    page /                                     2049.9 / 2748.6   n=25
+    page /attestation-campaigns                2178.8 / 2340.8   n=25
+    page /escalation                           2158.8 / 2623.3   n=25
+    page /escalations                          2055.8 / 2277.3   n=26
+    page /formation-requests                   2080.2 / 2517.2   n=24
+    page /forum                                2431.7 / 3151.8   n=25
+    page /forums                               1985.8 / 2744.7   n=25
+    page /policies                             2039.9 / 2642.4   n=25
+    page /policy                               2528.4 / 3144.7   n=25
+    page /reports                              2095.4 / 2732.2   n=26
+    page /tasks                                2122.4 / 2652.9   n=26
+
+  full result written to /opt/consilium/logs/load-test.json

@@ -1,0 +1,179 @@
+{
+  "name": "Assistant Settings",
+  "module": "Consilium Core",
+  "description": "The portal's help assistant and the governance analysis features. Both always work from built-in, deterministic answers with no external service. An administrator may additionally connect an AI endpoint, which is called from the server only, grounded in those answers, and bypassed on any error.",
+  "issingle": 1,
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "general_section",
+      "fieldtype": "Section Break",
+      "label": "Help assistant"
+    },
+    {
+      "fieldname": "rate_limit_per_hour",
+      "fieldtype": "Int",
+      "label": "Questions Per Person Per Hour",
+      "default": "30",
+      "reqd": 1,
+      "description": "Each person may ask this many questions in any sixty minutes. Protects a paid endpoint and the server alike."
+    },
+    {
+      "fieldname": "ai_section",
+      "fieldtype": "Section Break",
+      "label": "AI-assisted answers (optional)"
+    },
+    {
+      "fieldname": "ai_enabled",
+      "fieldtype": "Check",
+      "label": "Use an AI Endpoint",
+      "default": "0",
+      "description": "Off by default. When off, or when the endpoint fails or times out, the assistant answers from the built-in guides alone."
+    },
+    {
+      "fieldname": "provider",
+      "fieldtype": "Select",
+      "label": "Request Format",
+      "options": "Anthropic Messages API\nOpenAI-compatible (internal gateway)",
+      "default": "Anthropic Messages API",
+      "reqd": 1,
+      "description": "The wire format the endpoint speaks. An internal gateway that fronts a model usually speaks the second."
+    },
+    {
+      "fieldname": "endpoint_url",
+      "fieldtype": "Data",
+      "label": "Endpoint Base URL",
+      "description": "The service's base address, for example https://gateway.internal.example/ . The request path for the chosen format is added to it. Must be reachable from the server, not from people's browsers."
+    },
+    {
+      "fieldname": "model",
+      "fieldtype": "Data",
+      "label": "Model",
+      "default": "claude-sonnet-5",
+      "description": "The model identifier the endpoint expects."
+    },
+    {
+      "fieldname": "api_key",
+      "fieldtype": "Password",
+      "label": "API Key",
+      "description": "Stored encrypted. Leave blank for a gateway that authenticates the server another way."
+    },
+    {
+      "fieldname": "ai_col",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "timeout_seconds",
+      "fieldtype": "Int",
+      "label": "Timeout (seconds)",
+      "default": "15",
+      "reqd": 1,
+      "description": "After this, the built-in answer is shown instead. Between 1 and 120."
+    },
+    {
+      "fieldname": "max_tokens",
+      "fieldtype": "Int",
+      "label": "Maximum Answer Length (tokens)",
+      "default": "800",
+      "reqd": 1,
+      "description": "Between 64 and 4096. Answers are meant to be short."
+    },
+    {
+      "fieldname": "data_sharing",
+      "fieldtype": "Select",
+      "label": "What Leaves the Platform",
+      "options": "Guidance only\nInclude visible record summary",
+      "default": "Guidance only",
+      "reqd": 1,
+      "description": "Guidance only: the question, the matching guide sections, the kind of page and the person's role names. No record contents. Include visible record summary: also a few fields of the record on screen that the person may read, never for a sensitive, confidential or restricted record. Every request is recorded as an AI Service Request. For the analysis features: Guidance only sends counts, taxonomy names and opaque record tokens, never a title or any text of a record; Include visible record summary also sends the titles and short summaries of records the person may read, up to the classification limit below."
+    },
+    {
+      "fieldname": "features_section",
+      "fieldtype": "Section Break",
+      "label": "AI in the governance analysis features (optional)",
+      "description": "Policy-change impact, governance gaps, regulatory updates, emerging risks and the governance risk assessment always show their rule-based results. With this on, a person may also ask the endpoint above for narrative commentary and suggestions, which are labelled as machine-generated and never written into a record unless a person accepts them."
+    },
+    {
+      "fieldname": "features_enabled",
+      "fieldtype": "Check",
+      "label": "Use the AI Endpoint for Analysis Features",
+      "default": "0",
+      "description": "Off by default. Uses the endpoint, model and key above. Independent of the help assistant's switch."
+    },
+    {
+      "fieldname": "ai_policy_impact",
+      "fieldtype": "Check",
+      "label": "Policy-Change Impact Assessment",
+      "default": "1"
+    },
+    {
+      "fieldname": "ai_governance_gaps",
+      "fieldtype": "Check",
+      "label": "Governance Gap Commentary",
+      "default": "1"
+    },
+    {
+      "fieldname": "ai_regulatory_updates",
+      "fieldtype": "Check",
+      "label": "Regulatory Update Suggestions",
+      "default": "1"
+    },
+    {
+      "fieldname": "ai_emerging_risks",
+      "fieldtype": "Check",
+      "label": "Emerging-Risk Narrative",
+      "default": "1"
+    },
+    {
+      "fieldname": "ai_risk_assessment",
+      "fieldtype": "Check",
+      "label": "Governance Risk Rationale",
+      "default": "1"
+    },
+    {
+      "fieldname": "features_col",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "classification_ceiling",
+      "fieldtype": "Select",
+      "label": "Highest Classification That May Leave",
+      "options": "Public\nInternal\nConfidential",
+      "default": "Internal",
+      "reqd": 1,
+      "description": "A record classified above this is never included in what is sent, and an analysis whose subject is above it is not sent at all. Restricted records and sensitive escalations never leave, whatever this says."
+    },
+    {
+      "fieldname": "feature_max_tokens",
+      "fieldtype": "Int",
+      "label": "Maximum Analysis Length (tokens)",
+      "default": "2000",
+      "reqd": 1,
+      "description": "For the analysis features only; kept between 256 and 8192. Models that reason before answering spend part of this on reasoning."
+    },
+    {
+      "fieldname": "risk_score_weights",
+      "fieldtype": "Code",
+      "options": "JSON",
+      "label": "Governance Risk Score Weights",
+      "description": "Optional JSON overriding the default points per factor for the governance risk assessment, for example {\"forum\": {\"review_overdue\": {\"weight\": 20}}}. Leave empty for the defaults, which the governance gaps page lists with every score."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "provenance": "01-requirements-baseline.md O-6/O-7 (AI integration); help assistant"
+}

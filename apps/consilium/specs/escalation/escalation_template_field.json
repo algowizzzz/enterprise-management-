@@ -33,7 +33,7 @@
       "options": "Always\nHigh\nHigh Or Medium",
       "default": "Always",
       "in_list_view": 1,
-      "description": "E-5: the required-field set varies by type and by severity."
+      "description": "The fields required vary with the escalation type and severity."
     },
     {
       "fieldname": "display_order",

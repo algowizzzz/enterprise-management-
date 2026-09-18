@@ -1,7 +1,7 @@
 {
   "name": "Escalation Review",
   "module": "Escalation",
-  "description": "One second-line challenge round on a matter (E-9). Effective challenge is a control, not a courtesy.",
+  "description": "One second-line challenge round on a matter. Effective challenge is a control, not a courtesy.",
   "istable": 1,
   "permissions": [],
   "fields": [

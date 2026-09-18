@@ -118,14 +118,35 @@ def check_wkhtmltopdf() -> Check:
 	return Check("wkhtmltopdf", True, exe)
 
 
-def run_all(common_config: dict) -> list[Check]:
-	checks = [
-		check_postgres(
-			common_config.get("db_host", "127.0.0.1"),
-			int(common_config.get("db_port", 5432)),
+def run_all(common_config: dict, site_config: dict | None = None) -> list[Check]:
+	"""Run every check.
+
+	The database check signs in as the superuser named in the bench config when
+	one is configured there -- a development bench, where `new-site` needs it.
+	An installation made by the deployment kit deliberately keeps no superuser
+	password on disk, so there it signs in with the site's own role instead,
+	which is also the more honest test: it is the login the application uses.
+	"""
+	host = common_config.get("db_host", "127.0.0.1")
+	port = int(common_config.get("db_port", 5432))
+	if not common_config.get("root_password") and site_config and site_config.get("db_name"):
+		postgres = check_postgres(
+			host,
+			port,
+			site_config.get("db_user") or site_config["db_name"],
+			site_config.get("db_password", ""),
+			dbname=site_config["db_name"],
+		)
+		postgres.detail += " (as the site's own role)"
+	else:
+		postgres = check_postgres(
+			host,
+			port,
 			common_config.get("root_login", "postgres"),
 			common_config.get("root_password", ""),
-		),
+		)
+	checks = [
+		postgres,
 		check_redis(common_config.get("redis_cache", DEFAULT_REDIS_CACHE), "redis_cache"),
 		check_redis(common_config.get("redis_queue", DEFAULT_REDIS_QUEUE), "redis_queue"),
 		check_node(),

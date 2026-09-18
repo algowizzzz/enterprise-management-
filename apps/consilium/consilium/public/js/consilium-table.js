@@ -87,6 +87,11 @@
       return util.escapeHtml(value);
     },
 
+    /** A person, shown by name once names are in (see Consilium.person). */
+    person: function (value) {
+      return NS.person ? NS.person(value) : util.escapeHtml(value);
+    },
+
     date: function (value) {
       return util.escapeHtml(util.formatDate(value, false));
     },

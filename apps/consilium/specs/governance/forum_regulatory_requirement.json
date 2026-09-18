@@ -1,7 +1,7 @@
 {
   "name": "Forum Regulatory Requirement",
   "module": "Governance",
-  "description": "The regulatory detail G-4 requires once a forum is marked regulatory-required. The citation is drawn from Core's shared Regulatory Requirement library so that a regulatory change fans out in one hop.",
+  "description": "The regulatory detail required once a forum is marked regulatory-required. The citation is drawn from the shared Regulatory Requirement library so that a regulatory change reaches every forum that cites it.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",

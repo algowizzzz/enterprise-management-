@@ -1,7 +1,7 @@
 {
   "name": "Attestation Task Item",
   "module": "Consilium Core",
-  "description": "Line-by-line confirmation where an attestation is over a list. [Inferred \u2014.]",
+  "description": "Line-by-line confirmation where an attestation is over a list.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",

@@ -1,7 +1,7 @@
 {
   "name": "Document Applicability",
   "module": "Policy",
-  "description": "Where a document applies (P-21). Notification of affected parties is derived from these rows; there is no hand-maintained recipient list anywhere in the module.",
+  "description": "Where a document applies. Notification of affected parties is derived from these rows; there is no hand-maintained recipient list anywhere in the module.",
   "istable": 1,
   "fields": [
     {

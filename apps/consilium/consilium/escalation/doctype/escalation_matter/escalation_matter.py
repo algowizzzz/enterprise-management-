@@ -14,7 +14,7 @@ from frappe.model.document import Document
 from frappe.utils import getdate, now
 
 from consilium.consilium_core import state_flags
-from consilium.escalation import resolution, routing, sensitivity, templates
+from consilium.escalation import assignment, resolution, routing, sensitivity, templates
 from consilium.escalation.doctype.escalation_impacted_entity.escalation_impacted_entity import (
     ENTITY_DOCTYPES,
 )
@@ -37,6 +37,8 @@ class EscalationMatter(Document):
 
     def on_update(self):
         resolution.sync_clock(self)
+        # A matter entering a role or group queue tells the queue (E-5, E-8).
+        assignment.on_update(self)
         if self.has_value_changed("sensitive"):
             sensitivity.propagate(self.name, int(self.sensitive or 0))
         if self.material_entity_impact and self.has_value_changed("material_entity_impact"):

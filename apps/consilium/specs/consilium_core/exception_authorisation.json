@@ -1,7 +1,7 @@
 {
   "name": "Exception Authorisation",
   "module": "Consilium Core",
-  "description": "The documented authorisation without which an approval step may not be bypassed. [Inferred \u2014.]",
+  "description": "The documented authorisation without which an approval step may not be bypassed.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",
@@ -29,7 +29,7 @@
       "label": "Exception Type",
       "reqd": 1,
       "default": "Approval Bypass",
-      "options": "Approval Bypass\nSequence Change\nThreshold Waiver\nOther"
+      "options": "Approval Bypass\nSequence Change\nThreshold Waiver\nGate Bypass\nOther"
     },
     {
       "fieldname": "justification",

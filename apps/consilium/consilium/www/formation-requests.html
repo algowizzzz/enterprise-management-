@@ -1,0 +1,342 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Formation queue.
+  The governance office's list of formation requests, on the shared table and
+  over the REST API. The default view is what is waiting on the office; the
+  stage filter reads the records' semantic flags, so it keeps working when a
+  state is renamed. Below it, the forums whose compliance standing is awaiting
+  a review, because an approved request's forum lands there next.
+-#}
+
+{% block page_actions %}
+{%- if can_request %}
+<a class="cns-btn cns-btn-secondary" href="/create-forum">
+  <i class="bi bi-plus-lg" aria-hidden="true"></i> Raise a request
+</a>
+{%- endif %}
+<a class="cns-btn cns-btn-secondary" href="/forums">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Forum inventory
+</a>
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not can_read %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
+    <p class="cns-state-title">Formation requests are not open to you</p>
+    <p class="cns-state-message">The queue is kept by the governance office. If you raised a
+      request, open it from the link you were given, or ask the office where it stands.</p>
+    <a class="cns-btn cns-btn-secondary" href="/forums">Back to the inventory</a>
+  </div>
+</div>
+{%- else %}
+
+{%- if not is_office %}
+<div class="cns-alert cns-status-info" style="margin-bottom: var(--cns-space-4);">
+  <i class="bi bi-info-circle" aria-hidden="true"></i>
+  <div>You can follow these requests. Evaluating and deciding them is the governance
+    office's work, so the actions are not offered to you.</div>
+</div>
+{%- endif %}
+
+<section class="cns-card" aria-labelledby="filter-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="filter-heading">Narrow the list</h2>
+      <p class="cns-card-subtitle">Filters apply on the server and combine with whatever you
+        type in the table's search box.</p>
+    </div>
+    <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" id="filter-clear">
+      <i class="bi bi-x-circle" aria-hidden="true"></i> Clear filters
+    </button>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-form-grid">
+      <div class="cns-field">
+        <label class="cns-label" for="f-stage">Whose move it is</label>
+        <select class="cns-select" id="f-stage" aria-describedby="f-stage-help">
+          <option value="office">Waiting on the governance office</option>
+          <option value="originator">With the originator (drafts and questions)</option>
+          <option value="returned">Returned with questions</option>
+          <option value="decided">Decided or closed</option>
+          <option value="all">Every request</option>
+        </select>
+        <span class="cns-help" id="f-stage-help">Read from each request's flags, not its label.</span>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-state">State</label>
+        <select class="cns-select" id="f-state" data-filter-field="workflow_state">
+          <option value="">Any state</option>
+          {%- for option in state_options %}
+          <option value="{{ option }}">{{ option }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-kind">Kind of request</label>
+        <select class="cns-select" id="f-kind" data-filter-field="request_type">
+          <option value="">Any kind</option>
+          {%- for option in request_types %}
+          <option value="{{ option }}">{{ option }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-type">Forum type</label>
+        <select class="cns-select" id="f-type" data-filter-field="forum_type">
+          <option value="">Any type</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="request-table"></div>
+
+{%- if can_read_forums %}
+<section class="cns-card" aria-labelledby="review-heading" style="margin-top: var(--cns-space-6);">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="review-heading">Forums awaiting a compliance review</h2>
+      <p class="cns-card-subtitle">A forum an approved request creates starts here. Its standing
+        moves only when a compliance review is recorded against it.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    {%- if not can_review_forums %}
+    <p class="cns-text-muted cns-text-sm">Compliance decisions are recorded by the compliance
+      reviewers. You can open each forum's review page to see its history.</p>
+    {%- endif %}
+    <div id="review-table"></div>
+  </div>
+</section>
+{%- endif %}
+
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if can_read %}
+<script>
+(function () {
+  "use strict";
+
+  var f = Consilium.Table.formatters;
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+
+  /* Display only: the colour a state is shown in. Nothing is decided by it. */
+  var STATE_TONES = {
+    Draft: "neutral",
+    Submitted: "info",
+    "Under Evaluation": "primary",
+    "Returned To Originator": "warning",
+    "Pending Approval": "info",
+    "Exception Review": "danger",
+    Approved: "success",
+    Rejected: "danger",
+    Withdrawn: "neutral"
+  };
+
+  var FORUM_TONES = {
+    Draft: "neutral", Pending: "warning", Compliant: "success",
+    "Non-Compliant": "danger", "Not Applicable": "info", Disbanded: "neutral"
+  };
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+  function plain(value) { return value ? escapeHtml(value) : dash(); }
+
+  function named(doctype) {
+    return function (value) {
+      return value ? escapeHtml(Consilium.reference.label(doctype, value)) : dash();
+    };
+  }
+
+  function flag(yes, no, tone) {
+    return function (value) {
+      return value
+        ? '<span class="cns-pill cns-status-' + tone + '">' + escapeHtml(yes) + "</span>"
+        : '<span class="cns-text-muted">' + escapeHtml(no) + "</span>";
+    };
+  }
+
+  /** A needed-by date that says plainly when it has passed. */
+  function neededBy(value, row) {
+    if (!value) return dash();
+    var text = escapeHtml(Consilium.util.formatDate(value, false));
+    var due = new Date(String(value) + "T00:00:00");
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (due < today && row.is_open) {
+      return text + ' <span class="cns-pill cns-status-danger">Passed</span>';
+    }
+    return text;
+  }
+
+  function forumLink(value) {
+    if (!value) return dash();
+    return '<a href="/forum?name=' + escapeAttr(encodeURIComponent(value)) + '">' +
+      escapeHtml(Consilium.reference.label("Governance Forum", value)) + "</a>";
+  }
+
+  /* Whose move it is, as flag filters. `is_open` and `is_editable` are the
+     semantic flags the state map maintains; no state label is named here. */
+  var STAGE_FILTERS = {
+    office: [["is_open", "=", 1], ["is_editable", "=", 0]],
+    originator: [["is_active", "=", 1], ["is_editable", "=", 1]],
+    returned: [["is_editable", "=", 1], ["requires_statement", "=", 1]],
+    decided: [["is_open", "=", 0]],
+    all: []
+  };
+
+  var table = null;
+  var stage = document.getElementById("f-stage");
+  var selects = Array.prototype.slice.call(document.querySelectorAll("[data-filter-field]"));
+
+  function currentFilters() {
+    var filters = (STAGE_FILTERS[stage.value] || []).slice();
+    selects.forEach(function (select) {
+      if (select.value) filters.push([select.getAttribute("data-filter-field"), "=", select.value]);
+    });
+    return filters;
+  }
+
+  function buildTable() {
+    table = Consilium.Table.create({
+      target: "#request-table",
+      doctype: "Committee Formation Request",
+      title: "Formation requests",
+      description: "Open a request to see it in full and to act on it.",
+      caption: "Committee formation requests",
+      storageKey: "formation-queue",
+      rowKey: "name",
+      searchPlaceholder: "Search by reference, proposed name or requester",
+      searchFields: ["name", "forum_name", "requester"],
+      defaultSort: { field: "modified", order: "desc" },
+      pageSize: 25,
+      striped: true,
+      filters: currentFilters(),
+      fields: ["name", "forum_name", "request_type", "workflow_state", "requester", "forum_type",
+               "primary_risk_category", "proposed_timeline", "completeness_confirmed",
+               "created_forum", "subject_forum", "is_open", "modified"],
+      onRowClick: function (row) {
+        window.location.href = "/formation-request?name=" + encodeURIComponent(row.name);
+      },
+      emptyTitle: "No requests match",
+      emptyMessage: "Nothing is waiting here. Choose “Every request” to see the whole record.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono", width: "10rem",
+          formatter: f.link("/formation-request?name=") },
+        { field: "forum_name", label: "Proposed forum", sortable: true, width: "16rem",
+          formatter: f.truncate(60) },
+        { field: "request_type", label: "Kind", sortable: true, formatter: plain },
+        { field: "workflow_state", label: "State", sortable: true, formatter: f.status(STATE_TONES) },
+        { field: "requester", label: "Raised by", sortable: true, formatter: Consilium.Table.formatters.person },
+        { field: "forum_type", label: "Forum type", sortable: true, formatter: named("Governance Forum Type") },
+        { field: "primary_risk_category", label: "Primary risk", sortable: true,
+          formatter: named("Risk Category") },
+        { field: "proposed_timeline", label: "Needed by", sortable: true, formatter: neededBy },
+        { field: "completeness_confirmed", label: "Completeness", sortable: true,
+          formatter: flag("Confirmed", "Not yet", "success") },
+        { field: "subject_forum", label: "Concerns", sortable: true, formatter: forumLink },
+        { field: "created_forum", label: "Forum created", sortable: true, formatter: forumLink },
+        { field: "modified", label: "Updated", sortable: true, formatter: f.datetime }
+      ]
+    });
+  }
+
+  function applyFilters() {
+    if (!table) return;
+    table.setFilters(currentFilters());
+    Consilium.announce("Filters applied.");
+  }
+
+  /* The stage can be named in the address, so another page can link straight
+     to "returned with questions" or "decided". */
+  try {
+    var asked = new URLSearchParams(window.location.search).get("stage");
+    if (asked && STAGE_FILTERS[asked]) stage.value = asked;
+  } catch (e) { /* the default stage already applies */ }
+
+  selects.concat([stage]).forEach(function (node) {
+    node.addEventListener("change", applyFilters);
+  });
+
+  document.getElementById("filter-clear").addEventListener("click", function () {
+    selects.forEach(function (select) { select.value = ""; });
+    stage.value = "office";
+    applyFilters();
+  });
+
+  Consilium.api
+    .list("Governance Forum Type", {
+      fields: ["name", "forum_type_name"],
+      filters: [["is_active", "=", 1]],
+      order_by: "forum_type_name asc",
+      limit_page_length: 200
+    })
+    .then(function (rows) {
+      var select = document.getElementById("f-type");
+      rows.forEach(function (row) {
+        var option = document.createElement("option");
+        option.value = row.name;
+        option.textContent = row.forum_type_name || row.name;
+        select.appendChild(option);
+      });
+    })
+    .catch(function () {
+      var select = document.getElementById("f-type");
+      select.disabled = true;
+      select.setAttribute("title", "This filter is unavailable because the reference list could not be read.");
+    });
+
+  function buildReviewTable() {
+    if (!document.getElementById("review-table")) return;
+    Consilium.Table.create({
+      target: "#review-table",
+      doctype: "Governance Forum",
+      caption: "Forums awaiting a compliance review",
+      storageKey: "formation-queue-reviews",
+      rowKey: "name",
+      pageSize: 10,
+      compact: true,
+      filters: [["requires_review", "=", 1], ["is_active", "=", 1]],
+      searchFields: ["forum_name", "name"],
+      searchPlaceholder: "Search forums awaiting review",
+      defaultSort: { field: "modified", order: "desc" },
+      fields: ["name", "forum_name", "forum_type", "compliance_status", "formation_request",
+               "compliance_contact", "modified"],
+      onRowClick: function (row) {
+        window.location.href = "/forum-review?forum=" + encodeURIComponent(row.name);
+      },
+      emptyTitle: "No forum is awaiting review",
+      emptyMessage: "Every active forum has a compliance decision that stands.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono",
+          formatter: f.link("/forum-review?forum=") },
+        { field: "forum_name", label: "Forum", sortable: true, formatter: f.truncate(60) },
+        { field: "forum_type", label: "Type", sortable: true, formatter: named("Governance Forum Type") },
+        { field: "compliance_status", label: "Standing", sortable: true, formatter: f.status(FORUM_TONES) },
+        { field: "formation_request", label: "Formation request", sortable: true,
+          formatter: function (value) {
+            if (!value) return dash();
+            return '<a href="/formation-request?name=' + escapeAttr(encodeURIComponent(value)) + '">' +
+              escapeHtml(value) + "</a>";
+          } },
+        { field: "compliance_contact", label: "Compliance contact", sortable: true, formatter: Consilium.Table.formatters.person },
+        { field: "modified", label: "Updated", sortable: true, formatter: f.datetime }
+      ]
+    });
+  }
+
+  Consilium.reference
+    .load(["Governance Forum Type", "Risk Category", "Governance Forum"])
+    .then(function () { buildTable(); buildReviewTable(); })
+    .catch(function () { buildTable(); buildReviewTable(); });
+})();
+</script>
+{%- endif %}
+{% endblock %}

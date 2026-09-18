@@ -198,13 +198,59 @@ Install the **patched-qt** Windows build and put it on `PATH`. Frappe v15's
 exists but only for Print Format *Builder* formats, and needs the GTK3 runtime
 on Windows.)
 
+On Linux the kit installs it from the bundle. If the message shows an empty
+path (`found: ""`), the binary is there but the `which` command is not: the PDF
+library finds the engine by running `which`. Install `which` (minimal RHEL).
+
+### PDF fails with `network error: ConnectionRefusedError`
+The engine fetches the page's stylesheets from the URL the framework builds.
+Without `restart_systemd_on_update` in `common_site_config.json` the framework
+appends `webserver_port` to `host_name` — `https://<host>:8000/…`, which
+nothing serves (every link in a notification has the same fault). The kit sets
+it; re-run `install.sh`. If the stylesheet URL is right but the connection is
+refused or untrusted, the host cannot reach its own public name, or does not
+trust the certificate's CA.
+
+---
+
+## Deployment kit (Linux server)
+
+### `[section] key: …` from any kit command
+The configuration file is checked in full before anything runs; every problem
+is listed with its section and key. `python3 install/kit.py check-config
+--config <file>` runs the same check alone.
+
+### `the bundle's wheels are for Python 3.11, and no python3.11 … was found`
+A bundle is built for one Python version. Install that version's package from
+the distribution (`python3.11`, plus `python3.11-venv` on Ubuntu), or set
+`CONSILIUM_PYTHON` to its path. Building a bundle for another version is
+`make_bundle.py --target-python`, subject to the pins in DEPLOYMENT.md §5.
+
+### `Could not find a version that satisfies the requirement maxminddb-geolite2`
+An old installer let pip read the framework's own dependency list. The kit
+installs the requirement set first and the framework with `--no-deps`; use
+`install.sh` from the same bundle.
+
+### `the database <name> already exists … Refusing to create the site`
+The installation has no site directory but its database exists — creating the
+site would drop it. Restore the site directory, use `restore.sh`, or, if the
+database is disposable, re-run with `--recreate-database`.
+
+### `file: command not found` during a restore
+The framework's restore runs `file` on the backup first. Install `file`. (On
+Windows, winbench answers that probe itself.)
+
+### A readiness report says `NOT READY`
+Each failed check carries its evidence in the report's second half. Fix, re-run
+`verify.sh`, and keep the report that says `READY`.
+
 ---
 
 ## When you are stuck
 
 1. `winbench doctor` — services and active patches
 2. `python scripts/smoke_test.py --site <site>` — where the request path breaks
-3. `python -m pytest tests/ -q` — is the compat layer itself intact (20 tests)
+3. `python -m pytest tests/ -q` — is the compat layer itself intact (`tests/test_compat.py`)
 4. `python scripts/audit_windows_compat.py <path-to-app>` — POSIX-only code in an
    app you are porting
 

@@ -146,6 +146,37 @@ def create_version(
     return version
 
 
+def protected_fields(subject_doctype: str) -> set[str]:
+    """Fields a revert never writes back: the lifecycle, and what the platform maintains.
+
+    A revert restores *content*. Writing the snapshot wholesale also wrote the
+    record's lifecycle phase, its workflow state and the semantic flags derived
+    from them — so reverting a published document to a draft-era version put it
+    back in draft, without the transition, its author or its reason. States move
+    only through their own transitions. Excluded here:
+
+    * every state field the ``Workflow State Flag`` map configures for the
+      DocType (``lifecycle_phase``, ``status``, ``term_status``…), read from the
+      configuration rather than listed, so a module's new state field is covered;
+    * the framework's ``workflow_state`` and the active workflow's state field;
+    * the semantic flags themselves;
+    * every read-only field: those are maintained by the platform (version
+      pointers, stamps, derived values), never typed by a person.
+    """
+    from consilium.consilium_core import state_flags
+
+    meta = frappe.get_meta(subject_doctype)
+    protected = {"workflow_state", *state_flags.FLAG_FIELDS}
+    protected.update(state_flags.get_flag_map(subject_doctype).keys())
+    workflow_field = frappe.db.get_value(
+        "Workflow", {"document_type": subject_doctype, "is_active": 1}, "workflow_state_field"
+    )
+    if workflow_field:
+        protected.add(workflow_field)
+    protected.update(df.fieldname for df in meta.fields if df.read_only)
+    return protected
+
+
 def revert_to_version(
     subject_doctype: str,
     subject_name: str,
@@ -185,9 +216,10 @@ def revert_to_version(
 
     subject = frappe.get_doc(subject_doctype, subject_name)
     if apply_to_subject:
+        protected = protected_fields(subject_doctype)
         meta = frappe.get_meta(subject_doctype)
         for fieldname, value in snapshot.items():
-            if fieldname in ("name", "parent", "parenttype", "parentfield"):
+            if fieldname in ("name", "parent", "parenttype", "parentfield") or fieldname in protected:
                 continue
             if meta.has_field(fieldname):
                 subject.set(fieldname, value)

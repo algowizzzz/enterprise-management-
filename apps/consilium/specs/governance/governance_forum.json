@@ -8,6 +8,7 @@
   "allow_import": 1,
   "track_changes": 1,
   "title_field": "forum_name",
+  "show_title_field_in_link": 1,
   "search_fields": "forum_name,forum_type,compliance_status",
   "sort_field": "modified",
   "sort_order": "DESC",
@@ -18,7 +19,7 @@
       "label": "Forum Name",
       "reqd": 1,
       "in_list_view": 1,
-      "description": "The forum's business name. Its identifier is the record key, a naming series \u2014 the forum_id of the data model."
+      "description": "The forum's name as it is referred to in minutes. Its reference number is assigned automatically."
     },
     {
       "fieldname": "forum_type",
@@ -154,7 +155,7 @@
       "label": "Regulatory Requirements",
       "options": "Forum Regulatory Requirement",
       "depends_on": "regulatory_required",
-      "description": "Required when the forum is regulatory-required (G-4)."
+      "description": "Required when the forum is regulatory-required."
     },
     {
       "fieldname": "risk_references",
@@ -203,6 +204,7 @@
       "fieldname": "quorum_value",
       "fieldtype": "Float",
       "label": "Quorum Value",
+      "mandatory_depends_on": "eval:doc.quorum_rule_type && doc.quorum_rule_type !== 'All Voting Members'",
       "precision": "2",
       "description": "The count, or the percentage of entitled voters. Required for the count and percentage rules."
     },
@@ -277,7 +279,7 @@
       "fieldname": "next_review_on",
       "fieldtype": "Date",
       "label": "Next Review On",
-      "description": "The annual review due date (G-10)."
+      "description": "The annual review due date."
     },
     {
       "fieldname": "last_attested_on",
@@ -298,7 +300,7 @@
       "fieldtype": "Check",
       "label": "Confidential",
       "default": "0",
-      "description": "Drives restricted handling. [Inferred \u2014",
+      "description": "Drives restricted handling.",
       "provenance": "02-data-model.md \u00a76.2.]"
     }
   ],

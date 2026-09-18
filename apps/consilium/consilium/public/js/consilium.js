@@ -56,6 +56,21 @@
      Tiny helpers
      ---------------------------------------------------------------------- */
 
+  /* Wall-clock time in the site's zone -> the instant it names. Uses only the
+     browser's own zone data (Intl), so nothing is fetched. */
+  function fromSiteZone(m) {
+    var zone = (document.querySelector('meta[name="cns-time-zone"]') || {}).content || "UTC";
+    var asUtc = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+    try {
+      var probe = new Date(asUtc);
+      var there = new Date(probe.toLocaleString("en-US", { timeZone: zone }));
+      var utc = new Date(probe.toLocaleString("en-US", { timeZone: "UTC" }));
+      return new Date(asUtc - (there.getTime() - utc.getTime()));
+    } catch (e) {
+      return new Date(asUtc); // an unknown zone name: treat as UTC, still labelled
+    }
+  }
+
   var util = (NS.util = {
     /** Escape a value for safe insertion as HTML text. */
     escapeHtml: function (value) {
@@ -117,12 +132,27 @@
     /** ISO / framework datetime string -> locale date string. */
     formatDate: function (value, withTime) {
       if (!value) return "";
-      var d = value instanceof Date ? value : new Date(String(value).replace(" ", "T"));
-      if (isNaN(d.getTime())) return String(value);
+      /* A bare date is a calendar day, not an instant. `new Date("2026-09-17")`
+         reads it as midnight UTC, which west of UTC is the previous evening —
+         so every due date, review date and seat date showed a day early. Build
+         it from its parts in local time instead. */
+      var text = String(value);
+      var ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+      /* A timestamp from the server carries no zone: it is in the site's time
+         zone. Read as the browser's own zone it was hours out and unlabelled,
+         so it is converted from the site's zone and shown with the reader's. */
+      var naive = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(text);
+      var zoned = /(?:Z|[+-]\d{2}:?\d{2})$/.test(text);
+      var d = value instanceof Date ? value
+        : ymd ? new Date(+ymd[1], +ymd[2] - 1, +ymd[3])
+        : naive && !zoned ? fromSiteZone(naive)
+        : new Date(text.replace(" ", "T"));
+      if (isNaN(d.getTime())) return text;
       var opts = { year: "numeric", month: "short", day: "2-digit" };
       if (withTime) {
         opts.hour = "2-digit";
         opts.minute = "2-digit";
+        opts.timeZoneName = "short";
       }
       return d.toLocaleString(undefined, opts);
     }

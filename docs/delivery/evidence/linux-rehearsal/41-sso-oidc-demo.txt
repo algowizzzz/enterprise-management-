@@ -1,0 +1,46 @@
+{
+ "existing_account": {
+  "login_page_has_provider_button": true,
+  "authorize_url": "http://127.0.0.1:9100/authorize",
+  "landed_on": "/me",
+  "status": 200,
+  "signed_in_as": "sso.person@example.internal"
+ },
+ "no_account": {
+  "login_page_has_provider_button": true,
+  "authorize_url": "http://127.0.0.1:9100/authorize",
+  "status": 403,
+  "refusal": "Signup is Disabled window.frappe = {}; frappe.ready_events = []; frappe.ready = function(fn) { frappe.ready_events.push(fn); } window.dev_server = 0; window.soc",
+  "signed_in_as": null
+ }
+}
+demo_exit=0
+after: account sso.person@example.internal created 2026-09-18 08:33:39.763205 enabled 1
+social logins: [('frappe', '46b9f0a0848f0436589bf917d976a8667b2cc72'), ('corporate_sso', 'mock-77ec14fd14d8133a076fac83')]
+users after: 3 ; stranger exists: False
+Social Login Key: {'enable_social_login': 1, 'sign_ups': 'Deny', 'redirect_url': '/api/method/frappe.integrations.oauth2_logins.custom/corporate_sso'}
+
+--- provider log
+[mock-oidc] TEST PROVIDER listening on http://127.0.0.1:9100 for client consilium; signs in sso.person@example.internal, stranger@example.internal without a password
+[mock-oidc] "GET /.well-known/openid-configuration HTTP/1.1" 200 -
+[mock-oidc] authorize: code issued for sso.person@example.internal -> https://governance.example.internal/api/method/frappe.integrations.oauth2_logins.custom/corporate_sso
+[mock-oidc] "GET /authorize?redirect_uri=https%3A%2F%2Fgovernance.example.internal%2Fapi%2Fmethod%2Ffrappe.integrations.oauth2_logins.custom%2Fcorporate_sso&state=ef21cc4a1afe31df0ad159d7b938942d&response_type=code&scope=openid+email+profile&client_id=consilium&login_hint=sso.person%40example.internal HTTP/1.1" 302 -
+[mock-oidc] token: access token issued for sso.person@example.internal
+[mock-oidc] "POST /token HTTP/1.1" 200 -
+[mock-oidc] userinfo: sso.person@example.internal
+[mock-oidc] "GET /userinfo HTTP/1.1" 200 -
+[mock-oidc] authorize: code issued for stranger@example.internal -> https://governance.example.internal/api/method/frappe.integrations.oauth2_logins.custom/corporate_sso
+[mock-oidc] "GET /authorize?redirect_uri=https%3A%2F%2Fgovernance.example.internal%2Fapi%2Fmethod%2Ffrappe.integrations.oauth2_logins.custom%2Fcorporate_sso&state=e8519d14f0d5bf9c3d6a226bf94734bd&response_type=code&scope=openid+email+profile&client_id=consilium&login_hint=stranger%40example.internal HTTP/1.1" 302 -
+[mock-oidc] token: access token issued for stranger@example.internal
+[mock-oidc] "POST /token HTTP/1.1" 200 -
+[mock-oidc] userinfo: stranger@example.internal
+[mock-oidc] "GET /userinfo HTTP/1.1" 200 -
+[sso]
+mode = none
+allow_signup = no
+install=0
+  sso (oidc)         off (provider 'corporate_sso' disabled)
+  sso (ldap)         off
+      17/17 checks passed. The installation is healthy.
+==> Installed
+  Installed at: /opt/consilium  (release abecd3f1fd63)

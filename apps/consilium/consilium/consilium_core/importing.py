@@ -114,8 +114,12 @@ def validate_batch(batch, rows: list[dict] | None = None) -> dict:
             frappe.throw(_("Batch {0} has no source file and no rows were supplied.").format(batch.name))
         rows = read_rows_from_file(batch.source_file)
 
-    for existing in frappe.get_all("Import Row", filters={"import_batch": batch.name}, pluck="name"):
-        frappe.delete_doc("Import Row", existing, ignore_permissions=True, force=True)
+    # Staged rows from an earlier validation are cleared without the framework's
+    # Deleted Document archive: on PostgreSQL a row's JSON ``messages`` comes back
+    # as a list, the archive's serialiser refuses a list ("Messages cannot be a
+    # list"), and so validating a batch a second time failed on any row that had
+    # a message. See ``_clear_staged_rows``, which this shares.
+    _clear_staged_rows(batch)
 
     counts = {"Valid": 0, "Warning": 0, "Error": 0}
     try:
@@ -321,3 +325,304 @@ def export_records(
             "status": "Generated",
         }
     ).insert(ignore_permissions=True), content
+
+
+# ---------------------------------------------------------------------------
+# Batch review from the portal (CS-11).
+#
+# Validation and commit had no caller outside the tests, so a file could only
+# be brought in from a Python shell. These endpoints are the review screen's
+# way in. They add no second pipeline: every one of them hands the batch to
+# `validate_batch` or `commit_batch` above. What they add is the gate —
+# who may look, who may act — and the two decisions a reviewer makes that the
+# pipeline had no word for: leaving a row out, and discarding a whole batch.
+#
+# Permission is the Import Batch DocType's own: read to look, write to act,
+# create to upload. Committing also needs the right to create the records the
+# batch would write, because the pipeline writes them on the reviewer's
+# behalf and must not become a way round the target's permissions.
+# ---------------------------------------------------------------------------
+
+#: The status a discarded batch is written with. A value handed to the flag map,
+#: never compared: what it *means* (no longer editable, no longer open) is read
+#: from `is_editable` and `is_open` like every other state.
+DISCARDED_BATCH_STATUS = "Rejected"
+
+#: The status a row the reviewer leaves out is written with. Its flags clear
+#: `is_committable`, which is the only thing `commit_batch` reads.
+EXCLUDED_ROW_STATUS = "Skipped"
+
+#: The largest file the portal accepts. A governed import is a register or a
+#: feed extract, not a data warehouse; anything bigger belongs in several batches.
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
+#: Row payloads returned to the screen. The review page pages them in memory.
+MAX_REVIEW_ROWS = 5000
+
+
+def _batch_for(batch: str, ptype: str):
+    doc = frappe.get_doc("Import Batch", batch)
+    doc.check_permission(ptype)
+    return doc
+
+
+def _preparers(target_doctype: str) -> list:
+    """Module hooks that finish a row's payload before Core commits it.
+
+    A flat file cannot express a child table, so a module that needs one (the
+    escalation module's impacted entities) registers a preparer under the
+    ``consilium_import_preparers`` hook, keyed by the target DocType. Core
+    stays ignorant of the modules; the module stays out of Core's commit.
+    """
+    hooks = frappe.get_hooks("consilium_import_preparers") or {}
+    paths = hooks.get(target_doctype) or []
+    if isinstance(paths, str):
+        paths = [paths]
+    return [frappe.get_attr(path) for path in paths]
+
+
+def review_context(batch) -> dict:
+    """The review screen's payload: the batch, its profile, and every staged row."""
+    if isinstance(batch, str):
+        batch = frappe.get_doc("Import Batch", batch)
+    profile = frappe.get_doc("Import Profile", batch.import_profile)
+    rows = []
+    for row in frappe.get_all(
+        "Import Row",
+        filters={"import_batch": batch.name},
+        fields=["name", "row_number", "status", "is_committable", "messages", "raw_payload",
+                "mapped_payload", "external_key", "target_name"],
+        order_by="row_number asc",
+        limit_page_length=MAX_REVIEW_ROWS,
+    ):
+        row["messages"] = _loads(row["messages"], [])
+        row["raw_payload"] = _loads(row["raw_payload"])
+        row["mapped_payload"] = _loads(row["mapped_payload"])
+        rows.append(row)
+
+    editable = bool(batch.is_editable)
+    committable = sum(1 for row in rows if row["is_committable"])
+    may_write = bool(frappe.has_permission("Import Batch", "write", doc=batch))
+    may_create_target = bool(frappe.has_permission(profile.target_doctype, "create"))
+    return {
+        "batch": {
+            field: (str(batch.get(field)) if batch.get(field) is not None else None)
+            for field in ("name", "batch_reference", "source_system", "import_profile", "target_doctype",
+                          "source_file", "source_file_sha256", "received_on", "imported_by", "status",
+                          "committed_on")
+        }
+        | {
+            "is_editable": int(batch.is_editable or 0),
+            "is_open": int(batch.is_open or 0),
+            "row_count": batch.row_count or 0,
+            "valid_count": batch.valid_count or 0,
+            "warning_count": batch.warning_count or 0,
+            "error_count": batch.error_count or 0,
+            "validation_report": _loads(batch.validation_report),
+        },
+        "profile": {
+            "name": profile.name,
+            "profile_title": profile.profile_title,
+            "target_doctype": profile.target_doctype,
+            "key_strategy": profile.key_strategy,
+            "on_duplicate_key": profile.on_duplicate_key,
+        },
+        "rows": rows,
+        "committable": committable,
+        "actions": {
+            "commit": editable and may_write and may_create_target and committable > 0,
+            "discard": editable and may_write,
+            "revalidate": editable and may_write and bool(batch.source_file),
+            "exclude_row": editable and may_write,
+        },
+        "may_create_target": may_create_target,
+    }
+
+
+def _require_editable(batch) -> None:
+    if not batch.is_editable:
+        frappe.throw(
+            _("Batch {0} is closed — committed or discarded — and cannot be changed.").format(batch.name),
+            title=_("Batch Closed"),
+        )
+
+
+@frappe.whitelist(methods=["GET"])
+def get_batch_review(batch: str) -> dict:
+    return review_context(_batch_for(batch, "read"))
+
+
+@frappe.whitelist(methods=["GET"])
+def import_profiles() -> list[dict]:
+    """The active profiles a file can be uploaded against, with the columns each expects."""
+    if not frappe.has_permission("Import Batch", "create"):
+        frappe.throw(_("You may not upload an import file."), frappe.PermissionError)
+    out = []
+    for name in frappe.get_all("Import Profile", filters={"is_active": 1}, pluck="name", order_by="profile_title asc"):
+        profile = frappe.get_doc("Import Profile", name)
+        columns = [
+            {"column": m.source_column, "field": m.target_fieldname, "required": int(m.is_required or 0),
+             "transform": m.transform}
+            for m in profile.mappings
+        ]
+        if profile.external_key_column:
+            columns.insert(0, {"column": profile.external_key_column, "field": None, "required": 0,
+                               "transform": "External Key"})
+        out.append({
+            "name": profile.name,
+            "profile_title": profile.profile_title,
+            "source_system": profile.source_system,
+            "target_doctype": profile.target_doctype,
+            "may_create_target": bool(frappe.has_permission(profile.target_doctype, "create")),
+            "columns": columns,
+        })
+    return out
+
+
+@frappe.whitelist(methods=["POST"])
+def upload_batch(import_profile: str, file_name: str, content: str, batch_reference: str | None = None) -> dict:
+    """Stage an uploaded delimited file against a profile, and validate it.
+
+    The file is kept exactly as received, privately attached to the batch with
+    its hash, which is the pipeline's provenance promise. Nothing is written to
+    a target record: that waits for a reviewer's commit.
+    """
+    if not frappe.has_permission("Import Batch", "create"):
+        frappe.throw(_("You may not upload an import file."), frappe.PermissionError)
+    profile = frappe.get_doc("Import Profile", import_profile)
+    if not profile.is_active:
+        frappe.throw(_("Import profile {0} is not active.").format(profile.name), title=_("Profile Inactive"))
+    raw = (content or "").encode("utf-8")
+    if not raw.strip():
+        frappe.throw(_("The file is empty."), title=_("Empty File"))
+    if len(raw) > MAX_UPLOAD_BYTES:
+        frappe.throw(_("The file is larger than {0} MB. Split it into several batches.").format(
+            MAX_UPLOAD_BYTES // (1024 * 1024)), title=_("File Too Large"))
+    file_name = frappe.utils.cstr(file_name or "import.csv").split("/")[-1].split("\\")[-1] or "import.csv"
+    if not file_name.lower().endswith((".csv", ".txt")):
+        frappe.throw(_("Upload a comma-separated file (.csv)."), title=_("Unsupported File"))
+
+    batch = frappe.get_doc(
+        {
+            "doctype": "Import Batch",
+            "batch_reference": (batch_reference or "").strip() or f"{profile.source_system}-{now()[:19]}",
+            "source_system": profile.source_system,
+            "import_profile": profile.name,
+            "target_doctype": profile.target_doctype,
+            "source_file_sha256": sha256_of(raw),
+            "received_on": now(),
+            "imported_by": frappe.session.user,
+            "status": "Uploaded",
+        }
+    ).insert()
+    stored = frappe.get_doc(
+        {
+            "doctype": "File",
+            "file_name": file_name,
+            "is_private": 1,
+            "content": raw,
+            "attached_to_doctype": "Import Batch",
+            "attached_to_name": batch.name,
+        }
+    ).insert(ignore_permissions=True)
+    batch.db_set("source_file", stored.file_url)
+    _validate_keeping_the_batch(batch)
+    return review_context(batch.name)
+
+
+def _validate_keeping_the_batch(batch) -> None:
+    """Validate; on a batch-level rejection keep the batch and its reason.
+
+    `validate_batch` records the rejection and then raises, and a raise rolls
+    the request back — taking the uploaded file and the recorded reason with it,
+    so the reviewer would see an error and no batch. The rejection is the
+    outcome here, not a failure, so it is kept.
+    """
+    try:
+        validate_batch(batch.name)
+    except BatchRejected:
+        pass
+
+
+@frappe.whitelist(methods=["POST"])
+def revalidate_batch(batch: str) -> dict:
+    """Validate the kept file again — after a taxonomy value it named has been added, say."""
+    doc = _batch_for(batch, "write")
+    _require_editable(doc)
+    if not doc.source_file:
+        frappe.throw(_("Batch {0} kept no file, so there is nothing to validate again.").format(doc.name),
+                     title=_("No File"))
+    _clear_staged_rows(doc)
+    _validate_keeping_the_batch(doc)
+    return review_context(doc.name)
+
+
+def _clear_staged_rows(batch) -> None:
+    """Remove a batch's staged rows before it is validated again.
+
+    `validate_batch` deletes them itself, through the framework's delete, which
+    first archives each row as a Deleted Document. On PostgreSQL a JSON column
+    is read back as a list, and the archive's serialiser refuses a list — so any
+    row carrying a message (every refused row does) made validating again fail.
+    The rows are derived data, rebuilt from the kept file and its hash on the
+    very next line, so they are deleted without the archive copy; retention's
+    deletion guard still runs, because this is still the framework's delete.
+    """
+    for name in frappe.get_all("Import Row", filters={"import_batch": batch.name}, pluck="name"):
+        frappe.delete_doc("Import Row", name, ignore_permissions=True, force=True, delete_permanently=True)
+
+
+@frappe.whitelist(methods=["POST"])
+def exclude_row(row: str, reason: str | None = None) -> dict:
+    """Leave one staged row out of the commit. Validating the file again restores it."""
+    doc = frappe.get_doc("Import Row", row)
+    batch = _batch_for(doc.import_batch, "write")
+    # An open batch has written nothing yet, so every one of its rows may still
+    # be left out; the row carries no editable flag of its own to ask.
+    _require_editable(batch)
+    note = (reason or "").strip()
+    doc.status = EXCLUDED_ROW_STATUS
+    doc.messages = json.dumps(
+        _loads(doc.messages, []) + [f"left out by {frappe.session.user}" + (f": {note}" if note else "")]
+    )
+    doc.save(ignore_permissions=True)
+    return review_context(batch.name)
+
+
+@frappe.whitelist(methods=["POST"])
+def commit_reviewed_batch(batch: str) -> dict:
+    """Commit the rows the flags mark committable, through Core's commit."""
+    doc = _batch_for(batch, "write")
+    _require_editable(doc)
+    profile = frappe.get_doc("Import Profile", doc.import_profile)
+    if not frappe.has_permission(profile.target_doctype, "create"):
+        frappe.throw(
+            _("You may not create {0} records, so you may not commit a batch that writes them.").format(
+                _(profile.target_doctype)),
+            frappe.PermissionError,
+        )
+    if not frappe.db.exists("Import Row", {"import_batch": doc.name, "is_committable": 1}):
+        frappe.throw(_("Batch {0} has no row that may be committed.").format(doc.name), title=_("Nothing To Commit"))
+    for prepare in _preparers(profile.target_doctype):
+        prepare(doc)
+    doc.reload()
+    outcome = commit_batch(doc)
+    context = review_context(doc.name)
+    context["outcome"] = {key: len(value) for key, value in outcome.items()}
+    return context
+
+
+@frappe.whitelist(methods=["POST"])
+def discard_batch(batch: str, reason: str) -> dict:
+    """Close a batch without writing anything. The file, rows and reason are kept."""
+    doc = _batch_for(batch, "write")
+    _require_editable(doc)
+    reason = (reason or "").strip()
+    if not reason:
+        frappe.throw(_("Say why the batch is being discarded."), title=_("Reason Required"))
+    report = _loads(doc.validation_report)
+    report["discarded"] = {"by": frappe.session.user, "on": now(), "reason": reason}
+    doc.validation_report = json.dumps(report)
+    doc.status = DISCARDED_BATCH_STATUS
+    doc.save()
+    return review_context(doc.name)

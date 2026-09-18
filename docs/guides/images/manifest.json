@@ -1,0 +1,5646 @@
+{
+ "generated_at": "2026-09-18T14:26:58+00:00",
+ "site": "consilium.localhost",
+ "server": "http://consilium.localhost:8000",
+ "generator": "scripts/capture_screenshots.py",
+ "summary": {
+  "captured": 351,
+  "kept_from_earlier_run": 0,
+  "skipped": 1,
+  "failed": 0
+ },
+ "shots": [
+  {
+   "area": "admin",
+   "name": "admin-taxonomy-admin",
+   "route": "/admin",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "admin/admin-taxonomy-admin.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 106689,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "admin-top",
+   "route": "/admin",
+   "persona": "Administrator",
+   "file": "admin/admin-top.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 105646,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "admin",
+   "route": "/admin",
+   "persona": "Administrator",
+   "file": "admin/admin.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 371232,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "assistant-interaction-list",
+   "route": "/app/assistant-interaction",
+   "persona": "Administrator",
+   "file": "admin/assistant-interaction-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 56695,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "assistant-settings",
+   "route": "/app/assistant-settings",
+   "persona": "Administrator",
+   "file": "admin/assistant-settings.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 260590,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "authority-delegation-list",
+   "route": "/app/authority-delegation",
+   "persona": "Administrator",
+   "file": "admin/authority-delegation-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 75133,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "error-log-list",
+   "route": "/app/error-log",
+   "persona": "Administrator",
+   "file": "admin/error-log-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 47323,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "guide-article-list",
+   "route": "/app/guide-article",
+   "persona": "Administrator",
+   "file": "admin/guide-article-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 81111,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "guide-article",
+   "route": "/app/guide-article",
+   "persona": "Administrator",
+   "file": "admin/guide-article.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 101471,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "impersonate-dialog",
+   "route": "/app/user/committee.secretary@demo.example",
+   "persona": "Administrator",
+   "file": "admin/impersonate-dialog.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 74463,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "import-profile-list",
+   "route": "/app/import-profile",
+   "persona": "Administrator",
+   "file": "admin/import-profile-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 48824,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "imports-batch",
+   "route": "/imports?batch=IMPB-00001",
+   "persona": "Administrator",
+   "file": "admin/imports-batch.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 244108,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "imports-profile-chosen",
+   "route": "/imports",
+   "persona": "Administrator",
+   "file": "admin/imports-profile-chosen.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 110521,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "imports-top",
+   "route": "/imports",
+   "persona": "Administrator",
+   "file": "admin/imports-top.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 111230,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "imports",
+   "route": "/imports",
+   "persona": "Administrator",
+   "file": "admin/imports.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 122760,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "legal-hold-list",
+   "route": "/app/legal-hold",
+   "persona": "records.manager@demo.example",
+   "file": "admin/legal-hold-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 54075,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "notification-channel-list",
+   "route": "/app/notification-channel",
+   "persona": "Administrator",
+   "file": "admin/notification-channel-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 60304,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "notification-dispatch-list",
+   "route": "/app/notification-dispatch",
+   "persona": "Administrator",
+   "file": "admin/notification-dispatch-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 158994,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "notification-template-list",
+   "route": "/app/notification-template",
+   "persona": "Administrator",
+   "file": "admin/notification-template-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 147536,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "notification-template",
+   "route": "/app/notification-template",
+   "persona": "Administrator",
+   "file": "admin/notification-template.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 156741,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "portal-branding",
+   "route": "/app/portal-branding",
+   "persona": "Administrator",
+   "file": "admin/portal-branding.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 180122,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "reference-organization-unit",
+   "route": "/app/organization-unit",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "admin/reference-organization-unit.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 134332,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "reference-risk-category",
+   "route": "/app/risk-category",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "admin/reference-risk-category.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 104122,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "reference-risk-type",
+   "route": "/app/risk-type",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "admin/reference-risk-type.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 118407,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "refusal-log-list",
+   "route": "/app/governance-refusal-log",
+   "persona": "Administrator",
+   "file": "admin/refusal-log-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 63010,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "retention-class-list",
+   "route": "/app/retention-class",
+   "persona": "records.manager@demo.example",
+   "file": "admin/retention-class-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 68153,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "role-permissions-manager",
+   "route": "/app/permission-manager",
+   "persona": "Administrator",
+   "file": "admin/role-permissions-manager.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 93188,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "role-profile-list",
+   "route": "/app/role-profile",
+   "persona": "Administrator",
+   "file": "admin/role-profile-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 43443,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "system-settings",
+   "route": "/app/system-settings",
+   "persona": "Administrator",
+   "file": "admin/system-settings.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 87651,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "user-form",
+   "route": "/app/user/committee.secretary@demo.example",
+   "persona": "Administrator",
+   "file": "admin/user-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 96314,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "user-list",
+   "route": "/app/user",
+   "persona": "Administrator",
+   "file": "admin/user-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 166823,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "user-permission-list",
+   "route": "/app/user-permission",
+   "persona": "Administrator",
+   "file": "admin/user-permission-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 47527,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "user-permission-new",
+   "route": "/app/user-permission/new",
+   "persona": "Administrator",
+   "file": "admin/user-permission-new.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 54236,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "admin",
+   "name": "user-roles",
+   "route": "/app/user/committee.secretary@demo.example",
+   "persona": "Administrator",
+   "file": "admin/user-roles.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 124115,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "annual-review-full",
+   "route": "/forum-review?forum=FRM-2026-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "compliance/annual-review-full.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 273300,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "annual-review",
+   "route": "/forum-review?forum=FRM-2026-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "compliance/annual-review.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 102869,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "compliance-review-list",
+   "route": "/app/forum-compliance-review",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "compliance/compliance-review-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 167026,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "disbandment-plan",
+   "route": "/app/disbandment-plan/FDIS-2026-00001",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "compliance/disbandment-plan.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 138262,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-disband-approver",
+   "route": "/forum-disband?forum=FRM-2026-00013",
+   "persona": "chief.operating.officer@demo.example",
+   "file": "compliance/forum-disband-approver.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 196231,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-disband-done",
+   "route": "/forum-disband?forum=FRM-2026-00012",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "compliance/forum-disband-done.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 174308,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-disband-open",
+   "route": "/forum-disband?forum=FRM-2026-00013",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "compliance/forum-disband-open.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 188645,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-disband",
+   "route": "/forum-disband?forum=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "compliance/forum-disband.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 161963,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-history",
+   "route": "/forum?name=FRM-2026-00006#history",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "compliance/forum-history.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 261523,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-pending-locked",
+   "route": "/forum?name=FRM-2026-00013",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "compliance/forum-pending-locked.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 112361,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-review-disbanded",
+   "route": "/forum-review?forum=FRM-2026-00012",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "compliance/forum-review-disbanded.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 113258,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-review-queue",
+   "route": "/formation-requests",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "compliance/forum-review-queue.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 130754,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-review-top",
+   "route": "/forum-review?forum=FRM-2026-00014",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "compliance/forum-review-top.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 137066,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-review-validation",
+   "route": "/forum-review?forum=FRM-2026-00014",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "compliance/forum-review-validation.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "Non-Compliant without questions or comments is not recorded.",
+   "status": "captured",
+   "bytes": 126798,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "forum-review",
+   "route": "/forum-review?forum=FRM-2026-00014",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "compliance/forum-review.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 221752,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "compliance",
+   "name": "watched-field-set",
+   "route": "/app/watched-field-set/Governance Forum",
+   "persona": "Administrator",
+   "file": "compliance/watched-field-set.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 105801,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "approval-route-form",
+   "route": "/app/approval-route",
+   "persona": "Administrator",
+   "file": "configuring/approval-route-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 111293,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "attestation-campaign-new",
+   "route": "/app/attestation-campaign/new",
+   "persona": "Administrator",
+   "file": "configuring/attestation-campaign-new.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 116632,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "business-calendar-new",
+   "route": "/app/business-calendar/new",
+   "persona": "Administrator",
+   "file": "configuring/business-calendar-new.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 52639,
+   "captured_at": "2026-09-18T14:19:57+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "classification-rule-set-form",
+   "route": "/app/classification-rule-set",
+   "persona": "Administrator",
+   "file": "configuring/classification-rule-set-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 181777,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "escalation-matrix-form",
+   "route": "/app/escalation-matrix",
+   "persona": "Administrator",
+   "file": "configuring/escalation-matrix-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 260760,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "escalation-template-form",
+   "route": "/app/escalation-template",
+   "persona": "Administrator",
+   "file": "configuring/escalation-template-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 97151,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "formation-approval-route-form",
+   "route": "/app/formation-approval-route",
+   "persona": "Administrator",
+   "file": "configuring/formation-approval-route-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 84845,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "guide-article-form",
+   "route": "/app/guide-article",
+   "persona": "Administrator",
+   "file": "configuring/guide-article-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 120256,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "lifecycle-gate-form",
+   "route": "/app/document-lifecycle-gate",
+   "persona": "Administrator",
+   "file": "configuring/lifecycle-gate-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 73730,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "lifecycle-gate-list",
+   "route": "/app/document-lifecycle-gate",
+   "persona": "Administrator",
+   "file": "configuring/lifecycle-gate-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 92521,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "notification-channel-form",
+   "route": "/app/notification-channel",
+   "persona": "Administrator",
+   "file": "configuring/notification-channel-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 58754,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "refusal-log-list",
+   "route": "/app/governance-refusal-log",
+   "persona": "Administrator",
+   "file": "configuring/refusal-log-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 63010,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "sla-definition-form",
+   "route": "/app/sla-definition",
+   "persona": "Administrator",
+   "file": "configuring/sla-definition-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 93686,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "watched-field-set-form",
+   "route": "/app/watched-field-set",
+   "persona": "Administrator",
+   "file": "configuring/watched-field-set-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 106258,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-builder",
+   "route": "/app/workflow-builder/Governing Document Lifecycle",
+   "persona": "Administrator",
+   "file": "configuring/workflow-builder.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 83711,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-form-states",
+   "route": "/app/workflow/Governing Document Lifecycle",
+   "persona": "Administrator",
+   "file": "configuring/workflow-form-states.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 116777,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-form-transitions",
+   "route": "/app/workflow/Governing Document Lifecycle",
+   "persona": "Administrator",
+   "file": "configuring/workflow-form-transitions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 97536,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-form",
+   "route": "/app/workflow/Governing Document Lifecycle",
+   "persona": "Administrator",
+   "file": "configuring/workflow-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 147535,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-list",
+   "route": "/app/workflow",
+   "persona": "Administrator",
+   "file": "configuring/workflow-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 49688,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-state-flag-document",
+   "route": "/app/workflow-state-flag?target_doctype=Governing%20Document",
+   "persona": "Administrator",
+   "file": "configuring/workflow-state-flag-document.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 84824,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-state-flag-form",
+   "route": "/app/workflow-state-flag?target_doctype=Governing%20Document",
+   "persona": "Administrator",
+   "file": "configuring/workflow-state-flag-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 93209,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-state-flag-list",
+   "route": "/app/workflow-state-flag",
+   "persona": "Administrator",
+   "file": "configuring/workflow-state-flag-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 139275,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-state-flag-new",
+   "route": "/app/workflow-state-flag/new",
+   "persona": "Administrator",
+   "file": "configuring/workflow-state-flag-new.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 83203,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-state-list",
+   "route": "/app/workflow-state",
+   "persona": "Administrator",
+   "file": "configuring/workflow-state-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 65028,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "configuring",
+   "name": "workflow-state-new",
+   "route": "/app/workflow-state/new",
+   "persona": "Administrator",
+   "file": "configuring/workflow-state-new.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 34553,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "action-add-plan",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/action-add-plan.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 81024,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "action-close",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/action-close.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 95072,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "action-decide-acceptance",
+   "route": "/escalation?name=ESC-2026-00002",
+   "persona": "chief.risk.officer@demo.example",
+   "file": "escalations/action-decide-acceptance.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 106843,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "action-move-status",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/action-move-status.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 92259,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "action-pathway",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/action-pathway.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 106271,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "action-record-closure",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/action-record-closure.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 298382,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "action-record-review",
+   "route": "/escalation?name=ESC-2026-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "escalations/action-record-review.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 89405,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "action-risk-acceptance",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/action-risk-acceptance.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 97789,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "business-calendar-list",
+   "route": "/app/business-calendar",
+   "persona": "Administrator",
+   "file": "escalations/business-calendar-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 46091,
+   "captured_at": "2026-09-18T14:19:57+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "business-calendar",
+   "route": "/app/business-calendar/HEAD_OFFICE",
+   "persona": "Administrator",
+   "file": "escalations/business-calendar.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 97324,
+   "captured_at": "2026-09-18T14:19:57+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "evidence-pack-button",
+   "route": "/escalation?name=ESC-2026-00001",
+   "persona": "internal.auditor@demo.example",
+   "file": "escalations/evidence-pack-button.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 129252,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matrix",
+   "route": "/app/escalation-matrix/ENTERPRISE-ESC",
+   "persona": "Administrator",
+   "file": "escalations/matrix.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 260760,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-breach-tab-closure",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/matter-breach-tab-closure.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-closure",
+   "status": "captured",
+   "bytes": 139380,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-breach-tab-details",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/matter-breach-tab-details.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-details",
+   "status": "captured",
+   "bytes": 330946,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-breach-tab-history",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/matter-breach-tab-history.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-history",
+   "status": "captured",
+   "bytes": 394151,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-breach-tab-impact",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/matter-breach-tab-impact.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-impact",
+   "status": "captured",
+   "bytes": 297907,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-breach-tab-response",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/matter-breach-tab-response.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-response",
+   "status": "captured",
+   "bytes": 224315,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-breach-tab-reviews",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/matter-breach-tab-reviews.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-reviews",
+   "status": "captured",
+   "bytes": 149226,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-breach",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/matter-breach.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 123386,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-external",
+   "route": "/escalation?name=ESC-2026-00006#closure",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/matter-external.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 172573,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-history",
+   "route": "/escalation?name=ESC-2026-00007#history",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/matter-history.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 394081,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-review-tab-closure",
+   "route": "/escalation?name=ESC-2026-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "escalations/matter-review-tab-closure.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-closure",
+   "status": "captured",
+   "bytes": 130351,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-review-tab-details",
+   "route": "/escalation?name=ESC-2026-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "escalations/matter-review-tab-details.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-details",
+   "status": "captured",
+   "bytes": 327717,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-review-tab-history",
+   "route": "/escalation?name=ESC-2026-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "escalations/matter-review-tab-history.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-history",
+   "status": "captured",
+   "bytes": 183292,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-review-tab-impact",
+   "route": "/escalation?name=ESC-2026-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "escalations/matter-review-tab-impact.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-impact",
+   "status": "captured",
+   "bytes": 272282,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-review-tab-response",
+   "route": "/escalation?name=ESC-2026-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "escalations/matter-review-tab-response.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-response",
+   "status": "captured",
+   "bytes": 215789,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-review-tab-reviews",
+   "route": "/escalation?name=ESC-2026-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "escalations/matter-review-tab-reviews.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-reviews",
+   "status": "captured",
+   "bytes": 173710,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-review",
+   "route": "/escalation?name=ESC-2026-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "escalations/matter-review.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 116584,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-sensitive-holder",
+   "route": "/escalation?name=ESC-2026-00003",
+   "persona": "chief.compliance.officer@demo.example",
+   "file": "escalations/matter-sensitive-holder.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 126296,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-sensitive-named",
+   "route": "/escalation?name=ESC-2026-00003",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/matter-sensitive-named.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "A person named on a sensitive matter sees it without the sensitive-access role.",
+   "status": "captured",
+   "bytes": 126166,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-sensitive-refused",
+   "route": "/escalation?name=ESC-2026-00003",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/matter-sensitive-refused.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 61197,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-systemic",
+   "route": "/escalation?name=ESC-2026-00014",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "escalations/matter-systemic.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 122957,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-tab-closure",
+   "route": "/escalation?name=ESC-2026-00001",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/matter-tab-closure.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-closure",
+   "status": "captured",
+   "bytes": 173042,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-tab-details",
+   "route": "/escalation?name=ESC-2026-00001",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/matter-tab-details.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-details",
+   "status": "captured",
+   "bytes": 328359,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-tab-history",
+   "route": "/escalation?name=ESC-2026-00001",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/matter-tab-history.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-history",
+   "status": "captured",
+   "bytes": 364159,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-tab-impact",
+   "route": "/escalation?name=ESC-2026-00001",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/matter-tab-impact.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-impact",
+   "status": "captured",
+   "bytes": 288468,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-tab-response",
+   "route": "/escalation?name=ESC-2026-00001",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/matter-tab-response.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-response",
+   "status": "captured",
+   "bytes": 231988,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter-tab-reviews",
+   "route": "/escalation?name=ESC-2026-00001",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/matter-tab-reviews.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-reviews",
+   "status": "captured",
+   "bytes": 148155,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "matter",
+   "route": "/escalation?name=ESC-2026-00001",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/matter.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 125667,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "new-matter-desk",
+   "route": "/app/escalation-matter/new",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/new-matter-desk.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 152117,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "periodic-submission-list",
+   "route": "/app/periodic-submission",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/periodic-submission-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 69189,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "raise-proposal",
+   "route": "/raise-escalation",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/raise-proposal.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 92813,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "raise-systemic",
+   "route": "/raise-escalation",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/raise-systemic.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 82785,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "raise-top",
+   "route": "/raise-escalation",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/raise-top.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 123715,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "raise-validation",
+   "route": "/raise-escalation",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/raise-validation.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 124494,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "raise",
+   "route": "/raise-escalation",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/raise.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 236784,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "record-history",
+   "route": "/escalation?name=ESC-2026-00001#history",
+   "persona": "internal.auditor@demo.example",
+   "file": "escalations/record-history.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 169526,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "register-filters",
+   "route": "/escalations?standing=all",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/register-filters.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 358637,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "register-high",
+   "route": "/escalations?severity=High&standing=all",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/register-high.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 115683,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "register-sensitive-holder",
+   "route": "/escalations?standing=all",
+   "persona": "chief.compliance.officer@demo.example",
+   "file": "escalations/register-sensitive-holder.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 130063,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "register-waiting-on-you",
+   "route": "/escalations",
+   "persona": "chief.risk.officer@demo.example",
+   "file": "escalations/register-waiting-on-you.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 145068,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "register",
+   "route": "/escalations",
+   "persona": "head.operational.risk@demo.example",
+   "file": "escalations/register.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 115501,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "sla-clock-list",
+   "route": "/app/sla-clock",
+   "persona": "Administrator",
+   "file": "escalations/sla-clock-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 134693,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "sla-definition",
+   "route": "/app/sla-definition/ESC-HIGH",
+   "persona": "Administrator",
+   "file": "escalations/sla-definition.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 106387,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "take-ownership",
+   "route": "/escalation?name=ESC-2026-00012",
+   "persona": "chief.risk.officer@demo.example",
+   "file": "escalations/take-ownership.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 109964,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "template",
+   "route": "/app/escalation-template/ESC-INCIDENT",
+   "persona": "Administrator",
+   "file": "escalations/template.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 97001,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "escalations",
+   "name": "time-in-status",
+   "route": "/escalation?name=ESC-2026-00007",
+   "persona": "head.retail.banking@demo.example",
+   "file": "escalations/time-in-status.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 110992,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "create-forum-answer",
+   "route": "/create-forum?request=CFR-2026-00003",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/create-forum-answer.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "A returned request, with the governance office's questions.",
+   "status": "captured",
+   "bytes": 112427,
+   "captured_at": "2026-09-18T14:24:51+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "create-forum-draft-refused",
+   "route": "/create-forum",
+   "persona": "committee.secretary@demo.example",
+   "file": "formation/create-forum-draft-refused.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "Save draft on an empty form: nothing is saved.",
+   "status": "captured",
+   "bytes": 106195,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "create-forum-draft",
+   "route": "/create-forum?request=CFR-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/create-forum-draft.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 298963,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "create-forum-no-access",
+   "route": "/create-forum",
+   "persona": "board.chair@demo.example",
+   "file": "formation/create-forum-no-access.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 59838,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "create-forum-top",
+   "route": "/create-forum",
+   "persona": "committee.secretary@demo.example",
+   "file": "formation/create-forum-top.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 138887,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "create-forum",
+   "route": "/create-forum",
+   "persona": "committee.secretary@demo.example",
+   "file": "formation/create-forum.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 269478,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "formation-approval-route",
+   "route": "/app/formation-approval-route/Standard Formation Approval",
+   "persona": "Administrator",
+   "file": "formation/formation-approval-route.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 84445,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "queue-all",
+   "route": "/formation-requests?stage=all",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/queue-all.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 330275,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "queue",
+   "route": "/formation-requests",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/queue.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 139709,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-approve-blocked",
+   "route": "/formation-request?name=CFR-2026-00002",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-approve-blocked.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "Approve stays disabled while anything stands in the way.",
+   "status": "captured",
+   "bytes": 119825,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-approved-tab-approval",
+   "route": "/formation-request?name=CFR-2026-00001",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-approved-tab-approval.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-approval",
+   "status": "captured",
+   "bytes": 271677,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-approved-tab-evaluation",
+   "route": "/formation-request?name=CFR-2026-00001",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-approved-tab-evaluation.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-evaluation",
+   "status": "captured",
+   "bytes": 254994,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-approved-tab-questions",
+   "route": "/formation-request?name=CFR-2026-00001",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-approved-tab-questions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-questions",
+   "status": "captured",
+   "bytes": 121928,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-approved-tab-request",
+   "route": "/formation-request?name=CFR-2026-00001",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-approved-tab-request.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-request",
+   "status": "captured",
+   "bytes": 228266,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-approved",
+   "route": "/formation-request?name=CFR-2026-00001",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-approved.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 131260,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-approver",
+   "route": "/formation-request?name=CFR-2026-00002#approval",
+   "persona": "chief.risk.officer@demo.example",
+   "file": "formation/request-approver.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "The Head of Risk Governance, who is also assigned an open step.",
+   "status": "captured",
+   "bytes": 316584,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-evaluation-form",
+   "route": "/formation-request?name=CFR-2026-00004",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-evaluation-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 68548,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-evaluation-tab-approval",
+   "route": "/formation-request?name=CFR-2026-00004",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-evaluation-tab-approval.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-approval",
+   "status": "captured",
+   "bytes": 227240,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-evaluation-tab-evaluation",
+   "route": "/formation-request?name=CFR-2026-00004",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-evaluation-tab-evaluation.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-evaluation",
+   "status": "captured",
+   "bytes": 247849,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-evaluation-tab-questions",
+   "route": "/formation-request?name=CFR-2026-00004",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-evaluation-tab-questions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-questions",
+   "status": "captured",
+   "bytes": 152464,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-evaluation-tab-request",
+   "route": "/formation-request?name=CFR-2026-00004",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-evaluation-tab-request.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-request",
+   "status": "captured",
+   "bytes": 251127,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-evaluation",
+   "route": "/formation-request?name=CFR-2026-00004",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-evaluation.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 124107,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-exception-panel",
+   "route": "/formation-request?name=CFR-2026-00002",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-exception-panel.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 113761,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-originator",
+   "route": "/formation-request?name=CFR-2026-00003",
+   "persona": "head.technology.risk@demo.example",
+   "file": "formation/request-originator.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "The originator, who holds no raising role, follows the request and may withdraw it.",
+   "status": "captured",
+   "bytes": 109792,
+   "captured_at": "2026-09-18T14:24:51+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-pending-tab-approval",
+   "route": "/formation-request?name=CFR-2026-00002",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-pending-tab-approval.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-approval",
+   "status": "captured",
+   "bytes": 314602,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-pending-tab-evaluation",
+   "route": "/formation-request?name=CFR-2026-00002",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-pending-tab-evaluation.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-evaluation",
+   "status": "captured",
+   "bytes": 293586,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-pending-tab-questions",
+   "route": "/formation-request?name=CFR-2026-00002",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-pending-tab-questions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-questions",
+   "status": "captured",
+   "bytes": 157671,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-pending-tab-request",
+   "route": "/formation-request?name=CFR-2026-00002",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-pending-tab-request.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-request",
+   "status": "captured",
+   "bytes": 264652,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-pending",
+   "route": "/formation-request?name=CFR-2026-00002",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-pending.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 128957,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-reject-panel",
+   "route": "/formation-request?name=CFR-2026-00002",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-reject-panel.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 108483,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-rejected",
+   "route": "/formation-request?name=CFR-2026-00005",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-rejected.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 123660,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-return-panel",
+   "route": "/formation-request?name=CFR-2026-00004",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-return-panel.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 96994,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-returned-tab-approval",
+   "route": "/formation-request?name=CFR-2026-00003",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-returned-tab-approval.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-approval",
+   "status": "captured",
+   "bytes": 207171,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-returned-tab-evaluation",
+   "route": "/formation-request?name=CFR-2026-00003",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-returned-tab-evaluation.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-evaluation",
+   "status": "captured",
+   "bytes": 208982,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-returned-tab-questions",
+   "route": "/formation-request?name=CFR-2026-00003",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-returned-tab-questions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-questions",
+   "status": "captured",
+   "bytes": 174066,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-returned-tab-request",
+   "route": "/formation-request?name=CFR-2026-00003",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-returned-tab-request.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-request",
+   "status": "captured",
+   "bytes": 224536,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-returned",
+   "route": "/formation-request?name=CFR-2026-00003",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-returned.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 110885,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "formation",
+   "name": "request-submitted",
+   "route": null,
+   "persona": "risk.governance.lead@demo.example",
+   "file": "formation/request-submitted.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "skipped",
+   "reason": "the record this shot shows does not exist on this site",
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-decisions",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-decisions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 293468,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-disbanded-header",
+   "route": "/forum?name=FRM-2026-00012",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-disbanded-header.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 94142,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-edit-desk",
+   "route": "/app/governance-forum/FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-edit-desk.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 82417,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-evidence-pack",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "internal.auditor@demo.example",
+   "file": "forums/forum-evidence-pack.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 102704,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-linkages-exec",
+   "route": "/forum?name=FRM-2026-00005",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-linkages-exec.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 241590,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-membership-as-at",
+   "route": "/forum?name=FRM-2026-00012",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-membership-as-at.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 105681,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-membership-today-disbanded",
+   "route": "/forum?name=FRM-2026-00012",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-membership-today-disbanded.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 97984,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-noncompliant",
+   "route": "/forum?name=FRM-2026-00007",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "forums/forum-noncompliant.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 112449,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-record-history",
+   "route": "/forum?name=FRM-2026-00006#history",
+   "persona": "internal.auditor@demo.example",
+   "file": "forums/forum-record-history.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 131438,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-tab-decisions",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-tab-decisions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-decisions",
+   "status": "captured",
+   "bytes": 293469,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-tab-details",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-tab-details.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-details",
+   "status": "captured",
+   "bytes": 258259,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-tab-docs",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-tab-docs.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-docs",
+   "status": "captured",
+   "bytes": 261927,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-tab-escalations",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-tab-escalations.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-escalations",
+   "status": "captured",
+   "bytes": 229482,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-tab-history",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-tab-history.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-history",
+   "status": "captured",
+   "bytes": 273569,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-tab-links",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-tab-links.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-links",
+   "status": "captured",
+   "bytes": 201843,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-tab-members",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum-tab-members.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-members",
+   "status": "captured",
+   "bytes": 211374,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum-viewer",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "board.chair@demo.example",
+   "file": "forums/forum-viewer.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 98560,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "forum",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/forum.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 105018,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "inventory-filters",
+   "route": "/forums",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/inventory-filters.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 440097,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "inventory-noncompliant",
+   "route": "/forums?compliance_status=Non-Compliant",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/inventory-noncompliant.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 114743,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "inventory-overdue",
+   "route": "/forums?standing=overdue",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/inventory-overdue.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 114360,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "inventory-search",
+   "route": "/forums",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/inventory-search.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 112201,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "inventory-table",
+   "route": "/forums",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/inventory-table.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 188895,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "forums",
+   "name": "inventory",
+   "route": "/forums",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "forums/inventory.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 114242,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "dark-theme-forum",
+   "route": "/forum?name=FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/dark-theme-forum.png",
+   "theme": "dark",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 105477,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "dark-theme-home",
+   "route": "/",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/dark-theme-home.png",
+   "theme": "dark",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 485350,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "help-assistant-answer",
+   "route": "/forums",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/help-assistant-answer.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 166955,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "help-assistant-open",
+   "route": "/forums",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/help-assistant-open.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 145141,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "help-assistant-why",
+   "route": "/formation-request?name=CFR-2026-00002",
+   "persona": "committee.secretary@demo.example",
+   "file": "getting-started/help-assistant-why.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 166743,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "home-top",
+   "route": "/",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/home-top.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 439418,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "home-viewer",
+   "route": "/",
+   "persona": "board.chair@demo.example",
+   "file": "getting-started/home-viewer.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "A Governance Viewer's home page.",
+   "status": "captured",
+   "bytes": 425257,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "home",
+   "route": "/",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/home.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 612440,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "no-access",
+   "route": "/formation-requests",
+   "persona": "board.chair@demo.example",
+   "file": "getting-started/no-access.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 140257,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "phone-forums",
+   "route": "/forums",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/phone-forums.png",
+   "theme": "light",
+   "viewport": {
+    "width": 390,
+    "height": 844
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 58260,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "phone-home",
+   "route": "/",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/phone-home.png",
+   "theme": "light",
+   "viewport": {
+    "width": 390,
+    "height": 844
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 245720,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "signed-out",
+   "route": "/forums",
+   "persona": "guest",
+   "file": "getting-started/signed-out.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 52302,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "text-size-larger",
+   "route": "/forums",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/text-size-larger.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 118820,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "top-bar",
+   "route": "/",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/top-bar.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 45048,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "user-menu",
+   "route": "/",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/user-menu.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 412831,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "workspace-administration",
+   "route": "/app/consilium-administration",
+   "persona": "Administrator",
+   "file": "getting-started/workspace-administration.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 109513,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "workspace-escalation",
+   "route": "/app/escalation",
+   "persona": "head.operational.risk@demo.example",
+   "file": "getting-started/workspace-escalation.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 55393,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "workspace-form",
+   "route": "/app/governance-forum/FRM-2026-00006",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/workspace-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 82417,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "workspace-governance",
+   "route": "/app/governance",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/workspace-governance.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 69022,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "workspace-home",
+   "route": "/app",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/workspace-home.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 69022,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "workspace-list",
+   "route": "/app/governance-forum",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "getting-started/workspace-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 170515,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "getting-started",
+   "name": "workspace-policy",
+   "route": "/app/policy",
+   "persona": "policy.office.lead@demo.example",
+   "file": "getting-started/workspace-policy.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 75904,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "charter-card",
+   "route": "/forum?name=FRM-2026-00006#docs",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "meetings/charter-card.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 261881,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "charter-challenge-form",
+   "route": "/forum?name=FRM-2026-00006#docs",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "meetings/charter-challenge-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 76847,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "charter-challenge-formation",
+   "route": "/formation-request?name=CFR-2026-00002",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "meetings/charter-challenge-formation.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 94065,
+   "captured_at": "2026-09-18T14:26:43+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "charter-change",
+   "route": "/forum?name=FRM-2026-00006#docs",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "meetings/charter-change.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 68791,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "charter-form",
+   "route": "/app/committee-charter",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/charter-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 150864,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "charter-list",
+   "route": "/app/committee-charter",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/charter-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 147457,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "forum-decisions-put",
+   "route": "/forum?name=FRM-2026-00006#decisions",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/forum-decisions-put.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 108724,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "forum-decisions",
+   "route": "/forum?name=FRM-2026-00005#decisions",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/forum-decisions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 287072,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "forum-documents",
+   "route": "/forum?name=FRM-2026-00005#docs",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/forum-documents.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 123917,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "meeting-form",
+   "route": "/app/forum-meeting/FMTG-2026-00001",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/meeting-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 159330,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "meeting-list",
+   "route": "/app/forum-meeting",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/meeting-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 186146,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "meeting-record-minutes",
+   "route": "/app/forum-meeting/FMTG-2026-00001",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/meeting-record-minutes.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 75543,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "membership-form",
+   "route": "/app/forum-membership",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/membership-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 164946,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "membership-list",
+   "route": "/app/forum-membership",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/membership-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 161602,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "motion-form",
+   "route": "/app/forum-motion",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/motion-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 166222,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "motion-list",
+   "route": "/app/forum-motion",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/motion-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 165400,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "motion-open",
+   "route": "/forum-motion?name=FMOT-2026-00024",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/motion-open.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 212216,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "motion-put",
+   "route": "/forum-motion?forum=FRM-2026-00006",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/motion-put.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 72989,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "motion-vote",
+   "route": "/forum-motion?name=FMOT-2026-00024",
+   "persona": "chief.risk.officer@demo.example",
+   "file": "meetings/motion-vote.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 74166,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "meetings",
+   "name": "vote-list",
+   "route": "/app/forum-vote",
+   "persona": "committee.secretary@demo.example",
+   "file": "meetings/vote-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 158931,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "approval-bypass-form",
+   "route": "/policy?name=GDOC-00005#approval",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/approval-bypass-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 66497,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "approval-decide-step",
+   "route": "/policy?name=GDOC-00005#approval",
+   "persona": "chief.risk.officer@demo.example",
+   "file": "policies/approval-decide-step.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "The approver assigned the open step sees the decision form.",
+   "status": "captured",
+   "bytes": 271708,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "approval-raise-steps",
+   "route": "/policy?name=GDOC-00011#approval",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/approval-raise-steps.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 264122,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "approval-route-list",
+   "route": "/app/approval-route",
+   "persona": "Administrator",
+   "file": "policies/approval-route-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 59326,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "correct-metadata",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/correct-metadata.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 88472,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-approved-tab-approval",
+   "route": "/policy?name=GDOC-00006",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-approved-tab-approval.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-approval",
+   "status": "captured",
+   "bytes": 225293,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-approved-tab-details",
+   "route": "/policy?name=GDOC-00006",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-approved-tab-details.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-details",
+   "status": "captured",
+   "bytes": 272136,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-approved-tab-lifecycle",
+   "route": "/policy?name=GDOC-00006",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-approved-tab-lifecycle.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-lifecycle",
+   "status": "captured",
+   "bytes": 200438,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-approved-tab-lineage",
+   "route": "/policy?name=GDOC-00006",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-approved-tab-lineage.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-lineage",
+   "status": "captured",
+   "bytes": 157744,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-approved-tab-monitoring",
+   "route": "/policy?name=GDOC-00006",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-approved-tab-monitoring.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-monitoring",
+   "status": "captured",
+   "bytes": 195445,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-approved-tab-reviews",
+   "route": "/policy?name=GDOC-00006",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-approved-tab-reviews.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-reviews",
+   "status": "captured",
+   "bytes": 214239,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-approved-tab-versions",
+   "route": "/policy?name=GDOC-00006",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-approved-tab-versions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-versions",
+   "status": "captured",
+   "bytes": 181680,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-approved",
+   "route": "/policy?name=GDOC-00006",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-approved.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 109089,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-confidential",
+   "route": "/policy?name=GDOC-00010",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-confidential.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 111492,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-draft-owner",
+   "route": "/policy?name=GDOC-00004",
+   "persona": "chief.information.officer@demo.example",
+   "file": "policies/document-draft-owner.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 110500,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-published-tab-approval",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-published-tab-approval.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-approval",
+   "status": "captured",
+   "bytes": 212285,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-published-tab-details",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-published-tab-details.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-details",
+   "status": "captured",
+   "bytes": 274517,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-published-tab-lifecycle",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-published-tab-lifecycle.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-lifecycle",
+   "status": "captured",
+   "bytes": 211901,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-published-tab-lineage",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-published-tab-lineage.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-lineage",
+   "status": "captured",
+   "bytes": 160367,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-published-tab-monitoring",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-published-tab-monitoring.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-monitoring",
+   "status": "captured",
+   "bytes": 195686,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-published-tab-reviews",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-published-tab-reviews.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-reviews",
+   "status": "captured",
+   "bytes": 242947,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-published-tab-versions",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-published-tab-versions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-versions",
+   "status": "captured",
+   "bytes": 247805,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-published",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-published.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 107732,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-reader",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "policies/document-reader.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "A reader with no part to play: read only.",
+   "status": "captured",
+   "bytes": 100104,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-review-full",
+   "route": "/policy?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-review-full.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 294534,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-review-tab-approval",
+   "route": "/policy?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-review-tab-approval.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-approval",
+   "status": "captured",
+   "bytes": 264222,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-review-tab-details",
+   "route": "/policy?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-review-tab-details.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-details",
+   "status": "captured",
+   "bytes": 294602,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-review-tab-lifecycle",
+   "route": "/policy?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-review-tab-lifecycle.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-lifecycle",
+   "status": "captured",
+   "bytes": 226306,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-review-tab-lineage",
+   "route": "/policy?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-review-tab-lineage.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-lineage",
+   "status": "captured",
+   "bytes": 186955,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-review-tab-monitoring",
+   "route": "/policy?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-review-tab-monitoring.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-monitoring",
+   "status": "captured",
+   "bytes": 208558,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-review-tab-reviews",
+   "route": "/policy?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-review-tab-reviews.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-reviews",
+   "status": "captured",
+   "bytes": 236214,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-review-tab-versions",
+   "route": "/policy?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-review-tab-versions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "tab tab-versions",
+   "status": "captured",
+   "bytes": 234293,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-review",
+   "route": "/policy?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-review.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 120309,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-viewer-confidential",
+   "route": "/document-view?version=DVER-00039",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-viewer-confidential.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 126101,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "document-viewer",
+   "route": "/document-view?version=DVER-00028",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/document-viewer.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 130155,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "exemption-list",
+   "route": "/app/applicability-exemption",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/exemption-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 59444,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "gate-exception",
+   "route": "/policy?name=GDOC-00011#approval",
+   "persona": "head.retail.banking@demo.example",
+   "file": "policies/gate-exception.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 84189,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "glossary-list",
+   "route": "/app/glossary-term",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/glossary-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 118846,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "horizon-scan-form",
+   "route": "/policy?name=GDOC-00002#reviews",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/horizon-scan-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 92939,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "impact-panel",
+   "route": "/policy?name=GDOC-00002",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/impact-panel.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 123645,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "intake-classified",
+   "route": "/policy-intake?name=PINT-00008",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/intake-classified.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 244360,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "intake-classify",
+   "route": "/policy-intake?name=PINT-00005",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/intake-classify.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 170897,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "intake-explained",
+   "route": "/policy-intake?name=PINT-00001",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/intake-explained.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 187537,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "intake-top",
+   "route": "/policy-intake",
+   "persona": "chief.information.officer@demo.example",
+   "file": "policies/intake-top.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 91405,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "intake",
+   "route": "/policy-intake",
+   "persona": "chief.information.officer@demo.example",
+   "file": "policies/intake.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 233533,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "lifecycle-blocked",
+   "route": "/policy?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/lifecycle-blocked.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "Record Approval is refused while the approval chain is incomplete.",
+   "status": "captured",
+   "bytes": 111367,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "lifecycle-confirm-panel",
+   "route": "/policy?name=GDOC-00006",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/lifecycle-confirm-panel.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 89134,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "lifecycle-gate-list",
+   "route": "/app/document-lifecycle-gate",
+   "persona": "Administrator",
+   "file": "policies/lifecycle-gate-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 92239,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "lifecycle-readiness",
+   "route": "/policy?name=GDOC-00006#lifecycle",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/lifecycle-readiness.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 200395,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "lineage-tab",
+   "route": "/policy?name=GDOC-00001#lineage",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/lineage-tab.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 215231,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "monitoring-activity-list",
+   "route": "/app/monitoring-activity",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/monitoring-activity-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 81388,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "monitoring-result-form",
+   "route": "/policy?name=GDOC-00004#monitoring",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/monitoring-result-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 78483,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "monitoring-tab",
+   "route": "/policy?name=GDOC-00004#monitoring",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/monitoring-tab.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 257342,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "new-document-desk",
+   "route": "/app/governing-document/new",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/new-document-desk.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 115690,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "policy-impact",
+   "route": "/policy-impact?name=GDOC-00011",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/policy-impact.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 170019,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "publish-audience-preview",
+   "route": "/policy?name=GDOC-00002#versions",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/publish-audience-preview.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 110293,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "publish-form",
+   "route": "/policy?name=GDOC-00002#versions",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/publish-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 106544,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "register-filters",
+   "route": "/policies",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/register-filters.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 404970,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "register-overdue",
+   "route": "/policies?standing=overdue",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/register-overdue.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 115667,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "register-review-phase",
+   "route": "/policies?lifecycle_phase=Review",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/register-review-phase.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 115437,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "register",
+   "route": "/policies",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/register.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 115208,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "regulatory-update-one",
+   "route": "/regulatory-updates?requirement=REQ_OP_RESILIENCE",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/regulatory-update-one.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 214061,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "regulatory-updates",
+   "route": "/regulatory-updates",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/regulatory-updates.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 221104,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "reviews-tab",
+   "route": "/policy?name=GDOC-00014#reviews",
+   "persona": "head.operational.risk@demo.example",
+   "file": "policies/reviews-tab.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 277610,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "template-list",
+   "route": "/app/document-template",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/template-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 75367,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "versions-chain",
+   "route": "/policy?name=GDOC-00001#versions",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/versions-chain.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 268241,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "versions-revert-form",
+   "route": "/policy?name=GDOC-00004#versions",
+   "persona": "chief.information.officer@demo.example",
+   "file": "policies/versions-revert-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 65470,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "versions-upload-form",
+   "route": "/policy?name=GDOC-00004#versions",
+   "persona": "chief.information.officer@demo.example",
+   "file": "policies/versions-upload-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 73770,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "violation-form",
+   "route": "/policy?name=GDOC-00002#monitoring",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/violation-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 51212,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "violation-list",
+   "route": "/app/policy-violation",
+   "persona": "policy.office.lead@demo.example",
+   "file": "policies/violation-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 83675,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "policies",
+   "name": "workflow-lifecycle",
+   "route": "/app/workflow/Governing Document Lifecycle",
+   "persona": "Administrator",
+   "file": "policies/workflow-lifecycle.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 266031,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "reports",
+   "name": "emerging-risks",
+   "route": "/emerging-risks",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "reports/emerging-risks.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 335471,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "reports",
+   "name": "governance-gaps",
+   "route": "/governance-gaps",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "reports/governance-gaps.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 453670,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "reports",
+   "name": "reports-analysis",
+   "route": "/reports",
+   "persona": "chief.risk.officer@demo.example",
+   "file": "reports/reports-analysis.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 111736,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "reports",
+   "name": "reports-audit",
+   "route": "/reports",
+   "persona": "internal.auditor@demo.example",
+   "file": "reports/reports-audit.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 127197,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "reports",
+   "name": "reports-coverage",
+   "route": "/reports#coverage",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "reports/reports-coverage.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 87765,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "reports",
+   "name": "reports-documents",
+   "route": "/reports#documents",
+   "persona": "policy.office.lead@demo.example",
+   "file": "reports/reports-documents.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 93354,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "reports",
+   "name": "reports-escalations",
+   "route": "/reports#escalations",
+   "persona": "chief.risk.officer@demo.example",
+   "file": "reports/reports-escalations.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 98385,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "reports",
+   "name": "reports-forums",
+   "route": "/reports#forums",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "reports/reports-forums.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 126573,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "reports",
+   "name": "reports-top",
+   "route": "/reports",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "reports/reports-top.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 128861,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "reports",
+   "name": "reports",
+   "route": "/reports",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "reports/reports.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 297294,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "attestation-task-list",
+   "route": "/app/attestation-task",
+   "persona": "Administrator",
+   "file": "tasks/attestation-task-list.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 165870,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "campaign-form",
+   "route": "/app/attestation-campaign/ACAM-00004",
+   "persona": "Administrator",
+   "file": "tasks/campaign-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 196576,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "campaigns-admin",
+   "route": "/attestation-campaigns",
+   "persona": "Administrator",
+   "file": "tasks/campaigns-admin.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 198633,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "campaigns-no-access",
+   "route": "/attestation-campaigns",
+   "persona": "committee.secretary@demo.example",
+   "file": "tasks/campaigns-no-access.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 64951,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "campaigns-top",
+   "route": "/attestation-campaigns",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "tasks/campaigns-top.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 129575,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "campaigns",
+   "route": "/attestation-campaigns",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "tasks/campaigns.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 199255,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "inbox-answer-form",
+   "route": "/tasks",
+   "persona": "chief.operating.officer@demo.example",
+   "file": "tasks/inbox-answer-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 113552,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "inbox-empty",
+   "route": "/tasks",
+   "persona": "board.chair@demo.example",
+   "file": "tasks/inbox-empty.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 71017,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "inbox-full",
+   "route": "/tasks",
+   "persona": "chief.operating.officer@demo.example",
+   "file": "tasks/inbox-full.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 170632,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "inbox-overdue-filter",
+   "route": "/tasks?show=soon",
+   "persona": "chief.operating.officer@demo.example",
+   "file": "tasks/inbox-overdue-filter.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 63601,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "inbox-queue",
+   "route": "/tasks",
+   "persona": "chief.risk.officer@demo.example",
+   "file": "tasks/inbox-queue.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 139198,
+   "captured_at": "2026-09-18T14:12:47+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "inbox-second-signature",
+   "route": "/tasks",
+   "persona": "second.line.reviewer@demo.example",
+   "file": "tasks/inbox-second-signature.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 112596,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "tasks",
+   "name": "inbox",
+   "route": "/tasks",
+   "persona": "chief.operating.officer@demo.example",
+   "file": "tasks/inbox.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 113512,
+   "captured_at": "2026-09-18T14:07:54+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a0-workflow-state-field",
+   "route": "/app/workflow/Governing Document Lifecycle",
+   "persona": "Administrator",
+   "file": "verification/a0-workflow-state-field.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "After the one-time switch the lifecycle runs on workflow_state.",
+   "status": "captured",
+   "bytes": 97858,
+   "captured_at": "2026-09-18T14:17:16+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a1-review-actions",
+   "route": "/policy?name=GDOC-00016",
+   "persona": "policy.office.lead@demo.example",
+   "file": "verification/a1-review-actions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "The temporary document in Review, with the new action offered.",
+   "status": "captured",
+   "bytes": 118294,
+   "captured_at": "2026-09-18T14:14:35+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a10-gate-form",
+   "route": "/app/document-lifecycle-gate?notes=Guide%20verification",
+   "persona": "Administrator",
+   "file": "verification/a10-gate-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 64318,
+   "captured_at": "2026-09-18T14:15:24+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a11-refusal-log",
+   "route": "/app/governance-refusal-log",
+   "persona": "Administrator",
+   "file": "verification/a11-refusal-log.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 56037,
+   "captured_at": "2026-09-18T14:16:55+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a2-refused-no-flag",
+   "route": "/policy?name=GDOC-00016",
+   "persona": "policy.office.lead@demo.example",
+   "file": "verification/a2-refused-no-flag.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "Refused: the new state has no Workflow State Flag row yet.",
+   "status": "captured",
+   "bytes": 142874,
+   "captured_at": "2026-09-18T14:14:35+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a4-refused-by-gate",
+   "route": "/policy?name=GDOC-00016",
+   "persona": "policy.office.lead@demo.example",
+   "file": "verification/a4-refused-by-gate.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "The new gate is shown before anyone tries: the action would be refused today.",
+   "status": "captured",
+   "bytes": 117610,
+   "captured_at": "2026-09-18T14:15:24+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a4b-refused-by-gate-lifecycle",
+   "route": "/policy?name=GDOC-00016#lifecycle",
+   "persona": "policy.office.lead@demo.example",
+   "file": "verification/a4b-refused-by-gate-lifecycle.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "The Lifecycle tab's readiness table names the gate that blocks the action.",
+   "status": "captured",
+   "bytes": 225590,
+   "captured_at": "2026-09-18T14:15:24+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a5-moved",
+   "route": "/policy?name=GDOC-00016",
+   "persona": "policy.office.lead@demo.example",
+   "file": "verification/a5-moved.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "The document moves into Legal Review.",
+   "status": "captured",
+   "bytes": 125374,
+   "captured_at": "2026-09-18T14:15:42+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a6-in-legal-review",
+   "route": "/policy?name=GDOC-00016#lifecycle",
+   "persona": "policy.office.lead@demo.example",
+   "file": "verification/a6-in-legal-review.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 236834,
+   "captured_at": "2026-09-18T14:15:46+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a7-workflow-form",
+   "route": "/app/workflow/Governing Document Lifecycle",
+   "persona": "Administrator",
+   "file": "verification/a7-workflow-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 101221,
+   "captured_at": "2026-09-18T14:14:35+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a7b-workflow-transitions",
+   "route": "/app/workflow/Governing Document Lifecycle",
+   "persona": "Administrator",
+   "file": "verification/a7b-workflow-transitions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 106864,
+   "captured_at": "2026-09-18T14:14:35+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a7c-workflow-builder",
+   "route": "/app/workflow-builder/Governing Document Lifecycle",
+   "persona": "Administrator",
+   "file": "verification/a7c-workflow-builder.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 83730,
+   "captured_at": "2026-09-18T14:14:35+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a8-flag-row",
+   "route": "/app/workflow-state-flag?target_doctype=Governing%20Document&state_field=workflow_state&state_value=Legal%20Review",
+   "persona": "Administrator",
+   "file": "verification/a8-flag-row.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 98566,
+   "captured_at": "2026-09-18T14:15:24+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "a8b-flag-rows-derived",
+   "route": "/app/workflow-state-flag?target_doctype=Governing%20Document&state_field=workflow_state",
+   "persona": "Administrator",
+   "file": "verification/a8b-flag-rows-derived.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "The flag rows on workflow_state, each naming its Phase.",
+   "status": "captured",
+   "bytes": 91379,
+   "captured_at": "2026-09-18T14:15:24+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "b1-new-workflow-form",
+   "route": "/app/workflow/Policy Violation Handling",
+   "persona": "Administrator",
+   "file": "verification/b1-new-workflow-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 233994,
+   "captured_at": "2026-09-18T06:20:16+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "b2-violation-actions",
+   "route": "/app/policy-violation/PVIO-00008",
+   "persona": "head.technology.risk@demo.example",
+   "file": "verification/b2-violation-actions.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 62743,
+   "captured_at": "2026-09-18T06:20:16+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "c1-rename-move-offered",
+   "route": "/policy?name=GDOC-00016",
+   "persona": "policy.office.lead@demo.example",
+   "file": "verification/c1-rename-move-offered.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "Renaming: the temporary action that carries records from the old name to the new one.",
+   "status": "captured",
+   "bytes": 120729,
+   "captured_at": "2026-09-18T14:16:32+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "c2-rename-moved",
+   "route": "/policy?name=GDOC-00016",
+   "persona": "policy.office.lead@demo.example",
+   "file": "verification/c2-rename-moved.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 116771,
+   "captured_at": "2026-09-18T14:16:32+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "c3-rename-done",
+   "route": "/policy?name=GDOC-00016#lifecycle",
+   "persona": "policy.office.lead@demo.example",
+   "file": "verification/c3-rename-done.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 209963,
+   "captured_at": "2026-09-18T14:16:40+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "c4-list-old-state-empty",
+   "route": "/app/governing-document?workflow_state=Legal%20Review",
+   "persona": "Administrator",
+   "file": "verification/c4-list-old-state-empty.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 59216,
+   "captured_at": "2026-09-18T14:16:40+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "m1-home-guide-article",
+   "route": "/",
+   "persona": "risk.governance.lead@demo.example",
+   "file": "verification/m1-home-guide-article.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "A published Guide Article replaces the home page's built-in 'Setting up a forum' section.",
+   "status": "captured",
+   "bytes": 138102,
+   "captured_at": "2026-09-18T06:26:51+00:00"
+  },
+  {
+   "area": "verification",
+   "name": "m2-guide-article-form",
+   "route": "/app/guide-article/guide-verification-temporary",
+   "persona": "Administrator",
+   "file": "verification/m2-guide-article-form.png",
+   "theme": "light",
+   "viewport": {
+    "width": 1440,
+    "height": 900
+   },
+   "note": "",
+   "status": "captured",
+   "bytes": 90655,
+   "captured_at": "2026-09-18T06:26:51+00:00"
+  }
+ ]
+}

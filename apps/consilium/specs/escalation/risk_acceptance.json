@@ -1,7 +1,7 @@
 {
   "name": "Risk Acceptance",
   "module": "Escalation",
-  "description": "A documented, approved and time-bounded decision to accept a risk rather than remediate it (E-6, E-9, E16-S4). Subject to periodic reassessment.",
+  "description": "A documented, approved and time-bounded decision to accept a risk rather than remediate it. Subject to periodic reassessment.",
   "autoname": "RACC-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "risk_acceptance_name",
@@ -215,13 +215,13 @@
       "fieldname": "next_reassessment_on",
       "fieldtype": "Date",
       "label": "Next Reassessment On",
-      "description": "[Inferred] Risk acceptance is subject to periodic reassessment."
+      "description": "Risk acceptance is subject to periodic reassessment."
     },
     {
       "fieldname": "reassessment_frequency_months",
       "fieldtype": "Int",
       "label": "Reassessment Frequency (Months)",
-      "description": "[Inferred]"
+      "description": ""
     },
     {
       "fieldname": "external_reference",

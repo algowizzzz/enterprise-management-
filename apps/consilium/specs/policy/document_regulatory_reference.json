@@ -1,7 +1,7 @@
 {
   "name": "Document Regulatory Reference",
   "module": "Policy",
-  "description": "P-6 regulatory capture against the shared Regulatory Requirement library, so a regulatory change is assessed once and fans out to every document that cites it.",
+  "description": "Regulatory capture against the shared Regulatory Requirement library, so a regulatory change is assessed once and fans out to every document that cites it.",
   "istable": 1,
   "fields": [
     {

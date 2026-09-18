@@ -113,3 +113,63 @@ class TestSensitiveMatters(EscalationTestCase):
         self.ordinary.sensitive = 1
         self.ordinary.save(ignore_permissions=True)
         self.assertTrue(frappe.db.get_value("Action Plan", plan.name, "sensitive"))
+
+
+class TestNamedPeopleSeeTheirSensitiveMatters(EscalationTestCase):
+    """Restricted handling keeps a matter from people with no part in it, not
+    from the people it names: raiser, identifier, accountable executive,
+    response owner, members of its group queue."""
+
+    def setUp(self):
+        super().setUp()
+        self.reference = self.reference_data()
+        self.responder = make_user("Escalation Owner")
+        self.member = make_user("Escalation Owner")
+        self.stranger = make_user("Escalation Owner")
+        self.group = frappe.get_doc({"doctype": "User Group", "__newname": f"Queue-{frappe.generate_hash(length=8)}",
+                                     "user_group_members": [{"user": self.member}]}).insert(ignore_permissions=True).name
+        self.matter = self.make_matter(self.reference, escalation_title="A restricted matter with owners",
+                                       sensitive=1, response_owner=self.responder)
+        frappe.db.set_value("Escalation Matter", self.matter.name, "assigned_group", self.group)
+        self.plan = frappe.get_doc({
+            "doctype": "Action Plan", "escalation_matter": self.matter.name, "action_plan_name": "Remediate",
+            "start_date": "2026-01-10", "end_date": "2026-02-10",
+            "accountable_executive": self.reference["user"], "owner_user": self.reference["user"],
+        }).insert(ignore_permissions=True)
+
+    def test_the_named_response_owner_reads_it_on_every_path(self):
+        with escalation_permission_hooks():
+            listed = [row["name"] for row in rest_list("Escalation Matter", self.responder, limit_page_length=0)]
+            self.assertIn(self.matter.name, listed)
+            self.assertEqual(rest_get("Escalation Matter", self.matter.name, self.responder).name, self.matter.name)
+            plans = [row["name"] for row in rest_list("Action Plan", self.responder, limit_page_length=0)]
+            self.assertIn(self.plan.name, plans)
+            self.assertEqual(rest_get("Action Plan", self.plan.name, self.responder).name, self.plan.name)
+
+    def test_a_member_of_its_group_queue_reads_it(self):
+        with escalation_permission_hooks():
+            listed = [row["name"] for row in rest_list("Escalation Matter", self.member, limit_page_length=0)]
+            self.assertIn(self.matter.name, listed)
+            with as_user(self.member):
+                self.assertTrue(frappe.has_permission("Escalation Matter", "read", doc=self.matter.name))
+
+    def test_the_accountable_executive_and_raiser_read_it(self):
+        with escalation_permission_hooks():
+            self.assertEqual(rest_get("Escalation Matter", self.matter.name, self.reference["user"]).name,
+                             self.matter.name)
+            raiser = make_user("Escalation Owner", sensitivity.SENSITIVE_ROLE)
+            with as_user(raiser):
+                raised = frappe.get_doc(self.matter_values(self.reference, escalation_title="Raised in confidence",
+                                                           sensitive=1)).insert()
+            frappe.get_doc("User", raiser).remove_roles(sensitivity.SENSITIVE_ROLE)
+            with as_user(raiser):
+                self.assertTrue(frappe.has_permission("Escalation Matter", "read", doc=raised.name))
+
+    def test_someone_it_does_not_name_still_cannot(self):
+        with escalation_permission_hooks():
+            listed = [row["name"] for row in rest_list("Escalation Matter", self.stranger, limit_page_length=0)]
+            self.assertNotIn(self.matter.name, listed)
+            with self.assertRaises(frappe.PermissionError):
+                rest_get("Escalation Matter", self.matter.name, self.stranger)
+            with self.assertRaises(frappe.PermissionError):
+                rest_get("Action Plan", self.plan.name, self.stranger)

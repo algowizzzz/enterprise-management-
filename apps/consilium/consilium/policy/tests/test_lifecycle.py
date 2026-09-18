@@ -45,9 +45,28 @@ def _approve_all(doc):
         "Approval Decision",
         filters={"subject_doctype": DOCTYPE, "subject_name": doc.name, "is_open": 1},
         pluck="name",
+        # In route order: a sequential step waits for the steps ahead (E7-S4).
+        order_by="step_sequence asc, creation asc",
     ):
         row = frappe.get_doc("Approval Decision", name)
         approvals.record_decision(row, "Approved", comments="Content reviewed.", acting_user=row.assigned_to)
+
+
+def approval_gate_off():
+    """Switch off the approval-chain gate on Approved, for this test only.
+
+    Recording the approval is refused while the routed chain is incomplete (a
+    "Complete Approval Chain" gate on Approved). A test whose subject is the
+    *publication* gate — which refuses the same incomplete chain again, and
+    must hold on its own if an administrator removes the earlier row — turns
+    the earlier one off so it can reach publication with the chain still
+    incomplete. The change is rolled back with the test.
+    """
+    frappe.db.set_value(
+        "Document Lifecycle Gate",
+        {"target_doctype": DOCTYPE, "state_value": "Approved", "gate": "Complete Approval Chain"},
+        "is_active", 0,
+    )
 
 
 class TestLifecycleConfiguration(PolicyTestCase):
@@ -95,6 +114,7 @@ class TestLifecycleTransitions(PolicyTestCase):
     def test_a_document_moves_through_drafting_review_and_approval(self):
         doc = _with_applicability(make_document())
         _version(doc)
+        _approve_all(doc)
         self.assertEditable(doc, True)
         self.assertNotInForce(doc)
 
@@ -140,6 +160,12 @@ class TestLifecycleTransitions(PolicyTestCase):
 
 
 class TestPublicationRefusal(PolicyTestCase):
+    """The publication gate, on its own (see `approval_gate_off`)."""
+
+    def setUp(self):
+        super().setUp()
+        approval_gate_off()
+
     def test_publication_without_a_complete_approval_chain_is_refused(self):
         doc = _with_applicability(make_document())
         _version(doc)
@@ -179,6 +205,7 @@ class TestPublicationRefusal(PolicyTestCase):
             "Approval Decision",
             filters={"subject_doctype": DOCTYPE, "subject_name": doc.name},
             pluck="name",
+            order_by="step_sequence asc, creation asc",
         )
         for index, name in enumerate(rows):
             row = frappe.get_doc("Approval Decision", name)
@@ -232,8 +259,16 @@ class TestPublicationRefusal(PolicyTestCase):
         with self.assertRaises(frappe.ValidationError):
             lifecycle.perform(doc, "Publish", exception_authorisation=authorisation.name)
 
+        # Approved by the document's approver, who holds no standing to excuse a
+        # gate: still refused (lifecycle.approval_unfit).
         frappe.db.set_value(
             "Exception Authorisation", authorisation.name, "approved_by", doc.document_approver
+        )
+        with self.assertRaises(frappe.ValidationError):
+            lifecycle.perform(doc, "Publish", exception_authorisation=authorisation.name)
+
+        frappe.db.set_value(
+            "Exception Authorisation", authorisation.name, "approved_by", make_user("Enterprise Policy Office")
         )
         lifecycle.perform(doc, "Publish", exception_authorisation=authorisation.name)
         self.assertInForce(doc)
@@ -367,6 +402,7 @@ class TestParentOwnerApproval(PolicyTestCase):
         self.assertEqual([s for s in preview["steps"] if s["source"].startswith("lineage:")], [])
 
     def test_publication_is_refused_while_the_parent_owner_has_not_approved(self):
+        approval_gate_off()
         parent = make_document()
         child = _with_applicability(make_document(parent_document=parent.name))
         parent.append(
@@ -381,6 +417,7 @@ class TestParentOwnerApproval(PolicyTestCase):
             "Approval Decision",
             filters={"subject_doctype": DOCTYPE, "subject_name": child.name},
             fields=["name", "approval_step", "assigned_to"],
+            order_by="step_sequence asc, creation asc",
         )
         for row in rows:
             if row["approval_step"].startswith(routing.PARENT_OWNER_STEP):

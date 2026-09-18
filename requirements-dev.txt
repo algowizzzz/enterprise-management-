@@ -1,0 +1,12 @@
+# Tools for development machines only — never installed on a server.
+#
+# The screenshot capture (scripts/capture_screenshots.py) and the browser
+# journeys (scripts/browser_journeys.py) drive a locally installed Chrome
+# through Playwright. Playwright ships its own Node.js driver, which has no
+# place on an offline production server, so it is kept out of requirements.txt
+# (and so out of the deployment bundle). greenlet and pyee are needed only by it.
+#
+#     pip install -r requirements.txt -r requirements-dev.txt
+greenlet==3.5.6
+playwright==1.63.0
+pyee==13.0.1

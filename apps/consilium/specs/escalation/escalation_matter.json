@@ -5,6 +5,7 @@
   "autoname": "ESC-.YYYY.-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "escalation_title",
+  "show_title_field_in_link": 1,
   "search_fields": "escalation_title,escalation_id",
   "permissions": [
     {
@@ -179,7 +180,7 @@
       "options": "Matrix\nManual Override",
       "reqd": 1,
       "default": "Matrix",
-      "description": "[Inferred \u2014 ] Manual Override keeps a person's severity; Matrix lets the matrix resolve it.",
+      "description": "Manual Override keeps the severity a person chose; Matrix lets the escalation matrix set it.",
       "provenance": "\u00a711."
     },
     {
@@ -195,6 +196,36 @@
       "label": "Matched Matrix Rule",
       "read_only": 1,
       "description": "The rule code that fired, stored like the classification trace."
+    },
+    {
+      "fieldname": "assigned_role",
+      "fieldtype": "Link",
+      "label": "Assigned Role",
+      "options": "Role",
+      "read_only": 1,
+      "description": "The role whose queue the matched matrix rule routed the matter to."
+    },
+    {
+      "fieldname": "assigned_group",
+      "fieldtype": "Link",
+      "label": "Assigned Group",
+      "options": "User Group",
+      "read_only": 1,
+      "description": "The user group whose queue the matched matrix rule routed the matter to."
+    },
+    {
+      "fieldname": "assignment_rule",
+      "fieldtype": "Data",
+      "label": "Assigned By Rule",
+      "read_only": 1,
+      "description": "The matrix rule that set the queue."
+    },
+    {
+      "fieldname": "ownership_taken_on",
+      "fieldtype": "Datetime",
+      "label": "Ownership Taken On",
+      "read_only": 1,
+      "description": "When a member of the queue took ownership and became the response owner."
     },
     {
       "fieldname": "governance_forums",
@@ -213,6 +244,13 @@
       "fieldtype": "Check",
       "label": "Risk Appetite Breach",
       "default": "0"
+    },
+    {
+      "fieldname": "systemic",
+      "fieldtype": "Check",
+      "label": "Systemic",
+      "default": "0",
+      "description": "The issue is systemic rather than isolated. A matrix rule may test this flag to send the matter on the systemic route, and a service level may time the second-line challenge of systemic matters."
     },
     {
       "fieldname": "risk_appetite_reference",
@@ -237,7 +275,7 @@
       "fieldtype": "Check",
       "label": "Sensitive",
       "default": "0",
-      "description": "E-16 restricted visibility. A sensitive matter is excluded from list, search, report and API reads for users without the Sensitive Escalation Access role."
+      "description": "A sensitive matter is hidden from lists, search, reports and the API for anyone without the Sensitive Escalation Access role."
     },
     {
       "fieldname": "status",
@@ -322,6 +360,7 @@
       "fieldname": "opened_on",
       "fieldtype": "Datetime",
       "label": "Opened On",
+      "default": "Now",
       "reqd": 1
     },
     {
@@ -335,7 +374,7 @@
       "fieldtype": "Check",
       "label": "Response Template Completed",
       "default": "0",
-      "description": "E-9 makes this mandatory for every escalation, including externally-tracked ones."
+      "description": "Must be completed for every escalation, including one tracked outside this system, before it is closed."
     },
     {
       "fieldname": "retention_class",
@@ -349,7 +388,7 @@
       "label": "SLA Definition",
       "options": "SLA Definition",
       "read_only": 1,
-      "description": "[Inferred] The time threshold the matched matrix rule imposed."
+      "description": "The time threshold the matched matrix rule imposed."
     },
     {
       "fieldname": "sla_clock",
@@ -357,7 +396,7 @@
       "label": "SLA Clock",
       "options": "SLA Clock",
       "read_only": 1,
-      "description": "[Inferred] Core's clock for this matter. The module writes no timing logic of its own."
+      "description": "Core's clock for this matter. The module writes no timing logic of its own."
     },
     {
       "fieldname": "threshold_breached",
@@ -365,7 +404,7 @@
       "label": "Threshold Breached",
       "read_only": 1,
       "default": "0",
-      "description": "[Inferred \u2014 E17-S4 requires the breach to be recorded.]"
+      "description": ""
     },
     {
       "fieldname": "breach_count",
@@ -385,7 +424,7 @@
       "label": "Auto Escalated",
       "read_only": 1,
       "default": "0",
-      "description": "[Inferred] Set when a breach raised the matter without a person acting."
+      "description": "Set when a breach raised the matter without a person acting."
     },
     {
       "fieldname": "reviews",

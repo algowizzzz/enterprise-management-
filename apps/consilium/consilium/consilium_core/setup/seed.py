@@ -10,6 +10,7 @@ from __future__ import annotations
 import frappe
 
 from consilium.consilium_core import state_flags
+from consilium.consilium_core.setup import notification_templates
 from consilium.consilium_core.setup.state_flag_seed import FLAG_COLUMNS, STATE_FLAGS
 
 FORUM_ROLES = [
@@ -159,3 +160,6 @@ def seed_all() -> None:
     seed_taxonomies()
     seed_notification_channels()
     seed_state_flags()
+    # The email channel and one template per event the application raises.
+    # After the record channel, which the email channel falls back to.
+    notification_templates.seed_all()

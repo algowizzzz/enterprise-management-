@@ -1,0 +1,1705 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  One escalation matter, and the work on it.
+  Six panels behind a tab strip: the matter itself, who and what it touches and
+  the forums on its pathway, the response to it (action plans and risk
+  acceptances), its review rounds, its closure, and its history — with its
+  revision chain and revert. Every read goes over the REST API or a
+  permission-checked server method, so the sensitive-matter restriction applies
+  to the matter and to every record hanging off it.
+
+  The page never decides what may be done. The server's workbench payload says
+  which actions this viewer may take at this stage, each button calls a thin
+  entry point in `consilium.escalation`, and the server checks both again on the
+  way in (see `resolution.authorise`).
+-#}
+
+{% block page_actions %}
+{%- if found %}
+{%- if desk_access %}
+<a class="cns-btn cns-btn-primary" href="/app/escalation-matter/{{ record_name | urlencode }}">
+  <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Open in the workspace
+</a>
+{%- endif %}
+{%- if cns_has_any_role("Consilium Audit", "Consilium Administrator", "System Manager") %}
+{#- E4-S4. The server checks the role and read access again, and audits a refusal. #}
+<a class="cns-btn cns-btn-secondary" href="/api/method/consilium.consilium_core.evidence.export_pack?doctype=Escalation%20Matter&amp;name={{ record_name | urlencode }}">
+  <i class="bi bi-file-earmark-zip" aria-hidden="true"></i> Export evidence pack
+</a>
+{%- endif %}
+<a class="cns-btn cns-btn-secondary" href="/escalations">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to the register
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not record_name %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-signpost" aria-hidden="true"></i></span>
+    <p class="cns-state-title">No matter was named</p>
+    <p class="cns-state-message">Open a matter from the register to see its record.</p>
+    <a class="cns-btn cns-btn-primary" href="/escalations">Go to the register</a>
+  </div>
+</div>
+{%- elif not found %}
+<div class="cns-card">
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">That matter is not available</p>
+    <p class="cns-state-message">Reference <span class="cns-mono">{{ record_name | e }}</span> does not exist,
+      or it is not available to you. Matters with restricted handling are shown only to those
+      cleared to see them.</p>
+    <a class="cns-btn cns-btn-secondary" href="/escalations">Back to the register</a>
+  </div>
+</div>
+{%- else %}
+
+<div id="matter-summary" class="cns-card">
+  <div class="cns-card-body">
+    <p class="cns-text-muted cns-text-sm">Loading the record&hellip;</p>
+  </div>
+</div>
+
+<div id="outcome" role="status" aria-live="polite"></div>
+
+<section class="cns-card" id="actions-card" aria-labelledby="actions-heading" hidden>
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="actions-heading">What you can do now</h2>
+      <p class="cns-card-subtitle" id="actions-subtitle"></p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-btn-group" id="action-buttons"></div>
+    <div id="action-panel"></div>
+  </div>
+</section>
+
+<div class="cns-alert cns-status-info" id="read-only-note" style="margin-bottom: var(--cns-space-4);" hidden>
+  <i class="bi bi-info-circle" aria-hidden="true"></i>
+  <div id="read-only-text">
+    {%- if can_edit %}
+    Nothing on this matter is open to you at its present stage. Anything else is done in the workspace.
+    {%- else %}
+    You have read access to this matter. It is worked by its response owner and accountable
+    executive, and challenged by the second line.
+    {%- endif %}
+  </div>
+</div>
+
+<div class="cns-tabs" role="tablist" aria-label="Escalation detail sections">
+  <button class="cns-tab" role="tab" id="tab-details"  aria-controls="panel-details"  aria-selected="true">Details</button>
+  <button class="cns-tab" role="tab" id="tab-impact"   aria-controls="panel-impact"   aria-selected="false" tabindex="-1">Impact and forums</button>
+  <button class="cns-tab" role="tab" id="tab-response" aria-controls="panel-response" aria-selected="false" tabindex="-1">Response</button>
+  <button class="cns-tab" role="tab" id="tab-reviews"  aria-controls="panel-reviews"  aria-selected="false" tabindex="-1">Reviews</button>
+  <button class="cns-tab" role="tab" id="tab-closure"  aria-controls="panel-closure"  aria-selected="false" tabindex="-1">Closure</button>
+  <button class="cns-tab" role="tab" id="tab-history"  aria-controls="panel-history"  aria-selected="false" tabindex="-1">History</button>
+</div>
+
+<!-- ------------------------------ Details ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-details" aria-labelledby="tab-details" tabindex="0">
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">What happened</h2></div>
+    <div class="cns-card-body"><p id="detail-description" class="cns-prose">&nbsp;</p></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">The record</h2></div>
+    <div class="cns-card-body"><dl class="cns-dl" id="detail-fields"></dl></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Severity and routing</h2>
+        <p class="cns-card-subtitle">How the severity was set, and the escalation matrix rule that
+          proposed the pathway.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><dl class="cns-dl" id="detail-routing"></dl></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Time limits</h2>
+        <p class="cns-card-subtitle">The time threshold the matched rule imposed, and whether it has
+          been breached.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><dl class="cns-dl" id="detail-sla"></dl></div>
+  </section>
+
+  <section class="cns-card" aria-labelledby="durations-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="durations-heading">Time in each status</h2>
+        <p class="cns-card-subtitle">How long the matter has spent in each status, from its change log, against
+          the target an administrator has configured for that status. A status with no configured target shows
+          its time only.</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="durations-body">
+      <p class="cns-text-muted cns-text-sm">Loading&hellip;</p>
+    </div>
+  </section>
+</div>
+
+<!-- -------------------------- Impact and forums ------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-impact" aria-labelledby="tab-impact" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Impacted entities</h2>
+        <p class="cns-card-subtitle">The legal entities, material entities and business lines the
+          matter touches.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="entities-table"></div></div>
+  </section>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Forums on the pathway</h2>
+        <p class="cns-card-subtitle">Where the matter goes for a decision, for oversight, or to be informed.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="forums-table"></div></div>
+  </section>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Who a notice reaches</h2>
+        <p class="cns-card-subtitle">The chair, the secretary and the attesting seats of each forum on the
+          pathway, from forum membership as at today. A breach or a material-entity impact is sent to them
+          as well as to the matter's named people.</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="participants-body">
+      <p class="cns-text-muted cns-text-sm">Loading&hellip;</p>
+    </div>
+  </section>
+</div>
+
+<!-- ------------------------------ Response ----------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-response" aria-labelledby="tab-response" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Action plans</h2></div>
+    <div class="cns-card-body"><div id="plans-table"></div></div>
+  </section>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Risk acceptances</h2>
+        <p class="cns-card-subtitle">Where the risk is carried rather than treated, with who accepted it
+          and when it is next reassessed.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="acceptances-table"></div></div>
+  </section>
+</div>
+
+<!-- ------------------------------ Reviews ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-reviews" aria-labelledby="tab-reviews" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Review rounds</h2>
+        <p class="cns-card-subtitle">Each round of challenge, with the line of defence that gave it.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="reviews-table"></div></div>
+  </section>
+</div>
+
+<!-- ------------------------------ Closure ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-closure" aria-labelledby="tab-closure" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Closure</h2>
+        <p class="cns-card-subtitle">How the matter ended, and the criteria it was closed against.</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="closure-body">
+      <p class="cns-text-muted cns-text-sm">Loading&hellip;</p>
+    </div>
+  </section>
+</div>
+
+<!-- ------------------------------ History ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-history" aria-labelledby="tab-history" tabindex="0" hidden>
+  <section class="cns-card" aria-labelledby="revisions-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="revisions-heading">Revision history</h2>
+        <p class="cns-card-subtitle">Each saved version of the matter. Reverting writes a new version with
+          the earlier content and your reason; it never changes the status, the handling restriction or
+          the review rounds, and history is never rewritten.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="revision-note"></div>
+      <ul class="cns-timeline" id="revision-list">
+        <li class="cns-text-muted">Loading&hellip;</li>
+      </ul>
+    </div>
+  </section>
+  <section class="cns-card">
+    <div class="cns-card-header"><div>
+      <h2 class="cns-card-title">Record history</h2>
+      <p class="cns-card-subtitle">Field changes, workflow moves, comments, attachments and the notifications sent about this matter, newest first.</p>
+    </div></div>
+    <div class="cns-card-body">
+      <ul class="cns-timeline" id="change-list">
+        <li class="cns-text-muted">Loading&hellip;</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if found %}
+<script>
+(function () {
+  "use strict";
+
+  var MATTER = {{ record_name | tojson }};
+  var FIELD_LABELS = {{ field_labels | tojson }};
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var f = Consilium.Table.formatters;
+
+  /* Display tones only; open or closed is read from `is_open`. */
+  var SEVERITY_TONES = { High: "danger", Medium: "warning", Low: "info" };
+  var STATUS_TONES = {
+    Open: "warning", "In Progress": "info", "Under Review": "primary",
+    "Pending Review": "primary", Closed: "success", "Closed — Tracked Externally": "neutral"
+  };
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+  function named(doctype, code) {
+    return code ? escapeHtml(Consilium.reference.label(doctype, code)) : dash();
+  }
+  function value(v) { return (v === null || v === undefined || v === "") ? dash() : escapeHtml(v); }
+  function dateValue(v) { return v ? escapeHtml(Consilium.util.formatDate(v, false)) : dash(); }
+  function datetimeValue(v) { return v ? escapeHtml(Consilium.util.formatDate(v, true)) : dash(); }
+  function yesNo(v) { return v ? "Yes" : "No"; }
+  function pill(text, tone) {
+    return '<span class="cns-pill cns-status-' + escapeAttr(tone) + '">' + escapeHtml(text) + "</span>";
+  }
+
+  function forumLink(name) {
+    if (!name) return dash();
+    return '<a href="/forum?name=' + escapeAttr(encodeURIComponent(name)) + '">' +
+      escapeHtml(Consilium.reference.label("Governance Forum", name)) + "</a>";
+  }
+
+  function fillList(target, rows) {
+    document.getElementById(target).innerHTML = rows.map(function (row) {
+      return "<div><dt>" + escapeHtml(row[0]) + "</dt><dd>" + row[1] + "</dd></div>";
+    }).join("");
+  }
+
+  function errorState(target, title, error) {
+    document.getElementById(target).innerHTML =
+      '<div class="cns-state cns-state--error"><p class="cns-state-title">' + escapeHtml(title) +
+      '</p><p class="cns-state-message">' + escapeHtml((error && error.message) || "") + "</p></div>";
+  }
+
+  /* Timestamps from the server carry no zone: they are wall-clock times in the
+     site's zone (the page names it in a meta tag). Ages and age bands are
+     therefore worked out in that zone too, or a matter opened late in the day
+     would fall into the wrong band for anyone reading from elsewhere. */
+  function siteZone() {
+    return (document.querySelector('meta[name="cns-time-zone"]') || {}).content || "UTC";
+  }
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  /** An instant as the site's wall clock, in the framework's datetime format. */
+  function siteWallClock(date) {
+    try {
+      var p = {};
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: siteZone(), year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
+      }).formatToParts(date).forEach(function (part) { p[part.type] = part.value; });
+      return p.year + "-" + p.month + "-" + p.day + " " + p.hour + ":" + p.minute + ":" + p.second;
+    } catch (e) {
+      return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + " " +
+        pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds());
+    }
+  }
+
+  /** Now minus `days`, as the site's wall clock. */
+  function daysAgo(days) {
+    return siteWallClock(new Date(Date.now() - days * 86400000));
+  }
+
+  /** A site wall-clock string as a comparable number; both ends of an age are
+      read the same way, so the zone cancels out. */
+  function wallClockValue(value) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(value || ""));
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)) : null;
+  }
+
+  /** Whole days from opening to closing, or to now while the matter is open. */
+  function ageDays(row) {
+    var opened = wallClockValue(row.opened_on);
+    if (opened === null) return null;
+    var closed = !row.is_open ? wallClockValue(row.closed_on) : null;
+    var end = closed !== null ? closed : wallClockValue(siteWallClock(new Date()));
+    return Math.max(0, Math.floor((end - opened) / 86400000));
+  }
+
+  function ageText(doc) {
+    var days = ageDays(doc);
+    if (days === null) return dash();
+    return escapeHtml(days + (days === 1 ? " day" : " days") + (doc.is_open ? " and counting" : " open"));
+  }
+
+  /* ------------------------------- tabs -------------------------------- */
+
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  var loaders = {};
+  var loaded = {};
+
+  function selectTab(tab, focus) {
+    tabs.forEach(function (other) {
+      var selected = other === tab;
+      other.setAttribute("aria-selected", selected ? "true" : "false");
+      other.tabIndex = selected ? 0 : -1;
+      document.getElementById(other.getAttribute("aria-controls")).hidden = !selected;
+    });
+    if (focus) tab.focus();
+    var key = tab.id.replace("tab-", "");
+    if (loaders[key] && !loaded[key]) { loaded[key] = true; loaders[key](); }
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, "", "#" + key);
+    }
+  }
+
+  tabs.forEach(function (tab, index) {
+    tab.addEventListener("click", function () { selectTab(tab); });
+    tab.addEventListener("keydown", function (event) {
+      var step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (step) {
+        event.preventDefault();
+        selectTab(tabs[(index + step + tabs.length) % tabs.length], true);
+      } else if (event.key === "Home") {
+        event.preventDefault(); selectTab(tabs[0], true);
+      } else if (event.key === "End") {
+        event.preventDefault(); selectTab(tabs[tabs.length - 1], true);
+      }
+    });
+  });
+
+  /* ------------------------------ the record --------------------------- */
+
+  var levelLabels = {};
+  var defenceLabels = {};
+
+  function labelList(doctype, field, target) {
+    return Consilium.api.list(doctype, { fields: ["name", field], limit_page_length: 200, trackLoading: false })
+      .then(function (rows) { rows.forEach(function (r) { target[r.name] = r[field] || r.name; }); })
+      .catch(function () { /* codes still display */ });
+  }
+
+  var referenceReady = Promise.all([
+    Consilium.reference.load(["Escalation Type", "Risk Type", "Legal Entity", "Organization Unit",
+                              "Retention Class", "Governance Forum"]),
+    labelList("Organizational Level", "organizational_level_name", levelLabels),
+    labelList("Line Of Defence", "line_of_defence_name", defenceLabels)
+  ]);
+
+  /** Read the matter and draw the parts every tab shares. Run again after an action. */
+  function fetchRecord() {
+    var ready = referenceReady
+      .then(function () { return Consilium.api.get("Escalation Matter", MATTER); })
+      .then(function (doc) {
+        renderSummary(doc);
+        renderDetails(doc);
+        return doc;
+      });
+    ready.catch(function (error) {
+      errorState("matter-summary", "The record could not be read", error);
+    });
+    return ready;
+  }
+
+  var recordReady = fetchRecord();
+
+  function renderSummary(doc) {
+    var flags = [];
+    if (doc.requires_review) flags.push(pill("Awaiting review", "warning"));
+    if (doc.threshold_breached) flags.push(pill("Time threshold breached", "danger"));
+    if (doc.risk_appetite_breach) flags.push(pill("Risk appetite breached", "danger"));
+    if (doc.material_entity_impact) flags.push(pill("Material entity impact", "info"));
+    if (doc.systemic) flags.push(pill("Systemic", "danger"));
+    if (doc.sensitive) flags.push(pill("Restricted handling", "warning"));
+
+    document.getElementById("matter-summary").innerHTML =
+      '<div class="cns-card-body">' +
+      '<p class="cns-eyebrow">' + named("Escalation Type", doc.escalation_type) + "</p>" +
+      '<p style="margin-bottom: var(--cns-space-3);">' +
+      (doc.severity ? pill(doc.severity + " severity", SEVERITY_TONES[doc.severity] || "neutral") + " " : "") +
+      (doc.status ? pill(doc.status, STATUS_TONES[doc.status] || "neutral") + " " : "") +
+      flags.join(" ") + "</p>" +
+      '<dl class="cns-dl">' +
+      "<div><dt>Reference</dt><dd class=\"cns-mono\">" + escapeHtml(doc.name) + "</dd></div>" +
+      /* Read from the flag: a status label says what the workflow calls the
+         state, the flag says whether the matter is still being worked. */
+      "<div><dt>Open or closed</dt><dd>" + (doc.is_open ? "Open" : "Closed") + "</dd></div>" +
+      "<div><dt>Accountable executive</dt><dd>" + value(doc.accountable_executive) + "</dd></div>" +
+      "<div><dt>Response owner</dt><dd>" + value(doc.response_owner) + "</dd></div>" +
+      "<div><dt>Opened</dt><dd>" + datetimeValue(doc.opened_on) + "</dd></div>" +
+      "<div><dt>Age</dt><dd>" + ageText(doc) + "</dd></div>" +
+      "<div><dt>Closed</dt><dd>" + datetimeValue(doc.closed_on) + "</dd></div>" +
+      "</dl></div>";
+  }
+
+  function renderDetails(doc) {
+    document.getElementById("detail-description").innerHTML =
+      doc.description ? escapeHtml(doc.description) : dash();
+
+    fillList("detail-fields", [
+      ["Title", value(doc.escalation_title)],
+      ["Escalation ID", value(doc.escalation_id)],
+      ["Escalation type", named("Escalation Type", doc.escalation_type)],
+      ["Organisational level", doc.organizational_level
+        ? escapeHtml(levelLabels[doc.organizational_level] || doc.organizational_level) : dash()],
+      ["Tier 1 risk type", named("Risk Type", doc.tier_1_risk_type)],
+      ["Tier 2 risk type", named("Risk Type", doc.tier_2_risk_type)],
+      ["Identified by", (doc.identified_by ? Consilium.Table.formatters.person(doc.identified_by) : value(doc.identified_by))],
+      ["Identified on", dateValue(doc.escalation_identification_date)],
+      ["Escalated on", dateValue(doc.escalation_date)],
+      ["Accountable executive", (doc.accountable_executive ? Consilium.Table.formatters.person(doc.accountable_executive) : value(doc.accountable_executive))],
+      ["Response owner", (doc.response_owner ? Consilium.Table.formatters.person(doc.response_owner) : value(doc.response_owner))],
+      ["Status", value(doc.status)],
+      ["Material entity impact", yesNo(doc.material_entity_impact)],
+      ["Risk appetite breach", yesNo(doc.risk_appetite_breach)],
+      ["Risk appetite reference", value(doc.risk_appetite_reference)],
+      ["Related risk reference", value(doc.related_risk_reference)],
+      ["Source policy violation", value(doc.source_policy_violation)],
+      ["Tracked externally in", value(doc.external_reference)],
+      ["Response template completed", yesNo(doc.response_template_completed)],
+      ["Template", value(doc.escalation_template)],
+      ["Retention class", named("Retention Class", doc.retention_class)],
+      ["Last updated", datetimeValue(doc.modified)]
+    ]);
+
+    fillList("detail-routing", [
+      ["Severity", doc.severity ? pill(doc.severity, SEVERITY_TONES[doc.severity] || "neutral") : dash()],
+      ["Severity set by", value(doc.severity_source)],
+      ["Escalation trigger", value(doc.escalation_trigger)],
+      ["Escalation matrix", value(doc.escalation_matrix)],
+      ["Rule that fired", value(doc.matched_matrix_rule)],
+      ["Systemic", yesNo(doc.systemic)],
+      /* Assignment by role or group: the queue the rule named, and whether
+         a member of it has taken the matter yet. */
+      ["Routed to role", value(doc.assigned_role)],
+      ["Routed to group", value(doc.assigned_group)],
+      ["Assigned by rule", value(doc.assignment_rule)],
+      ["Ownership taken", datetimeValue(doc.ownership_taken_on)]
+    ]);
+    loadDurations();
+
+    fillList("detail-sla", [
+      ["Time limit", value(doc.sla_definition)],
+      ["Threshold breached", doc.threshold_breached ? pill("Breached", "danger") : "No"],
+      ["Breaches recorded", value(doc.breach_count)],
+      ["Last breach", datetimeValue(doc.last_breach_on)],
+      ["Raised automatically", yesNo(doc.auto_escalated)],
+      ["Clock", doc.sla_clock
+        ? '<span id="sla-clock-detail">' + escapeHtml(doc.sla_clock) + "</span>"
+        : dash()]
+    ]);
+
+    /* The clock itself is Core's record and is readable only by some roles;
+       where it can be read, its target and state add to the summary. */
+    if (doc.sla_clock) {
+      Consilium.api.get("SLA Clock", doc.sla_clock)
+        .then(function (clock) {
+          if (!clock) return;
+          var node = document.getElementById("sla-clock-detail");
+          if (!node) return;
+          node.innerHTML = escapeHtml(clock.status || "") +
+            (clock.target_on ? " &middot; target " + datetimeValue(clock.target_on) : "") +
+            (clock.breached_on ? " &middot; breached " + datetimeValue(clock.breached_on) : "");
+        })
+        .catch(function () { /* the reference alone is still shown */ });
+    }
+  }
+
+  /* --------------------------- time in status --------------------------- */
+  /* Rebuilt on the server from the change log (`escalation.timing`), each
+     stretch judged against the Time In State target configured for its status.
+     The page shows what it is told; it judges nothing itself. */
+
+  var TIMING = null;
+  var OUTCOMES = {
+    no_target: ["No target", "neutral"],
+    within: ["Within target", "success"],
+    running: ["Running, within target", "info"],
+    warning: ["Near its target", "warning"],
+    breached: ["Past its target", "danger"]
+  };
+
+  function durationText(seconds) {
+    var s = Math.max(0, Math.round(seconds || 0));
+    var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+    if (d) return d + " d " + h + " h";
+    if (h) return h + " h " + m + " min";
+    return m + " min";
+  }
+
+  function hoursText(hours) {
+    if (hours === null || hours === undefined) return dash();
+    return escapeHtml((Math.round(hours * 10) / 10) + " h");
+  }
+
+  function outcomePill(code) {
+    var o = OUTCOMES[code] || [code, "neutral"];
+    return pill(o[0], o[1]);
+  }
+
+  /** A clock by reference, with what is known of it: used by the review rounds. */
+  function clockText(name) {
+    if (!name) return dash();
+    var clock = ((TIMING && TIMING.clocks) || []).filter(function (c) { return c.name === name; })[0];
+    if (!clock) return '<span class="cns-mono">' + escapeHtml(name) + "</span>";
+    return escapeHtml(clock.definition_title || clock.definition) + " &middot; " + escapeHtml(clock.status || "") +
+      (clock.target_on ? " &middot; target " + datetimeValue(clock.target_on) : "");
+  }
+
+  function renderDurations(t) {
+    var body = document.getElementById("durations-body");
+    var totals = (t.status && t.status.totals) || [];
+    var stretches = (t.status && t.status.stretches) || [];
+    var html = "";
+    if (!totals.length) {
+      body.innerHTML = '<p class="cns-text-muted cns-text-sm">No status history is recorded for this matter.</p>';
+      return;
+    }
+    html += '<div class="cns-table-wrap"><table class="cns-table cns-table--compact">' +
+      "<caption class=\"cns-visually-hidden\">Total time in each status</caption>" +
+      '<thead><tr><th scope="col">Status</th><th scope="col" class="cns-num">Time spent</th>' +
+      '<th scope="col" class="cns-num">Times entered</th><th scope="col" class="cns-num">Target per stay</th>' +
+      '<th scope="col">Against target</th></tr></thead><tbody>' +
+      totals.map(function (row) {
+        var judged = !row.definition ? outcomePill("no_target")
+          : (row.breaches ? pill(row.breaches + " past target", "danger") : pill("Within target", "success"));
+        return "<tr><td>" + value(row.value) + (row.is_current ? " " + pill("Now", "info") : "") + "</td>" +
+          '<td class="cns-num">' + escapeHtml(durationText(row.seconds)) + "</td>" +
+          '<td class="cns-num">' + escapeHtml(String(row.visits)) + "</td>" +
+          '<td class="cns-num">' + hoursText(row.target_hours) + "</td>" +
+          "<td>" + judged + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+
+    html += '<h3 class="cns-card-title" style="margin-top: var(--cns-space-4);">Each stay</h3>' +
+      '<ul class="cns-timeline">' + stretches.map(function (row) {
+        return "<li><strong>" + value(row.value) + "</strong> " + outcomePill(row.outcome) + " " +
+          escapeHtml(durationText(row.seconds)) +
+          (row.definition ? '<span class="cns-text-muted cns-text-sm"> &middot; target ' + hoursText(row.target_hours) +
+            (row.target_on ? ", due " + datetimeValue(row.target_on) : "") + "</span>" : "") +
+          '<span class="cns-timeline-meta">' + datetimeValue(row.started_on) + " &rarr; " +
+          (row.ended_on ? datetimeValue(row.ended_on) : "now") + "</span></li>";
+      }).join("") + "</ul>";
+
+    var others = (t.clocks || []).filter(function (c) { return c.state_field !== t.status.field; });
+    if (others.length) {
+      html += '<h3 class="cns-card-title" style="margin-top: var(--cns-space-4);">Other service levels on this matter</h3>' +
+        '<ul class="cns-timeline">' + others.map(function (c) {
+          return "<li><strong>" + escapeHtml(c.definition_title || c.definition) + "</strong> " +
+            (c.breached_on ? pill("Past its target", "danger") : (c.is_open ? pill("Running", "info") : pill("Met", "success"))) +
+            '<span class="cns-text-muted cns-text-sm"> &middot; target ' + hoursText(c.target_hours) +
+            (c.target_on ? ", due " + datetimeValue(c.target_on) : "") + "</span>" +
+            '<span class="cns-timeline-meta">' + datetimeValue(c.started_on) + " &rarr; " +
+            (c.stopped_on ? datetimeValue(c.stopped_on) : "now") + "</span></li>";
+        }).join("") + "</ul>";
+    }
+    body.innerHTML = html;
+  }
+
+  function loadDurations() {
+    return Consilium.api.call(ACT + "timing.get_time_in_state", { escalation_matter: MATTER }, { trackLoading: false })
+      .then(function (t) {
+        TIMING = t;
+        renderDurations(t);
+        if (loaded.reviews && loaders.reviews) loaders.reviews();
+        return t;
+      })
+      .catch(function (error) {
+        errorState("durations-body", "Time in each status could not be read", error);
+      });
+  }
+
+  /* -------------------------- impact and forums ------------------------ */
+
+  loaders.impact = function () {
+    recordReady.then(function (doc) {
+      Consilium.Table.create({
+        target: "#entities-table",
+        data: doc.impacted_entities || [],
+        caption: "Entities impacted by this matter",
+        storageKey: "escalation-entities",
+        rowKey: "name",
+        pageSize: 10,
+        compact: true,
+        searchFields: ["entity_type", "entity_value", "impact_note"],
+        searchPlaceholder: "Search impacted entities",
+        defaultSort: { field: "entity_type", order: "asc" },
+        emptyTitle: "No impacted entity recorded",
+        emptyMessage: "The matter does not yet name the entities it touches.",
+        columns: [
+          { field: "entity_type", label: "Kind", sortable: true, formatter: function (v) { return value(v); } },
+          { field: "entity_value", label: "Entity", sortable: true,
+            formatter: function (v, row) { return named(row.entity_doctype, v); } },
+          { field: "impact_note", label: "Impact", formatter: f.truncate(120) }
+        ]
+      });
+
+      Consilium.Table.create({
+        target: "#forums-table",
+        data: doc.governance_forums || [],
+        caption: "Forums on this matter's pathway",
+        storageKey: "escalation-forums",
+        rowKey: "name",
+        pageSize: 10,
+        compact: true,
+        searchable: false,
+        defaultSort: { field: "role_in_escalation", order: "asc" },
+        emptyTitle: "No forum on the pathway",
+        emptyMessage: "No governance forum has been named for this matter.",
+        columns: [
+          { field: "governance_forum", label: "Forum", sortable: true, formatter: forumLink },
+          { field: "role_in_escalation", label: "Role", sortable: true,
+            formatter: f.status({ Decision: "primary", Oversight: "info", Informed: "neutral" }) },
+          { field: "escalation_threshold", label: "Threshold", formatter: f.truncate(80) },
+          { field: "escalation_protocol", label: "Protocol", formatter: f.truncate(80) },
+          { field: "proposed_by_rule", label: "Proposed by rule", formatter: function (v) { return value(v); } },
+          { field: "notified_on", label: "Notified", sortable: true, formatter: f.datetime },
+          { field: "decision_motion", label: "Decision motion", formatter: function (v) { return value(v); } }
+        ]
+      });
+    }).catch(function (error) {
+      errorState("entities-table", "The matter could not be read", error);
+    });
+    workbenchReady.then(renderParticipants, function (error) {
+      errorState("participants-body", "The forum participants could not be read", error);
+    });
+  };
+
+  /* ------------------------------ response ----------------------------- */
+
+  loaders.response = function () {
+    workbenchReady.then(renderResponseTables, renderResponseTables);
+  };
+
+  function renderResponseTables() {
+    Consilium.Table.create({
+      target: "#plans-table",
+      doctype: "Action Plan",
+      caption: "Action plans for this matter",
+      storageKey: "escalation-plans",
+      pageSize: 10,
+      compact: true,
+      filters: [["escalation_matter", "=", MATTER]],
+      searchFields: ["action_plan_name", "name", "description"],
+      searchPlaceholder: "Search action plans",
+      defaultSort: { field: "end_date", order: "asc" },
+      extraFields: ["is_open"],
+      emptyTitle: "No action plan",
+      emptyMessage: "No action plan has been recorded against this matter.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono" },
+        { field: "action_plan_name", label: "Plan", sortable: true, formatter: f.truncate(60) },
+        { field: "status", label: "Status", sortable: true,
+          formatter: f.status({ Draft: "neutral", Open: "warning", "In Progress": "info",
+                                Completed: "success", Cancelled: "neutral" }) },
+        { field: "owner_user", label: "Owner", sortable: true, formatter: Consilium.Table.formatters.person },
+        { field: "accountable_executive", label: "Accountable", sortable: true,
+          formatter: Consilium.Table.formatters.person },
+        { field: "start_date", label: "Starts", sortable: true, formatter: f.date },
+        { field: "end_date", label: "Due", sortable: true,
+          formatter: function (v, row) {
+            if (!v) return dash();
+            var due = new Date(String(v) + "T00:00:00");
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return dateValue(v) + (row.is_open && due < today ? " " + pill("Overdue", "danger") : "");
+          } },
+        { field: "completed_on", label: "Completed", sortable: true, formatter: f.date },
+        { label: "Your action", formatter: function (v, row) {
+            var plan = planById(row.name);
+            return plan && plan.can_update
+              ? '<button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" data-plan-action="' +
+                escapeAttr(row.name) + '">Update</button>'
+              : "";
+          } }
+      ]
+    });
+
+    Consilium.Table.create({
+      target: "#acceptances-table",
+      doctype: "Risk Acceptance",
+      caption: "Risk acceptances for this matter",
+      storageKey: "escalation-acceptances",
+      pageSize: 10,
+      compact: true,
+      filters: [["escalation_matter", "=", MATTER]],
+      searchFields: ["risk_acceptance_name", "name", "rationale"],
+      searchPlaceholder: "Search risk acceptances",
+      defaultSort: { field: "start_date", order: "desc" },
+      emptyTitle: "No risk acceptance",
+      emptyMessage: "The risk in this matter has not been formally accepted.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono" },
+        { field: "risk_acceptance_name", label: "Acceptance", sortable: true, formatter: f.truncate(60) },
+        { field: "status", label: "Status", sortable: true,
+          formatter: f.status({ Draft: "neutral", "Pending Approval": "warning", Approved: "success",
+                                Expired: "danger", Withdrawn: "neutral" }) },
+        { field: "accountable_executive", label: "Accountable", sortable: true,
+          formatter: Consilium.Table.formatters.person },
+        { field: "approved_by", label: "Approved by", sortable: true, formatter: Consilium.Table.formatters.person },
+        { field: "start_date", label: "From", sortable: true, formatter: f.date },
+        { field: "end_date", label: "To", sortable: true, formatter: f.date },
+        { field: "next_reassessment_on", label: "Reassess by", sortable: true, formatter: f.date },
+        { field: "rationale", label: "Rationale", formatter: f.truncate(80) },
+        { label: "Approval", formatter: function (v, row) {
+            var acc = acceptanceById(row.name);
+            if (!acc) return "";
+            var out = [];
+            if (acc.decision && acc.decision.is_open) {
+              out.push('<span class="cns-text-sm">Waiting on ' + Consilium.Table.formatters.person(acc.decision.assigned_to) + "</span>");
+            }
+            if (acc.can_decide) {
+              out.push('<button type="button" class="cns-btn cns-btn-primary cns-btn-sm" data-acc-action="decide" data-acc="' +
+                escapeAttr(row.name) + '">Decide</button>');
+            }
+            if (acc.can_request) {
+              out.push('<button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" data-acc-action="request" data-acc="' +
+                escapeAttr(row.name) + '">Request approval</button>');
+            }
+            return out.join(" ");
+          } }
+      ]
+    });
+  }
+
+  document.getElementById("panel-response").addEventListener("click", function (event) {
+    var planButton = event.target.closest("[data-plan-action]");
+    if (planButton) { panelPlan(planById(planButton.getAttribute("data-plan-action"))); return; }
+    var accButton = event.target.closest("[data-acc-action]");
+    if (!accButton) return;
+    var which = accButton.getAttribute("data-acc");
+    if (accButton.getAttribute("data-acc-action") === "decide") panelDecide(which);
+    else panelRequest(which);
+  });
+
+  /* ------------------------------ reviews ------------------------------ */
+
+  loaders.reviews = function () {
+    recordReady.then(function (doc) {
+      Consilium.Table.create({
+        target: "#reviews-table",
+        data: doc.reviews || [],
+        caption: "Review rounds on this matter",
+        storageKey: "escalation-reviews",
+        rowKey: "name",
+        pageSize: 10,
+        compact: true,
+        searchFields: ["reviewer", "outcome", "comments"],
+        searchPlaceholder: "Search reviews",
+        defaultSort: { field: "round", order: "asc" },
+        emptyTitle: "No review round",
+        emptyMessage: "The matter has not been through a review round yet.",
+        columns: [
+          { field: "round", label: "Round", sortable: true, align: "end", formatter: f.number },
+          { field: "reviewer", label: "Reviewer", sortable: true, formatter: Consilium.Table.formatters.person },
+          { field: "review_line", label: "Line of defence", sortable: true,
+            formatter: function (v) { return v ? escapeHtml(defenceLabels[v] || v) : dash(); } },
+          { field: "outcome", label: "Outcome", sortable: true,
+            formatter: f.status({ Challenged: "warning", Accepted: "success", Escalated: "danger",
+                                  Returned: "info" }) },
+          { field: "received_on", label: "Received", sortable: true, formatter: f.datetime },
+          { field: "responded_on", label: "Responded", sortable: true, formatter: f.datetime },
+          { field: "comments", label: "Comments", formatter: f.truncate(100) },
+          { field: "sla_clock", label: "Challenge service level", formatter: function (v) { return clockText(v); } }
+        ]
+      });
+    }).catch(function (error) {
+      errorState("reviews-table", "The matter could not be read", error);
+    });
+  };
+
+  /* ------------------------------ closure ------------------------------ */
+
+  loaders.closure = function () {
+    var body = document.getElementById("closure-body");
+    Consilium.api
+      .list("Escalation Closure", {
+        fields: ["name"],
+        filters: [["escalation_matter", "=", MATTER]],
+        order_by: "creation desc",
+        limit_page_length: 5
+      })
+      .then(function (rows) {
+        if (!rows.length) {
+          body.innerHTML = '<div class="cns-state"><span class="cns-state-icon">' +
+            '<i class="bi bi-hourglass-split" aria-hidden="true"></i></span>' +
+            '<p class="cns-state-title">Not closed</p>' +
+            '<p class="cns-state-message">No closure has been recorded against this matter.</p></div>';
+          return;
+        }
+        /* The list gives the references; the full record carries the criteria. */
+        return Promise.all(rows.map(function (row) {
+          return Consilium.api.get("Escalation Closure", row.name);
+        })).then(function (closures) {
+          body.innerHTML = closures.filter(Boolean).map(function (c) {
+            var criteria = c.criteria_met || [];
+            return '<dl class="cns-dl">' +
+              "<div><dt>Reference</dt><dd class=\"cns-mono\">" + escapeHtml(c.name) + "</dd></div>" +
+              "<div><dt>How it ended</dt><dd>" + value(c.closure_type) + "</dd></div>" +
+              "<div><dt>Approved by</dt><dd>" + value(c.approved_by) + "</dd></div>" +
+              "<div><dt>Approved on</dt><dd>" + datetimeValue(c.approved_on) + "</dd></div>" +
+              "<div><dt>Tracked externally in</dt><dd>" + value(c.external_reference) + "</dd></div>" +
+              "<div><dt>Evidence held</dt><dd>" + (c.evidence ? "Yes" : "No") + "</dd></div>" +
+              "</dl>" +
+              '<p class="cns-eyebrow" style="margin-top: var(--cns-space-4);">Summary</p>' +
+              '<p class="cns-prose">' + value(c.closure_summary) + "</p>" +
+              '<p class="cns-eyebrow" style="margin-top: var(--cns-space-4);">Closure criteria</p>' +
+              (criteria.length
+                ? '<div class="cns-table-wrap"><table class="cns-table cns-table--compact">' +
+                  '<caption class="cns-visually-hidden">Closure criteria for ' + escapeHtml(c.name) + "</caption>" +
+                  '<thead><tr><th scope="col">Criterion</th><th scope="col">Required</th>' +
+                  '<th scope="col">Met</th><th scope="col">Evidence</th></tr></thead><tbody>' +
+                  criteria.map(function (row) {
+                    return "<tr><th scope=\"row\">" + escapeHtml(row.criterion || "") + "</th>" +
+                      "<td>" + yesNo(row.required) + "</td>" +
+                      "<td>" + (row.met ? pill("Met", "success")
+                                        : row.required ? pill("Not met", "danger") : "No") + "</td>" +
+                      "<td>" + value(row.evidence_note) + "</td></tr>";
+                  }).join("") + "</tbody></table></div>"
+                : '<p class="cns-text-muted">No criteria were recorded with this closure.</p>');
+          }).join('<hr style="margin: var(--cns-space-5) 0;">');
+        });
+      })
+      .catch(function (error) {
+        errorState("closure-body", "The closure could not be read", error);
+      });
+  };
+
+  /* ------------------------------ history ------------------------------ */
+
+  loaders.history = function () {
+    loadRevisions();
+    /* One chronological history (E4-S2): field changes, workflow moves,
+       comments, attachments and the notifications sent about this matter,
+       read through Core's `evidence.record_history` (which applies the
+       sensitive-matter restriction like every other read). */
+    Consilium.api.call("consilium.consilium_core.evidence.record_history",
+      { doctype: "Escalation Matter", name: MATTER })
+      .then(function (h) {
+        var list = document.getElementById("change-list");
+        list.innerHTML = h.entries.length ? h.entries.map(historyEntry).join("")
+          : '<li class="cns-text-muted">Nothing has been recorded against this record yet.</li>';
+      })
+      .catch(function () {
+        document.getElementById("change-list").innerHTML =
+          '<li class="cns-text-muted">The history is not available to you.</li>';
+      });
+  };
+
+  var HISTORY_ICONS = { change: "pencil", workflow: "arrow-right-circle", comment: "chat-left-text",
+                        attachment: "paperclip", info: "info-circle", notification: "envelope" };
+
+  function historyEntry(e) {
+    var meta = [];
+    if (e.kind === "notification") {
+      meta.push("To " + escapeHtml(e.recipient || "—"));
+      if (e.channel) meta.push(escapeHtml(e.channel));
+      if (e.status) meta.push(escapeHtml(e.status));
+      if (e.mail_status && e.mail_status !== e.status) meta.push("mail: " + escapeHtml(e.mail_status));
+    } else if (e.by) {
+      meta.push(escapeHtml(e.by));
+    }
+    meta.push(escapeHtml(Consilium.util.formatDate(e.on, true)));
+    return '<li><i class="bi bi-' + (HISTORY_ICONS[e.kind] || "dot") + '" aria-hidden="true"></i> ' +
+      escapeHtml(e.summary || "") + '<span class="cns-timeline-meta">' + meta.join(" &middot; ") + "</span></li>";
+  }
+
+  /* ============================== the work ============================== */
+  /* The server's workbench says what this viewer may do now; each action is a
+     thin POST to `consilium.escalation.*`, which checks the stage and the
+     viewer's standing again on the way in. Nothing here decides permission. */
+
+  var ACT = "consilium.escalation.";
+  var WB = null;
+
+  var STAGE_TEXT = {
+    working: "The matter is being worked by the first line.",
+    in_review: "The matter is with the second line for review; the first line can still report plan progress.",
+    at_rest: "The matter is closed."
+  };
+
+  var ACTIONS = [
+    { key: "move_status", icon: "bi-arrow-left-right", open: function () { panelMove(); } },
+    { key: "record_review", icon: "bi-chat-square-text", open: function () { panelReview(); } },
+    { key: "add_action_plan", icon: "bi-list-check", open: function () { panelPlan(null); } },
+    { key: "update_action_plan", icon: "bi-pencil-square", open: function () { panelPickPlan(); } },
+    { key: "add_risk_acceptance", icon: "bi-shield-plus", open: function () { panelAcceptance(); } },
+    { key: "request_approval", icon: "bi-send", open: function () { panelRequest(); } },
+    { key: "decide_approval", icon: "bi-check2-square", open: function () { panelDecide(); } },
+    { key: "change_pathway", icon: "bi-signpost-split", open: function () { panelPathway(); } },
+    { key: "take_ownership", icon: "bi-person-check", open: function () { panelTake(); } },
+    { key: "record_closure", icon: "bi-clipboard-check", open: function () { panelClosure(); } },
+    { key: "close", icon: "bi-lock", open: function () { panelClose(); } }
+  ];
+
+  function $(id) { return document.getElementById(id); }
+  function planById(name) { return ((WB && WB.plans) || []).filter(function (p) { return p.name === name; })[0]; }
+  function acceptanceById(name) {
+    return ((WB && WB.acceptances) || []).filter(function (a) { return a.name === name; })[0];
+  }
+  function actionLabel(key) { return (WB && WB.action_labels && WB.action_labels[key]) || key; }
+  function peopleOptions() {
+    return ((WB && WB.people) || []).map(function (p) { return { value: p.name, label: p.full_name || p.name }; });
+  }
+  function required(scope, fieldname) {
+    return ((WB.template_requirements || {})[scope] || []).some(function (r) { return r.fieldname === fieldname; });
+  }
+
+  function loadWorkbench() {
+    return Consilium.api.call(ACT + "resolution.get_matter_workbench", { escalation_matter: MATTER })
+      .then(function (wb) { WB = wb; renderActions(); return wb; });
+  }
+  var workbenchReady = loadWorkbench();
+  workbenchReady.catch(function () { $("read-only-note").hidden = false; });
+
+  function renderActions() {
+    var open = ACTIONS.filter(function (a) { return WB.actions[a.key]; });
+    $("actions-card").hidden = !open.length;
+    $("read-only-note").hidden = !!open.length;
+    $("actions-subtitle").textContent = (STAGE_TEXT[WB.matter.stage] || "") +
+      " Only the actions open to you at this stage are offered.";
+    $("action-buttons").innerHTML = open.map(function (a) {
+      var tone = a.key === "close" ? "cns-btn-danger" : "cns-btn-secondary";
+      return '<button type="button" class="cns-btn ' + tone + '" data-action="' + escapeAttr(a.key) + '">' +
+        '<i class="bi ' + a.icon + '" aria-hidden="true"></i> ' + escapeHtml(actionLabel(a.key)) + "</button>";
+    }).join("");
+    $("action-panel").innerHTML = "";
+  }
+
+  $("action-buttons").addEventListener("click", function (event) {
+    var button = event.target.closest("[data-action]");
+    if (!button) return;
+    var action = ACTIONS.filter(function (a) { return a.key === button.getAttribute("data-action"); })[0];
+    if (action) action.open();
+  });
+
+  /** After an action: redraw from the server's answer and re-read the record. */
+  function refreshAll() {
+    recordReady = fetchRecord();
+    loaded = {};
+    var current = tabs.filter(function (t) { return t.getAttribute("aria-selected") === "true"; })[0];
+    if (current) {
+      var key = current.id.replace("tab-", "");
+      if (loaders[key]) { loaded[key] = true; loaders[key](); }
+    }
+  }
+
+  function act(method, args, success) {
+    var buttons = document.querySelectorAll("#actions-card button, [data-plan-action], [data-acc-action], [data-revert]");
+    Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+    return Consilium.api.call(ACT + method, args, { method: "POST" })
+      .then(function (wb) {
+        WB = wb;
+        renderActions();
+        refreshAll();
+        $("outcome").innerHTML = '<div class="cns-alert cns-status-success"><i class="bi bi-check-circle" aria-hidden="true"></i><div>' +
+          escapeHtml(success) + "</div></div>";
+        Consilium.toast.success(success, { title: "Recorded" });
+        Consilium.announce(success);
+        return wb;
+      })
+      .catch(function (error) {
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+        Consilium.toast.error(error.message || "The server refused the action.", { title: "Not done" });
+        throw error;
+      });
+  }
+
+  /* ---------------------------- small forms ---------------------------- */
+
+  function optionTags(options, selected, placeholder) {
+    return (placeholder !== undefined ? '<option value="">' + escapeHtml(placeholder) + "</option>" : "") +
+      options.map(function (o) {
+        var v = typeof o === "string" ? o : o.value;
+        var l = typeof o === "string" ? o : o.label;
+        return '<option value="' + escapeAttr(v) + '"' + (String(v) === String(selected || "") ? " selected" : "") + ">" +
+          escapeHtml(l) + "</option>";
+      }).join("");
+  }
+
+  /** One field. `spec`: name, label, type, options, required, help, value. */
+  function fieldHtml(spec) {
+    var id = "act-" + spec.name;
+    var star = spec.required ? '<span class="cns-required" aria-hidden="true">*</span>' : "";
+    var help = spec.help ? '<span class="cns-help" id="' + id + '-help">' + escapeHtml(spec.help) + "</span>" : "";
+    var described = spec.help ? ' aria-describedby="' + id + '-help"' : "";
+    var req = spec.required ? " required" : "";
+    var value = spec.value === null || spec.value === undefined ? "" : spec.value;
+    var control;
+    if (spec.type === "textarea") {
+      control = '<textarea class="cns-textarea" id="' + id + '" rows="' + (spec.rows || 3) + '"' + req + described + ">" +
+        escapeHtml(value) + "</textarea>";
+    } else if (spec.type === "select") {
+      control = '<select class="cns-select" id="' + id + '"' + req + described + ">" +
+        optionTags(spec.options || [], value, spec.placeholder === undefined ? "Choose" : spec.placeholder) + "</select>";
+    } else if (spec.type === "checkbox") {
+      return '<div class="cns-field"><div class="cns-check"><input type="checkbox" id="' + id + '"' +
+        (value ? " checked" : "") + described + '><label for="' + id + '">' + escapeHtml(spec.label) + star +
+        "</label></div>" + help + "</div>";
+    } else if (spec.type === "checkboxes") {
+      var chosen = value || [];
+      return '<fieldset class="cns-field" id="' + id + '"><legend class="cns-label">' + escapeHtml(spec.label) + star +
+        "</legend>" + (spec.options || []).map(function (o, i) {
+          return '<div class="cns-check"><input type="checkbox" id="' + id + "-" + i + '" value="' + escapeAttr(o.value) + '"' +
+            (chosen.indexOf(o.value) !== -1 ? " checked" : "") + '><label for="' + id + "-" + i + '">' +
+            escapeHtml(o.label) + "</label></div>";
+        }).join("") + help + "</fieldset>";
+    } else {
+      control = '<input class="cns-input" type="' + (spec.type || "text") + '" id="' + id + '" value="' +
+        escapeAttr(value) + '"' + req + described + (spec.type === "number" ? ' min="0"' : "") + ">";
+    }
+    return '<div class="cns-field"><label class="cns-label" for="' + id + '">' + escapeHtml(spec.label) + star +
+      "</label>" + control + help + "</div>";
+  }
+
+  /** Show or clear a field's error. Returns true when the field is valid. */
+  function setError(node, message) {
+    var wrapper = node.closest(".cns-field");
+    var existing = wrapper.querySelector(".cns-error-text");
+    if (message) {
+      node.setAttribute("aria-invalid", "true");
+      if (!existing) {
+        existing = document.createElement("span");
+        existing.className = "cns-error-text";
+        existing.id = node.id + "-error";
+        wrapper.appendChild(existing);
+      }
+      existing.textContent = message;
+      return false;
+    }
+    node.removeAttribute("aria-invalid");
+    if (existing) existing.remove();
+    return true;
+  }
+
+  function readFields(specs) {
+    var values = {}, ok = true, firstBad = null;
+    specs.forEach(function (spec) {
+      var node = $("act-" + spec.name);
+      if (!node) return;
+      var v;
+      if (spec.type === "checkbox") v = node.checked ? 1 : 0;
+      else if (spec.type === "checkboxes") {
+        v = Array.prototype.map.call(node.querySelectorAll("input:checked"), function (c) { return c.value; });
+      } else v = (node.value || "").trim();
+      var empty = spec.type === "checkboxes" ? !v.length : (spec.type === "checkbox" ? !v : !v);
+      var bad = spec.required && empty;
+      if (spec.type !== "checkboxes" && !setError(node, bad ? spec.label + " is required." : null) && !firstBad) firstBad = node;
+      if (spec.type === "checkboxes" && bad) { ok = false; if (!firstBad) firstBad = node.querySelector("input") || node; }
+      if (bad) ok = false;
+      values[spec.name] = v;
+    });
+    if (firstBad) firstBad.focus();
+    return ok ? values : null;
+  }
+
+  /**
+   * Open a form in the action panel.
+   * opts: title, intro, specs, extra (html after the fields), submit, danger, onSubmit(values), afterRender()
+   */
+  function openPanel(opts) {
+    var panel = $("action-panel");
+    panel.innerHTML =
+      '<form class="cns-fieldset" id="act-form" novalidate style="margin-top: var(--cns-space-4);">' +
+      "<legend>" + escapeHtml(opts.title) + "</legend>" +
+      (opts.intro ? '<div class="cns-alert cns-status-info"><i class="bi bi-info-circle" aria-hidden="true"></i><div>' +
+        opts.intro + "</div></div>" : "") +
+      '<div class="cns-form-grid">' + (opts.specs || []).filter(function (s) { return s.type !== "textarea" && s.type !== "checkboxes"; })
+        .map(fieldHtml).join("") + "</div>" +
+      (opts.specs || []).filter(function (s) { return s.type === "textarea" || s.type === "checkboxes"; }).map(fieldHtml).join("") +
+      (opts.extra || "") +
+      '<div class="cns-form-actions">' +
+      (opts.submit ? '<button type="submit" class="cns-btn ' + (opts.danger ? "cns-btn-danger" : "cns-btn-primary") + '">' +
+        escapeHtml(opts.submit) + "</button>" : "") +
+      '<button type="button" class="cns-btn cns-btn-ghost" id="act-cancel">Cancel</button></div></form>';
+    $("actions-card").hidden = false;
+    $("act-cancel").addEventListener("click", function () { panel.innerHTML = ""; });
+    $("act-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      var values = readFields(opts.specs || []);
+      if (!values) return;
+      var result = opts.onSubmit(values);
+      if (result && result.catch) result.catch(function () { /* the toast has said why */ });
+    });
+    if (opts.afterRender) opts.afterRender();
+    var first = panel.querySelector("input, select, textarea, button[type=submit]");
+    if (first) first.focus();
+    $("actions-card").scrollIntoView({ block: "start" });
+  }
+
+  function notice(title, message) {
+    $("action-panel").innerHTML = '<div class="cns-alert cns-status-warning" style="margin-top: var(--cns-space-4);">' +
+      '<i class="bi bi-exclamation-circle" aria-hidden="true"></i><div><strong>' + escapeHtml(title) + "</strong> " +
+      escapeHtml(message) + "</div></div>";
+  }
+
+  /* ------------------------------ status ------------------------------- */
+
+  function panelMove() {
+    var reviewing = WB.matter.stage === "in_review";
+    openPanel({
+      title: actionLabel("move_status"),
+      intro: reviewing
+        ? "Handing the matter back returns it to the first line to continue the work."
+        : "A state marked <em>with the second line</em> sends the matter for review; only a reviewer can hand it back. " +
+          "Closing is a separate action, with its own checks.",
+      specs: [{ name: "status", label: "Move to", type: "select", required: true,
+        options: WB.status_targets.map(function (t) {
+          return { value: t.value, label: t.value + (t.requires_review ? " (with the second line)" : "") };
+        }) }],
+      submit: "Move the matter",
+      onSubmit: function (v) {
+        return act("resolution.move_matter_status", { escalation_matter: MATTER, status: v.status },
+          "The matter is now " + v.status + ".");
+      }
+    });
+  }
+
+  /* ------------------------------ ownership --------------------------- */
+
+  function panelTake() {
+    var m = WB.matter;
+    var queue = [m.assigned_role ? "role " + escapeHtml(m.assigned_role) : "",
+                 m.assigned_group ? "group " + escapeHtml(m.assigned_group) : ""].filter(Boolean).join(" or ");
+    openPanel({
+      title: actionLabel("take_ownership"),
+      intro: "The matrix routed this matter to " + queue + ". Taking it makes you its response owner" +
+        (m.response_owner ? ", in place of " + escapeHtml(m.response_owner) : "") +
+        ", and takes it out of the queue for everyone else.",
+      specs: [],
+      submit: "Take ownership",
+      onSubmit: function () {
+        return act("assignment.take_ownership", { escalation_matter: MATTER }, "You now own the response to this matter.");
+      }
+    });
+  }
+
+  /* ------------------------------ reviews ------------------------------ */
+
+  function panelReview() {
+    openPanel({
+      title: actionLabel("record_review"),
+      intro: "Record the second line's challenge. The reasoning is kept with the round; a round opened for you " +
+        "and not yet answered is completed, otherwise a new round is added.",
+      specs: [
+        { name: "outcome", label: "Outcome", type: "select", required: true, options: WB.review_outcomes },
+        { name: "review_line", label: "Line of defence", type: "select", placeholder: "Not stated",
+          options: (WB.lines_of_defence || []).map(function (l) { return { value: l.name, label: l.line_of_defence_name || l.name }; }) },
+        { name: "comments", label: "Reasoning", type: "textarea", required: true, rows: 4,
+          help: "What was challenged, what evidence was seen, and what is expected next." }
+      ],
+      submit: "Record the round",
+      onSubmit: function (v) {
+        return act("resolution.record_review_round",
+          { escalation_matter: MATTER, outcome: v.outcome, review_line: v.review_line, comments: v.comments },
+          "Review round recorded: " + v.outcome + ".");
+      }
+    });
+  }
+
+  /* ---------------------------- action plans --------------------------- */
+
+  function forumChoices() {
+    return (WB.pathway || []).map(function (row) {
+      return { value: row.governance_forum, label: Consilium.reference.label("Governance Forum", row.governance_forum) };
+    });
+  }
+
+  function panelPickPlan() {
+    var plans = (WB.plans || []).filter(function (p) { return p.can_update; });
+    if (plans.length === 1) { panelPlan(plans[0]); return; }
+    if (!plans.length) { notice("No plan can be updated.", "Completed and cancelled plans are closed."); return; }
+    openPanel({
+      title: actionLabel("update_action_plan"),
+      specs: [{ name: "plan", label: "Plan", type: "select", required: true,
+        options: plans.map(function (p) { return { value: p.name, label: p.action_plan_name + " (" + p.status + ")" }; }) }],
+      submit: "Open the plan",
+      onSubmit: function (v) { panelPlan(planById(v.plan)); }
+    });
+  }
+
+  function panelPlan(plan) {
+    if (plan && !plan.can_update) return;
+    var scope = "Action Plan";
+    var m = WB.matter;
+    var specs = [
+      { name: "action_plan_name", label: "Plan", type: "text", required: true, value: plan && plan.action_plan_name },
+      { name: "start_date", label: "Starts", type: "date", required: true, value: plan && plan.start_date },
+      { name: "end_date", label: "Due", type: "date", required: true, value: plan && plan.end_date },
+      { name: "accountable_executive", label: "Accountable executive", type: "select", required: true,
+        options: peopleOptions(), value: plan ? plan.accountable_executive : m.accountable_executive },
+      { name: "owner_user", label: "Owner", type: "select", required: true, options: peopleOptions(),
+        value: plan ? plan.owner_user : m.response_owner }
+    ];
+    if (plan) specs.push({ name: "status", label: "Status", type: "select", required: true,
+                           options: WB.plan_statuses, value: plan.status, placeholder: undefined });
+    specs.push({ name: "description", label: "What will be done", type: "textarea", rows: 3,
+                 required: required(scope, "description"), value: plan && plan.description });
+    if (forumChoices().length) {
+      specs.push({ name: "governance_forums", label: "Forums overseeing the plan", type: "checkboxes",
+                   options: forumChoices(), required: required(scope, "governance_forums"),
+                   value: plan ? plan.governance_forums : [] });
+    }
+    openPanel({
+      title: plan ? "Update " + plan.action_plan_name : actionLabel("add_action_plan"),
+      intro: (WB.template_requirements[scope] || []).length
+        ? "The action-plan template for this type and severity requires: " +
+          escapeHtml(WB.template_requirements[scope].map(function (r) { return r.label; }).join(", ")) + "."
+        : "",
+      specs: specs,
+      submit: plan ? "Save the plan" : "Add the plan",
+      onSubmit: function (v) {
+        return plan
+          ? act("resolution.update_action_plan", { action_plan: plan.name, values: v }, "Action plan updated.")
+          : act("resolution.add_action_plan", { escalation_matter: MATTER, values: v }, "Action plan added.");
+      }
+    });
+  }
+
+  /* --------------------------- risk acceptance ------------------------- */
+
+  function panelAcceptance() {
+    var scope = "Risk Acceptance";
+    var specs = [
+      { name: "risk_acceptance_name", label: "Acceptance", type: "text", required: true },
+      { name: "accountable_executive", label: "Accountable executive", type: "select", required: true,
+        options: peopleOptions(), value: WB.matter.accountable_executive },
+      { name: "start_date", label: "From", type: "date", required: true },
+      { name: "end_date", label: "To", type: "date", required: true },
+      { name: "reassessment_frequency_months", label: "Reassess every (months)", type: "number",
+        required: required(scope, "reassessment_frequency_months") },
+      { name: "external_acceptance_id", label: "Reference elsewhere", type: "text",
+        required: required(scope, "external_acceptance_id") },
+      { name: "rationale", label: "Why the risk is carried rather than treated", type: "textarea", rows: 4, required: true }
+    ];
+    if (forumChoices().length) {
+      specs.push({ name: "governance_forums", label: "Forums the acceptance is reported to", type: "checkboxes",
+                   options: forumChoices(), required: required(scope, "governance_forums") });
+    }
+    openPanel({
+      title: actionLabel("add_risk_acceptance"),
+      intro: "The acceptance has no effect until it is approved. Propose it here, then request approval from a named approver." +
+        ((WB.template_requirements[scope] || []).length
+          ? " The template for this type and severity also requires: " +
+            escapeHtml(WB.template_requirements[scope].map(function (r) { return r.label; }).join(", ")) + "."
+          : ""),
+      specs: specs,
+      submit: "Propose the acceptance",
+      onSubmit: function (v) {
+        return act("approvals.add_risk_acceptance", { escalation_matter: MATTER, values: v },
+          "Risk acceptance proposed. It has no effect until approved.");
+      }
+    });
+  }
+
+  function panelRequest(which) {
+    var open = (WB.acceptances || []).filter(function (a) { return a.can_request; });
+    if (!open.length) { notice("Nothing to send.", "No acceptance is with its author."); return; }
+    var chosen = acceptanceById(which) || open[0];
+    var approvers = (WB.approvers || []).filter(function (p) {
+      return p.name !== user && p.name !== chosen.accountable_executive;
+    }).map(function (p) { return { value: p.name, label: p.full_name || p.name }; });
+    openPanel({
+      title: actionLabel("request_approval"),
+      intro: "The approver must be independent of you and of the acceptance's accountable executive. " +
+        "They decide it from this page; until then it has no effect.",
+      specs: [
+        { name: "risk_acceptance", label: "Acceptance", type: "select", required: true, value: chosen.name,
+          options: open.map(function (a) { return { value: a.name, label: a.risk_acceptance_name + " (" + a.name + ")" }; }) },
+        { name: "approver", label: "Approver", type: "select", required: true, options: approvers }
+      ],
+      submit: "Request approval",
+      onSubmit: function (v) {
+        return act("approvals.request_risk_acceptance_approval",
+          { risk_acceptance: v.risk_acceptance, approver: v.approver }, "Approval requested.");
+      },
+      afterRender: function () {
+        $("act-risk_acceptance").addEventListener("change", function () { panelRequest(this.value); });
+      }
+    });
+  }
+
+  function panelDecide(which) {
+    var open = (WB.acceptances || []).filter(function (a) { return a.can_decide; });
+    if (!open.length) { notice("Nothing to decide.", "No acceptance is waiting on you."); return; }
+    var chosen = acceptanceById(which) || open[0];
+    var reasonNeeded = {};
+    (WB.decision_choices || []).forEach(function (c) { reasonNeeded[c.decision] = c.needs_reason; });
+    openPanel({
+      title: actionLabel("decide_approval"),
+      intro: "<strong>" + escapeHtml(chosen.risk_acceptance_name) + "</strong> &middot; " +
+        escapeHtml(Consilium.util.formatDate(chosen.start_date, false)) + " to " +
+        escapeHtml(Consilium.util.formatDate(chosen.end_date, false)) + " &middot; accountable: " +
+        Consilium.Table.formatters.person(chosen.accountable_executive) +
+        '<p class="cns-prose" style="margin-top: var(--cns-space-2);">' + escapeHtml(chosen.rationale || "") + "</p>" +
+        "An approval gives the acceptance effect. Any other decision returns it to its author, with your reason.",
+      specs: [
+        { name: "risk_acceptance", label: "Acceptance", type: "select", required: true, value: chosen.name,
+          options: open.map(function (a) { return { value: a.name, label: a.risk_acceptance_name + " (" + a.name + ")" }; }) },
+        { name: "decision", label: "Decision", type: "select", required: true,
+          options: (WB.decision_choices || []).map(function (c) { return c.decision; }) },
+        { name: "comments", label: "Reason", type: "textarea", rows: 3,
+          help: "Required when the decision returns the acceptance." }
+      ],
+      submit: "Record the decision",
+      onSubmit: function (v) {
+        if (reasonNeeded[v.decision] && !v.comments) {
+          setError($("act-comments"), "Give the reason for this decision.");
+          $("act-comments").focus();
+          return null;
+        }
+        return act("approvals.decide_risk_acceptance",
+          { risk_acceptance: v.risk_acceptance, decision: v.decision, comments: v.comments },
+          "Decision recorded: " + v.decision + ".");
+      },
+      afterRender: function () {
+        $("act-risk_acceptance").addEventListener("change", function () { panelDecide(this.value); });
+      }
+    });
+  }
+
+  /* ------------------------------ pathway ------------------------------ */
+
+  function panelPathway() {
+    var rows = (WB.pathway || []).map(function (r) {
+      return { governance_forum: r.governance_forum, role_in_escalation: r.role_in_escalation,
+               proposed_by_rule: r.proposed_by_rule };
+    });
+    var forumOptions = (WB.forums || []).map(function (f) { return { value: f.name, label: f.forum_name || f.name }; });
+
+    function rowsHtml() {
+      if (!rows.length) return '<p class="cns-text-muted">No forum on the pathway yet.</p>';
+      return '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><caption class="cns-visually-hidden">' +
+        "Forums on the pathway</caption><thead><tr><th scope=\"col\">Forum</th><th scope=\"col\">Role</th>" +
+        '<th scope="col">Proposed by</th><th scope="col"><span class="cns-visually-hidden">Remove</span></th></tr></thead><tbody>' +
+        rows.map(function (r, i) {
+          return "<tr><td><select class=\"cns-select\" data-row=\"" + i + "\" data-key=\"governance_forum\" aria-label=\"Forum\">" +
+            optionTags(forumOptions, r.governance_forum, "Choose a forum") + "</select></td>" +
+            "<td><select class=\"cns-select\" data-row=\"" + i + "\" data-key=\"role_in_escalation\" aria-label=\"Role\">" +
+            optionTags(WB.pathway_roles, r.role_in_escalation) + "</select></td>" +
+            "<td>" + (r.proposed_by_rule ? "Rule " + escapeHtml(r.proposed_by_rule) : "Added by a person") + "</td>" +
+            '<td><button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-remove="' + i + '">Remove</button></td></tr>';
+        }).join("") + "</tbody></table></div>";
+    }
+
+    openPanel({
+      title: actionLabel("change_pathway"),
+      intro: "Only active forums can be on a pathway. A forum the escalation matrix routes this matter to cannot be " +
+        "removed while its rule applies; change its role instead.",
+      extra: '<div id="pathway-rows">' + rowsHtml() + "</div>" +
+        '<div class="cns-btn-group" style="margin-top: var(--cns-space-3);">' +
+        '<button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" id="pathway-add"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add a forum</button>' +
+        '<button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" id="pathway-propose"><i class="bi bi-diagram-3" aria-hidden="true"></i> Add what the matrix proposes</button>' +
+        "</div>",
+      submit: "Save the pathway",
+      onSubmit: function () {
+        var chosen = rows.filter(function (r) { return r.governance_forum; });
+        return act("routing.set_pathway", { escalation_matter: MATTER, forums: chosen }, "Pathway saved.");
+      },
+      afterRender: function () {
+        var holder = $("pathway-rows");
+        function redraw() { holder.innerHTML = rowsHtml(); }
+        holder.addEventListener("change", function (event) {
+          var node = event.target;
+          if (node.hasAttribute("data-row")) rows[+node.getAttribute("data-row")][node.getAttribute("data-key")] = node.value;
+        });
+        holder.addEventListener("click", function (event) {
+          var node = event.target.closest("[data-remove]");
+          if (!node) return;
+          rows.splice(+node.getAttribute("data-remove"), 1);
+          redraw();
+        });
+        $("pathway-add").addEventListener("click", function () {
+          rows.push({ governance_forum: "", role_in_escalation: WB.pathway_roles[0] });
+          redraw();
+        });
+        $("pathway-propose").addEventListener("click", function () {
+          Consilium.api.call(ACT + "routing.propose_pathway", { escalation_matter: MATTER })
+            .then(function (proposal) {
+              var present = rows.map(function (r) { return r.governance_forum; });
+              var added = 0;
+              (proposal.forums || []).forEach(function (f) {
+                if (present.indexOf(f.governance_forum) === -1) {
+                  rows.push({ governance_forum: f.governance_forum, role_in_escalation: f.role_in_escalation,
+                              proposed_by_rule: proposal.rule_code });
+                  added += 1;
+                }
+              });
+              redraw();
+              Consilium.toast.info(proposal.matched
+                ? (added ? added + " proposed forum(s) added. Save to keep them." : "Every proposed forum is already on the pathway.")
+                : "No escalation matrix rule matches this matter.", { title: "Matrix proposal" });
+            })
+            .catch(function (error) { Consilium.toast.error(error.message || "No proposal.", { title: "Not done" }); });
+        });
+      }
+    });
+  }
+
+  function renderParticipants() {
+    var body = $("participants-body");
+    if (!WB) return;
+    if (!(WB.pathway || []).length) {
+      body.innerHTML = '<p class="cns-text-muted">No forum is on the pathway, so a notice reaches only the matter\'s named people.</p>';
+      return;
+    }
+    body.innerHTML = WB.pathway.map(function (row) {
+      var people = row.participants || [];
+      return '<div style="margin-bottom: var(--cns-space-4);"><p><strong>' + forumLink(row.governance_forum) + "</strong> " +
+        pill(row.role_in_escalation || "", "neutral") +
+        (row.notified_on ? ' <span class="cns-text-muted cns-text-sm">last notified ' +
+          escapeHtml(Consilium.util.formatDate(row.notified_on, true)) + "</span>" : "") + "</p>" +
+        (people.length
+          ? '<ul class="cns-prose">' + people.map(function (p) {
+              return "<li>" + Consilium.Table.formatters.person(p.user) + ' <span class="cns-text-muted cns-text-sm">' +
+                escapeHtml(p.seat_role_name || p.seat_role || "") + (p.capacity === "delegate" ? ", standing delegate" : "") + "</span></li>";
+            }).join("") + "</ul>"
+          : '<p class="cns-text-muted cns-text-sm">No chair, secretary or attesting seat on this forum is filled today.</p>') +
+        "</div>";
+    }).join("");
+  }
+
+  /* ------------------------------ closure ------------------------------ */
+
+  function panelClosure() {
+    var existing = WB.closure;
+    var criteria = (existing && existing.criteria_met && existing.criteria_met.length
+      ? existing.criteria_met : WB.default_criteria).map(function (c) {
+        return { criterion: c.criterion, required: c.required ? 1 : 0, met: c.met ? 1 : 0, evidence_note: c.evidence_note || "" };
+      });
+
+    function criteriaHtml() {
+      return '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><caption>Closure criteria</caption>' +
+        '<thead><tr><th scope="col">Criterion</th><th scope="col">Required</th><th scope="col">Met</th>' +
+        '<th scope="col">Evidence</th><th scope="col"><span class="cns-visually-hidden">Remove</span></th></tr></thead><tbody>' +
+        criteria.map(function (c, i) {
+          return '<tr><td><input class="cns-input" data-c="' + i + '" data-k="criterion" aria-label="Criterion" value="' +
+            escapeAttr(c.criterion) + '"></td>' +
+            '<td><input type="checkbox" data-c="' + i + '" data-k="required" aria-label="Required"' + (c.required ? " checked" : "") + "></td>" +
+            '<td><input type="checkbox" data-c="' + i + '" data-k="met" aria-label="Met"' + (c.met ? " checked" : "") + "></td>" +
+            '<td><input class="cns-input" data-c="' + i + '" data-k="evidence_note" aria-label="Evidence" value="' +
+            escapeAttr(c.evidence_note) + '"></td>' +
+            '<td><button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-drop="' + i + '">Remove</button></td></tr>';
+        }).join("") + "</tbody></table></div>" +
+        '<button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" id="criterion-add" style="margin-top: var(--cns-space-2);">' +
+        '<i class="bi bi-plus-lg" aria-hidden="true"></i> Add a criterion</button>';
+    }
+
+    openPanel({
+      title: actionLabel("record_closure"),
+      intro: "Every criterion left marked <em>required</em> must be met before the closure is accepted. " +
+        "A matter transferred to another system must name the system and its reference there." +
+        (existing ? " This revises the closure already recorded (" + escapeHtml(existing.name) + ")." : ""),
+      specs: [
+        { name: "closure_type", label: "How it ended", type: "select", required: true, options: WB.closure_types,
+          value: existing && existing.closure_type },
+        { name: "external_system", label: "Tracked in (system)", type: "select", placeholder: "Not tracked elsewhere",
+          options: (WB.external_systems || []).map(function (x) { return { value: x.name, label: x.title || x.name }; }) },
+        { name: "external_key", label: "Reference there", type: "text" },
+        { name: "closure_summary", label: "Summary of the outcome", type: "textarea", rows: 4, required: true,
+          value: existing && existing.closure_summary }
+      ],
+      extra: '<div id="criteria-rows" style="margin-top: var(--cns-space-3);">' + criteriaHtml() + "</div>",
+      submit: existing ? "Save the closure" : "Record the closure",
+      onSubmit: function (v) {
+        return act("resolution.record_matter_closure", {
+          escalation_matter: MATTER, closure_type: v.closure_type, closure_summary: v.closure_summary,
+          external_system: v.external_system || null, external_key: v.external_key || null,
+          criteria: criteria.filter(function (c) { return c.criterion.trim(); })
+        }, "Closure recorded.");
+      },
+      afterRender: function () {
+        var holder = $("criteria-rows");
+        function redraw() { holder.innerHTML = criteriaHtml(); bindAdd(); }
+        function bindAdd() {
+          $("criterion-add").addEventListener("click", function () {
+            criteria.push({ criterion: "", required: 1, met: 0, evidence_note: "" });
+            redraw();
+          });
+        }
+        holder.addEventListener("input", function (event) {
+          var node = event.target;
+          if (!node.hasAttribute("data-c")) return;
+          criteria[+node.getAttribute("data-c")][node.getAttribute("data-k")] =
+            node.type === "checkbox" ? (node.checked ? 1 : 0) : node.value;
+        });
+        holder.addEventListener("change", function (event) {
+          var node = event.target;
+          if (node.type === "checkbox" && node.hasAttribute("data-c")) {
+            criteria[+node.getAttribute("data-c")][node.getAttribute("data-k")] = node.checked ? 1 : 0;
+          }
+        });
+        holder.addEventListener("click", function (event) {
+          var node = event.target.closest("[data-drop]");
+          if (!node) return;
+          criteria.splice(+node.getAttribute("data-drop"), 1);
+          redraw();
+        });
+        bindAdd();
+      }
+    });
+  }
+
+  function panelClose() {
+    if (!WB.closure) {
+      openPanel({
+        title: actionLabel("close"),
+        intro: "A matter is closed against a recorded outcome. Record the closure — how it ended, and the criteria it " +
+          "was closed against — first.",
+        submit: actionLabel("record_closure"),
+        onSubmit: function () { panelClosure(); }
+      });
+      return;
+    }
+    openPanel({
+      title: actionLabel("close"),
+      intro: "Closing brings the matter to rest against closure " + escapeHtml(WB.closure.name) + " (" +
+        escapeHtml(WB.closure.closure_type || "") + "). A state tracked elsewhere takes the external reference " +
+        "recorded on the closure. You will be recorded as approving the outcome.",
+      specs: [
+        { name: "status", label: "Close as", type: "select", required: true,
+          options: WB.closing_states.map(function (c) {
+            return { value: c.value, label: c.value + (c.is_committable ? " (needs the external reference)" : "") };
+          }) },
+        { name: "response_template_completed", label: "The response template is complete", type: "checkbox",
+          required: true, value: WB.matter.response_template_completed }
+      ],
+      submit: "Close the matter",
+      danger: true,
+      onSubmit: function (v) {
+        /* Closing cannot be undone from this page: a closed matter offers no
+           actions, and reopening it is a desk correction. So it is confirmed. */
+        if (!window.confirm("Close " + MATTER + " as " + v.status + "? A closed matter can no longer be worked " +
+            "from this page, and you are recorded as approving its outcome.")) {
+          return null;
+        }
+        return act("resolution.close_matter",
+          { escalation_matter: MATTER, status: v.status, response_template_completed: v.response_template_completed },
+          "The matter is closed.");
+      }
+    });
+  }
+
+  /* ----------------------------- revisions ----------------------------- */
+
+  var user = {{ user_display | tojson }};
+
+  function loadRevisions() {
+    Consilium.api.call("consilium.consilium_core.revision.history", { doctype: "Escalation Matter", name: MATTER })
+      .then(renderRevisions)
+      .catch(function () {
+        $("revision-list").innerHTML = '<li class="cns-text-muted">The revision history is not available to you.</li>';
+      });
+  }
+
+  /* How a version came to be, in words for the reader. An ordinary edit needs no tag. */
+  var ORIGIN_LABELS = { Migrated: "Baseline", Reverted: "Revert", Imported: "Imported" };
+
+  function renderRevisions(h) {
+    var note = $("revision-note");
+    note.innerHTML = h.can_revert && h.blocker
+      ? '<div class="cns-alert cns-status-warning"><i class="bi bi-lock" aria-hidden="true"></i><div>' +
+        escapeHtml(h.blocker) + "</div></div>"
+      : (!h.can_revert && h.versions.length > 1
+        ? '<p class="cns-text-muted cns-text-sm">Reverting belongs to: ' + escapeHtml(h.revert_roles.join(", ")) + ".</p>"
+        : "");
+    var list = $("revision-list");
+    if (!h.versions.length) {
+      list.innerHTML = '<li class="cns-text-muted">No version has been recorded yet. One is written the next time ' +
+        "the matter changes.</li>";
+      return;
+    }
+    list.innerHTML = h.versions.map(function (v) {
+      return '<li id="rev-' + escapeAttr(v.name) + '"><strong>Version ' + escapeHtml(v.version_number) + "</strong> " +
+        (v.is_current ? pill("Current", "success") + " " : "") +
+        (ORIGIN_LABELS[v.origin] ? pill(ORIGIN_LABELS[v.origin], "info") + " " : "") +
+        '<span class="cns-text-muted cns-text-sm">status ' + escapeHtml(v.state || "") + "</span>" +
+        '<p class="cns-prose">' + escapeHtml(v.change_summary || "") + "</p>" +
+        '<span class="cns-timeline-meta">' + Consilium.Table.formatters.person(v.owner) + " &middot; " +
+        escapeHtml(Consilium.util.formatDate(v.creation, true)) + "</span>" +
+        (v.can_revert
+          ? '<button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" data-revert="' + escapeAttr(v.name) +
+            '" data-number="' + escapeAttr(v.version_number) + '" style="margin-top: var(--cns-space-2);">' +
+            '<i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Revert to this version</button>'
+          : (!v.is_current && h.can_revert && v.blocker
+            ? '<span class="cns-text-muted cns-text-sm">' + escapeHtml(v.blocker) + "</span>" : "")) +
+        '<div data-revert-form="' + escapeAttr(v.name) + '"></div></li>';
+    }).join("");
+  }
+
+  $("revision-list").addEventListener("click", function (event) {
+    var button = event.target.closest("[data-revert]");
+    if (!button) return;
+    var version = button.getAttribute("data-revert");
+    var holder = document.querySelector('[data-revert-form="' + version + '"]');
+    holder.innerHTML = '<form class="cns-fieldset" novalidate style="margin-top: var(--cns-space-3);">' +
+      "<legend>Revert to version " + escapeHtml(button.getAttribute("data-number")) + "</legend>" +
+      '<div class="cns-field"><label class="cns-label" for="revert-reason-' + escapeAttr(version) + '">Reason' +
+      '<span class="cns-required" aria-hidden="true">*</span></label>' +
+      '<textarea class="cns-textarea" id="revert-reason-' + escapeAttr(version) + '" rows="3" required></textarea>' +
+      '<span class="cns-help">Kept with the revert. The status, restricted handling and review rounds stay as they are.</span></div>' +
+      '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">Revert</button>' +
+      '<button type="button" class="cns-btn cns-btn-ghost" data-cancel>Cancel</button></div></form>';
+    var reason = holder.querySelector("textarea");
+    reason.focus();
+    holder.querySelector("[data-cancel]").addEventListener("click", function () { holder.innerHTML = ""; });
+    holder.querySelector("form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var text = reason.value.trim();
+      if (!setError(reason, text ? null : "Give the reason for the revert.")) { reason.focus(); return; }
+      Consilium.api.call("consilium.consilium_core.revision.revert",
+        { doctype: "Escalation Matter", name: MATTER, version: version, reason: text }, { method: "POST" })
+        .then(function (h) {
+          renderRevisions(h);
+          recordReady = fetchRecord();
+          loadWorkbench();
+          Consilium.toast.success("Reverted. A new version records the earlier content.", { title: "Recorded" });
+          Consilium.announce("Reverted to version " + button.getAttribute("data-number") + ".");
+        })
+        .catch(function (error) {
+          Consilium.toast.error(error.message || "The revert was refused.", { title: "Not done" });
+        });
+    });
+  });
+
+  /* Open the tab named in the address, if there is one. */
+  var initial = (window.location.hash || "").replace("#", "");
+  var initialTab = document.getElementById("tab-" + initial);
+  selectTab(initialTab || tabs[0]);
+})();
+</script>
+{%- endif %}
+{% endblock %}

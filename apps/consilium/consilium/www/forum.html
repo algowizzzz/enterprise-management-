@@ -2,16 +2,42 @@
 
 {#-
   One forum.
-  Six panels behind a tab strip: the record itself, its membership (as it
-  stands or as it stood), its linkages and the interconnectivity view, the
-  documents it approves, the decisions it has taken, and its history.
+  Seven panels behind a tab strip: the record itself, its membership (as it
+  stands or as it stood), its linkages and the interconnectivity view, its
+  charter and the documents it approves, the decisions it has taken, the
+  escalations on its pathway, and its history.
+
+  What the viewer may *do* beyond reading (take a charter version, record the
+  charter challenge, open the disbandment) is asked of the server by the page
+  script, and every action is checked again on the way in.
 -#}
 
 {% block page_actions %}
 {%- if found %}
 {%- if can_edit %}
-<a class="cns-btn cns-btn-primary" href="/app/governance-forum/{{ forum }}">
+<a class="cns-btn cns-btn-primary" href="/app/governance-forum/{{ forum | urlencode }}">
   <i class="bi bi-pencil" aria-hidden="true"></i> Edit this forum
+</a>
+{%- endif %}
+{%- if can_review %}
+<a class="cns-btn cns-btn-secondary" href="/forum-review?forum={{ forum | urlencode }}">
+  <i class="bi bi-shield-check" aria-hidden="true"></i> Record a compliance review
+</a>
+{%- endif %}
+{%- if can_annual_review %}
+{#- E8-S4. Started by the governance office, signed by the owner and the
+    compliance contact, recorded by a compliance reviewer. #}
+<a class="cns-btn cns-btn-secondary" href="/forum-review?forum={{ forum | urlencode }}#annual-review">
+  <i class="bi bi-calendar-check" aria-hidden="true"></i> Annual review
+</a>
+{%- endif %}
+{#- Filled by the page script when the server says the viewer may see or take
+    part in this forum's disbandment. #}
+<span id="forum-extra-actions"></span>
+{%- if cns_has_any_role("Consilium Audit", "Consilium Administrator", "System Manager") %}
+{#- E4-S4. The server checks the role and read access again, and audits a refusal. #}
+<a class="cns-btn cns-btn-secondary" href="/api/method/consilium.consilium_core.evidence.export_pack?doctype=Governance%20Forum&amp;name={{ forum | urlencode }}">
+  <i class="bi bi-file-earmark-zip" aria-hidden="true"></i> Export evidence pack
 </a>
 {%- endif %}
 <a class="cns-btn cns-btn-secondary" href="/forums">
@@ -36,7 +62,7 @@
   <div class="cns-state cns-state--error">
     <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
     <p class="cns-state-title">That forum is not on the inventory</p>
-    <p class="cns-state-message">Reference <span class="cns-mono">{{ forum }}</span> does not exist,
+    <p class="cns-state-message">Reference <span class="cns-mono">{{ forum | e }}</span> does not exist,
       or it has been removed.</p>
     <a class="cns-btn cns-btn-secondary" href="/forums">Back to the inventory</a>
   </div>
@@ -63,6 +89,7 @@
   <button class="cns-tab" role="tab" id="tab-links"    aria-controls="panel-links"    aria-selected="false" tabindex="-1">Linkages</button>
   <button class="cns-tab" role="tab" id="tab-docs"     aria-controls="panel-docs"     aria-selected="false" tabindex="-1">Documents</button>
   <button class="cns-tab" role="tab" id="tab-decisions" aria-controls="panel-decisions" aria-selected="false" tabindex="-1">Decisions</button>
+  <button class="cns-tab" role="tab" id="tab-escalations" aria-controls="panel-escalations" aria-selected="false" tabindex="-1">Escalations</button>
   <button class="cns-tab" role="tab" id="tab-history"  aria-controls="panel-history"  aria-selected="false" tabindex="-1">History</button>
 </div>
 
@@ -142,9 +169,114 @@
 
 <!-- ----------------------------- Documents ----------------------------- -->
 <div class="cns-tabpanel" role="tabpanel" id="panel-docs" aria-labelledby="tab-docs" tabindex="0" hidden>
-  <section class="cns-card">
-    <div class="cns-card-header"><h2 class="cns-card-title">Charter</h2></div>
+  <section class="cns-card" aria-labelledby="charter-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="charter-heading">Charter</h2>
+        <p class="cns-card-subtitle">The charter's text is kept as a chain of versions. The risk governance
+          office challenges each text; while its challenge is outstanding the charter is not cleared, a
+          formation request carrying it cannot be approved, and the forum cannot be found compliant.</p>
+      </div>
+    </div>
     <div class="cns-card-body"><div id="charter-body"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div></div>
+  </section>
+
+  <section class="cns-card" id="charter-actions" aria-labelledby="charter-actions-heading" hidden>
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="charter-actions-heading">Change the charter</h2>
+        <p class="cns-card-subtitle">A new version never overwrites an earlier one. It reopens the challenge,
+          because a clearance covers the text it was given on.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <form id="charter-start-form" class="cns-fieldset" novalidate hidden>
+        <p class="cns-text-secondary">This forum has no charter yet. Name it, then take its first version.</p>
+        <div class="cns-alert cns-status-danger" role="alert" data-form-error hidden></div>
+        <div class="cns-field">
+          <label class="cns-label" for="charter-title">Charter title<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" id="charter-title" type="text" maxlength="140" required>
+        </div>
+        <div class="cns-form-actions">
+          <button type="submit" class="cns-btn cns-btn-primary"><i class="bi bi-journal-plus" aria-hidden="true"></i> Start the charter</button>
+        </div>
+      </form>
+
+      <form id="charter-publish-form" novalidate hidden>
+        <h3 class="cns-card-title">Take a new version</h3>
+        <div class="cns-alert cns-status-danger" role="alert" data-form-error hidden></div>
+        <div class="cns-form-grid">
+          <div class="cns-field">
+            <label class="cns-label" for="publish-charter">Charter</label>
+            <select class="cns-select" id="publish-charter"></select>
+          </div>
+          <div class="cns-field">
+            <label class="cns-label" for="publish-label">Version label</label>
+            <input class="cns-input" id="publish-label" type="text" maxlength="60" aria-describedby="publish-label-help">
+            <span class="cns-help" id="publish-label-help">Optional, for example "2027 review".</span>
+          </div>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="publish-summary">What changed, and why<span class="cns-required" aria-hidden="true">*</span></label>
+          <textarea class="cns-textarea" id="publish-summary" rows="2" required aria-describedby="publish-summary-help"></textarea>
+          <span class="cns-help" id="publish-summary-help">The change summary is the record of why this version exists.</span>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="publish-text">Charter text</label>
+          <textarea class="cns-textarea" id="publish-text" rows="8" aria-describedby="publish-body-help"></textarea>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="publish-file">Or upload the charter document</label>
+          <input class="cns-input" id="publish-file" type="file" aria-describedby="publish-body-help">
+          <span class="cns-help" id="publish-body-help">Enter the text, upload a file, or both. The file is kept
+            private and attached to the charter.</span>
+        </div>
+        <fieldset class="cns-fieldset" id="publish-challenge" hidden>
+          <legend>The risk governance office's challenge of this text</legend>
+          <div class="cns-form-grid">
+            <div class="cns-field">
+              <label class="cns-label" for="publish-challenge-status">Outcome</label>
+              <select class="cns-select" id="publish-challenge-status" aria-describedby="publish-challenge-help">
+                <option value="">Not yet &mdash; leave the challenge open</option>
+              </select>
+              <span class="cns-help" id="publish-challenge-help">Record it now only if the office has reviewed this text.</span>
+            </div>
+          </div>
+          <div class="cns-field">
+            <label class="cns-label" for="publish-challenge-comments">Challenge comments</label>
+            <textarea class="cns-textarea" id="publish-challenge-comments" rows="3"></textarea>
+          </div>
+        </fieldset>
+        <div class="cns-form-actions">
+          <button type="submit" class="cns-btn cns-btn-primary"><i class="bi bi-upload" aria-hidden="true"></i> Publish the version</button>
+        </div>
+      </form>
+
+      <form id="charter-challenge-form" novalidate hidden>
+        <h3 class="cns-card-title">Record the challenge</h3>
+        <p class="cns-text-secondary cns-text-sm">The second line's effective challenge of the current text.
+          Only a cleared challenge lifts the approval blocker.</p>
+        <div class="cns-alert cns-status-danger" role="alert" data-form-error hidden></div>
+        <div class="cns-form-grid">
+          <div class="cns-field">
+            <label class="cns-label" for="challenge-charter">Charter</label>
+            <select class="cns-select" id="challenge-charter"></select>
+          </div>
+          <div class="cns-field">
+            <label class="cns-label" for="challenge-status">Outcome<span class="cns-required" aria-hidden="true">*</span></label>
+            <select class="cns-select" id="challenge-status" required></select>
+          </div>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="challenge-comments">Comments</label>
+          <textarea class="cns-textarea" id="challenge-comments" rows="3" aria-describedby="challenge-comments-help"></textarea>
+          <span class="cns-help" id="challenge-comments-help">Required when changes are requested: say what must change.</span>
+        </div>
+        <div class="cns-form-actions">
+          <button type="submit" class="cns-btn cns-btn-primary"><i class="bi bi-clipboard-check" aria-hidden="true"></i> Record the outcome</button>
+        </div>
+      </form>
+    </div>
   </section>
   <section class="cns-card">
     <div class="cns-card-header">
@@ -164,14 +296,33 @@
       <div>
         <h2 class="cns-card-title">Motions</h2>
         <p class="cns-card-subtitle">A decision counts when the sitting was quorate and the outcome
-          was recorded.</p>
+          was recorded. Open a motion to vote on it.</p>
       </div>
+      {%- if can_propose_motion %}
+      <a class="cns-btn cns-btn-secondary cns-btn-sm" href="/forum-motion?forum={{ forum | urlencode }}">
+        <i class="bi bi-hand-index" aria-hidden="true"></i> Put a motion
+      </a>
+      {%- endif %}
     </div>
     <div class="cns-card-body"><div id="motions-table"></div></div>
   </section>
   <section class="cns-card">
     <div class="cns-card-header"><h2 class="cns-card-title">Sittings</h2></div>
     <div class="cns-card-body"><div id="meetings-table"></div></div>
+  </section>
+</div>
+
+<!-- ---------------------------- Escalations ---------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-escalations" aria-labelledby="tab-escalations" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Escalations on this forum's pathway</h2>
+        <p class="cns-card-subtitle">Matters routed to this forum to decide, to oversee or to be informed of.
+          Restricted matters appear only to those cleared to see them.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="escalations-table"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div></div>
   </section>
 </div>
 
@@ -186,8 +337,23 @@
     </div>
     <div class="cns-card-body"><div id="reviews-table"></div></div>
   </section>
+  {#- ===== REVISION / REVERT (G-9) =====
+      The forum's revision chain and its revert control. Endpoints are Core's
+      `revision.history` / `revision.revert`; the script is `loadForumRevisions`. #}
+  <section class="cns-card" aria-labelledby="forum-revisions-heading">
+    <div class="cns-card-header"><div>
+      <h2 class="cns-card-title" id="forum-revisions-heading">Revision history</h2>
+      <p class="cns-card-subtitle">Reverting writes a new version with the earlier content and your reason. It never changes the compliance status; a watched field put back sends the forum for review.</p>
+    </div></div>
+    <div class="cns-card-body"><div id="forum-revision-note"></div>
+      <ul class="cns-timeline" id="forum-revision-list"><li class="cns-text-muted">Loading&hellip;</li></ul></div>
+  </section>
+
   <section class="cns-card">
-    <div class="cns-card-header"><h2 class="cns-card-title">Record changes</h2></div>
+    <div class="cns-card-header"><div>
+      <h2 class="cns-card-title">Record history</h2>
+      <p class="cns-card-subtitle">Field changes, workflow moves, comments, attachments and the notifications sent about this forum, newest first.</p>
+    </div></div>
     <div class="cns-card-body">
       <ul class="cns-timeline" id="version-list">
         <li class="cns-text-muted">Loading&hellip;</li>
@@ -201,7 +367,6 @@
 
 {% block scripts %}
 {%- if found %}
-<script src="/assets/consilium/js/consilium-reference.js"></script>
 <script>
 (function () {
   "use strict";
@@ -305,10 +470,20 @@
 
   function renderSummary(doc) {
     var tone = STATUS_TONES[doc.compliance_status] || "neutral";
+    /* The status pill already names the state, so the flag pills add only what
+       the label does not say, read from the semantic flags. A closed forum
+       (not active) says nothing more: its label says why it is closed, and
+       "locked for review" would be untrue — nothing is under review. An open
+       forum's lock is described by whether it is also awaiting review. */
     var flags = [];
-    if (doc.requires_review) flags.push('<span class="cns-pill cns-status-warning">Awaiting review</span>');
-    if (!doc.is_editable) flags.push('<span class="cns-pill cns-status-info">Locked for review</span>');
-    if (!doc.is_active) flags.push('<span class="cns-pill cns-status-neutral">Disbanded</span>');
+    if (doc.is_active) {
+      if (doc.requires_review) {
+        flags.push('<span class="cns-pill cns-status-warning">' +
+          (doc.is_editable ? "Awaiting review" : "Awaiting review &middot; locked") + "</span>");
+      } else if (!doc.is_editable) {
+        flags.push('<span class="cns-pill cns-status-info">Locked</span>');
+      }
+    }
     if (doc.regulatory_required) flags.push('<span class="cns-pill cns-status-info">Regulatory</span>');
     if (doc.confidential) flags.push('<span class="cns-pill cns-status-warning">Confidential</span>');
 
@@ -320,9 +495,9 @@
       escapeHtml(doc.compliance_status || "") + "</span> " + flags.join(" ") + "</p>" +
       '<dl class="cns-dl">' +
       "<div><dt>Reference</dt><dd class=\"cns-mono\">" + escapeHtml(doc.name) + "</dd></div>" +
-      "<div><dt>Chair</dt><dd>" + value(doc.committee_chair) + "</dd></div>" +
-      "<div><dt>Secretary</dt><dd>" + value(doc.secretary) + "</dd></div>" +
-      "<div><dt>Owner</dt><dd>" + value(doc.forum_owner) + "</dd></div>" +
+      "<div><dt>Chair</dt><dd>" + (doc.committee_chair ? Consilium.Table.formatters.person(doc.committee_chair) : value(doc.committee_chair)) + "</dd></div>" +
+      "<div><dt>Secretary</dt><dd>" + (doc.secretary ? Consilium.Table.formatters.person(doc.secretary) : value(doc.secretary)) + "</dd></div>" +
+      "<div><dt>Owner</dt><dd>" + (doc.forum_owner ? Consilium.Table.formatters.person(doc.forum_owner) : value(doc.forum_owner)) + "</dd></div>" +
       "<div><dt>Cadence</dt><dd>" + value(doc.cadence) + "</dd></div>" +
       "<div><dt>Next review</dt><dd>" + dateValue(doc.next_review_on) + "</dd></div>" +
       "</dl></div>";
@@ -337,11 +512,11 @@
       ["Forum type", named("Governance Forum Type", doc.forum_type)],
       ["Cadence", value(doc.cadence)],
       ["Compliance status", value(doc.compliance_status)],
-      ["Chair", value(doc.committee_chair)],
-      ["Secretary", value(doc.secretary)],
-      ["Forum owner", value(doc.forum_owner)],
-      ["Sponsor", value(doc.sponsor)],
-      ["Compliance contact", value(doc.compliance_contact)],
+      ["Chair", (doc.committee_chair ? Consilium.Table.formatters.person(doc.committee_chair) : value(doc.committee_chair))],
+      ["Secretary", (doc.secretary ? Consilium.Table.formatters.person(doc.secretary) : value(doc.secretary))],
+      ["Forum owner", (doc.forum_owner ? Consilium.Table.formatters.person(doc.forum_owner) : value(doc.forum_owner))],
+      ["Sponsor", (doc.sponsor ? Consilium.Table.formatters.person(doc.sponsor) : value(doc.sponsor))],
+      ["Compliance contact", (doc.compliance_contact ? Consilium.Table.formatters.person(doc.compliance_contact) : value(doc.compliance_contact))],
       ["Primary risk category", named("Risk Category", doc.primary_risk_category)],
       ["Owning operating group", named("Organization Unit", doc.owning_operating_group)],
       ["Owning line of business", named("Organization Unit", doc.owning_line_of_business)],
@@ -356,7 +531,10 @@
       ["Disbanded on", dateValue(doc.disbanded_on)],
       ["Disbandment plan", value(doc.disbandment_plan)],
       ["Retention class", named("Retention Class", doc.retention_class)],
-      ["Formation request", value(doc.formation_request)],
+      ["Formation request", doc.formation_request
+        ? '<a href="/formation-request?name=' + escapeHtml(encodeURIComponent(doc.formation_request)) + '">' +
+          escapeHtml(doc.formation_request) + "</a>"
+        : dash()],
       ["Editable", yesNo(doc.is_editable)],
       ["Active", yesNo(doc.is_active)],
       ["Awaiting review", yesNo(doc.requires_review)],
@@ -488,6 +666,8 @@
   }
 
   asAt.addEventListener("change", function () {
+    // `max` stops the picker but not typing; membership has no future to show.
+    if (asAt.value && asAt.value > todayISO()) asAt.value = todayISO();
     loadMembers();
     Consilium.announce("Membership shown as at " + (asAt.value || "today") + ".");
   });
@@ -705,41 +885,271 @@
         { field: "lifecycle_phase", label: "Phase", sortable: true,
           formatter: f.status({ Published: "success", Approved: "info", Draft: "neutral",
                                 Review: "warning", Implemented: "primary", Retired: "neutral" }) },
-        { field: "document_owner", label: "Owner", sortable: true },
+        { field: "document_owner", label: "Owner", sortable: true, formatter: Consilium.Table.formatters.person },
         { field: "effective_on", label: "Effective", sortable: true, formatter: f.date },
         { field: "next_review_on", label: "Next review", sortable: true, formatter: f.date }
       ]
     });
 
-    Consilium.api
-      .list("Committee Charter", {
-        fields: ["name", "charter_title", "rgo_challenge_status", "effective_from",
-                 "effective_to", "next_charter_review_on", "current_version"],
-        filters: [["forum", "=", FORUM]],
-        order_by: "effective_from desc",
-        limit_page_length: 5
-      })
-      .then(function (rows) {
-        var node = document.getElementById("charter-body");
-        if (!rows.length) {
-          node.innerHTML = '<p class="cns-text-muted">No charter is recorded for this forum.</p>';
-          return;
-        }
-        node.innerHTML = rows.map(function (row) {
-          return '<dl class="cns-dl">' +
-            "<div><dt>Charter</dt><dd>" + escapeHtml(row.charter_title || row.name) + "</dd></div>" +
-            "<div><dt>Reference</dt><dd class=\"cns-mono\">" + escapeHtml(row.name) + "</dd></div>" +
-            "<div><dt>Challenge status</dt><dd>" + value(row.rgo_challenge_status) + "</dd></div>" +
-            "<div><dt>Effective from</dt><dd>" + dateValue(row.effective_from) + "</dd></div>" +
-            "<div><dt>Next charter review</dt><dd>" + dateValue(row.next_charter_review_on) + "</dd></div>" +
-            "</dl>";
-        }).join("");
-      })
-      .catch(function () {
-        document.getElementById("charter-body").innerHTML =
-          '<p class="cns-text-muted">The charter could not be read.</p>';
-      });
+    loadCharters();
   };
+
+  /* ------------------------------- charter ------------------------------ */
+  /* The charter's chain and its challenge, read through the charter module:
+     `Document Version` is not readable over the REST interface by governance
+     roles, and the server also says which of the forms below this viewer may
+     use. Every form is checked again on the way in. */
+
+  var CHARTERS = "consilium.governance.charters.";
+  var charterCtx = null;
+
+  function pill(text, tone) {
+    return '<span class="cns-pill cns-status-' + escapeAttr(tone || "neutral") + '">' + escapeHtml(text) + "</span>";
+  }
+
+  function fileLink(url) {
+    if (!url) return dash();
+    var label = decodeURIComponent(String(url).split("/").pop() || url);
+    return '<a href="' + escapeAttr(url) + '" target="_blank" rel="noopener">' + escapeHtml(label) + "</a>";
+  }
+
+  function charterBlock(c, index) {
+    var challenge = c.challenge_outstanding
+      ? pill("Challenge outstanding", "warning")
+      : pill("Challenge cleared", "success");
+    var current = c.versions.filter(function (v) { return v.is_current; })[0];
+    var blockers = c.blockers.length
+      ? '<div class="cns-alert cns-status-warning"><i class="bi bi-hourglass-split" aria-hidden="true"></i><div>' +
+        "<strong>Not yet cleared for approval.</strong><ul>" +
+        c.blockers.map(function (b) { return "<li>" + escapeHtml(b) + "</li>"; }).join("") + "</ul></div></div>"
+      : '<div class="cns-alert cns-status-success"><i class="bi bi-check2-circle" aria-hidden="true"></i>' +
+        "<div>Cleared for approval: challenged, versioned and evidenced.</div></div>";
+    var versions = c.versions.length
+      ? '<div class="cns-table-wrap"><table class="cns-table cns-table--compact">' +
+        '<caption class="cns-visually-hidden">Versions of ' + escapeHtml(c.charter_title || c.name) + "</caption>" +
+        '<thead><tr><th scope="col">Version</th><th scope="col">What changed</th><th scope="col">Origin</th>' +
+        '<th scope="col">By</th><th scope="col">When</th><th scope="col">File</th></tr></thead><tbody>' +
+        c.versions.map(function (v) {
+          return '<tr><th scope="row">' + escapeHtml("v" + v.version_number) +
+            (v.version_label ? " " + escapeHtml(v.version_label) : "") +
+            (v.is_current ? " " + pill("Current", "success") : "") + "</th>" +
+            "<td>" + value(v.change_summary) + "</td><td>" + value(v.origin) + "</td>" +
+            "<td>" + Consilium.Table.formatters.person(v.owner) + "</td>" +
+            "<td>" + escapeHtml(Consilium.util.formatDate(v.creation, true)) + "</td>" +
+            "<td>" + fileLink(v.body_file) + "</td></tr>";
+        }).join("") + "</tbody></table></div>"
+      : '<p class="cns-text-muted">No version has been taken yet.</p>';
+    return '<article class="cns-charter" aria-labelledby="charter-title-' + index + '">' +
+      '<h3 class="cns-card-title" id="charter-title-' + index + '">' + escapeHtml(c.charter_title || c.name) + "</h3>" +
+      '<p style="margin-bottom: var(--cns-space-3);">' + challenge + " " +
+      pill(c.rgo_challenge_status || "Not reviewed", c.challenge_outstanding ? "neutral" : "success") + "</p>" +
+      '<dl class="cns-dl">' +
+      '<div><dt>Reference</dt><dd class="cns-mono">' + escapeHtml(c.name) + "</dd></div>" +
+      "<div><dt>Challenge comments</dt><dd>" + value(c.rgo_challenge_comments) + "</dd></div>" +
+      "<div><dt>Challenged by</dt><dd>" + (c.rgo_reviewed_by ? Consilium.Table.formatters.person(c.rgo_reviewed_by) : dash()) + "</dd></div>" +
+      "<div><dt>Challenged on</dt><dd>" + (c.rgo_reviewed_on ? escapeHtml(Consilium.util.formatDate(c.rgo_reviewed_on, true)) : dash()) + "</dd></div>" +
+      "<div><dt>Effective from</dt><dd>" + dateValue(c.effective_from) + "</dd></div>" +
+      "<div><dt>Effective to</dt><dd>" + dateValue(c.effective_to) + "</dd></div>" +
+      "<div><dt>Next charter review</dt><dd>" + dateValue(c.next_charter_review_on) + "</dd></div>" +
+      "<div><dt>Current version</dt><dd>" + (current ? escapeHtml("v" + current.version_number) : dash()) + "</dd></div>" +
+      "</dl>" + blockers +
+      (c.current_text
+        ? '<details class="cns-charter-text"><summary>Read the current text</summary>' +
+          '<div class="cns-prose">' + escapeHtml(c.current_text) + "</div></details>"
+        : "") +
+      '<p class="cns-eyebrow" style="margin-top: var(--cns-space-4);">Version history</p>' + versions +
+      "</article>";
+  }
+
+  function loadCharters() {
+    return Consilium.api.call(CHARTERS + "get_forum_charters", { forum: FORUM })
+      .then(renderCharters)
+      .catch(function (error) {
+        document.getElementById("charter-body").innerHTML =
+          '<p class="cns-text-muted">The charter could not be read. ' + escapeHtml(error.message || "") + "</p>";
+      });
+  }
+
+  function renderCharters(ctx) {
+    charterCtx = ctx;
+    var node = document.getElementById("charter-body");
+    if (!ctx.readable) {
+      node.innerHTML = '<p class="cns-text-muted">The charter is not open to your role.</p>';
+    } else if (!ctx.charters.length) {
+      node.innerHTML = '<p class="cns-text-muted">No charter is recorded for this forum.</p>';
+    } else {
+      node.innerHTML = ctx.charters.map(charterBlock).join('<hr class="cns-divider">');
+    }
+    renderCharterForms(ctx);
+  }
+
+  function fillOptions(select, rows, valueOf, labelOf, keepFirst) {
+    var keep = keepFirst ? select.options[0] : null;
+    select.innerHTML = "";
+    if (keep) select.appendChild(keep);
+    rows.forEach(function (row) {
+      var option = document.createElement("option");
+      option.value = valueOf(row);
+      option.textContent = labelOf(row);
+      select.appendChild(option);
+    });
+  }
+
+  function renderCharterForms(ctx) {
+    var card = document.getElementById("charter-actions");
+    var publishable = ctx.charters.filter(function (c) { return c.can_publish; });
+    var challengeable = ctx.can_challenge
+      ? ctx.charters.filter(function (c) { return c.can_publish && c.current_version; }) : [];
+    var canStart = ctx.can_start && !ctx.charters.length;
+
+    document.getElementById("charter-start-form").hidden = !canStart;
+    document.getElementById("charter-publish-form").hidden = !publishable.length;
+    document.getElementById("charter-challenge-form").hidden = !challengeable.length;
+    document.getElementById("publish-challenge").hidden = !ctx.can_challenge;
+    card.hidden = !ctx.forum_active || !(canStart || publishable.length || challengeable.length);
+
+    function charterLabel(c) { return (c.charter_title || c.name) + " (" + c.name + ")"; }
+    fillOptions(document.getElementById("publish-charter"), publishable,
+                function (c) { return c.name; }, charterLabel);
+    fillOptions(document.getElementById("challenge-charter"), challengeable,
+                function (c) { return c.name; }, charterLabel);
+    function outcomeLabel(o) { return o.status + (o.requires_statement ? " (say what must change)" : ""); }
+    fillOptions(document.getElementById("challenge-status"), ctx.challenge_options,
+                function (o) { return o.status; }, outcomeLabel);
+    fillOptions(document.getElementById("publish-challenge-status"), ctx.challenge_options,
+                function (o) { return o.status; }, outcomeLabel, true);
+  }
+
+  function formError(form, message) {
+    var box = form.querySelector("[data-form-error]");
+    if (!message) { box.hidden = true; box.textContent = ""; return; }
+    box.innerHTML = '<i class="bi bi-x-octagon" aria-hidden="true"></i><div>' + escapeHtml(message) + "</div>";
+    box.hidden = false;
+    Consilium.announce(message);
+  }
+
+  function needsStatement(status) {
+    return ((charterCtx && charterCtx.challenge_options) || []).some(function (o) {
+      return o.status === status && o.requires_statement;
+    });
+  }
+
+  /* The framework's own upload endpoint, attached to the charter and private.
+     The server then accepts the file only because it is attached there. */
+  function uploadCharterFile(file, charter) {
+    var data = new FormData();
+    data.append("file", file, file.name);
+    data.append("is_private", "1");
+    data.append("doctype", "Committee Charter");
+    data.append("docname", charter);
+    var headers = { Accept: "application/json" };
+    var token = (window.frappe && window.frappe.csrf_token) ||
+      (document.querySelector('meta[name="csrf-token"]') || { getAttribute: function () { return null; } }).getAttribute("content");
+    if (token && token !== "None") headers["X-Frappe-CSRF-Token"] = token;
+    return window.fetch("/api/method/upload_file", { method: "POST", body: data, headers: headers, credentials: "same-origin" })
+      .then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (payload) {
+          if (!response.ok || !payload.message || !payload.message.file_url) {
+            throw new Error("The file could not be uploaded (" + response.status + ").");
+          }
+          return payload.message.file_url;
+        });
+      });
+  }
+
+  function submitting(form, busy) {
+    Array.prototype.forEach.call(form.querySelectorAll("button[type=submit]"), function (b) { b.disabled = busy; });
+  }
+
+  document.getElementById("charter-start-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.currentTarget;
+    var title = document.getElementById("charter-title");
+    if (!title.value.trim()) { formError(form, "A charter needs a title."); title.focus(); return; }
+    formError(form, null);
+    submitting(form, true);
+    Consilium.api.call(CHARTERS + "start_forum_charter", { forum: FORUM, charter_title: title.value.trim() },
+                       { method: "POST" })
+      .then(function () {
+        form.reset();
+        Consilium.toast.success("Charter started. Take its first version below.", { title: "Charter started" });
+        return loadCharters();
+      })
+      .catch(function (error) { formError(form, error.message || "The charter could not be started."); })
+      .then(function () { submitting(form, false); });
+  });
+
+  document.getElementById("charter-publish-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.currentTarget;
+    var charter = document.getElementById("publish-charter").value;
+    var summary = document.getElementById("publish-summary").value.trim();
+    var text = document.getElementById("publish-text").value.trim();
+    var fileInput = document.getElementById("publish-file");
+    var file = fileInput.files && fileInput.files[0];
+    var status = document.getElementById("publish-challenge-status").value;
+    var comments = document.getElementById("publish-challenge-comments").value.trim();
+    if (!summary) {
+      formError(form, "Say what changed: the change summary is required.");
+      document.getElementById("publish-summary").focus();
+      return;
+    }
+    if (!text && !file) {
+      formError(form, "Enter the charter text or upload the document.");
+      document.getElementById("publish-text").focus();
+      return;
+    }
+    if (status && needsStatement(status) && !comments) {
+      formError(form, "“" + status + "” is recorded with comments that say what must change.");
+      document.getElementById("publish-challenge-comments").focus();
+      return;
+    }
+    formError(form, null);
+    submitting(form, true);
+    (file ? uploadCharterFile(file, charter) : Promise.resolve(null))
+      .then(function (fileUrl) {
+        return Consilium.api.call(CHARTERS + "publish_charter_version", {
+          charter: charter, change_summary: summary, body_text: text, body_file: fileUrl,
+          version_label: document.getElementById("publish-label").value.trim(),
+          challenge_status: status, challenge_comments: comments
+        }, { method: "POST" });
+      })
+      .then(function (result) {
+        form.reset();
+        Consilium.toast.success("Version published on " + result.name + "." +
+          (result.challenge_outstanding ? " The challenge is open for the new text." : ""),
+          { title: "Version published", timeout: 8000 });
+        return loadCharters();
+      })
+      .catch(function (error) { formError(form, error.message || "The version could not be published."); })
+      .then(function () { submitting(form, false); });
+  });
+
+  document.getElementById("charter-challenge-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.currentTarget;
+    var status = document.getElementById("challenge-status").value;
+    var comments = document.getElementById("challenge-comments").value.trim();
+    if (!status) { formError(form, "Choose the outcome."); return; }
+    if (needsStatement(status) && !comments) {
+      formError(form, "“" + status + "” is recorded with comments that say what must change.");
+      document.getElementById("challenge-comments").focus();
+      return;
+    }
+    formError(form, null);
+    submitting(form, true);
+    Consilium.api.call(CHARTERS + "record_charter_challenge", {
+      charter: document.getElementById("challenge-charter").value, status: status, comments: comments
+    }, { method: "POST" })
+      .then(function (result) {
+        form.reset();
+        Consilium.toast.success("Challenge recorded on " + result.name + ": " + result.rgo_challenge_status + ".",
+                                { title: "Challenge recorded" });
+        return loadCharters();
+      })
+      .catch(function (error) { formError(form, error.message || "The challenge could not be recorded."); })
+      .then(function () { submitting(form, false); });
+  });
 
   /* ------------------------------ decisions ---------------------------- */
 
@@ -758,11 +1168,17 @@
       emptyTitle: "No motions",
       emptyMessage: "This forum has not recorded a motion.",
       columns: [
-        { field: "motion_reference", label: "Motion", sortable: true },
+        /* Each motion opens on the voting screen, where members vote and the
+           secretary records the outcome. */
+        { field: "motion_reference", label: "Motion", sortable: true, formatter: f.link("/forum-motion?name=") },
         { field: "motion_text", label: "What was put", formatter: f.truncate(90) },
         { field: "outcome", label: "Outcome", sortable: true,
-          formatter: f.status({ Carried: "success", "Not Carried": "danger", Deferred: "warning",
-                                Withdrawn: "neutral", Inquorate: "danger" }) },
+          formatter: function (v, row) {
+            if (!v) return '<a class="cns-pill cns-status-info" href="/forum-motion?name=' +
+              escapeAttr(encodeURIComponent(row.name)) + '">Open for votes</a>';
+            return f.status({ Carried: "success", "Not Carried": "danger", Deferred: "warning",
+                              Withdrawn: "neutral", Inquorate: "danger" })(v);
+          } },
         { field: "votes_for", label: "For", align: "end", formatter: f.number },
         { field: "votes_against", label: "Against", align: "end", formatter: f.number },
         { field: "abstentions", label: "Abstained", align: "end", formatter: f.number },
@@ -800,9 +1216,131 @@
     });
   };
 
+  /* ----------------------------- escalations --------------------------- */
+  /* Matters whose pathway includes this forum (O-5). Read through the
+     inventory module, which lists them with the framework's permitted query:
+     a restricted matter the viewer is not cleared for is neither shown nor
+     counted. */
+
+  loaders.escalations = function () {
+    var holder = document.getElementById("escalations-table");
+    Consilium.api.call("consilium.governance.inventory.forum_escalations", { forum: FORUM })
+      .then(function (ctx) {
+        if (!ctx.readable) {
+          holder.innerHTML = '<p class="cns-text-muted">Escalation matters are not open to your role.</p>';
+          return;
+        }
+        holder.innerHTML = "";
+        Consilium.Table.create({
+          target: "#escalations-table",
+          data: ctx.matters,
+          caption: "Escalation matters on this forum's pathway",
+          storageKey: "forum-escalations",
+          rowKey: "name",
+          pageSize: 10,
+          compact: true,
+          searchFields: ["escalation_id", "escalation_title", "name", "status"],
+          searchPlaceholder: "Search escalations",
+          defaultSort: { field: "escalation_date", order: "desc" },
+          emptyTitle: "No escalations",
+          emptyMessage: "No matter you may see names this forum on its pathway.",
+          columns: [
+            { field: "escalation_id", label: "Reference", sortable: true, className: "cns-mono",
+              formatter: function (v, row) {
+                return '<a href="/escalation?name=' + escapeAttr(encodeURIComponent(row.name)) + '">' +
+                  escapeHtml(v || row.name) + "</a>";
+              } },
+            { field: "escalation_title", label: "Matter", sortable: true,
+              formatter: function (v, row) {
+                return escapeHtml(v || "") + (row.sensitive ? " " + pill("Restricted", "warning") : "");
+              } },
+            { field: "role_in_escalation", label: "This forum's role", sortable: true },
+            { field: "severity", label: "Severity", sortable: true,
+              formatter: f.status({ High: "danger", Medium: "warning", Low: "info" }) },
+            { field: "status", label: "Status", sortable: true,
+              formatter: function (v, row) {
+                return escapeHtml(v || "") + (row.threshold_breached ? " " + pill("Breached", "danger") : "");
+              } },
+            { field: "is_open", label: "Open", sortable: true,
+              formatter: function (v) { return v ? "Open" : '<span class="cns-text-muted">Closed</span>'; } },
+            { field: "escalation_date", label: "Escalated", sortable: true, formatter: f.date },
+            { field: "accountable_executive", label: "Accountable", sortable: true,
+              formatter: Consilium.Table.formatters.person }
+          ]
+        });
+      })
+      .catch(function (error) {
+        holder.innerHTML = '<div class="cns-state cns-state--error"><p class="cns-state-title">Escalations could not be read</p>' +
+          '<p class="cns-state-message">' + escapeHtml(error.message || "") + "</p></div>";
+      });
+  };
+
   /* ------------------------------- history ----------------------------- */
 
+  /* --- revision history and revert (G-9) --------------------------------
+     The chain is Core's Document Version; the server says which versions this
+     viewer may revert to now (`can_revert`, `blocker`), and checks again. */
+  var REVISION = "consilium.consilium_core.revision.";
+
+  function loadForumRevisions() {
+    Consilium.api.call(REVISION + "history", { doctype: "Governance Forum", name: FORUM })
+      .then(renderForumRevisions)
+      .catch(function () {
+        document.getElementById("forum-revision-list").innerHTML =
+          '<li class="cns-text-muted">The revision history is not available to you.</li>';
+      });
+  }
+
+  function renderForumRevisions(h) {
+    var note = document.getElementById("forum-revision-note");
+    note.innerHTML = h.can_revert && h.blocker
+      ? '<div class="cns-alert cns-status-warning"><i class="bi bi-lock" aria-hidden="true"></i><div>' +
+        Consilium.util.escapeHtml(h.blocker) + "</div></div>" : "";
+    var labels = { Migrated: "Baseline", Reverted: "Revert" };
+    document.getElementById("forum-revision-list").innerHTML = h.versions.length ? h.versions.map(function (v) {
+      return "<li><strong>Version " + Consilium.util.escapeHtml(v.version_number) + "</strong> " +
+        (v.is_current ? '<span class="cns-pill cns-status-success">Current</span> ' : "") +
+        (labels[v.origin] ? '<span class="cns-pill cns-status-info">' + labels[v.origin] + "</span> " : "") +
+        '<span class="cns-text-muted cns-text-sm">' + Consilium.util.escapeHtml(v.state || "") + "</span>" +
+        '<p class="cns-prose">' + Consilium.util.escapeHtml(v.change_summary || "") + "</p>" +
+        '<span class="cns-timeline-meta">' + Consilium.Table.formatters.person(v.owner) + " &middot; " +
+        Consilium.util.escapeHtml(Consilium.util.formatDate(v.creation, true)) + "</span>" +
+        (v.can_revert ? '<button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" data-revert="' +
+          Consilium.util.escapeAttr(v.name) + '">Revert to this version</button>' : "") +
+        '<div data-revert-form="' + Consilium.util.escapeAttr(v.name) + '"></div></li>';
+    }).join("") : '<li class="cns-text-muted">No version yet; one is written the next time the forum changes.</li>';
+  }
+
+  document.getElementById("forum-revision-list").addEventListener("click", function (event) {
+    var button = event.target.closest("[data-revert]");
+    if (!button) return;
+    var version = button.getAttribute("data-revert");
+    var holder = document.querySelector('[data-revert-form="' + version + '"]');
+    holder.innerHTML = '<form class="cns-fieldset" novalidate><div class="cns-field">' +
+      '<label class="cns-label" for="revert-' + version + '">Reason<span class="cns-required" aria-hidden="true">*</span></label>' +
+      '<textarea class="cns-textarea" id="revert-' + version + '" rows="3" required></textarea>' +
+      '<span class="cns-help">A watched field put back sends the forum for compliance review, as any change does.</span></div>' +
+      '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">Revert</button></div></form>';
+    var reason = holder.querySelector("textarea");
+    reason.focus();
+    holder.querySelector("form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!reason.value.trim()) { reason.setAttribute("aria-invalid", "true"); reason.focus(); return; }
+      Consilium.api.call(REVISION + "revert",
+        { doctype: "Governance Forum", name: FORUM, version: version, reason: reason.value.trim() }, { method: "POST" })
+        .then(function (h) {
+          renderForumRevisions(h);
+          Consilium.toast.success("Reverted. A new version records the earlier content.", { title: "Recorded" });
+        })
+        .catch(function (error) {
+          Consilium.toast.error(error.message || "The revert was refused.", { title: "Not done" });
+        });
+    });
+  });
+
   loaders.history = function () {
+    /* Revision history and revert: the G-9 card above "Record history". */
+    loadForumRevisions();
     Consilium.Table.create({
       target: "#reviews-table",
       doctype: "Forum Compliance Review",
@@ -822,47 +1360,63 @@
         { field: "decision", label: "Decision", sortable: true,
           formatter: f.status({ Compliant: "success", "Non-Compliant": "danger",
                                 "Not Applicable": "info", "Returned To Creator": "warning" }) },
-        { field: "reviewer", label: "Reviewer", sortable: true },
+        { field: "reviewer", label: "Reviewer", sortable: true, formatter: Consilium.Table.formatters.person },
         { field: "comments", label: "Reason", formatter: f.truncate(90) },
         { field: "decided_on", label: "Decided", sortable: true, formatter: f.datetime }
       ]
     });
 
-    Consilium.api
-      .list("Version", {
-        fields: ["name", "owner", "creation", "data"],
-        filters: [["ref_doctype", "=", "Governance Forum"], ["docname", "=", FORUM]],
-        order_by: "creation desc",
-        limit_page_length: 20
-      })
-      .then(function (rows) {
+    /* One chronological history (E4-S2): field changes, workflow moves,
+       comments, attachments and the notifications sent about this forum,
+       read through Core's `evidence.record_history`. */
+    Consilium.api.call("consilium.consilium_core.evidence.record_history",
+      { doctype: "Governance Forum", name: FORUM })
+      .then(function (h) {
         var list = document.getElementById("version-list");
-        if (!rows.length) {
-          list.innerHTML = '<li class="cns-text-muted">No change has been recorded against this record yet.</li>';
-          return;
-        }
-        list.innerHTML = rows.map(function (row) {
-          var changed = [];
-          try {
-            var data = JSON.parse(row.data || "{}");
-            changed = (data.changed || []).map(function (entry) { return entry[0]; });
-            if ((data.added || []).length) changed.push("rows added");
-            if ((data.removed || []).length) changed.push("rows removed");
-          } catch (e) { /* a version whose payload cannot be read is still a change */ }
-          return "<li>" +
-            (changed.length
-              ? "Changed " + escapeHtml(changed.slice(0, 6).join(", "))
-              : "Record updated") +
-            '<span class="cns-timeline-meta">' + escapeHtml(row.owner) + " &middot; " +
-            escapeHtml(Consilium.util.formatDate(row.creation, true)) + "</span></li>";
-        }).join("");
+        list.innerHTML = h.entries.length ? h.entries.map(historyEntry).join("")
+          : '<li class="cns-text-muted">Nothing has been recorded against this record yet.</li>';
       })
       .catch(function () {
         document.getElementById("version-list").innerHTML =
-          '<li class="cns-text-muted">The change log is not available to you. ' +
+          '<li class="cns-text-muted">The history is not available to you. ' +
           "The compliance decisions above are the record of how this forum's standing moved.</li>";
       });
   };
+
+  var HISTORY_ICONS = { change: "pencil", workflow: "arrow-right-circle", comment: "chat-left-text",
+                        attachment: "paperclip", info: "info-circle", notification: "envelope" };
+
+  function historyEntry(e) {
+    var meta = [];
+    if (e.kind === "notification") {
+      meta.push("To " + escapeHtml(e.recipient || "—"));
+      if (e.channel) meta.push(escapeHtml(e.channel));
+      if (e.status) meta.push(escapeHtml(e.status));
+      if (e.mail_status && e.mail_status !== e.status) meta.push("mail: " + escapeHtml(e.mail_status));
+    } else if (e.by) {
+      meta.push(escapeHtml(e.by));
+    }
+    meta.push(escapeHtml(Consilium.util.formatDate(e.on, true)));
+    return '<li><i class="bi bi-' + (HISTORY_ICONS[e.kind] || "dot") + '" aria-hidden="true"></i> ' +
+      escapeHtml(e.summary || "") + '<span class="cns-timeline-meta">' + meta.join(" &middot; ") + "</span></li>";
+  }
+
+  /* ------------------------- actions beyond reading ---------------------- */
+  /* Whether to offer the disbandment screen is the server's call: the governance
+     office may raise a plan, a named approver (or their delegate) may decide
+     one, and readers of plans may follow one that exists. */
+
+  Consilium.api.call("consilium.governance.lifecycle.forum_page_actions", { forum: FORUM })
+    .then(function (actions) {
+      var d = actions.disbandment || {};
+      if (!d.visible) return;
+      var label = d.awaiting_my_decision ? "Disbandment: your decision is needed"
+        : d.may_raise ? "Disband this forum" : "Disbandment";
+      document.getElementById("forum-extra-actions").innerHTML =
+        '<a class="cns-btn cns-btn-secondary" href="/forum-disband?forum=' + escapeAttr(encodeURIComponent(FORUM)) + '">' +
+        '<i class="bi bi-archive" aria-hidden="true"></i> ' + escapeHtml(label) + "</a>";
+    })
+    .catch(function () { /* reading the forum does not depend on this */ });
 
   /* Open the tab named in the address, if there is one. */
   var initial = (window.location.hash || "").replace("#", "");

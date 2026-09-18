@@ -5,6 +5,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import getdate
 
+from consilium.consilium_core import attestation
 from consilium.consilium_core.state_flags import apply_state_flags
 
 
@@ -43,5 +44,13 @@ class AttestationCampaign(Document):
             for fieldname in ("seat_doctype", "seat_subject_field", "seat_user_field"):
                 if not self.get(fieldname):
                     frappe.throw(_("A seat-role population needs {0}.").format(_(fieldname)))
+        if self.participant_source == attestation.REGISTERED_SOURCE:
+            known = attestation.registered_resolvers()
+            if self.participant_resolver not in known:
+                frappe.throw(
+                    _("A registered-source population names one of the registered resolvers: {0}.").format(
+                        ", ".join(sorted(known)) or _("none is installed")
+                    )
+                )
         if self.requires_dual_signature and not self.second_signatory_field:
             frappe.throw(_("A dual-signature campaign needs the fieldname holding the second signatory."))

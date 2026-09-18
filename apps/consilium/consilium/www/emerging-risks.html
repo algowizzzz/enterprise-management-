@@ -1,0 +1,167 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Emerging risks (O-7): trend analysis and leading indicators.
+  Read in the browser from consilium.consilium_core.ai.trends.analyse, which
+  counts over permitted records only. The machine-generated narrative is
+  optional, labelled, and asked for on demand (trends.ai_commentary).
+-#}
+
+{% block page_actions %}
+<div class="cns-field cns-ai-filter">
+  <label class="cns-label" for="trend-months">Window</label>
+  <select class="cns-select" id="trend-months">
+    <option value="6">6 months</option>
+    <option value="12" selected>12 months</option>
+    <option value="24">24 months</option>
+  </select>
+</div>
+{% endblock %}
+
+{% block page_content %}
+{% set analysis_page = "emerging-risks" %}
+{% include "consilium/templates/includes/analysis_nav.html" %}
+<div class="cns-metric-grid" id="trend-totals" aria-live="polite">
+  <div class="cns-card"><div class="cns-card-body"><p class="cns-text-muted">Counting&hellip;</p></div></div>
+</div>
+
+<section aria-labelledby="rising-heading">
+  <h2 id="rising-heading" class="cns-eyebrow">Rising</h2>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title">Series flagged as rising</h3>
+        <p class="cns-card-subtitle" id="trend-method">&nbsp;</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div class="cns-table-wrap" id="trend-rising" aria-busy="true"></div></div>
+  </section>
+  <div id="trend-ai"></div>
+</section>
+
+<section aria-labelledby="indicators-heading" style="margin-top: var(--cns-space-6);">
+  <h2 id="indicators-heading" class="cns-eyebrow">Leading indicators</h2>
+  <div class="cns-ai-indicators" id="trend-indicators"></div>
+</section>
+
+<section aria-labelledby="all-heading" style="margin-top: var(--cns-space-6);">
+  <h2 id="all-heading" class="cns-eyebrow">Every series</h2>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title">Monthly counts by stream and dimension</h3>
+        <p class="cns-card-subtitle" id="trend-note">&nbsp;</p>
+      </div>
+      <div class="cns-field cns-ai-filter">
+        <label class="cns-label" for="trend-stream">Stream</label>
+        <select class="cns-select" id="trend-stream"><option value="">Every stream</option></select>
+      </div>
+    </div>
+    <div class="cns-card-body"><div class="cns-table-wrap" id="trend-all"></div></div>
+  </section>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ asset_url('/assets/consilium/js/consilium-ai.js') }}"></script>
+<script>
+(function () {
+  "use strict";
+
+  var api = Consilium.api;
+  var ai = Consilium.ai;
+  var esc = ai.esc;
+  var METHOD = "consilium.consilium_core.ai.trends.";
+  var state = { data: null };
+
+  function $(id) { return document.getElementById(id); }
+
+  function change(s) {
+    var sign = s.mom_change > 0 ? "+" : "";
+    return sign + s.mom_change + (s.mom_pct == null ? "" : " (" + sign + s.mom_pct + "%)");
+  }
+
+  function seriesRows(rows, withReasons) {
+    return rows.map(function (s) {
+      return "<tr><td>" + esc(s.stream) + "</td><td>" + esc(s.dimension === "all" ? "all" : s.dimension + ": " + s.label) + "</td><td>" +
+        ai.sparkline(s.counts, s.rising) + '</td><td class="cns-num">' + esc(s.latest) + '</td><td class="cns-num">' + esc(change(s)) +
+        '</td><td class="cns-num">' + esc(s.slope) + '</td><td class="cns-num">' + (s.z == null ? "—" : esc(s.z)) + "</td>" +
+        (withReasons ? '<td class="cns-text-sm">' + esc(s.reasons.join("; ")) + "</td>" : '<td class="cns-num">' + esc(s.total) + "</td>") + "</tr>";
+    }).join("");
+  }
+
+  function head(last) {
+    return '<thead><tr><th scope="col">Stream</th><th scope="col">Series</th><th scope="col">Trend</th><th scope="col" class="cns-num">Latest month</th>' +
+      '<th scope="col" class="cns-num">Month over month</th><th scope="col" class="cns-num">Slope</th><th scope="col" class="cns-num">z</th><th scope="col"' +
+      (last === "Why" ? "" : ' class="cns-num"') + ">" + last + "</th></tr></thead>";
+  }
+
+  function draw(data) {
+    state.data = data;
+    var months = data.months;
+    $("trend-method").textContent = data.method.text;
+    $("trend-note").textContent = data.note + " Months: " + months[0] + " to " + months[months.length - 1] + ".";
+
+    var streams = Object.keys(data.totals);
+    $("trend-totals").innerHTML = streams.length ? streams.map(function (stream) {
+      var counts = data.totals[stream];
+      var total = counts.reduce(function (a, b) { return a + b; }, 0);
+      return '<div class="cns-card"><div class="cns-card-body cns-stat"><span class="cns-stat-value">' + total + '</span><span class="cns-stat-label">' +
+        esc(stream) + "</span>" + ai.sparkline(counts, false) + '<span class="cns-metric-note">latest month ' + counts[counts.length - 1] + "</span></div></div>";
+    }).join("") : '<div class="cns-card"><div class="cns-card-body"><p class="cns-text-muted">No events in this window among the records you may read.</p></div></div>';
+
+    var rising = $("trend-rising");
+    rising.setAttribute("aria-busy", "false");
+    rising.innerHTML = data.rising.length
+      ? '<table class="cns-table cns-table--compact">' + head("Why") + "<tbody>" + seriesRows(data.rising, true) + "</tbody></table>"
+      : '<p class="cns-text-muted">Nothing is rising by the rules above.</p>';
+
+    $("trend-indicators").innerHTML = data.indicators.map(function (i) {
+      var items = i.items.map(function (it) {
+        var href = ai.safeHref(it.href);
+        var label = href ? '<a href="' + esc(href) + '">' + esc(it.label) + "</a>" : esc(it.label);
+        return "<li>" + label + (it.detail ? ' <span class="cns-text-muted">· ' + esc(it.detail) + "</span>" : "") + "</li>";
+      }).join("");
+      return '<section class="cns-card"><div class="cns-card-body"><div class="cns-stat"><span class="cns-stat-value">' + i.count +
+        '</span><span class="cns-stat-label">' + esc(i.label) + "</span></div>" + (items ? '<ul class="cns-ai-list">' + items + "</ul>" : "") +
+        (i.count > i.items.length ? '<p class="cns-text-sm cns-text-muted">and ' + (i.count - i.items.length) + " more</p>" : "") + "</div></section>";
+    }).join("");
+
+    var select = $("trend-stream");
+    var current = select.value;
+    select.innerHTML = '<option value="">Every stream</option>' + streams.map(function (s) {
+      return '<option value="' + esc(s) + '">' + esc(s) + "</option>";
+    }).join("");
+    select.value = current;
+    drawAll();
+    ai.renderAIBox($("trend-ai"), data.ai, null, { button: "Ask the AI service for emerging themes", onAsk: ask });
+  }
+
+  function drawAll() {
+    var stream = $("trend-stream").value;
+    var rows = state.data.series.filter(function (s) { return !stream || s.stream === stream; });
+    $("trend-all").innerHTML = rows.length
+      ? '<table class="cns-table cns-table--compact">' + head("Total") + "<tbody>" + seriesRows(rows, false) + "</tbody></table>"
+      : '<p class="cns-text-muted">No series.</p>';
+  }
+
+  function ask() {
+    return api.call(METHOD + "ai_commentary", { months: $("trend-months").value }, { method: "POST" }).then(function (out) {
+      draw(out.analysis);
+      ai.renderAIBox($("trend-ai"), out.analysis.ai, out.ai, { button: "Ask again", onAsk: ask });
+    }).catch(function (e) {
+      ai.renderAIBox($("trend-ai"), state.data.ai, { used: false, notice: e.message }, { button: "Try again", onAsk: ask });
+    });
+  }
+
+  function load() {
+    api.call(METHOD + "analyse", { months: $("trend-months").value }).then(draw)
+      .catch(function (e) { ai.errorState($("trend-rising"), e); });
+  }
+
+  $("trend-months").addEventListener("change", load);
+  $("trend-stream").addEventListener("change", drawAll);
+  load();
+})();
+</script>
+{% endblock %}

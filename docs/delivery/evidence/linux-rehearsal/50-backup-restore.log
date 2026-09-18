@@ -1,0 +1,59 @@
+
+==> Backing up governance.example.internal
+  /var/backups/consilium/20260918-073618-manual: 4 files, 0.4 MB, 2.3s
+
+real	0m2.841s
+user	0m2.272s
+sys	0m0.338s
+total 400
+drwx------ 2 consilium consilium   4096 Sep 18 07:36 .
+drwx------ 3 consilium consilium   4096 Sep 18 07:36 ..
+-rw------- 1 consilium consilium 367089 Sep 18 07:36 20260918_083619-governance_example_internal-database.sql.gz
+-rw------- 1 consilium consilium  10240 Sep 18 07:36 20260918_083619-governance_example_internal-files.tar
+-rw------- 1 consilium consilium  10240 Sep 18 07:36 20260918_083619-governance_example_internal-private-files.tar
+-rw------- 1 consilium consilium    264 Sep 18 07:36 20260918_083619-governance_example_internal-site_config_backup.json
+-rw-r--r-- 1 root      root         895 Sep 18 07:36 BACKUP.json
+{
+ "site": "governance.example.internal",
+ "taken_at": "2026-09-18T07:36:20+00:00",
+ "label": "manual",
+ "seconds": 2.3,
+ "release": "abecd3f1fd63",
+ "files": [
+  {
+   "name": "20260918_083619-governance_example_internal-database.sql.gz",
+   "bytes": 367089,
+   "sha256": "930737b608b7077510cbb3e9a29093af811b897bec085e8794b6cb22aa9176fa"
+  },
+  {
+   "name": "20260918_083619-governance_example_internal-files.tar",
+   "bytes": 10240,
+   "sha256": "b305a3363546cbe85a1b8bb1a9dbcd3f52085e16a8713c430289ec4d3bdf6b34"
+  },
+  {
+   "name": "20260918_083619-governance_example_internal-private-files.tar",
+   "bytes": 10240,
+   "sha256": "34458c3f6ef968712eb5b993fdbbaf3447172b8fe9f843e73e3f6c406232805f"
+  },
+  {
+   "name": "20260918_083619-governance_example_internal-site_config_backup.json",
+   "bytes": 264,
+   "sha256": "d7bdda0ad1b73ac3a4faa8406a36acd92189687da9870b037e40d993cf6e778e"
+  }
+ ]
+}
+      pass  Nothing references an external host              no CDN or external font references
+      pass  PDF engine present                               wkhtmltopdf 0.12.6.1 (with patched qt) at /usr/local/bin/wkhtmltopdf
+      pass  Background queues are reachable                  redis://cons-redis:6379/1
+      pass  Scheduled jobs are registered                    59 job types
+    
+      17/17 checks passed. The installation is healthy.
+
+==> Restored into governance.example.internal in 24s
+
+real	0m24.625s
+user	0m16.531s
+sys	0m2.193s
+active
+active
+active

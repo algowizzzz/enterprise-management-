@@ -1,0 +1,97 @@
+{
+  "name": "Reminder Log",
+  "module": "Consilium Core",
+  "description": "One row per scheduled reminder sent, so the daily job can tell what it has already said and never repeats itself on the same day.",
+  "autoname": "RMDL-.#####",
+  "allow_rename": 0,
+  "track_changes": 0,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "reminder_key",
+      "fieldtype": "Data",
+      "label": "Reminder Key",
+      "reqd": 1,
+      "unique": 1,
+      "read_only": 1,
+      "description": "Event, record, recipient, due date and day sent. Unique, so two scheduler runs racing each other cannot both send."
+    },
+    {
+      "fieldname": "event_code",
+      "fieldtype": "Data",
+      "label": "Event",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Record DocType",
+      "options": "DocType",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Record",
+      "options": "subject_doctype",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "recipient",
+      "fieldtype": "Link",
+      "label": "Recipient",
+      "options": "User",
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "due_on",
+      "fieldtype": "Date",
+      "label": "Due On"
+    },
+    {
+      "fieldname": "sent_for_date",
+      "fieldtype": "Date",
+      "label": "Sent On",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "dispatch",
+      "fieldtype": "Link",
+      "label": "Dispatch",
+      "options": "Notification Dispatch"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "provenance": "P-10, P-11, E-9, E-11: idempotent scheduled reminders",
+  "naming_rule": "Expression (old style)"
+}

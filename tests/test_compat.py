@@ -134,6 +134,48 @@ def test_execute_in_shell_raises_on_failure_when_asked(fake_frappe_utils, monkey
 		fake_frappe_utils.execute_in_shell("exit 3", check_exit_code=True)
 
 
+def test_restore_file_probe_is_answered_without_the_file_utility_on_windows(
+	fake_frappe_utils, monkeypatch, tmp_path
+):
+	"""`bench restore` runs `file <backup>` first; Windows has no `file`."""
+	import gzip
+
+	monkeypatch.setattr(compat, "IS_WINDOWS", True)
+	compat._patch_execute_in_shell()
+
+	def no_shell(*args, **kwargs):
+		raise AssertionError("must not shell out: there is no `file` on Windows")
+
+	monkeypatch.setattr(subprocess, "Popen", no_shell)
+
+	dump = tmp_path / "20260101-site-database.sql.gz"
+	dump.write_bytes(gzip.compress(b"CREATE TABLE x ();"))
+	err, out = fake_frappe_utils.execute_in_shell(f"file {dump}", check_exit_code=True)
+	assert err == b"" and out.decode().endswith("gzip compressed data")
+	assert "AES" not in out.decode().split(":")[-1]
+
+	encrypted = tmp_path / "encrypted.sql.gz"
+	encrypted.write_bytes(b"\x8c\x0d\x04\x09\x03\x02rest")
+	err, out = fake_frappe_utils.execute_in_shell(f"file {encrypted}")
+	assert "AES" in out.decode().split(":")[-1], "frappe decides to decrypt on this word"
+
+	with pytest.raises(Exception):
+		fake_frappe_utils.execute_in_shell(f"file {tmp_path / 'missing.sql.gz'}", check_exit_code=True)
+
+
+def test_restore_file_probe_uses_the_real_utility_on_posix(fake_frappe_utils, monkeypatch, tmp_path):
+	import shutil
+
+	if not shutil.which("file"):
+		pytest.skip("no `file` utility on this machine")
+	monkeypatch.setattr(compat, "IS_WINDOWS", False)
+	compat._patch_execute_in_shell()
+	plain = tmp_path / "plain.sql"
+	plain.write_text("select 1;\n")
+	err, out = fake_frappe_utils.execute_in_shell(f"file {plain}")
+	assert b"text" in out.lower()
+
+
 # ---------------------------------------------------------------------------
 # fault handler -- the blocker that fires on every frappe.init()
 # ---------------------------------------------------------------------------

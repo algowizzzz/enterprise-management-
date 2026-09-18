@@ -1,0 +1,25 @@
+les with rows before: 122; after: 128
+les with FEWER rows after the upgrade: 0
+les with more rows after (migration and post-upgrade setup writes):
+  Block Module: 0 -> 168
+  Comment: 68 -> 69
+  Contact: 0 -> 23
+  Contact Email: 0 -> 23
+  Deleted Document: 0 -> 1
+  DocField: 4447 -> 4556
+  DocPerm: 675 -> 692
+  DocType: 411 -> 418
+  External System: 3 -> 4
+  Has Role: 115 -> 143
+  Import Field Mapping: 11 -> 19
+  Import Profile: 1 -> 2
+  Module Profile: 0 -> 1
+  Notification Channel: 3 -> 4
+  Notification Template: 0 -> 44
+  Scheduled Job Type: 57 -> 59
+  Singles: 487 -> 491
+  Version: 112 -> 138
+  Workspace: 6 -> 10
+  Workspace Link: 116 -> 216
+  Workspace Shortcut: 21 -> 36
+Note: 'Deleted Document: Scheduled Job Type reviews.overdue_reviews' — the current working tree's hooks.py no longer schedules consilium.governance.reviews.overdue_reviews (removed by the application team today), so the framework's migrate removed the stale job type. Not data loss.

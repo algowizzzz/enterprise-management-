@@ -1,0 +1,1094 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  One formation request, as the governance office works it.
+  A summary and the actions open right now sit above four panels: the request
+  as raised, its evaluation (the overlap check and the five criteria), the
+  questions put to its originator, and its approval steps and any exception.
+
+  The page never decides what may be done. The server's review payload says
+  which actions the viewer may take at this stage, each button calls a thin
+  transition on the server, and the server checks both again on the way in.
+-#}
+
+{% block page_actions %}
+{%- if found and allowed %}
+<span id="forum-action"></span>
+{%- endif %}
+{%- if can_read_queue %}
+<a class="cns-btn cns-btn-secondary" href="/formation-requests">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to requests
+</a>
+{%- else %}
+<a class="cns-btn cns-btn-secondary" href="/">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Home
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not request_name %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-signpost" aria-hidden="true"></i></span>
+    <p class="cns-state-title">No request was named</p>
+    <p class="cns-state-message">Open a request from the formation queue to work on it.</p>
+    <a class="cns-btn cns-btn-primary" href="/formation-requests">Go to the queue</a>
+  </div>
+</div>
+{%- elif not found %}
+<div class="cns-card">
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">That request is not on record</p>
+    <p class="cns-state-message">Reference <span class="cns-mono">{{ request_name | e }}</span> does not exist.</p>
+    <a class="cns-btn cns-btn-secondary" href="/formation-requests">Back to the queue</a>
+  </div>
+</div>
+{%- elif not allowed %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
+    <p class="cns-state-title">This request is not open to you</p>
+    <p class="cns-state-message">Formation requests are read by the governance office and by the
+      people asked to decide them. Ask the office if you need to see this one.</p>
+    <a class="cns-btn cns-btn-secondary" href="/">Home</a>
+  </div>
+</div>
+{%- else %}
+
+<div id="request-summary" class="cns-card">
+  <div class="cns-card-body">
+    <p class="cns-text-muted cns-text-sm">Loading the request&hellip;</p>
+  </div>
+</div>
+
+<div id="outcome" role="status" aria-live="polite"></div>
+
+<section class="cns-card" id="actions-card" aria-labelledby="actions-heading" hidden>
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="actions-heading">What you can do now</h2>
+      <p class="cns-card-subtitle" id="actions-subtitle"></p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-btn-group" id="action-buttons"></div>
+    <div id="action-notes"></div>
+    <div id="action-panel"></div>
+  </div>
+</section>
+
+<div class="cns-tabs" role="tablist" aria-label="Formation request sections">
+  <button class="cns-tab" role="tab" id="tab-request"    aria-controls="panel-request"    aria-selected="true">Request</button>
+  <button class="cns-tab" role="tab" id="tab-evaluation" aria-controls="panel-evaluation" aria-selected="false" tabindex="-1">Evaluation</button>
+  <button class="cns-tab" role="tab" id="tab-questions"  aria-controls="panel-questions"  aria-selected="false" tabindex="-1">Questions</button>
+  <button class="cns-tab" role="tab" id="tab-approval"   aria-controls="panel-approval"   aria-selected="false" tabindex="-1">Approval</button>
+</div>
+
+<!-- ------------------------------ Request ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-request" aria-labelledby="tab-request" tabindex="0">
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">The case for it</h2></div>
+    <div class="cns-card-body"><dl class="cns-dl cns-dl--stacked" id="request-case"></dl></div>
+  </section>
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">The forum asked for</h2></div>
+    <div class="cns-card-body"><dl class="cns-dl" id="request-forum"></dl></div>
+  </section>
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Accountability and timing</h2></div>
+    <div class="cns-card-body"><dl class="cns-dl" id="request-accountability"></dl></div>
+  </section>
+</div>
+
+<!-- ----------------------------- Evaluation ---------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-evaluation" aria-labelledby="tab-evaluation" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Overlap check</h2>
+        <p class="cns-card-subtitle">Run when the request was submitted: forums already on the
+          inventory with the same type and primary risk category.</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="duplicate-check"></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">The five criteria</h2>
+        <p class="cns-card-subtitle">Every criterion needs a finding, with a note saying why,
+          before approval can be sought.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <form id="findings-form" novalidate>
+        <div class="cns-alert cns-status-danger" id="findings-errors" role="alert" hidden>
+          <i class="bi bi-x-octagon" aria-hidden="true"></i>
+          <div>
+            <strong>These findings cannot be saved yet.</strong>
+            <ul id="findings-errors-list" class="cns-prose" style="margin-top: var(--cns-space-2);"></ul>
+          </div>
+        </div>
+        <div id="criteria-list"></div>
+        <div id="completeness"></div>
+        <div class="cns-form-actions" id="findings-actions" hidden>
+          <button type="submit" class="cns-btn cns-btn-primary" id="save-findings">
+            <i class="bi bi-save" aria-hidden="true"></i> Save findings
+          </button>
+          <span class="cns-text-muted cns-text-sm" id="findings-state"></span>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+
+<!-- ------------------------------ Questions ---------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-questions" aria-labelledby="tab-questions" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Questions to the originator</h2>
+        <p class="cns-card-subtitle">Returning a request is a transition, not a comment: the
+          questions and the answer stay on the record.</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="exchange"></div>
+  </section>
+</div>
+
+<!-- ------------------------------ Approval ----------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-approval" aria-labelledby="tab-approval" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">What stands in the way of approval</h2>
+        <p class="cns-card-subtitle">Facts about the record, checked again when approval is given.</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="blockers"></div>
+  </section>
+
+  {#- E33-S1 / G-7: the risk governance office challenges the draft charter
+      before final approval. Filled from `charter_challenge` in the review
+      payload; recorded through `charters.record_charter_challenge` (POST),
+      which checks the role again and audits a refusal. #}
+  <section class="cns-card" id="charter-challenge-card" aria-labelledby="charter-challenge-heading" hidden>
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="charter-challenge-heading">Charter challenge</h2>
+        <p class="cns-card-subtitle">The risk governance office challenges each charter drafted for this
+          request. An outcome that is not cleared holds approval back.</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="charter-challenge"></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Approval steps</h2>
+        <p class="cns-card-subtitle" id="route-note">The steps come from the configured approval
+          route. Each is decided by the person it is assigned to, or their delegate.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="steps-table"></div>
+      <div id="step-forms"></div>
+    </div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Exceptions</h2>
+        <p class="cns-card-subtitle">A disputed request goes to the designated authority, and no
+          step is skipped without a recorded exception authorisation.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="exception-body"></div>
+      <div id="exception-forms"></div>
+    </div>
+  </section>
+</div>
+
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if found and allowed %}
+<script>
+(function () {
+  "use strict";
+
+  var REQUEST = {{ request_name | tojson }};
+  var METHOD = "consilium.governance.formation.";
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var f = Consilium.Table.formatters;
+
+  var ctx = null;
+  var stepsTable = null;
+
+  /* Display only: the colour a state or decision is shown in. */
+  var STATE_TONES = {
+    Draft: "neutral", Submitted: "info", "Under Evaluation": "primary",
+    "Returned To Originator": "warning", "Pending Approval": "info", "Exception Review": "danger",
+    Approved: "success", Rejected: "danger", Withdrawn: "neutral"
+  };
+  var DECISION_TONES = {
+    Pending: "neutral", Approved: "success", Rejected: "danger",
+    "Changes Requested": "warning", Abstained: "info", Bypassed: "warning"
+  };
+  var FINDING_TONES = { Pass: "success", Fail: "danger" };
+
+  /* What each criterion asks. Guidance for the evaluator, keyed by the
+     criterion row's own name; a criterion added later simply has none. */
+  var CRITERION_HELP = {
+    "Gap In Coverage": "Is there oversight this forum would provide that no forum provides today?",
+    "Duplication": "Does an existing forum already cover this ground? Read the overlap check above.",
+    "Escalation Pathway": "Is it clear what the forum escalates, to whom, and when?",
+    "Framework Alignment": "Does the proposal fit the governance framework and the forum hierarchy?",
+    "Resource Feasibility": "Can it be chaired, staffed and served at the proposed cadence?"
+  };
+
+  /* Where a request stands, keyed by the server's stage (derived from the
+     record's flags — not its state label). */
+  var STAGES = {
+    draft: { step: 0, text: "Still a draft with its originator. It reaches the governance office when it is submitted." },
+    awaiting_evaluation: { step: 1, text: "Submitted, and waiting for the governance office to start evaluating it." },
+    evaluation: { step: 2, text: "Being evaluated. Every criterion needs a finding, and completeness must be confirmed, before approval is sought." },
+    with_originator: { step: 2, blocked: true, text: "Returned to its originator with questions. It comes back into evaluation when they answer." },
+    exception: { step: 2, blocked: true, text: "Routed as an exception to the designated authority, who must resolve it before approval continues." },
+    approval: { step: 3, text: "Approval has been sought. Each step is decided by the person it is assigned to; the request can then be approved." },
+    approved: { step: 4, done: true, text: "Approved." },
+    closed: { step: 4, blocked: true, text: "Closed without a forum being created." }
+  };
+  var PROGRESS = ["Drafted", "Submitted", "Evaluated", "Approval sought", "Decided"];
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+  function value(v) { return (v === null || v === undefined || v === "") ? dash() : escapeHtml(v); }
+  function prose(v) {
+    return v ? '<span style="white-space: pre-line;">' + escapeHtml(v) + "</span>" : dash();
+  }
+  function dateValue(v) { return v ? escapeHtml(Consilium.util.formatDate(v, false)) : dash(); }
+  function when(v) { return v ? escapeHtml(Consilium.util.formatDate(v, true)) : dash(); }
+  function named(doctype, code) {
+    return code ? escapeHtml(Consilium.reference.label(doctype, code)) : dash();
+  }
+  function pill(text, tone) {
+    return '<span class="cns-pill cns-status-' + escapeAttr(tone || "neutral") + '">' + escapeHtml(text) + "</span>";
+  }
+  function forumLink(name) {
+    if (!name) return dash();
+    return '<a href="/forum?name=' + escapeAttr(encodeURIComponent(name)) + '">' +
+      escapeHtml(Consilium.reference.label("Governance Forum", name)) + "</a>";
+  }
+  function fillList(target, rows) {
+    document.getElementById(target).innerHTML = rows.map(function (row) {
+      return "<div><dt>" + escapeHtml(row[0]) + "</dt><dd>" + row[1] + "</dd></div>";
+    }).join("");
+  }
+  function chips(rows, field, doctype) {
+    if (!rows || !rows.length) return dash();
+    return '<ul class="cns-chips">' + rows.map(function (row) {
+      return '<li><span class="cns-badge cns-status-neutral">' +
+        escapeHtml(Consilium.reference.label(doctype, row[field])) + "</span></li>";
+    }).join("") + "</ul>";
+  }
+  function stateCard(title, message) {
+    return '<div class="cns-state cns-state--error"><span class="cns-state-icon">' +
+      '<i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>' +
+      '<p class="cns-state-title">' + escapeHtml(title) + "</p>" +
+      '<p class="cns-state-message">' + escapeHtml(message || "") + "</p></div>";
+  }
+  function label(action) { return (ctx.action_labels || {})[action] || action; }
+
+  /* ------------------------------- tabs -------------------------------- */
+
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+
+  function selectTab(tab, focus) {
+    tabs.forEach(function (other) {
+      var selected = other === tab;
+      other.setAttribute("aria-selected", selected ? "true" : "false");
+      other.tabIndex = selected ? 0 : -1;
+      document.getElementById(other.getAttribute("aria-controls")).hidden = !selected;
+    });
+    if (focus) tab.focus();
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search +
+        "#" + tab.id.replace("tab-", ""));
+    }
+  }
+
+  function openTab(key) {
+    var tab = document.getElementById("tab-" + key);
+    if (tab) { selectTab(tab, true); }
+  }
+
+  tabs.forEach(function (tab, index) {
+    tab.addEventListener("click", function () { selectTab(tab); });
+    tab.addEventListener("keydown", function (event) {
+      var step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (step) {
+        event.preventDefault();
+        selectTab(tabs[(index + step + tabs.length) % tabs.length], true);
+      } else if (event.key === "Home") {
+        event.preventDefault(); selectTab(tabs[0], true);
+      } else if (event.key === "End") {
+        event.preventDefault(); selectTab(tabs[tabs.length - 1], true);
+      }
+    });
+  });
+
+  /* ------------------------------ calling ------------------------------ */
+
+  /** Run one transition on the server, then redraw from what it returns. */
+  function act(method, args, success) {
+    var buttons = document.querySelectorAll("#actions-card button, #panel-approval button, #save-findings");
+    Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+    var payload = Object.assign({ request: REQUEST }, args || {});
+    return Consilium.api.call(METHOD + method, payload, { method: "POST" })
+      .then(function (next) {
+        render(next);
+        Consilium.toast.success(success, { title: "Recorded" });
+        Consilium.announce(success);
+        return next;
+      })
+      .catch(function (error) {
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+        Consilium.toast.error(error.message || "The server refused the action.", { title: "Not done" });
+        throw error;
+      });
+  }
+
+  /* ------------------------------ rendering ---------------------------- */
+
+  function render(next) {
+    ctx = next;
+    var doc = ctx.request;
+    renderSummary(doc);
+    renderOutcome(doc);
+    renderActions(doc);
+    renderRequest(doc);
+    renderEvaluation(doc);
+    renderExchange(doc);
+    renderApproval(doc);
+    renderCharterChallenge();
+  }
+
+  /* ------------------------ charter challenge (E33-S1) ------------------ */
+
+  var CHARTERS = "consilium.governance.charters.";
+
+  function renderCharterChallenge() {
+    var cc = ctx.charter_challenge || { charters: [] };
+    var card = document.getElementById("charter-challenge-card");
+    var body = document.getElementById("charter-challenge");
+    card.hidden = !cc.charters.length;
+    if (!cc.charters.length) { body.innerHTML = ""; return; }
+    body.innerHTML = cc.charters.map(function (c) {
+      var status = c.rgo_challenge_status || "Not Reviewed";
+      var form = "";
+      if (c.can_record) {
+        form = '<form class="cns-fieldset" data-challenge="' + escapeAttr(c.name) + '" novalidate style="margin-top: var(--cns-space-3);">' +
+          '<div class="cns-field"><label class="cns-label" for="challenge-status-' + escapeAttr(c.name) + '">Outcome</label>' +
+          '<select class="cns-select" id="challenge-status-' + escapeAttr(c.name) + '" name="status">' +
+          cc.options.map(function (o) {
+            return '<option value="' + escapeAttr(o.status) + '" data-requires-statement="' + (o.requires_statement ? 1 : 0) + '">' +
+              escapeHtml(o.status) + "</option>";
+          }).join("") + "</select></div>" +
+          '<div class="cns-field"><label class="cns-label" for="challenge-comments-' + escapeAttr(c.name) + '">Comments</label>' +
+          '<textarea class="cns-textarea" id="challenge-comments-' + escapeAttr(c.name) + '" name="comments" rows="3"></textarea>' +
+          '<span class="cns-help">Required when the outcome asks for changes: say what is to change.</span></div>' +
+          '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">Record challenge outcome</button></div></form>';
+      } else if (cc.may_record && !c.current_version) {
+        form = '<p class="cns-text-muted cns-text-sm">This charter has no version yet, so there is nothing to challenge.</p>';
+      }
+      return '<div style="margin-bottom: var(--cns-space-4);">' +
+        "<p><strong>" + escapeHtml(c.charter_title || c.name) + '</strong> <span class="cns-mono cns-text-sm">' + escapeHtml(c.name) + "</span> " +
+        '<span class="cns-pill ' + (c.challenge_outstanding ? "cns-status-warning" : "cns-status-success") + '">' + escapeHtml(status) + "</span></p>" +
+        (c.rgo_challenge_comments ? '<p class="cns-prose">' + escapeHtml(c.rgo_challenge_comments) + "</p>" : "") +
+        (c.rgo_reviewed_by ? '<p class="cns-text-muted cns-text-sm">' + escapeHtml(c.rgo_reviewed_by) +
+          (c.rgo_reviewed_on ? " &middot; " + escapeHtml(Consilium.util.formatDate(c.rgo_reviewed_on, true)) : "") + "</p>" : "") +
+        form + "</div>";
+    }).join("");
+  }
+
+  document.getElementById("charter-challenge").addEventListener("submit", function (event) {
+    var form = event.target.closest("form[data-challenge]");
+    if (!form) return;
+    event.preventDefault();
+    var select = form.querySelector("select[name=status]");
+    var comments = form.querySelector("textarea[name=comments]");
+    var option = select.options[select.selectedIndex];
+    if (option && option.getAttribute("data-requires-statement") === "1" && !comments.value.trim()) {
+      comments.setAttribute("aria-invalid", "true");
+      comments.focus();
+      return;
+    }
+    var button = form.querySelector("button[type=submit]");
+    button.disabled = true;
+    Consilium.api.call(CHARTERS + "record_charter_challenge",
+      { charter: form.getAttribute("data-challenge"), status: select.value, comments: comments.value.trim() },
+      { method: "POST" })
+      .then(function () { return Consilium.api.call(METHOD + "get_request_review", { request: REQUEST }); })
+      .then(function (next) {
+        render(next);
+        Consilium.toast.success("The challenge outcome is recorded.", { title: "Recorded" });
+      })
+      .catch(function (error) {
+        button.disabled = false;
+        Consilium.toast.error(error.message || "The server refused the challenge outcome.", { title: "Not done" });
+      });
+  });
+
+  function renderSummary(doc) {
+    var stage = STAGES[ctx.stage] || { step: 0, text: "" };
+    var flags = [];
+    if (doc.completeness_confirmed) flags.push(pill("Completeness confirmed", "success"));
+    if (doc.exception_raised) flags.push(pill("Exception raised", "warning"));
+    if (ctx.is_originator) flags.push(pill("You raised this", "info"));
+
+    var steps = PROGRESS.map(function (text, index) {
+      var state = index < stage.step ? "done" : index === stage.step ? "current" : "pending";
+      if (index === stage.step && stage.done) state = "done";
+      if (index === stage.step && stage.blocked) state = "blocked";
+      var marker = state === "done" ? '<i class="bi bi-check"></i>'
+        : state === "blocked" ? '<i class="bi bi-exclamation"></i>' : String(index + 1);
+      return '<li class="cns-workflow-step" data-state="' + state + '"' +
+        (index === stage.step ? ' aria-current="step"' : "") + '>' +
+        '<span class="cns-workflow-marker" aria-hidden="true">' + marker + "</span> " +
+        escapeHtml(text) + "</li>";
+    }).join("");
+
+    document.getElementById("request-summary").innerHTML =
+      '<div class="cns-card-body">' +
+      '<p class="cns-eyebrow">' + escapeHtml(doc.request_type || "") + " request &middot; " +
+      '<span class="cns-mono">' + escapeHtml(doc.name) + "</span></p>" +
+      '<p style="margin-bottom: var(--cns-space-3);">' +
+      pill(doc.workflow_state || "", STATE_TONES[doc.workflow_state]) + " " + flags.join(" ") + "</p>" +
+      '<p class="cns-text-secondary">' + escapeHtml(stage.text) + "</p>" +
+      '<ol class="cns-workflow" aria-label="Where this request stands">' + steps + "</ol>" +
+      '<dl class="cns-dl" style="margin-top: var(--cns-space-4);">' +
+      "<div><dt>Raised by</dt><dd>" + value(doc.requester) + "</dd></div>" +
+      "<div><dt>Raised on</dt><dd>" + dateValue(doc.creation) + "</dd></div>" +
+      "<div><dt>Needed in place by</dt><dd>" + dateValue(doc.proposed_timeline) + "</dd></div>" +
+      "<div><dt>Forum type</dt><dd>" + named("Governance Forum Type", doc.forum_type) + "</dd></div>" +
+      "<div><dt>Decided on</dt><dd>" + dateValue(doc.decided_on) + "</dd></div>" +
+      "</dl></div>";
+  }
+
+  function renderOutcome(doc) {
+    var node = document.getElementById("outcome");
+    var slot = document.getElementById("forum-action");
+    slot.innerHTML = "";
+    if (ctx.stage === "approved") {
+      if (ctx.created_forum) {
+        var href = "/forum?name=" + encodeURIComponent(ctx.created_forum.name);
+        node.innerHTML =
+          '<div class="cns-alert cns-status-success"><i class="bi bi-check-circle" aria-hidden="true"></i>' +
+          "<div><strong>Approved" + (doc.decided_on ? " on " + escapeHtml(Consilium.util.formatDate(doc.decided_on, false)) : "") +
+          ".</strong> Forum <a href=\"" + escapeAttr(href) + "\">" +
+          escapeHtml(ctx.created_forum.forum_name || ctx.created_forum.name) + "</a> (" +
+          '<span class="cns-mono">' + escapeHtml(ctx.created_forum.name) + "</span>) was created in draft. " +
+          "Its standing moves when a compliance review is recorded: " +
+          '<a href="/forum-review?forum=' + escapeAttr(encodeURIComponent(ctx.created_forum.name)) +
+          '">open its compliance review</a>.</div></div>';
+        slot.innerHTML = '<a class="cns-btn cns-btn-primary" href="' + escapeAttr(href) + '">' +
+          '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Open the forum</a>';
+      } else {
+        node.innerHTML =
+          '<div class="cns-alert cns-status-success"><i class="bi bi-check-circle" aria-hidden="true"></i>' +
+          "<div><strong>Approved.</strong> A " + escapeHtml((doc.request_type || "").toLowerCase()) +
+          " request creates no forum. " +
+          (doc.subject_forum
+            ? "The forum it concerns, " + forumLink(doc.subject_forum) + ", was sent for compliance review."
+            : "") + "</div></div>";
+      }
+    } else if (ctx.stage === "closed") {
+      node.innerHTML =
+        '<div class="cns-alert cns-status-warning"><i class="bi bi-slash-circle" aria-hidden="true"></i>' +
+        "<div><strong>" + escapeHtml(doc.workflow_state || "Closed") + ".</strong> " +
+        (doc.exception_resolution ? "Reason recorded: " + escapeHtml(doc.exception_resolution) : "") +
+        "</div></div>";
+    } else {
+      node.innerHTML = "";
+    }
+  }
+
+  /* --- the action bar --------------------------------------------------- */
+
+  /* Each action the server may offer, and how the page asks for it. A `form`
+     action opens a panel that collects what the transition needs; a `confirm`
+     action opens a panel that says what will happen; a `tab` action is taken
+     where its detail lives. Which of them appear is the server's decision. */
+  var ACTIONS = [
+    { key: "start_evaluation", icon: "bi-play-circle", tone: "primary",
+      method: "start_request_evaluation", done: "Evaluation started.",
+      confirm: "The request moves into evaluation. Its originator can no longer change it unless you return it with questions." },
+    { key: "record_findings", icon: "bi-clipboard-check", tone: "secondary", tab: "evaluation" },
+    { key: "raise_approval_steps", icon: "bi-diagram-3", tone: "primary",
+      method: "raise_request_approval_steps", done: "Approval steps raised.",
+      confirm: "Each step of the configured approval route becomes a decision assigned to its approver, who is notified.",
+      precheck: function () {
+        var needs = [];
+        if (ctx.unassessed.length) needs.push("findings on " + ctx.unassessed.join(", "));
+        if (!ctx.request.completeness_confirmed) needs.push("the completeness confirmation");
+        return needs;
+      } },
+    { key: "return_to_originator", icon: "bi-reply", tone: "secondary",
+      method: "return_request_to_originator", done: "Returned to the originator with your questions.",
+      form: { field: "questions", label: "Questions for the originator",
+              help: "They see these on their request and answer them there. Be specific.",
+              required: "Enter the questions the originator must answer.",
+              submit: "Return the request" } },
+    { key: "record_step_decision", icon: "bi-check2-square", tone: "primary", tab: "approval" },
+    { key: "authorise_bypass", icon: "bi-skip-forward", tone: "secondary", tab: "approval" },
+    { key: "resolve_exception", icon: "bi-shield-check", tone: "primary", tab: "approval" },
+    { key: "raise_exception", icon: "bi-exclamation-diamond", tone: "secondary",
+      method: "raise_request_exception", done: "Exception raised and routed to the designated authority.",
+      form: { field: "rationale", label: "Why this is being raised as an exception",
+              help: "The designated authority reads this first. Say what is disputed and by whom.",
+              required: "Enter the rationale for the exception.",
+              submit: "Raise the exception" } },
+    { key: "approve", icon: "bi-check-circle", tone: "primary",
+      method: "approve_request", done: "Request approved.",
+      confirm: "Approving is final. A create request produces its forum in draft, awaiting a compliance review; a change or retirement sends the forum it concerns for review.",
+      precheck: function () { return ctx.blockers; } },
+    { key: "reject", icon: "bi-x-circle", tone: "danger",
+      method: "reject_request", done: "Request rejected.",
+      form: { field: "reason", label: "Why the request is rejected",
+              help: "The originator is told this. Rejection is final.",
+              required: "Enter the reason for rejecting the request.",
+              submit: "Reject the request", danger: true } },
+    { key: "withdraw", icon: "bi-box-arrow-left", tone: "secondary",
+      method: "withdraw_request", done: "Request withdrawn.",
+      form: { field: "reason", label: "Why the request is withdrawn",
+              help: "Kept on the record, so the queue can say why it went.",
+              required: "Enter the reason for withdrawing the request.",
+              submit: "Withdraw the request", danger: true } },
+    { key: "respond", icon: "bi-chat-left-text", tone: "primary",
+      link: function () { return "/create-forum?request=" + encodeURIComponent(REQUEST); } }
+  ];
+
+  var WHOSE = {
+    draft: "The originator is still drafting this request.",
+    awaiting_evaluation: "This request is waiting on the governance office.",
+    evaluation: "This request is with the governance office for evaluation.",
+    with_originator: "This request is with its originator, who must answer the questions put to them.",
+    exception: "This request is with the designated authority.",
+    approval: "This request is with its approvers."
+  };
+
+  function renderActions(doc) {
+    var card = document.getElementById("actions-card");
+    var buttons = document.getElementById("action-buttons");
+    var notes = document.getElementById("action-notes");
+    document.getElementById("action-panel").innerHTML = "";
+    var offered = ACTIONS.filter(function (a) { return ctx.actions[a.key]; });
+
+    if (!ctx.is_open) { card.hidden = true; return; }
+    card.hidden = false;
+    document.getElementById("actions-subtitle").textContent = WHOSE[ctx.stage] || "";
+
+    if (!offered.length) {
+      buttons.innerHTML = "";
+      notes.innerHTML = '<p class="cns-text-muted">Nothing here is yours to do at this stage.</p>';
+      return;
+    }
+
+    var noteHtml = [];
+    buttons.innerHTML = offered.map(function (a) {
+      var needs = a.precheck ? a.precheck() : [];
+      var noteId = needs.length ? "note-" + a.key : null;
+      if (needs.length) {
+        noteHtml.push('<div class="cns-alert cns-status-warning" id="' + noteId + '">' +
+          '<i class="bi bi-exclamation-triangle" aria-hidden="true"></i><div><strong>' +
+          escapeHtml(label(a.key)) + " is not available yet.</strong> Still needed:" +
+          '<ul class="cns-prose" style="margin-top: var(--cns-space-2);">' +
+          needs.map(function (n) { return "<li>" + escapeHtml(n) + "</li>"; }).join("") +
+          "</ul></div></div>");
+      }
+      var tone = a.tone === "danger" ? "cns-btn-danger" : a.tone === "primary" ? "cns-btn-primary" : "cns-btn-secondary";
+      if (a.link) {
+        return '<a class="cns-btn ' + tone + '" href="' + escapeAttr(a.link()) + '">' +
+          '<i class="bi ' + a.icon + '" aria-hidden="true"></i> ' + escapeHtml(label(a.key)) + "</a>";
+      }
+      return '<button type="button" class="cns-btn ' + tone + '" data-action="' + escapeAttr(a.key) + '"' +
+        (needs.length ? ' disabled aria-describedby="' + noteId + '"' : "") + ">" +
+        '<i class="bi ' + a.icon + '" aria-hidden="true"></i> ' + escapeHtml(label(a.key)) + "</button>";
+    }).join("");
+    notes.innerHTML = noteHtml.join("");
+  }
+
+  document.getElementById("action-buttons").addEventListener("click", function (event) {
+    var button = event.target.closest("[data-action]");
+    if (!button || button.disabled) return;
+    var action = ACTIONS.filter(function (a) { return a.key === button.getAttribute("data-action"); })[0];
+    if (!action) return;
+    if (action.tab) { openTab(action.tab); return; }
+    openPanel(action);
+  });
+
+  /** The confirmation or the small form an action needs before it is sent. */
+  function openPanel(action) {
+    var panel = document.getElementById("action-panel");
+    var form = action.form;
+    var fieldId = form ? "panel-" + form.field : null;
+    panel.innerHTML =
+      '<form class="cns-fieldset" id="panel-form" novalidate style="margin-top: var(--cns-space-4);">' +
+      "<legend>" + escapeHtml(label(action.key)) + "</legend>" +
+      (action.confirm
+        ? '<div class="cns-alert cns-status-info"><i class="bi bi-info-circle" aria-hidden="true"></i><div>' +
+          escapeHtml(action.confirm) + "</div></div>"
+        : "") +
+      (form
+        ? '<div class="cns-field"><label class="cns-label" for="' + fieldId + '">' + escapeHtml(form.label) +
+          '<span class="cns-required" aria-hidden="true">*</span></label>' +
+          '<textarea class="cns-textarea" id="' + fieldId + '" rows="4" required aria-describedby="' +
+          fieldId + '-help"></textarea>' +
+          '<span class="cns-help" id="' + fieldId + '-help">' + escapeHtml(form.help) + "</span></div>"
+        : "") +
+      '<div class="cns-form-actions">' +
+      '<button type="submit" class="cns-btn ' + (form && form.danger ? "cns-btn-danger" : "cns-btn-primary") + '">' +
+      escapeHtml(form ? form.submit : "Confirm: " + label(action.key).toLowerCase()) + "</button>" +
+      '<button type="button" class="cns-btn cns-btn-ghost" id="panel-cancel">Cancel</button>' +
+      "</div></form>";
+
+    var node = form ? document.getElementById(fieldId) : panel.querySelector("button[type=submit]");
+    node.focus();
+
+    document.getElementById("panel-cancel").addEventListener("click", function () {
+      panel.innerHTML = "";
+      var back = document.querySelector('[data-action="' + action.key + '"]');
+      if (back) back.focus();
+    });
+
+    document.getElementById("panel-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      var args = {};
+      if (form) {
+        var input = document.getElementById(fieldId);
+        var text = input.value.trim();
+        if (!setError(input, text ? null : form.required)) { input.focus(); return; }
+        args[form.field] = text;
+      }
+      act(action.method, args, action.done).catch(function () { /* the toast has said why */ });
+    });
+  }
+
+  /** Show or clear a field's error. Returns true when the field is valid. */
+  function setError(node, message) {
+    var wrapper = node.closest(".cns-field");
+    var existing = wrapper.querySelector(".cns-error-text");
+    if (message) {
+      node.setAttribute("aria-invalid", "true");
+      if (!existing) {
+        existing = document.createElement("span");
+        existing.className = "cns-error-text";
+        existing.id = node.id + "-error";
+        wrapper.appendChild(existing);
+      }
+      existing.textContent = message;
+      var described = (node.getAttribute("aria-describedby") || "").split(" ")
+        .filter(function (v) { return v && v !== existing.id; });
+      described.push(existing.id);
+      node.setAttribute("aria-describedby", described.join(" "));
+      return false;
+    }
+    node.removeAttribute("aria-invalid");
+    if (existing) existing.remove();
+    return true;
+  }
+
+  /* --- the request as raised -------------------------------------------- */
+
+  function renderRequest(doc) {
+    fillList("request-case", [
+      ["Why it is needed", prose(doc.rationale)],
+      ["Purpose and scope", prose(doc.purpose_scope)],
+      ["Proposed responsibilities", prose(doc.proposed_responsibilities)]
+    ]);
+    fillList("request-forum", [
+      ["Kind of request", value(doc.request_type)],
+      ["Forum this concerns", doc.subject_forum ? forumLink(doc.subject_forum) : dash()],
+      ["Proposed name", value(doc.forum_name)],
+      ["Proposed reference", value(doc.forum_id_proposed)],
+      ["Forum type", named("Governance Forum Type", doc.forum_type)],
+      ["Primary risk category", named("Risk Category", doc.primary_risk_category)],
+      ["Cadence", value(doc.cadence)],
+      ["Parent forum", doc.parent_forum ? forumLink(doc.parent_forum) : dash()],
+      ["Jurisdictions", chips(doc.jurisdictions, "jurisdiction", "Jurisdiction")],
+      ["Sub-forums", (doc.child_forums || []).length
+        ? doc.child_forums.map(function (row) { return forumLink(row.child_forum); }).join(", ")
+        : dash()]
+    ]);
+    fillList("request-accountability", [
+      ["Owning operating group", named("Organization Unit", doc.owning_operating_group)],
+      ["Owning line of business", named("Organization Unit", doc.owning_line_of_business)],
+      ["Owning business units", chips(doc.owning_business_units, "business_unit", "Organization Unit")],
+      ["Delegating authority", (doc.delegating_authority ? Consilium.Table.formatters.person(doc.delegating_authority) : value(doc.delegating_authority))],
+      ["Delegating authority has agreed", doc.delegating_authority_approved ? "Yes" : "Not yet"],
+      ["Sponsor", (doc.forum_sponsor ? Consilium.Table.formatters.person(doc.forum_sponsor) : value(doc.forum_sponsor))],
+      ["Needed in place by", dateValue(doc.proposed_timeline)],
+      ["Intended first meeting", dateValue(doc.first_meeting_date)],
+      ["Raised by", (doc.requester ? Consilium.Table.formatters.person(doc.requester) : value(doc.requester))],
+      ["Last updated", when(doc.modified)]
+    ]);
+  }
+
+  /* --- evaluation ------------------------------------------------------- */
+
+  function renderEvaluation(doc) {
+    var check = doc.duplicate_check_result;
+    document.getElementById("duplicate-check").innerHTML = check
+      ? '<div class="cns-alert cns-status-info">' +
+        '<i class="bi bi-search" aria-hidden="true"></i><div>' + escapeHtml(check) + "</div></div>"
+      : '<p class="cns-text-muted">The overlap check runs when the request is submitted; it has not run yet.</p>';
+
+    var editable = !!ctx.actions.record_findings;
+    var rows = doc.evaluations || [];
+    var list = document.getElementById("criteria-list");
+
+    list.innerHTML = rows.map(function (row, index) {
+      var help = CRITERION_HELP[row.criterion] || "";
+      var stamp = row.reviewed_by
+        ? '<p class="cns-text-muted cns-text-xs">Recorded by ' + escapeHtml(row.reviewed_by) +
+          (row.reviewed_on ? " on " + escapeHtml(Consilium.util.formatDate(row.reviewed_on, true)) : "") + "</p>"
+        : "";
+      if (!editable) {
+        var finding = row.assessment === ctx.unassessed_value
+          ? '<span class="cns-text-muted">' + escapeHtml(row.assessment) + "</span>"
+          : pill(row.assessment, FINDING_TONES[row.assessment] || "info");
+        return '<div class="cns-fieldset"><p><strong>' + escapeHtml(row.criterion) + "</strong> " + finding + "</p>" +
+          (help ? '<p class="cns-help">' + escapeHtml(help) + "</p>" : "") +
+          '<p class="cns-prose">' + (row.comments ? prose(row.comments) : '<span class="cns-text-muted">No note.</span>') + "</p>" +
+          stamp + "</div>";
+      }
+      var options = ctx.assessment_options.map(function (option) {
+        return '<option value="' + escapeAttr(option) + '"' + (option === row.assessment ? " selected" : "") + ">" +
+          escapeHtml(option) + "</option>";
+      }).join("");
+      return '<fieldset class="cns-fieldset" data-criterion="' + escapeAttr(row.criterion) + '">' +
+        "<legend>" + escapeHtml(row.criterion) + "</legend>" +
+        (help ? '<p class="cns-help" style="margin-bottom: var(--cns-space-3);">' + escapeHtml(help) + "</p>" : "") +
+        '<div class="cns-form-grid"><div class="cns-field">' +
+        '<label class="cns-label" for="finding-' + index + '">Finding</label>' +
+        '<select class="cns-select" id="finding-' + index + '" data-role="assessment">' + options + "</select>" +
+        "</div></div>" +
+        '<div class="cns-field"><label class="cns-label" for="note-' + index + '">Note</label>' +
+        '<textarea class="cns-textarea" id="note-' + index + '" rows="3" data-role="comments" ' +
+        'aria-describedby="note-' + index + '-help">' + escapeHtml(row.comments || "") + "</textarea>" +
+        '<span class="cns-help" id="note-' + index + '-help">Required with a finding. A finding without a reason is not one.</span>' +
+        "</div>" + stamp + "</fieldset>";
+    }).join("") || '<p class="cns-text-muted">This request has no criteria recorded.</p>';
+
+    var completeness = document.getElementById("completeness");
+    if (editable) {
+      completeness.innerHTML =
+        '<div class="cns-field"><div class="cns-check">' +
+        '<input type="checkbox" id="completeness_confirmed"' + (doc.completeness_confirmed ? " checked" : "") + ">" +
+        '<label for="completeness_confirmed">The request is complete: everything the evaluation needs is on it</label>' +
+        '</div><span class="cns-help">The completeness confirmation gates approval. It can be withdrawn by unticking it.</span></div>';
+    } else {
+      completeness.innerHTML = '<p class="cns-text-secondary">Completeness: ' +
+        (doc.completeness_confirmed ? pill("Confirmed", "success") : pill("Not confirmed", "neutral")) + "</p>";
+    }
+    document.getElementById("findings-actions").hidden = !editable;
+    document.getElementById("findings-errors").hidden = true;
+    document.getElementById("findings-state").textContent = "";
+  }
+
+  document.getElementById("criteria-list").addEventListener("input", function (event) {
+    document.getElementById("findings-state").textContent = "Unsaved changes.";
+    if (event.target.getAttribute("aria-invalid")) setError(event.target, null);
+  });
+  document.getElementById("criteria-list").addEventListener("change", function () {
+    document.getElementById("findings-state").textContent = "Unsaved changes.";
+  });
+
+  document.getElementById("findings-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    if (!ctx || !ctx.actions.record_findings) return;
+    var findings = [];
+    var problems = [];
+    Array.prototype.forEach.call(document.querySelectorAll("#criteria-list [data-criterion]"), function (set) {
+      var criterion = set.getAttribute("data-criterion");
+      var assessment = set.querySelector('[data-role="assessment"]');
+      var comments = set.querySelector('[data-role="comments"]');
+      var note = comments.value.trim();
+      var message = null;
+      if (assessment.value !== ctx.unassessed_value && !note) {
+        message = "Add a note saying why this finding was reached.";
+      }
+      setError(comments, message);
+      if (message) problems.push({ id: comments.id, text: criterion + ": " + message });
+      findings.push({ criterion: criterion, assessment: assessment.value, comments: note });
+    });
+    var box = document.getElementById("findings-errors");
+    if (problems.length) {
+      document.getElementById("findings-errors-list").innerHTML = problems.map(function (p) {
+        return '<li><a href="#' + p.id + '">' + escapeHtml(p.text) + "</a></li>";
+      }).join("");
+      box.hidden = false;
+      document.getElementById(problems[0].id).focus();
+      Consilium.announce(problems.length + " finding(s) need a note before they can be saved.");
+      return;
+    }
+    box.hidden = true;
+    var confirmed = document.getElementById("completeness_confirmed");
+    act("record_request_findings",
+        { findings: findings, completeness_confirmed: confirmed && confirmed.checked ? 1 : 0 },
+        "Findings saved.")
+      .then(function () { openTab("evaluation"); })
+      .catch(function () { /* the toast has said why */ });
+  });
+
+  /* --- the exchange with the originator ---------------------------------- */
+
+  function renderExchange(doc) {
+    var node = document.getElementById("exchange");
+    if (!doc.return_questions) {
+      node.innerHTML = '<p class="cns-text-muted">No questions have been put to the originator.</p>';
+      return;
+    }
+    var answered = !!doc.originator_response;
+    node.innerHTML =
+      '<ul class="cns-timeline">' +
+      "<li><strong>Questions put</strong>" +
+      '<span class="cns-timeline-meta">' + value(doc.returned_by) + " &middot; " + when(doc.returned_on) + "</span>" +
+      '<p class="cns-prose" style="margin-top: var(--cns-space-2);">' + prose(doc.return_questions) + "</p></li>" +
+      "<li><strong>" + (answered ? "Originator's answer" : "Awaiting the originator's answer") + "</strong>" +
+      '<span class="cns-timeline-meta">' + value(doc.requester) + "</span>" +
+      (answered
+        ? '<p class="cns-prose" style="margin-top: var(--cns-space-2);">' + prose(doc.originator_response) + "</p>"
+        : "") +
+      "</li></ul>" +
+      (ctx.stage === "with_originator"
+        ? '<p class="cns-text-muted cns-text-sm" style="margin-top: var(--cns-space-3);">The originator answers on ' +
+          '<a href="/create-forum?request=' + escapeAttr(encodeURIComponent(doc.name)) + '">their request</a>, ' +
+          "where they may also amend it.</p>"
+        : "");
+  }
+
+  /* --- approval ---------------------------------------------------------- */
+
+  function decisionOptions(choices) {
+    return choices.map(function (c) {
+      return '<option value="' + escapeAttr(c.decision) + '" data-needs-reason="' + (c.needs_reason ? 1 : 0) + '">' +
+        escapeHtml(c.decision) + "</option>";
+    }).join("");
+  }
+
+  function renderApproval(doc) {
+    var blockers = document.getElementById("blockers");
+    if (!ctx.is_open) {
+      blockers.innerHTML = '<p class="cns-text-muted">This request has been decided.</p>';
+    } else if (!ctx.decisions.length) {
+      /* No step raised yet: the gate would pass vacuously, so say what is
+         actually true rather than "nothing stands in the way". */
+      blockers.innerHTML = '<p class="cns-text-secondary">Approval has not been sought yet. The ' +
+        "governance office raises the approval steps once every criterion has a finding and " +
+        "completeness is confirmed.</p>" +
+        (ctx.blockers.length
+          ? '<ul class="cns-prose">' + ctx.blockers.map(function (b) {
+              return "<li>Still needed: " + escapeHtml(b) + "</li>";
+            }).join("") + "</ul>"
+          : "");
+    } else if (ctx.blockers.length) {
+      blockers.innerHTML = '<div class="cns-alert cns-status-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>' +
+        "<div><strong>Approval would be refused today.</strong><ul class=\"cns-prose\" style=\"margin-top: var(--cns-space-2);\">" +
+        ctx.blockers.map(function (b) { return "<li>" + escapeHtml(b) + "</li>"; }).join("") + "</ul></div></div>";
+    } else {
+      blockers.innerHTML = '<div class="cns-alert cns-status-success"><i class="bi bi-check-circle" aria-hidden="true"></i>' +
+        "<div>Nothing stands in the way of approval.</div></div>";
+    }
+
+    document.getElementById("route-note").textContent = doc.approval_route
+      ? "Raised from the route “" + doc.approval_route + "”. Each step is decided by the person it is assigned to, or their delegate."
+      : "No approval route has been raised yet. The steps appear here when the governance office raises them.";
+
+    var rows = ctx.decisions.map(function (row) { return Object.assign({}, row); });
+    var columns = [
+      { field: "approval_step", label: "Step", sortable: true },
+      { field: "step_sequence", label: "Order", sortable: true, align: "end", formatter: f.number },
+      { field: "mode", label: "Mode", sortable: true },
+      { field: "assigned_to", label: "Assigned to", sortable: true,
+        formatter: function (v, row) {
+          return (v ? Consilium.Table.formatters.person(v) : value(v)) + (row.can_decide ? " " + pill("Yours to decide", "primary") : "");
+        } },
+      { field: "decision", label: "Decision", sortable: true, formatter: f.status(DECISION_TONES) },
+      { field: "acted_by", label: "Decided by", sortable: true,
+        formatter: function (v, row) {
+          return (v ? Consilium.Table.formatters.person(v) : value(v)) + (row.acting_delegation ? ' <span class="cns-text-muted cns-text-xs">under ' +
+            escapeHtml(row.acting_delegation) + "</span>" : "");
+        } },
+      { field: "decided_on", label: "Decided", sortable: true, formatter: f.datetime },
+      { field: "comments", label: "Reason", formatter: f.truncate(90) }
+    ];
+    if (stepsTable) {
+      stepsTable.setData(rows);
+    } else {
+      stepsTable = Consilium.Table.create({
+        target: "#steps-table",
+        data: rows,
+        caption: "Approval steps on this request",
+        storageKey: "formation-steps",
+        rowKey: "name",
+        pageSize: 10,
+        compact: true,
+        searchable: false,
+        defaultSort: { field: "step_sequence", order: "asc" },
+        emptyTitle: "No approval steps yet",
+        emptyMessage: "They are raised once every criterion has a finding and completeness is confirmed.",
+        columns: columns
+      });
+    }
+
+    /* A form for each open step the viewer may decide. */
+    var forms = document.getElementById("step-forms");
+    var mine = ctx.actions.record_step_decision
+      ? ctx.decisions.filter(function (row) { return row.can_decide && row.is_open; })
+      : [];
+    forms.innerHTML = mine.map(function (row) {
+      var id = "step-" + row.name.replace(/[^A-Za-z0-9_-]/g, "");
+      return '<form class="cns-fieldset" data-decision="' + escapeAttr(row.name) + '" novalidate style="margin-top: var(--cns-space-4);">' +
+        "<legend>Your decision: " + escapeHtml(row.approval_step) + "</legend>" +
+        '<div class="cns-form-grid"><div class="cns-field">' +
+        '<label class="cns-label" for="' + id + '-decision">Decision</label>' +
+        '<select class="cns-select" id="' + id + '-decision" data-role="decision">' +
+        decisionOptions(ctx.step_decisions) + "</select></div></div>" +
+        '<div class="cns-field"><label class="cns-label" for="' + id + '-comments">Reason</label>' +
+        '<textarea class="cns-textarea" id="' + id + '-comments" rows="3" data-role="comments" aria-describedby="' +
+        id + '-help"></textarea>' +
+        '<span class="cns-help" id="' + id + '-help">Required unless you approve. Recorded against the step in your name.</span></div>' +
+        '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">Record decision</button></div>' +
+        "</form>";
+    }).join("");
+
+    renderException(doc);
+  }
+
+  document.getElementById("step-forms").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    var select = form.querySelector('[data-role="decision"]');
+    var comments = form.querySelector('[data-role="comments"]');
+    var needsReason = select.options[select.selectedIndex].getAttribute("data-needs-reason") === "1";
+    var note = comments.value.trim();
+    if (!setError(comments, needsReason && !note ? "Enter the reason for this decision." : null)) {
+      comments.focus();
+      return;
+    }
+    act("record_request_step_decision",
+        { approval_decision: form.getAttribute("data-decision"), decision: select.value, comments: note },
+        "Your decision on this step is recorded.")
+      .then(function () { openTab("approval"); })
+      .catch(function () { /* the toast has said why */ });
+  });
+
+  function renderException(doc) {
+    var body = document.getElementById("exception-body");
+    var rows = [];
+    if (doc.exception_raised) {
+      rows.push(["Rationale", prose(doc.exception_rationale)]);
+      rows.push(["Resolution", ctx.stage === "closed" ? dash() : prose(doc.exception_resolution)]);
+    }
+    var auth = ctx.exception_authorisation;
+    if (auth) {
+      rows.push(["Exception authorisation", '<span class="cns-mono">' + escapeHtml(auth.name) + "</span> &middot; " +
+        escapeHtml(auth.exception_type || "") + " &middot; authorised by " + value(auth.approved_by) +
+        " on " + when(auth.approved_on)]);
+      rows.push(["Justification", prose(auth.justification)]);
+    }
+    body.innerHTML = rows.length
+      ? '<dl class="cns-dl cns-dl--stacked">' + rows.map(function (r) {
+          return "<div><dt>" + escapeHtml(r[0]) + "</dt><dd>" + r[1] + "</dd></div>";
+        }).join("") + "</dl>"
+      : '<p class="cns-text-muted">No exception has been raised and no step has been bypassed.</p>';
+
+    var forms = [];
+    if (ctx.actions.resolve_exception) {
+      forms.push('<form class="cns-fieldset" id="resolve-form" novalidate style="margin-top: var(--cns-space-4);">' +
+        "<legend>" + escapeHtml(label("resolve_exception")) + "</legend>" +
+        '<div class="cns-form-grid"><div class="cns-field">' +
+        '<label class="cns-label" for="resolve-decision">Your decision on the exception</label>' +
+        '<select class="cns-select" id="resolve-decision">' + decisionOptions(ctx.exception_decisions) + "</select>" +
+        '<span class="cns-help">Either way the request returns to approval; a refusal then stands in its way.</span></div></div>' +
+        '<div class="cns-field"><label class="cns-label" for="resolve-text">Resolution' +
+        '<span class="cns-required" aria-hidden="true">*</span></label>' +
+        '<textarea class="cns-textarea" id="resolve-text" rows="4" required></textarea></div>' +
+        '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">Record the resolution</button></div>' +
+        "</form>");
+    }
+    /* Only the steps the server says this viewer may bypass: never one that is
+       theirs to decide (segregation of duties). */
+    var open = ctx.decisions.filter(function (row) { return row.is_open && row.can_bypass; });
+    if (ctx.actions.authorise_bypass && open.length) {
+      forms.push('<form class="cns-fieldset" id="bypass-form" novalidate style="margin-top: var(--cns-space-4);">' +
+        "<legend>" + escapeHtml(label("authorise_bypass")) + "</legend>" +
+        '<div class="cns-alert cns-status-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>' +
+        "<div>This records an exception authorisation in your name and marks the step bypassed. " +
+        "It is permanent and it is what an auditor will read.</div></div>" +
+        '<div class="cns-form-grid"><div class="cns-field">' +
+        '<label class="cns-label" for="bypass-step">Step to bypass</label>' +
+        '<select class="cns-select" id="bypass-step">' + open.map(function (row) {
+          return '<option value="' + escapeAttr(row.name) + '">' + escapeHtml(row.approval_step) +
+            " (" + escapeHtml(row.assigned_to) + ")</option>";
+        }).join("") + "</select></div></div>" +
+        '<div class="cns-field"><label class="cns-label" for="bypass-text">Justification' +
+        '<span class="cns-required" aria-hidden="true">*</span></label>' +
+        '<textarea class="cns-textarea" id="bypass-text" rows="4" required></textarea></div>' +
+        '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-danger">Authorise the bypass</button></div>' +
+        "</form>");
+    }
+    document.getElementById("exception-forms").innerHTML = forms.join("");
+  }
+
+  document.getElementById("exception-forms").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    if (form.id === "resolve-form") {
+      var text = document.getElementById("resolve-text");
+      if (!setError(text, text.value.trim() ? null : "Enter the resolution of the exception.")) { text.focus(); return; }
+      act("resolve_request_exception",
+          { resolution: text.value.trim(), decision: document.getElementById("resolve-decision").value },
+          "Exception resolved; the request is back with its approvers.")
+        .then(function () { openTab("approval"); })
+        .catch(function () { /* the toast has said why */ });
+    } else if (form.id === "bypass-form") {
+      var why = document.getElementById("bypass-text");
+      if (!setError(why, why.value.trim() ? null : "Enter the justification for bypassing the step.")) { why.focus(); return; }
+      act("authorise_request_bypass",
+          { approval_decision: document.getElementById("bypass-step").value, justification: why.value.trim() },
+          "Bypass authorised and recorded.")
+        .then(function () { openTab("approval"); })
+        .catch(function () { /* the toast has said why */ });
+    }
+  });
+
+  /* ------------------------------ loading ------------------------------ */
+
+  Consilium.reference
+    .load(["Governance Forum Type", "Risk Category", "Organization Unit", "Jurisdiction", "Governance Forum"])
+    .then(function () {
+      return Consilium.api.call(METHOD + "get_request_review", { request: REQUEST });
+    })
+    .then(render)
+    .catch(function (error) {
+      document.getElementById("request-summary").innerHTML =
+        stateCard("The request could not be read", error.message);
+    });
+
+  var initial = (window.location.hash || "").replace("#", "");
+  selectTab(document.getElementById("tab-" + initial) || tabs[0]);
+})();
+</script>
+{%- endif %}
+{% endblock %}

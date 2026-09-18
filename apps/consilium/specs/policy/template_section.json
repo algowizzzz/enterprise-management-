@@ -1,7 +1,7 @@
 {
   "name": "Template Section",
   "module": "Policy",
-  "description": "A predefined section of a document template (P-15).",
+  "description": "A predefined section of a document template.",
   "istable": 1,
   "fields": [
     {

@@ -1,7 +1,7 @@
 # ============================================================================
 # Frappe 15.121.0 on PostgreSQL -- PyPI dependency set
 #
-# 150 packages, exact pinned versions, taken from a working install that serves
+# 147 packages, exact pinned versions, taken from a working install that serves
 # the Desk UI. Every one of these resolves from PyPI (or your internal mirror).
 #
 # TEST AVAILABILITY WITHOUT INSTALLING ANYTHING:
@@ -78,7 +78,6 @@ google-auth-httplib2==0.4.2
 google-auth-oauthlib==1.2.4
 google-auth==2.48.0
 googleapis-common-protos==1.75.3
-greenlet==3.5.6
 hiredis==2.2.3
 html5lib==1.1
 httplib2==0.32.0
@@ -120,7 +119,6 @@ phonenumbers==9.0.39
 pickleshare==0.7.5
 pillow==12.3.0
 pip==26.2.1
-playwright==1.63.0
 pluggy==1.6.0
 ply==3.11
 posthog==3.21.0
@@ -139,7 +137,6 @@ pycparser==3.0
 pydantic==2.12.5
 pydantic_core==2.41.5
 pydyf==0.12.1
-pyee==13.0.1
 Pygments==2.21.0
 PyJWT==2.13.0
 PyMySQL==1.1.1

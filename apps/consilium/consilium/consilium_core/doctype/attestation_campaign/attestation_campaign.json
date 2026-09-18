@@ -15,6 +15,7 @@
   "population_filter",
   "participant_source",
   "participant_field",
+  "participant_resolver",
   "second_signatory_field",
   "seat_doctype",
   "seat_subject_field",
@@ -65,18 +66,18 @@
    "reqd": 1
   },
   {
-   "description": "Stored, not recomputed, so the population that was attested can be reproduced. [Inferred \u2014.]",
+   "description": "Stored, not recomputed, so the population that was attested can be reproduced.",
    "fieldname": "population_filter",
    "fieldtype": "JSON",
    "label": "Population Filter"
   },
   {
    "default": "Record Field",
-   "description": "How the accountable person for each record in the population is resolved. Record Field reads a user field on the record; Seat Role reads a dated seat table. [Inferred \u2014 the model names the populations but not the resolution mechanism.]",
+   "description": "How the accountable person for each record in the population is resolved. Record Field reads a user field on the record; Seat Role reads a dated seat table; Registered Source asks a resolver a module registers by name, for populations neither of the other two can express, such as everyone a document applies to.",
    "fieldname": "participant_source",
    "fieldtype": "Select",
    "label": "Participant Source",
-   "options": "Record Field\nSeat Role",
+   "options": "Record Field\nSeat Role\nRegistered Source",
    "reqd": 1
   },
   {
@@ -85,6 +86,13 @@
    "fieldname": "participant_field",
    "fieldtype": "Data",
    "label": "Participant Field"
+  },
+  {
+   "depends_on": "eval:doc.participant_source=='Registered Source'",
+   "description": "The name a module registers its resolver under (the consilium_attestation_participants hook). A name, never a code path: an unknown name is refused.",
+   "fieldname": "participant_resolver",
+   "fieldtype": "Data",
+   "label": "Participant Resolver"
   },
   {
    "description": "The fieldname on the target record holding the second signatory, where dual signature is required.",
@@ -189,7 +197,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.702010",
+ "modified": "2026-09-18 06:44:45.938547",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Attestation Campaign",

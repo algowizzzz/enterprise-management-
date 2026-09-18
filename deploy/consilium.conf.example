@@ -1,0 +1,191 @@
+# Consilium deployment configuration
+#
+# This is the only file an operator edits. Copy it, fill it in, and hand it to
+# every deployment command:
+#
+#   sudo install -d -m 0750 /etc/consilium
+#   sudo cp consilium.conf.example /etc/consilium/consilium.conf
+#   sudo vi /etc/consilium/consilium.conf
+#   sudo ./install/install.sh --config /etc/consilium/consilium.conf --bundle consilium-bundle.tar.gz
+#   sudo ./install/verify.sh  --config /etc/consilium/consilium.conf
+#
+# Check it without changing anything:
+#
+#   python3 install/kit.py check-config --config /etc/consilium/consilium.conf
+#
+# Rules the checker enforces:
+#   * No secret is ever written in this file. Every password or client secret
+#     is named by a *_file key (a file containing only the secret, readable by
+#     root and nobody else) or a *_env key (the name of an environment variable
+#     that holds it). A literal password here is refused.
+#   * Every path is absolute. Every port is a number from 1 to 65535.
+#   * Unknown keys are refused, so a typo is an error rather than a setting
+#     that silently does nothing.
+#   * yes/no values accept yes, no, true, false, on, off, 1, 0.
+#
+# Values below are placeholders for an internal host called
+# governance.example.internal. Replace every one of them.
+
+[site]
+# The site's internal name: the directory under sites/ and the name the
+# framework knows the site by. Letters, digits, dots and hyphens.
+name = governance.example.internal
+# The hostname people type into their browser. The TLS certificate must be
+# issued for this name, and it is used to build links in notifications.
+hostname = governance.example.internal
+# Who receives system mail addressed to the administrator.
+admin_email = governance-admin@example.internal
+# IANA time zone name. Due dates and reminders are computed in this zone.
+timezone = Europe/London
+# The initial administrator password. If this file does not exist the
+# installer generates a password and writes it here (mode 0600). Change it
+# after first sign-in.
+admin_password_file = /etc/consilium/secrets/admin_password
+
+[paths]
+# Where the installation lives: the Python environment, the site, the logs.
+install_dir = /opt/consilium
+
+[service]
+# The account the services run as. Created by the installer if it does not
+# exist, as a system account with no login shell and no password. It owns
+# install_dir and backup.dir and nothing else.
+user = consilium
+group = consilium
+# yes: install and start the systemd units and the reverse-proxy
+#      configuration (requires root and systemd).
+# no:  render them into <install_dir>/config/ for someone else to install.
+# auto: yes when running as root on a host with systemd, otherwise no.
+manage_services = auto
+
+[database]
+# PostgreSQL 13 or newer; 16 is what this release is tested on. The database
+# may be on another host.
+host = 127.0.0.1
+port = 5432
+# The database name. The framework (version 15) connects with a role of the
+# same name, so the application's role is also called this.
+name = consilium
+# The application role's password: a file, or an environment variable.
+password_file = /etc/consilium/secrets/db_password
+# password_env = CONSILIUM_DB_PASSWORD
+#
+# superuser:   the installer creates the database and its role, using the
+#              superuser login below. Use when you administer the server.
+# provisioned: a database team has created the database (owned by a role named
+#              as above, with that password) and you hold no superuser login.
+#              The installer creates nothing on the database server.
+provisioning = superuser
+root_user = postgres
+root_password_file = /etc/consilium/secrets/db_root_password
+# root_password_env = PGPASSWORD
+# Where psql and pg_dump live, when they are not on PATH (for example
+# /usr/pgsql-16/bin on RHEL-family hosts using the PostgreSQL repository).
+# pg_dump must be the same major version as the server, or newer.
+client_bin_dir =
+
+[redis]
+# Two logical databases: the cache is flushed routinely, and the queue must
+# not be flushed with it. Use rediss:// and credentials in the URL for TLS or
+# authentication.
+cache_url = redis://127.0.0.1:6379/0
+queue_url = redis://127.0.0.1:6379/1
+
+[web]
+# The application server listens on the loopback interface only; the reverse
+# proxy is the only thing that reaches it.
+port = 8000
+threads = 8
+# Background workers run queued jobs: notifications, imports, exports.
+background_workers = 2
+# Live updates in open browser tabs need the framework's Node.js realtime
+# server, which this bundle does not ship. Leave off; pages still work and
+# refresh on navigation.
+socketio = no
+
+[tls]
+# The reverse proxy terminates TLS and forwards to the application server.
+# nginx or caddy; none if something else (a load balancer) terminates TLS.
+proxy = nginx
+# PEM files. The certificate file holds the server certificate followed by
+# any intermediates. The key must be readable by root only; the proxy reads
+# it as root at start-up.
+cert_file = /etc/pki/tls/certs/governance.example.internal.crt
+key_file = /etc/pki/tls/private/governance.example.internal.key
+https_port = 443
+# Plain HTTP on this port answers only with a redirect to HTTPS.
+http_port = 80
+
+[email]
+# Outgoing mail for notifications and reminders. Off until you fill it in.
+enabled = no
+smtp_host = smtp.example.internal
+smtp_port = 587
+# starttls, ssl or none
+security = starttls
+# Leave login empty for a relay that accepts unauthenticated mail from this
+# host.
+login = governance@example.internal
+password_file = /etc/consilium/secrets/smtp_password
+# password_env = CONSILIUM_SMTP_PASSWORD
+sender = governance@example.internal
+sender_name = Governance Portal
+
+[sso]
+# none, oidc or ldap. Off by default: people sign in with a password until
+# this is set and the identity provider has been configured to match.
+mode = none
+# Whether an SSO sign-in may create an account that does not exist yet. No
+# means SSO only signs in people an administrator has already created, matched
+# by email address.
+allow_signup = no
+
+# OpenID Connect (authorisation-code flow). The provider must allow the
+# redirect URI https://<hostname>/api/method/frappe.integrations.oauth2_logins.custom/<oidc_provider_id>
+oidc_provider_name = Corporate SSO
+oidc_base_url = https://idp.example.internal
+oidc_authorize_url = https://idp.example.internal/oauth2/authorize
+oidc_token_url = https://idp.example.internal/oauth2/token
+oidc_userinfo_url = https://idp.example.internal/oauth2/userinfo
+oidc_client_id = consilium
+oidc_client_secret_file = /etc/consilium/secrets/oidc_client_secret
+# oidc_client_secret_env = CONSILIUM_OIDC_SECRET
+oidc_scope = openid email profile
+# The claim that identifies a person at the provider and never changes.
+oidc_user_id_claim = sub
+
+# LDAP / Active Directory.
+ldap_server_url = ldaps://ldap.example.internal:636
+# OpenLDAP or Active Directory
+ldap_directory = Active Directory
+ldap_bind_dn = CN=svc-consilium,OU=Service Accounts,DC=example,DC=internal
+ldap_bind_password_file = /etc/consilium/secrets/ldap_bind_password
+# ldap_bind_password_env = CONSILIUM_LDAP_PASSWORD
+ldap_user_search_path = OU=People,DC=example,DC=internal
+ldap_group_search_path = OU=Groups,DC=example,DC=internal
+ldap_search_filter = (sAMAccountName={0})
+ldap_email_attribute = mail
+ldap_username_attribute = sAMAccountName
+ldap_first_name_attribute = givenName
+ldap_last_name_attribute = sn
+# PEM bundle of the CA that issued the directory's certificate.
+ldap_ca_file = /etc/pki/tls/certs/internal-ca.pem
+
+[assistant]
+# The built-in help assistant always answers from the bundled guides. An AI
+# endpoint can add written answers; it is off by default. The API key is never
+# put here: an administrator enters it in Assistant Settings after install.
+ai_enabled = no
+# anthropic or openai-compatible
+ai_provider = openai-compatible
+ai_endpoint_url = https://ai-gateway.example.internal/v1/chat/completions
+ai_model = internal-model
+
+[backup]
+# Nightly backups of the database, uploaded files and site configuration
+# (which holds the encryption key: the backup is useless without it, so the
+# directory is readable by the service account only).
+dir = /var/backups/consilium
+retention_days = 14
+# systemd calendar expression
+schedule = *-*-* 02:30:00

@@ -52,7 +52,7 @@
  ],
  "fields": [
   {
-   "description": "The forum's business name. Its identifier is the record key, a naming series \u2014 the forum_id of the data model.",
+   "description": "The forum's name as it is referred to in minutes. Its reference number is assigned automatically.",
    "fieldname": "forum_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -188,7 +188,7 @@
   },
   {
    "depends_on": "regulatory_required",
-   "description": "Required when the forum is regulatory-required (G-4).",
+   "description": "Required when the forum is regulatory-required.",
    "fieldname": "regulatory_requirements",
    "fieldtype": "Table",
    "label": "Regulatory Requirements",
@@ -242,6 +242,7 @@
    "fieldname": "quorum_value",
    "fieldtype": "Float",
    "label": "Quorum Value",
+   "mandatory_depends_on": "eval:doc.quorum_rule_type && doc.quorum_rule_type !== 'All Voting Members'",
    "precision": "2"
   },
   {
@@ -312,7 +313,7 @@
    "read_only": 1
   },
   {
-   "description": "The annual review due date (G-10).",
+   "description": "The annual review due date.",
    "fieldname": "next_review_on",
    "fieldtype": "Date",
    "label": "Next Review On"
@@ -333,7 +334,7 @@
   },
   {
    "default": "0",
-   "description": "Drives restricted handling. [Inferred \u2014",
+   "description": "Drives restricted handling.",
    "fieldname": "confidential",
    "fieldtype": "Check",
    "label": "Confidential"
@@ -341,7 +342,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.734111",
+ "modified": "2026-09-18 03:32:53.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Governance Forum",
@@ -407,6 +408,7 @@
   }
  ],
  "search_fields": "forum_name,forum_type,compliance_status",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

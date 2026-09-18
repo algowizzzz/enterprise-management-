@@ -6,6 +6,7 @@
   "allow_rename": 1,
   "allow_import": 1,
   "title_field": "risk_type_name",
+  "show_title_field_in_link": 1,
   "search_fields": "risk_type_name,risk_type_code",
   "sort_field": "risk_type_name",
   "sort_order": "ASC",
@@ -50,7 +51,7 @@
       "fieldname": "external_code",
       "fieldtype": "Data",
       "label": "External Code",
-      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014",
+      "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration.",
       "provenance": "02-data-model.md \u00a711 I-2.]"
     },
     {

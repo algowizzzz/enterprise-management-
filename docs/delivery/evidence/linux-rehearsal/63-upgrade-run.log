@@ -1,0 +1,103 @@
+
+==> Upgrading governance.example.internal at /opt/consilium
+  log: /opt/consilium/logs/kit-upgrade-20260918-074031.log
+
+==> Checking the host
+  Linux-6.10.14-linuxkit-x86_64-with-glibc2.34; running as root (root)
+  PostgreSQL port open at cons-pg:5432
+  Redis reachable
+  client tools: pg_dump (PostgreSQL) 16.15
+
+==> Verifying the bundle
+  unpacking consilium-bundle-linux-x86_64-py311.tar.gz (336 MB)
+/usr/lib64/python3.9/tarfile.py:2239: RuntimeWarning: The default behavior of tarfile extraction has been changed to disallow common exploits (including CVE-2007-4559). By default, absolute/parent paths are disallowed and some mode bits are cleared. See https://access.redhat.com/articles/7004769 for more details.
+  warnings.warn(
+  release abecd3f1fd63: consilium 0.1.0 (source c2c8a91+uncommitted), frappe 15.121.0, for linux/x86_64 Python 3.11, built 2026-09-18T07:16:20+00:00
+  all 537 files match their recorded checksums
+
+==> 1/7 Backup before anything changes
+  /var/backups/consilium/20260918-074036-pre-upgrade: 4 files, 0.4 MB, 1.0s
+
+==> 2/7 Installing the new release beside the current one (no network)
+  195 packages installed from the bundle's wheelhouse; pip log pip-20260918-074031.log
+  pip log: no index, no download, no git (pip-20260918-074031.log); internet from this host: unreachable
+
+==> 3/7 Stopping the application
+  services stopped
+
+==> 4/7 Switching to the new release
+  help-assistant documents -> /opt/consilium/docs; kit -> /opt/consilium/deploy
+  env -> abecd3f1fd63 (was fb46455860b4)
+  common_site_config.json: database cons-pg:5432, assistant documents at /opt/consilium/docs
+
+==> 5/7 Migrating the database
+    Updating Dashboard for frappe
+    Updating Dashboard for consilium
+    Consilium Policy: 46 database objects re-applied.
+    Consilium Escalation: 7 database objects re-applied.
+    Consilium Core: 21 database objects re-applied.
+    Consilium: 4 module setup steps ran.
+    
+    Queued rebuilding of search index for governance.example.internal
+  migrated in 27s
+  front-end assets from frappe-assets-v15.121.0.tar.gz, copied (not linked)
+  reference data loaded (idempotent)
+  scheduler          already enabled
+  site               Europe/London; links use https://governance.example.internal
+  email              off
+  sso (oidc)         off
+  sso (ldap)         off
+  assistant          AI off (built-in answers only)
+
+==> 6/7 Starting the application
+  rendered 8 files into /opt/consilium/config/(systemd|nginx)
+  systemd-analyze verify: no problems
+  systemd: consilium.target, consilium-web.service, consilium-scheduler.service, consilium-backup.timer, consilium-worker@1.service, consilium-worker@2.service enabled and started
+    nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+    nginx: configuration file /etc/nginx/nginx.conf test is successful
+  nginx: /etc/nginx/conf.d/consilium.conf installed, configuration test passed, reloaded
+
+==> 7/7 Health check
+    
+      pass  Site directory exists                            /opt/consilium/sites/governance.example.internal
+      pass  Site configuration is readable                   database consilium
+      pass  Framework imports                                frappe 15.121.0
+      pass  Database answers                                 PostgreSQL 16.15 on aarch64-unknown-linux-musl
+      pass  Database is PostgreSQL                           postgres
+      pass  Cache answers                                    redis://cons-redis:6379/0
+      pass  Application is installed on the site             frappe, consilium
+      pass  Application tables exist                         143 entities, all with tables
+      pass  An administrator account exists and is enabled   Administrator enabled
+      pass  Front-end assets are present and readable        2180 scripts, 38 stylesheets
+      pass  Libraries loaded on demand are present           6 files, including the code editor
+      pass  Served assets match the application source       served by copy; 22 files current
+      pass  Vendored libraries are present and unmodified    8 files verified
+      pass  Nothing references an external host              no CDN or external font references
+      pass  PDF engine present                               wkhtmltopdf 0.12.6.1 (with patched qt) at /usr/local/bin/wkhtmltopdf
+      pass  Background queues are reachable                  redis://cons-redis:6379/1
+      pass  Scheduled jobs are registered                    59 job types
+    
+      17/17 checks passed. The installation is healthy.
+  removed old release fb46455860b4
+
+==> Upgraded
+
+  Release     : abecd3f1fd63  (release abecd3f1fd63: consilium 0.1.0 (source c2c8a91+uncommitted), frappe 15.121.0, for linux/x86_64 Python 3.11, built 2026-09-18T07:16:20+00:00)
+  Backup      : /var/backups/consilium/20260918-074036-pre-upgrade
+  Log         : /opt/consilium/logs/kit-upgrade-20260918-074031.log
+
+  Next: /opt/consilium/deploy/verify.sh --config /etc/consilium/consilium.conf
+
+  ROLLBACK — the database and the code both go back:
+
+    sudo systemctl stop consilium.target 'consilium-worker@*'
+    sudo ln -sfn /opt/consilium/releases/fb46455860b4/env /opt/consilium/env
+    sudo /opt/consilium/deploy/restore.sh --config /etc/consilium/consilium.conf --from /var/backups/consilium/20260918-074036-pre-upgrade --yes
+    sudo systemctl start consilium.target
+
+  restore.sh re-imports the release's assets and runs the health check.
+
+
+real	1m29.238s
+user	1m7.925s
+sys	0m6.810s

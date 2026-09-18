@@ -1,7 +1,7 @@
 {
   "name": "Document Review Cycle",
   "module": "Policy",
-  "description": "P-10 periodic review. Created by cadence or by a horizon scan whose impact assessment triggered one.",
+  "description": "Periodic review. Created by cadence or by a horizon scan whose impact assessment triggered one.",
   "autoname": "PRVC-.#####",
   "naming_rule": "Expression (old style)",
   "search_fields": "document,cycle_year",

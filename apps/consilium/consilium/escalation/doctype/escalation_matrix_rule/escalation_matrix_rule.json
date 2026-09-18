@@ -12,6 +12,7 @@
   "condition",
   "resulting_severity",
   "route_to_role",
+  "route_to_group",
   "sla_definition",
   "is_active",
   "rule_description"
@@ -48,10 +49,18 @@
    "reqd": 1
   },
   {
+   "description": "Assignment by role: the matter waits in this role's queue until a holder of the role takes ownership of the response.",
    "fieldname": "route_to_role",
    "fieldtype": "Link",
    "label": "Route To Role",
    "options": "Role"
+  },
+  {
+   "description": "Assignment by group: the matter waits in this group's queue until a member takes ownership of the response. May be set with or instead of the role.",
+   "fieldname": "route_to_group",
+   "fieldtype": "Link",
+   "label": "Route To Group",
+   "options": "User Group"
   },
   {
    "description": "The time threshold this rule imposes. Core's SLA clock measures it; breach raises the matter.",
@@ -75,7 +84,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-09-17 23:50:00.723683",
+ "modified": "2026-09-18 06:40:43.320994",
  "modified_by": "Administrator",
  "module": "Escalation",
  "name": "Escalation Matrix Rule",

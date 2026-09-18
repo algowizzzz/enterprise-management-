@@ -1,0 +1,268 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Regulatory updates (O-7).
+  List: consilium.consilium_core.ai.regulatory.recent
+  One requirement: .overview, .record_change, .ai_suggest, .decide
+  A change is saved on the requirement; the requirement's own controller then
+  notifies the owner of every citing document and forum. Machine-generated
+  suggestions are shown labelled and are written into a document only when a
+  person with write access to it accepts them.
+-#}
+
+{% block page_actions %}
+{%- if requirement %}
+<a class="cns-btn cns-btn-ghost" href="/regulatory-updates">
+  <i class="bi bi-list-ul" aria-hidden="true"></i> Every requirement
+</a>
+{%- endif %}
+<a class="cns-btn cns-btn-ghost" href="/imports">
+  <i class="bi bi-upload" aria-hidden="true"></i> Import changes from a file
+</a>
+{% endblock %}
+
+{% block page_content %}
+{% set analysis_page = "regulatory-updates" %}
+{% include "consilium/templates/includes/analysis_nav.html" %}
+<div id="reg-root" aria-live="polite">
+  <div class="cns-card"><div class="cns-card-body">
+    <div class="cns-skeleton-row"><span class="cns-skeleton" style="width: 40%"></span></div>
+    <div class="cns-skeleton-row"><span class="cns-skeleton" style="width: 70%"></span></div>
+  </div></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ asset_url('/assets/consilium/js/consilium-ai.js') }}"></script>
+<script>
+(function () {
+  "use strict";
+
+  var api = Consilium.api;
+  var ai = Consilium.ai;
+  var esc = ai.esc;
+  var METHOD = "consilium.consilium_core.ai.regulatory.";
+  var REQUIREMENT = {{ requirement | tojson }};
+  var MAY_SET_UP_IMPORT = {{ (1 if may_set_up_import else 0) | tojson }};
+  var root = document.getElementById("reg-root");
+  var state = { data: null };
+
+  var FIELD_LABELS = {
+    regulatory_requirement_name: "Name", description: "Description", citation: "Citation", jurisdiction: "Jurisdiction",
+    regulator: "Regulator", effective_date: "Effective date", summary: "Summary", external_code: "External code", is_active: "Active"
+  };
+  var FORM_FIELDS = ["regulatory_requirement_name", "citation", "regulator", "effective_date", "summary", "description"];
+
+  function link(href, text) {
+    var safe = ai.safeHref(href);
+    return safe ? '<a href="' + esc(safe) + '">' + esc(text) + "</a>" : esc(text);
+  }
+
+  function toast(message, type) {
+    if (Consilium.toast) Consilium.toast({ message: message, type: type || "success" });
+  }
+
+  /* -------------------------------------------------------------- list */
+
+  function drawList(data) {
+    var html = "";
+    if (data.import_profile) {
+      html += '<div class="cns-alert cns-status-info"><i class="bi bi-upload" aria-hidden="true"></i><div>Changes can also arrive by file: on <a href="/imports">Imports</a>, choose the profile <strong>Regulatory changes — file import</strong>. A row naming an existing requirement code updates it, and its citers are told exactly as for a change made here.</div></div>';
+    } else if (MAY_SET_UP_IMPORT) {
+      html += '<div class="cns-alert cns-status-info"><i class="bi bi-upload" aria-hidden="true"></i><div>No import profile for regulatory changes exists yet. <button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" id="reg-setup-import">Set it up</button></div></div>';
+    }
+    html += '<section class="cns-card"><div class="cns-card-header"><div><h2 class="cns-card-title">Regulatory requirements</h2>' +
+      '<p class="cns-card-subtitle">Changed in the last year first. Open one to record a change or see what it touches.</p></div></div><div class="cns-card-body">';
+    if (!data.requirements.length) {
+      html += '<p class="cns-text-muted">No regulatory requirements are recorded.</p>';
+    } else {
+      html += '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><thead><tr><th scope="col">Requirement</th><th scope="col">Citation</th><th scope="col">Regulator</th><th scope="col">Last changed</th><th scope="col" class="cns-num">Documents citing</th><th scope="col" class="cns-num">Forums citing</th></tr></thead><tbody>' +
+        data.requirements.map(function (r) {
+          return "<tr><td>" + link(r.href, r.title || r.name) + (r.recent ? ' <span class="cns-pill cns-status-warning">recent</span>' : "") +
+            (r.active ? "" : ' <span class="cns-pill cns-status-neutral">inactive</span>') + "</td><td>" + esc(r.citation || "") + "</td><td>" + esc(r.regulator || "") +
+            "</td><td>" + esc(r.last_change_on || "—") + '</td><td class="cns-num">' + r.documents + '</td><td class="cns-num">' + r.forums + "</td></tr>";
+        }).join("") + "</tbody></table></div>";
+    }
+    html += "</div></section>";
+    root.innerHTML = html;
+    var setup = document.getElementById("reg-setup-import");
+    if (setup) {
+      setup.addEventListener("click", function () {
+        setup.disabled = true;
+        api.call(METHOD + "ensure_import_profile", {}, { method: "POST" }).then(function () {
+          toast("The import profile is ready.");
+          return api.call(METHOD + "recent").then(drawList);
+        }).catch(function (e) { setup.disabled = false; toast(e.message, "danger"); });
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------ detail */
+
+  function sectionsText(sections) {
+    if (!sections || !sections.length) return '<span class="cns-text-muted">no section uses the requirement\'s distinctive words</span>';
+    return sections.map(function (s) {
+      return esc(s.section) + ' <span class="cns-text-muted">(' + esc(s.terms.join(", ")) + ")</span>";
+    }).join("<br>");
+  }
+
+  function drawRequirement(data) {
+    var r = data.requirement;
+    var html = '<section class="cns-card"><div class="cns-card-header"><div><h2 class="cns-card-title">' + esc(r.regulatory_requirement_name || r.name) +
+      '</h2><p class="cns-card-subtitle">' + esc(r.name) + (r.citation ? " · " + esc(r.citation) : "") + (r.regulator ? " · " + esc(r.regulator) : "") +
+      "</p></div></div><div class=\"cns-card-body\"><dl class=\"cns-dl\">";
+    [["Jurisdiction", r.jurisdiction], ["Effective", r.effective_date], ["Last changed", r.last_change_on], ["Summary", r.summary]].forEach(function (pair) {
+      html += "<div><dt>" + esc(pair[0]) + "</dt><dd>" + esc(pair[1] || "—") + "</dd></div>";
+    });
+    html += "</dl>";
+    if (data.change) {
+      html += '<h3 class="cns-card-title" style="margin-top: var(--cns-space-4);">Most recent change · ' + esc(data.change.on.slice(0, 16)) + " by " + esc(data.change.by) + "</h3>" +
+        '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><thead><tr><th scope="col">Field</th><th scope="col">Was</th><th scope="col">Now</th></tr></thead><tbody>' +
+        data.change.changes.map(function (c) {
+          return "<tr><td>" + esc(c.label) + "</td><td>" + esc(c.old || "—") + "</td><td>" + esc(c.new || "—") + "</td></tr>";
+        }).join("") + "</tbody></table></div>";
+    } else {
+      html += '<p class="cns-text-sm cns-text-muted">No change to its substance is on record since it was created.</p>';
+    }
+    html += "</div></section>";
+    return html;
+  }
+
+  function drawForm(data) {
+    if (!data.may_edit) return "";
+    var r = data.requirement;
+    var html = '<section class="cns-card"><div class="cns-card-header"><div><h2 class="cns-card-title">Record a change</h2>' +
+      '<p class="cns-card-subtitle">Saving tells the owner of every document and forum that cites this requirement what changed.</p></div></div>' +
+      '<div class="cns-card-body"><form id="reg-form" class="cns-form-grid" novalidate>';
+    FORM_FIELDS.forEach(function (f) {
+      var id = "reg-" + f;
+      var value = r[f] || "";
+      var long = f === "summary" || f === "description";
+      html += '<div class="cns-field' + (long ? " cns-field--wide" : "") + '"><label class="cns-label" for="' + id + '">' + esc(FIELD_LABELS[f]) + "</label>" +
+        (long ? '<textarea class="cns-textarea" id="' + id + '" name="' + f + '" rows="3">' + esc(value) + "</textarea>"
+              : '<input class="cns-input" id="' + id + '" name="' + f + '" type="' + (f === "effective_date" ? "date" : "text") + '" value="' + esc(value) + '">') + "</div>";
+    });
+    html += '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">Save the change and notify citers</button></div></form></div></section>';
+    return html;
+  }
+
+  function drawMatches(data) {
+    var html = '<section class="cns-card"><div class="cns-card-header"><div><h2 class="cns-card-title">Directly affected: records citing it</h2>' +
+      '<p class="cns-card-subtitle">Their owners are notified of every change. The likely sections are where the requirement\'s distinctive words appear.</p></div></div><div class="cns-card-body">';
+    if (!data.citing.length) {
+      html += '<p class="cns-text-muted">No document or forum you may read cites this requirement.</p>';
+    } else {
+      html += '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><thead><tr><th scope="col">Record</th><th scope="col">Kind</th><th scope="col">Likely sections</th></tr></thead><tbody>' +
+        data.citing.map(function (c) {
+          return "<tr><td>" + link(c.href, c.label) + "</td><td>" + esc(c.doctype) + "</td><td>" + (c.doctype === "Governing Document" ? sectionsText(c.sections) : "—") + "</td></tr>";
+        }).join("") + "</tbody></table></div>";
+    }
+    html += "</div></section>";
+
+    html += '<section class="cns-card"><div class="cns-card-header"><div><h2 class="cns-card-title">Possibly affected: documents that do not cite it</h2>' +
+      '<p class="cns-card-subtitle">Rule-based: shared distinctive words (' + esc(data.terms.slice(0, 10).join(", ") || "none") + ") or the same jurisdiction. A heuristic, not a finding.</p></div></div><div class=\"cns-card-body\">";
+    if (!data.candidates.length) {
+      html += '<p class="cns-text-muted">No other document you may read shares enough of its words.</p>';
+    } else {
+      html += '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><thead><tr><th scope="col">Document</th><th scope="col">Why</th><th scope="col">Likely sections</th></tr></thead><tbody>' +
+        data.candidates.map(function (c) {
+          return "<tr><td>" + link(c.href, c.label) + "</td><td>" + esc(c.terms.join(", ")) + (c.same_jurisdiction ? " · same jurisdiction" : "") + "</td><td>" + sectionsText(c.sections) + "</td></tr>";
+        }).join("") + "</tbody></table></div>";
+    }
+    html += '<p class="cns-text-sm cns-text-muted">' + esc(data.note) + "</p></div></section>";
+    return html;
+  }
+
+  function drawRuns(data) {
+    if (!data.ai_runs.length) return "";
+    return data.ai_runs.map(function (run) {
+      var html = '<section class="cns-card cns-ai-run"><div class="cns-card-header"><div><h2 class="cns-card-title"><span class="cns-pill cns-status-info"><i class="bi bi-robot" aria-hidden="true"></i> Machine-generated</span> Suggestions of ' +
+        esc(run.requested_on.slice(0, 16)) + '</h2><p class="cns-card-subtitle">Asked by ' + esc(run.requested_by) + " · audit " + esc(run.service_request) +
+        " · nothing below is in any record until a person accepts it.</p></div></div><div class=\"cns-card-body\">";
+      if (run.summary) html += '<div class="cns-ai-text cns-prose"><p>' + esc(run.summary) + "</p></div>";
+      if (!run.suggestions.length) {
+        html += '<p class="cns-text-muted">No suggestion about a document you may read.</p>';
+      } else {
+        html += '<ul class="cns-ai-suggestions">' + run.suggestions.map(function (s) {
+          var body = '<div class="cns-ai-suggestion-head">' + link(s.href, s.title) + "</div>";
+          if (s.sections.length) body += '<div class="cns-text-sm">Sections: ' + esc(s.sections.join("; ")) + "</div>";
+          if (s.reason) body += '<div class="cns-text-sm cns-text-muted">' + esc(s.reason) + "</div>";
+          if (s.decision) {
+            body += '<p class="cns-text-sm">' + (s.decision.accepted
+              ? '<span class="cns-pill cns-status-success">Accepted</span> by ' + esc(s.decision.by) + " on " + esc(s.decision.on.slice(0, 16)) + (s.decision.edited ? " (edited before accepting)" : "") + " — written to the document's regulatory references."
+              : '<span class="cns-pill cns-status-neutral">Rejected</span> by ' + esc(s.decision.by) + " on " + esc(s.decision.on.slice(0, 16)) + " — nothing was written.") + "</p>";
+          } else if (s.may_decide) {
+            var id = "note-" + run.service_request + "-" + s.document;
+            body += '<div class="cns-field"><label class="cns-label" for="' + esc(id) + '">Note to write into the document\'s regulatory references if you accept (edit it first if you like)</label>' +
+              '<textarea class="cns-textarea" id="' + esc(id) + '" rows="3">' + esc(s.note) + "</textarea></div>" +
+              '<div class="cns-inbox-actions"><button type="button" class="cns-btn cns-btn-primary cns-btn-sm" data-decide="accept" data-run="' + esc(run.service_request) + '" data-doc="' + esc(s.document) + '" data-note="' + esc(id) + '">Accept and write</button>' +
+              '<button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" data-decide="reject" data-run="' + esc(run.service_request) + '" data-doc="' + esc(s.document) + '">Reject</button></div>';
+          } else {
+            body += '<p class="cns-text-sm cns-text-muted">Awaiting a decision by someone who may change this document.</p>';
+          }
+          return "<li>" + body + "</li>";
+        }).join("") + "</ul>";
+      }
+      return html + "</div></section>";
+    }).join("");
+  }
+
+  function drawDetail(data) {
+    state.data = data;
+    root.innerHTML = drawRequirement(data) + drawForm(data) + drawMatches(data) + '<div id="reg-ai"></div>' + drawRuns(data);
+    var result = data.ai_result || null;
+    /* A successful answer is drawn below as a suggestion run, labelled there;
+       the box then only says so. A failed one explains itself in the box. */
+    ai.renderAIBox(document.getElementById("reg-ai"), data.ai, result && !result.used ? result : null, {
+      button: data.ai_runs.length ? "Ask again for a summary and suggestions" : "Ask the AI service for a summary and suggestions",
+      onAsk: ask,
+      meta: result && result.used ? "AI was used · audit " + result.service_request : null,
+      foot: result && result.used ? "The AI service answered (audit " + result.service_request + "). Its summary and suggestions are below, each awaiting a decision." : null
+    });
+    var form = document.getElementById("reg-form");
+    if (form) form.addEventListener("submit", save);
+  }
+
+  function ask() {
+    return api.call(METHOD + "ai_suggest", { requirement: REQUIREMENT }, { method: "POST" }).then(drawDetail).catch(function (e) {
+      ai.renderAIBox(document.getElementById("reg-ai"), state.data.ai, { used: false, notice: e.message }, { button: "Try again", onAsk: ask });
+    });
+  }
+
+  function save(e) {
+    e.preventDefault();
+    var values = {};
+    FORM_FIELDS.forEach(function (f) {
+      var value = document.getElementById("reg-" + f).value;
+      if ((state.data.requirement[f] || "") !== value) values[f] = value;
+    });
+    if (!Object.keys(values).length) { toast("Nothing has changed.", "warning"); return; }
+    var button = e.target.querySelector('button[type="submit"]');
+    button.disabled = true;
+    api.call(METHOD + "record_change", { requirement: REQUIREMENT, values: values }, { method: "POST" }).then(function (out) {
+      toast("Saved. The owners of " + out.citing_notified + " citing record(s) are being told.");
+      drawDetail(out);
+    }).catch(function (err) { button.disabled = false; toast(err.message, "danger"); });
+  }
+
+  root.addEventListener("click", function (e) {
+    var button = e.target.closest("[data-decide]");
+    if (!button) return;
+    var decision = button.getAttribute("data-decide");
+    var args = { service_request: button.getAttribute("data-run"), document: button.getAttribute("data-doc"), decision: decision };
+    if (decision === "accept") args.accepted_value = document.getElementById(button.getAttribute("data-note")).value;
+    button.disabled = true;
+    api.call(METHOD + "decide", args, { method: "POST" }).then(function (out) {
+      toast(decision === "accept" ? "Accepted and written to the document." : "Rejected. Nothing was written.");
+      drawDetail(out);
+    }).catch(function (err) { button.disabled = false; toast(err.message, "danger"); });
+  });
+
+  if (REQUIREMENT) {
+    api.call(METHOD + "overview", { requirement: REQUIREMENT }).then(drawDetail).catch(function (e) { ai.errorState(root, e); });
+  } else {
+    api.call(METHOD + "recent").then(drawList).catch(function (e) { ai.errorState(root, e); });
+  }
+})();
+</script>
+{% endblock %}

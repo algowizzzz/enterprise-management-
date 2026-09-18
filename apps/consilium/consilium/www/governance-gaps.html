@@ -1,0 +1,289 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Governance gaps (O-6) and the governance risk assessment (O-7).
+  Everything is read in the browser from permission-checked endpoints:
+    consilium.consilium_core.ai.gaps.detect / ai_commentary
+    consilium.consilium_core.ai.scoring.assess / ai_rationale
+  The rule-based results are complete on their own. The machine-generated
+  boxes are optional, labelled, and filled only when someone asks.
+-#}
+
+{% block page_actions %}
+<a class="cns-btn cns-btn-secondary" href="/reports#coverage">
+  <i class="bi bi-grid-3x3" aria-hidden="true"></i> Coverage matrix
+</a>
+<button type="button" class="cns-btn cns-btn-ghost" id="gaps-refresh">
+  <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Refresh
+</button>
+{% endblock %}
+
+{% block page_content %}
+{% set analysis_page = "governance-gaps" %}
+{% include "consilium/templates/includes/analysis_nav.html" %}
+<div class="cns-metric-grid" id="gaps-metrics" aria-live="polite">
+  <div class="cns-card"><div class="cns-card-body cns-stat"><span class="cns-stat-value" id="m-high">&hellip;</span><span class="cns-stat-label">High-severity gaps</span></div></div>
+  <div class="cns-card"><div class="cns-card-body cns-stat"><span class="cns-stat-value" id="m-medium">&hellip;</span><span class="cns-stat-label">Medium-severity gaps</span></div></div>
+  <div class="cns-card"><div class="cns-card-body cns-stat"><span class="cns-stat-value" id="m-forums">&hellip;</span><span class="cns-stat-label">Forums at High or Critical risk</span></div></div>
+  <div class="cns-card"><div class="cns-card-body cns-stat"><span class="cns-stat-value" id="m-policies">&hellip;</span><span class="cns-stat-label">Policies at High or Critical risk</span></div></div>
+</div>
+
+<section aria-labelledby="gaps-heading">
+  <h2 id="gaps-heading" class="cns-eyebrow">Governance gaps</h2>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title">What is missing</h3>
+        <p class="cns-card-subtitle" id="gaps-note">Checking the records&hellip;</p>
+      </div>
+      <div class="cns-field cns-ai-filter">
+        <label class="cns-label" for="gaps-kind">Show</label>
+        <select class="cns-select" id="gaps-kind"><option value="">Every kind except coverage</option></select>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <ul class="cns-ai-kinds" id="gaps-summary"></ul>
+      <div class="cns-table-wrap" id="gaps-table" aria-busy="true"></div>
+    </div>
+  </section>
+
+  <section class="cns-card" aria-labelledby="coverage-gaps-title">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="coverage-gaps-title">Coverage: risk categories with no forum</h3>
+        <p class="cns-card-subtitle">For each risk category, the operating groups no active forum covers. The full matrix, with counts, is on <a href="/reports#coverage">Reports</a>.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div class="cns-table-wrap" id="coverage-list"></div></div>
+  </section>
+
+  <div id="gaps-ai"></div>
+</section>
+
+<section aria-labelledby="risk-heading" style="margin-top: var(--cns-space-6);">
+  <h2 id="risk-heading" class="cns-eyebrow">Governance risk assessment</h2>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title">Rules-based risk score</h3>
+        <p class="cns-card-subtitle" id="risk-method">&nbsp;</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div class="cns-tabs" role="tablist" aria-label="What to score">
+        <button class="cns-tab" role="tab" id="tab-forums" aria-controls="panel-forums" aria-selected="true">Forums</button>
+        <button class="cns-tab" role="tab" id="tab-policies" aria-controls="panel-policies" aria-selected="false" tabindex="-1">Policies</button>
+        <button class="cns-tab" role="tab" id="tab-weights" aria-controls="panel-weights" aria-selected="false" tabindex="-1">Weights</button>
+      </div>
+      <div class="cns-tabpanel" role="tabpanel" id="panel-forums" aria-labelledby="tab-forums"><div class="cns-table-wrap" id="scores-forums"></div></div>
+      <div class="cns-tabpanel" role="tabpanel" id="panel-policies" aria-labelledby="tab-policies" hidden><div class="cns-table-wrap" id="scores-policies"></div></div>
+      <div class="cns-tabpanel" role="tabpanel" id="panel-weights" aria-labelledby="tab-weights" hidden><div id="scores-weights"></div></div>
+      <p class="cns-text-sm cns-text-muted" id="risk-note"></p>
+    </div>
+  </section>
+  <div id="risk-ai"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ asset_url('/assets/consilium/js/consilium-ai.js') }}"></script>
+<script>
+(function () {
+  "use strict";
+
+  var api = Consilium.api;
+  var ai = Consilium.ai;
+  var esc = ai.esc;
+  var GAPS = "consilium.consilium_core.ai.gaps.";
+  var SCORES = "consilium.consilium_core.ai.scoring.";
+  var state = { gaps: null, scores: null };
+
+  function $(id) { return document.getElementById(id); }
+
+  /* ------------------------------------------------------------ gaps */
+
+  function drawGaps(data) {
+    state.gaps = data;
+    $("m-high").textContent = data.counts.High;
+    $("m-medium").textContent = data.counts.Medium;
+    $("gaps-note").textContent = data.note;
+
+    var select = $("gaps-kind");
+    var current = select.value;
+    select.innerHTML = '<option value="">Every kind except coverage</option>' + data.summary.map(function (k) {
+      return '<option value="' + esc(k.kind) + '">' + esc(k.label) + " (" + k.count + ")</option>";
+    }).join("");
+    select.value = current;
+
+    $("gaps-summary").innerHTML = data.summary.filter(function (k) { return k.kind !== "coverage"; }).map(function (k) {
+      return '<li><button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-kind="' + esc(k.kind) + '">' +
+        esc(k.label) + ' <span class="cns-badge cns-badge--count">' + k.count + "</span></button></li>";
+    }).join("") || '<li class="cns-text-muted">No gaps outside coverage.</li>';
+
+    drawGapTable();
+    drawCoverage(data.gaps.filter(function (g) { return g.kind === "coverage"; }), data.visible.forums);
+    ai.renderAIBox($("gaps-ai"), data.ai, null, { button: "Ask the AI service to prioritise these gaps", onAsk: askGaps });
+  }
+
+  function drawGapTable() {
+    var kind = $("gaps-kind").value;
+    var rows = state.gaps.gaps.filter(function (g) { return kind ? g.kind === kind : g.kind !== "coverage"; });
+    var node = $("gaps-table");
+    node.setAttribute("aria-busy", "false");
+    if (!rows.length) {
+      node.innerHTML = '<p class="cns-text-muted">No gaps of this kind among the records you may read.</p>';
+      return;
+    }
+    node.innerHTML = '<table class="cns-table cns-table--compact"><thead><tr><th scope="col">Severity</th><th scope="col">Gap</th><th scope="col">Why this severity</th></tr></thead><tbody>' +
+      rows.map(function (g) {
+        var href = ai.safeHref(g.href);
+        var text = href ? '<a href="' + esc(href) + '">' + esc(g.text) + "</a>" : esc(g.text);
+        return "<tr><td>" + ai.severity(g.severity) + "</td><td>" + text + '</td><td class="cns-text-sm cns-text-muted">' + esc(g.rule || "") + "</td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+
+  function drawCoverage(rows, forumsVisible) {
+    if (!forumsVisible) {
+      $("coverage-list").innerHTML = '<p class="cns-text-muted">Your role may not read forums, so coverage cannot be judged here.</p>';
+      return;
+    }
+    var byCategory = {};
+    var order = [];
+    rows.forEach(function (g) {
+      var parts = (g.title || "").split(" × ");
+      if (!byCategory[g.category]) { byCategory[g.category] = { label: parts[0], severity: g.severity, groups: [] }; order.push(g.category); }
+      byCategory[g.category].groups.push(parts[1] || g.group);
+    });
+    var node = $("coverage-list");
+    if (!order.length) {
+      node.innerHTML = '<p class="cns-text-muted">Every risk category is covered for every operating group, among the forums you may read.</p>';
+      return;
+    }
+    node.innerHTML = '<table class="cns-table cns-table--compact"><thead><tr><th scope="col">Risk category</th><th scope="col">Severity</th><th scope="col">Operating groups with no forum</th></tr></thead><tbody>' +
+      order.map(function (c) {
+        var row = byCategory[c];
+        return '<tr><th scope="row">' + esc(row.label) + "</th><td>" + ai.severity(row.severity) + "</td><td>" + esc(row.groups.join(", ")) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+
+  function askGaps() {
+    return api.call(GAPS + "ai_commentary", {}, { method: "POST" }).then(function (out) {
+      drawGaps(out.detection);
+      ai.renderAIBox($("gaps-ai"), out.detection.ai, out.ai, { button: "Ask again", onAsk: askGaps });
+    }).catch(function (e) {
+      ai.renderAIBox($("gaps-ai"), state.gaps.ai, { used: false, notice: e.message }, { button: "Try again", onAsk: askGaps });
+    });
+  }
+
+  /* ---------------------------------------------------------- scores */
+
+  function factorTable(s) {
+    return '<table class="cns-table cns-table--compact cns-ai-factors"><thead><tr><th scope="col">Factor</th><th scope="col">Evidence</th><th scope="col" class="cns-num">Weight</th><th scope="col" class="cns-num">Cap</th><th scope="col" class="cns-num">Points</th></tr></thead><tbody>' +
+      s.factors.map(function (f) {
+        var evidence;
+        if (!f.available) evidence = '<span class="cns-text-muted">unavailable to your role</span>';
+        else if (f.kind === "flag") evidence = f.evidence ? "yes" : "no";
+        else if (f.kind === "share") evidence = Math.round((f.evidence || 0) * 100) + "%";
+        else evidence = String(f.evidence);
+        if (f.detail) evidence += ' <span class="cns-text-muted">(' + esc(f.detail) + ")</span>";
+        var weight = f.kind === "count" ? f.weight + " each" : f.kind === "share" ? f.weight + " × share" : String(f.weight);
+        return "<tr><td>" + esc(f.label) + "</td><td>" + evidence + '</td><td class="cns-num">' + esc(weight) + '</td><td class="cns-num">' +
+          (f.cap == null ? "—" : esc(f.cap)) + '</td><td class="cns-num">' + esc(f.points) + "</td></tr>";
+      }).join("") + '</tbody><tfoot><tr><th scope="row" colspan="4">Score</th><td class="cns-num"><strong>' + esc(s.score) + "</strong></td></tr></tfoot></table>";
+  }
+
+  function scoreTable(rows, noun) {
+    if (!rows.length) return '<p class="cns-text-muted">No ' + noun + " you may read.</p>";
+    return '<table class="cns-table cns-table--compact"><thead><tr><th scope="col">' + (noun === "forums" ? "Forum" : "Policy") +
+      '</th><th scope="col" class="cns-num">Score</th><th scope="col">Band</th><th scope="col">Driven by</th></tr></thead><tbody>' +
+      rows.map(function (s) {
+        var drivers = s.factors.filter(function (f) { return f.points > 0; }).sort(function (a, b) { return b.points - a.points; })
+          .slice(0, 3).map(function (f) { return esc(f.label) + " (" + f.points + ")"; }).join("; ") || '<span class="cns-text-muted">nothing</span>';
+        var href = ai.safeHref(s.href);
+        return "<tr><td>" + (href ? '<a href="' + esc(href) + '">' + esc(s.title || s.name) + "</a>" : esc(s.title || s.name)) +
+          '</td><td class="cns-num"><strong>' + esc(s.score) + "</strong></td><td>" + ai.severity(s.band) + "</td><td>" + drivers +
+          '<details class="cns-ai-details"><summary>How this was computed</summary>' + factorTable(s) + "</details></td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+
+  function drawWeights(data) {
+    var html = "";
+    if (data.weight_problems.length) {
+      html += '<div class="cns-alert cns-status-warning" role="status"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><div>' +
+        data.weight_problems.map(esc).join("<br>") + "</div></div>";
+    }
+    ["forum", "policy"].forEach(function (subject) {
+      html += '<h4 class="cns-card-title" style="margin-top: var(--cns-space-3);">' + (subject === "forum" ? "Forums" : "Policies") + "</h4>";
+      html += '<table class="cns-table cns-table--compact"><thead><tr><th scope="col">Factor</th><th scope="col">Key</th><th scope="col">Kind</th><th scope="col" class="cns-num">Weight</th><th scope="col" class="cns-num">Cap</th></tr></thead><tbody>' +
+        Object.keys(data.weights[subject]).map(function (key) {
+          var f = data.weights[subject][key];
+          return "<tr><td>" + esc(f.label) + "</td><td><code>" + esc(key) + "</code></td><td>" + esc(f.kind) + '</td><td class="cns-num">' + esc(f.weight) +
+            '</td><td class="cns-num">' + (f.cap == null ? "—" : esc(f.cap)) + "</td></tr>";
+        }).join("") + "</tbody></table>";
+    });
+    html += '<p class="cns-text-sm cns-text-muted">An administrator changes these in Assistant Settings, under Governance Risk Score Weights, as JSON — for example <code>{"policy": {"open_violations": {"weight": 10}}}</code>.</p>';
+    $("scores-weights").innerHTML = html;
+  }
+
+  function drawScores(data) {
+    state.scores = data;
+    function atRisk(rows) { return rows.filter(function (s) { return s.band === "High" || s.band === "Critical"; }).length; }
+    $("m-forums").textContent = atRisk(data.forums);
+    $("m-policies").textContent = atRisk(data.policies);
+    $("risk-method").textContent = data.method;
+    $("risk-note").textContent = data.note;
+    $("scores-forums").innerHTML = scoreTable(data.forums, "forums");
+    $("scores-policies").innerHTML = scoreTable(data.policies, "policies");
+    drawWeights(data);
+    ai.renderAIBox($("risk-ai"), data.ai, null, { button: "Ask the AI service to explain the highest scores", onAsk: askScores });
+  }
+
+  function askScores() {
+    return api.call(SCORES + "ai_rationale", {}, { method: "POST" }).then(function (out) {
+      drawScores(out.assessment);
+      ai.renderAIBox($("risk-ai"), out.assessment.ai, out.ai, { button: "Ask again", onAsk: askScores });
+    }).catch(function (e) {
+      ai.renderAIBox($("risk-ai"), state.scores.ai, { used: false, notice: e.message }, { button: "Try again", onAsk: askScores });
+    });
+  }
+
+  /* ------------------------------------------------------------ tabs */
+
+  function bindTabs() {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.cns-tabs [role="tab"]'));
+    function select(tab) {
+      tabs.forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute("aria-selected", on ? "true" : "false");
+        t.tabIndex = on ? 0 : -1;
+        $(t.getAttribute("aria-controls")).hidden = !on;
+      });
+    }
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener("click", function () { select(tab); });
+      tab.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        var next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+        select(next); next.focus();
+      });
+    });
+  }
+
+  function load() {
+    api.call(GAPS + "detect").then(drawGaps).catch(function (e) { ai.errorState($("gaps-table"), e); });
+    api.call(SCORES + "assess").then(drawScores).catch(function (e) { ai.errorState($("scores-forums"), e); });
+  }
+
+  $("gaps-kind").addEventListener("change", drawGapTable);
+  $("gaps-summary").addEventListener("click", function (e) {
+    var button = e.target.closest("[data-kind]");
+    if (!button) return;
+    $("gaps-kind").value = button.getAttribute("data-kind");
+    drawGapTable();
+  });
+  $("gaps-refresh").addEventListener("click", load);
+  bindTabs();
+  load();
+})();
+</script>
+{% endblock %}

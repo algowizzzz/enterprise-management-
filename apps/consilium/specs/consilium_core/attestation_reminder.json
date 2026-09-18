@@ -1,7 +1,7 @@
 {
   "name": "Attestation Reminder",
   "module": "Consilium Core",
-  "description": "An offset at which a reminder fires for a campaign. [Inferred \u2014.]",
+  "description": "An offset at which a reminder fires for a campaign.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",

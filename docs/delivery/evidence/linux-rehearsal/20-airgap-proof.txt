@@ -1,0 +1,12 @@
+# Air gap, observed inside the target container before install
+Fri Sep 18 07:18:59 UTC 2026
+$ ip route
+172.19.0.0/16 dev eth0 proto kernel scope link src 172.19.0.4 
+$ getent hosts pypi.org github.com
+(no answer: DNS has no route out)
+$ bash -c "echo > /dev/tcp/151.101.0.223/443"
+bash: connect: Network is unreachable
+bash: line 1: /dev/tcp/151.101.0.223/443: Network is unreachable
+$ getent hosts cons-pg cons-redis
+172.19.0.2      cons-pg
+172.19.0.3      cons-redis

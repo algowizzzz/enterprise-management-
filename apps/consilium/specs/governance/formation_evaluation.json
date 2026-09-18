@@ -1,7 +1,7 @@
 {
   "name": "Formation Evaluation",
   "module": "Governance",
-  "description": "One row per G-5 evaluation criterion, so the criteria set is data. A request cannot be approved while any criterion is unassessed.",
+  "description": "One row per evaluation criterion, so the criteria set is data. A request cannot be approved while any criterion is unassessed.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",

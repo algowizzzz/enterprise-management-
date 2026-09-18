@@ -1,0 +1,158 @@
+{#-
+  ===== AI FEATURES: policy-change Impact panel (O-6) — self-contained include =====
+  Owned by the governance-analysis work (consilium_core/ai/impact.py), not by
+  the policy page. To place it, add ONE line inside the policy page's content,
+  where the viewer is known to be able to read the document:
+
+      {% include "consilium/templates/includes/ai_impact_panel.html" %}
+
+  It needs only `record_name` from the page context. It reads everything
+  through consilium.consilium_core.ai.impact.assess, which re-checks the
+  viewer's permission on the document; the optional AI commentary
+  (impact.ai_commentary) is asked for only when someone presses the button.
+  It brings its own script and waits for the page's scripts to load.
+-#}
+{%- if record_name %}
+<section class="cns-card cns-ai-impact" id="ai-impact" aria-labelledby="ai-impact-heading" data-document="{{ record_name | e }}">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="ai-impact-heading">Impact</h2>
+      <p class="cns-card-subtitle">What a change to this document would reach, worked out from the records. Name a version or describe the change.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <form class="cns-form-grid" id="ai-impact-form" novalidate>
+      <div class="cns-field">
+        <label class="cns-label" for="ai-impact-version">Proposed version</label>
+        <select class="cns-select" id="ai-impact-version"><option value="">No version — use the description</option></select>
+      </div>
+      <div class="cns-field cns-field--wide">
+        <label class="cns-label" for="ai-impact-summary">The change, in a sentence (optional)</label>
+        <textarea class="cns-textarea" id="ai-impact-summary" rows="2" maxlength="2000"></textarea>
+      </div>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-secondary cns-btn-sm"><i class="bi bi-diagram-3" aria-hidden="true"></i> Assess the impact</button>
+      </div>
+    </form>
+    <div id="ai-impact-result" aria-live="polite"><p class="cns-text-muted">Working out the impact&hellip;</p></div>
+    <div id="ai-impact-ai"></div>
+  </div>
+</section>
+<script src="{{ asset_url('/assets/consilium/js/consilium-ai.js') }}"></script>
+<script>
+(function () {
+  "use strict";
+
+  function start() {
+    var panel = document.getElementById("ai-impact");
+    if (!panel || !window.Consilium || !Consilium.api || !Consilium.ai) return;
+    var api = Consilium.api;
+    var ai = Consilium.ai;
+    var esc = ai.esc;
+    var METHOD = "consilium.consilium_core.ai.impact.";
+    var DOCUMENT = panel.getAttribute("data-document");
+    var result = document.getElementById("ai-impact-result");
+    var versionSelect = document.getElementById("ai-impact-version");
+    var summaryInput = document.getElementById("ai-impact-summary");
+    var last = null;
+
+    function link(item, text) {
+      var href = ai.safeHref(item.href);
+      return href ? '<a href="' + esc(href) + '">' + esc(text) + "</a>" : esc(text);
+    }
+
+    function list(items, render, empty) {
+      if (!items || !items.length) return '<p class="cns-text-sm cns-text-muted">' + esc(empty) + "</p>";
+      return '<ul class="cns-ai-list">' + items.map(function (x) { return "<li>" + render(x) + "</li>"; }).join("") + "</ul>";
+    }
+
+    function block(title, body) {
+      return '<div class="cns-ai-impact-part"><h3 class="cns-ai-impact-title">' + esc(title) + "</h3>" + body + "</div>";
+    }
+
+    function args() {
+      return { document: DOCUMENT, version: versionSelect.value || null, change_summary: summaryInput.value.trim() || null };
+    }
+
+    function draw(a) {
+      last = a;
+      if (versionSelect.options.length <= 1) {
+        a.versions.forEach(function (v) {
+          var o = document.createElement("option");
+          o.value = v.name;
+          o.textContent = v.label + (v.is_current ? " (current)" : "") + " — " + v.name;
+          versionSelect.appendChild(o);
+        });
+      }
+      var lin = a.lineage;
+      var html = '<div class="cns-ai-impact-rating"><span class="cns-stat-label">Reach</span> ' + ai.severity(a.rating.band) +
+        ' <span class="cns-text-sm cns-text-muted">score ' + esc(a.rating.score) + " · " + esc(a.rating.basis) + "</span></div>";
+      html += block("Review points (rule-based)", list(a.review_points, function (p) {
+        return p.href ? link(p, p.text) : esc(p.text);
+      }, "Nothing to review was found."));
+      if (a.change && (a.change.diff || a.change.diff_note)) {
+        var d = a.change.diff;
+        html += block("The change", d
+          ? "<p class=\"cns-text-sm\">" + esc(d.lines_added) + " lines added, " + esc(d.lines_removed) + " removed. Sections changed: " +
+            esc(d.sections_touched.map(function (s) { return s.section; }).join("; ") || "none detected") +
+            (d.sections_removed.length ? ". Removed: " + esc(d.sections_removed.join("; ")) : "") + ".</p>"
+          : '<p class="cns-text-sm cns-text-muted">' + esc(a.change.diff_note) + "</p>");
+      }
+      var lineage = [];
+      lin.parents.forEach(function (x) { lineage.push(link(x, x.title) + " <span class=\"cns-text-muted\">parent" + (x.owner_approval ? ", owner must approve" : "") + "</span>"); });
+      lin.children.forEach(function (x) { lineage.push(link(x, x.title) + ' <span class="cns-text-muted">' + esc((x.relationship || "child").toLowerCase()) + "</span>"); });
+      lin.descendants.forEach(function (x) { lineage.push(link(x, x.title) + ' <span class="cns-text-muted">further down</span>'); });
+      lin.supersedes.forEach(function (x) { lineage.push(link(x, x.title) + ' <span class="cns-text-muted">superseded by this</span>'); });
+      lin.referenced_by.forEach(function (x) { lineage.push(link(x, x.title) + ' <span class="cns-text-muted">refers to this</span>'); });
+      if (lin.superseded_by) lineage.push(link(lin.superseded_by, lin.superseded_by.title) + ' <span class="cns-text-muted">supersedes this</span>');
+      html += '<div class="cns-ai-impact-grid">';
+      html += block("Lineage", lineage.length ? '<ul class="cns-ai-list"><li>' + lineage.join("</li><li>") + "</li></ul>" : '<p class="cns-text-sm cns-text-muted">No related documents.</p>');
+      html += block("Who is affected", list(a.applicability.scopes, function (s) {
+        return esc(s.scope_type || "Scope") + ": " + esc(s.scope || "") + (s.has_recipients ? "" : ' <span class="cns-text-muted">(notifies nobody)</span>');
+      }, "No applicability in force.") + '<p class="cns-text-sm cns-text-muted">People reached by notification: ' + esc(a.applicability.people_reached == null ? "?" : a.applicability.people_reached) + "</p>");
+      html += block("Regulatory references", list(a.regulatory, function (r) {
+        return link(r, r.title || r.requirement) + (r.citation ? ' <span class="cns-text-muted">' + esc(r.citation) + "</span>" : "") +
+          (r.changed_since_verified ? ' <span class="cns-pill cns-status-warning">changed since verified</span>' : "") +
+          (r.also_cited_by.length ? ' <span class="cns-text-muted">· also cited by ' + r.also_cited_by.length + "</span>" : "");
+      }, "Cites no regulatory requirement."));
+      html += block("Forums", list(a.forums, function (f) { return link(f, f.title) + ' <span class="cns-text-muted">' + esc(f.role) + "</span>"; }, "No approving forum you may read."));
+      html += block("Monitoring and controls", list(a.monitoring, function (m) {
+        return esc(m.title) + (m.control_reference ? ' <span class="cns-text-muted">control ' + esc(m.control_reference) + "</span>" : "") +
+          (m.last_outcome ? " · last: " + (m.last_adverse ? '<span class="cns-pill cns-status-warning">' + esc(m.last_outcome) + "</span>" : esc(m.last_outcome)) : "");
+      }, "No monitoring activity."));
+      html += block("Open violations and escalations", list(a.open_violations, function (v) {
+        return esc(v.name) + " · " + esc(v.type || "") + " · " + esc(v.severity || "");
+      }, "No open violation.") + list(a.open_escalations, function (e) { return link(e, e.title || e.name); }, "No open escalation."));
+      html += "</div>";
+      html += '<p class="cns-text-sm cns-text-muted">' + esc(a.note) + " Section detection reads headings from the version text, a heuristic.</p>";
+      result.innerHTML = html;
+    }
+
+    function assess() {
+      result.setAttribute("aria-busy", "true");
+      return api.call(METHOD + "assess", args()).then(function (a) {
+        result.setAttribute("aria-busy", "false");
+        draw(a);
+        ai.renderAIBox(document.getElementById("ai-impact-ai"), a.ai, null, { button: "Ask the AI service for a narrative and review points", onAsk: askAI });
+      }).catch(function (e) { ai.errorState(result, e); });
+    }
+
+    function askAI() {
+      return api.call(METHOD + "ai_commentary", args(), { method: "POST" }).then(function (out) {
+        draw(out.assessment);
+        ai.renderAIBox(document.getElementById("ai-impact-ai"), out.assessment.ai, out.ai, { button: "Ask again", onAsk: askAI });
+      }).catch(function (e) {
+        ai.renderAIBox(document.getElementById("ai-impact-ai"), last && last.ai, { used: false, notice: e.message }, { button: "Try again", onAsk: askAI });
+      });
+    }
+
+    document.getElementById("ai-impact-form").addEventListener("submit", function (e) { e.preventDefault(); assess(); });
+    assess();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>
+{%- endif %}
+{#- ===== end AI FEATURES: Impact panel ===== -#}

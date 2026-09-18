@@ -1,0 +1,24 @@
+
+[1/4] Collecting dependency wheels for linux_x86_64, Python 3.11
+  142 downloaded as linux_x86_64 wheels; 6 publish none and are built here: cairocffi==1.5.1, docopt==0.6.2, PyQRCode==1.2.1, rauth==0.7.3, traceback-with-variables==2.0.4, zxcvbn==4.4.28
+
+[2/4] Building the framework fork of PyPika
+  pypika-0.48.9-py2.py3-none-any.whl verified as the framework's fork by content
+
+[3/4] Building the framework, the application and the launcher
+
+[4/4] Verifying the bundle resolves with no index
+  the requirement set: resolves from local files alone
+  the framework, application and launcher: resolves from local files alone
+  every dependency of 153 wheels is present for linux_x86_64, any Python 3.11.x; added for older patch releases: async-timeout>=4.0.2
+  PDF engine: 3 packages for x86_64, checksums verified
+  bundled 342 help-assistant documents
+  bundled 10 reference data files
+
+Writing <rehearsal>/dist/consilium-bundle-linux-x86_64-py311.tar.gz
+
+Bundle ready: <rehearsal>/dist/consilium-bundle-linux-x86_64-py311.tar.gz (336.1 MB)
+  for linux_x86_64, Python 3.11; 153 wheels, 537 files; source c2c8a91+uncommitted
+  checksum: 5111fc9a8c84ca5b6d8a955ea9b045b5f74eb623274080f76ccddd935b2f0d69
+
+Carry this one file to the target, then: install/install.sh --config <file> --bundle <this file>

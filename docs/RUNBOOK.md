@@ -202,31 +202,111 @@ platform can carry Consilium's approval and audit requirements.
 
 ## Phase 3 — Air-gapped Linux server
 
-Same repo, same commands. The compatibility patches are no-ops on POSIX, so you
-are running stock Frappe with a different launcher. If the server has no
-internet access, transfer the same bundle as in 1b (`wheelhouse/`, the Frappe
-archive, this repo) and add `--find-links` to `winbench init`.
+This is the production path, and it is three steps: fill in one file, run one
+command, run one check. Everything else — the Python environment, the site,
+the assets, the reference data, the PDF engine, the systemd units, the
+reverse proxy and TLS — is done by the deployment kit from the offline bundle,
+with no network access. What the kit does and the evidence that it works are in
+[`delivery/DEPLOYMENT-READINESS.md`](delivery/DEPLOYMENT-READINESS.md).
+
+> Docker was used only on the build machine to simulate a clean, network-less
+> Linux host during the rehearsal. The server needs none, and nothing in the
+> kit uses it.
+
+### 3a — On the connected build machine: build the bundle
+
+Any machine with internet access and this repository's development
+environment (a Mac or Linux laptop is fine), for an x86_64 server running
+Python 3.11:
 
 ```bash
-pip install -e winbench/
-winbench init ~/frappe-bench
-cd ~/frappe-bench
-winbench doctor        # expect: "(none needed on this platform)"
-winbench new-site prod.internal
-winbench build --production
-winbench start
+python deploy/make_bundle.py --frappe-src <framework source tree> --out dist/ \
+    --target-platform linux_x86_64 --target-python 3.11 \
+    --name consilium-bundle-linux-x86_64-py311
 ```
 
-You have a genuine choice here:
+It downloads the server's wheels, builds only pure-Python ones locally, checks
+that every dependency the server will ask for is present, adds the PDF engine
+packages (checked against pinned checksums), and refuses to write a bundle that
+cannot install offline. Carry the one `.tar.gz` across.
 
-- **Keep `winbench`** — one toolchain across both environments, no supervisor or
-  nginx config to maintain. Recommended for a first rollout.
-- **Switch to upstream `bench`** — the battle-tested production topology
-  (supervisor + nginx + gunicorn). The sites directory `winbench` creates is
-  byte-compatible with `bench`, so you can switch later without migrating.
+### 3b — On the server: prerequisites (the administrators, from the distribution's repositories)
+
+| Needed | RHEL / Rocky / Alma 9 | Ubuntu 22.04 |
+|---|---|---|
+| Python 3.11 with venv | `python3.11` | `python3.11 python3.11-venv` |
+| PostgreSQL 16 client | `postgresql` (module `postgresql:16`) or PGDG `postgresql16` | `postgresql-client-16` (PGDG) |
+| PostgreSQL 16 server, Redis | local or remote; reachable from this host | same |
+| systemd, reverse proxy | present; `nginx` (or Caddy) | present; `nginx` |
+| Small utilities | `which file util-linux` | present by default |
+| PDF engine libraries | `fontconfig freetype libX11 libXext libXrender libjpeg-turbo libpng xorg-x11-fonts-75dpi xorg-x11-fonts-Type1` | `fontconfig libfreetype6 libx11-6 libxext6 libxrender1 libjpeg-turbo8 libpng16-16 xfonts-75dpi xfonts-base` |
+| A TLS certificate and key for the public hostname | from the organisation's CA | same |
+
+The installer checks each of these before it changes anything and says what is
+missing. It needs no compiler, no Node.js and no internet access.
+
+### 3c — On the server: fill in the configuration
+
+```bash
+tar xzf consilium-bundle-linux-x86_64-py311.tar.gz
+sudo install -d -m 0750 /etc/consilium /etc/consilium/secrets
+sudo cp consilium-bundle/install/consilium.conf.example /etc/consilium/consilium.conf
+sudo vi /etc/consilium/consilium.conf
+# secrets: one file each, readable by root only
+sudo sh -c 'umask 077; printf "%s\n" "<database role password>" > /etc/consilium/secrets/db_password'
+sudo sh -c 'umask 077; printf "%s\n" "<postgres superuser password>" > /etc/consilium/secrets/db_root_password'
+python3 consilium-bundle/install/kit.py check-config --config /etc/consilium/consilium.conf
+```
+
+`check-config` lists every problem at once, by section and key. It refuses a
+password written into the file: secrets are always `*_file` or `*_env`.
+
+### 3d — Install
+
+```bash
+sudo consilium-bundle/install/install.sh --config /etc/consilium/consilium.conf --bundle consilium-bundle
+```
+
+About two and a half minutes on the rehearsal host. It ends with the health
+check (17 checks) and prints where the installation is. Re-run it after any
+change to the configuration; it changes only what differs.
+
+### 3e — Verify
+
+```bash
+sudo /opt/consilium/deploy/verify.sh --config /etc/consilium/consilium.conf
+```
+
+This is Checkpoints 1, 2 and 3 as automated checks — smoke test 8/8 with a
+session created on the server (no password needed), the workflow primitives
+(Phase 2: a throwaway workflow, a Workflow Action and a Version row, cleaned
+up afterwards), a real PDF, `winbench doctor` reporting no patches needed, no
+network access during install, the interface sweep, no page or asset loading
+anything from another host, TLS through the proxy, services and exactly one
+scheduler. It writes `/opt/consilium/logs/readiness-<timestamp>.md`; keep it
+with the change record.
 
 ### Checkpoint 3
-> ✅ Smoke test passes on Linux, and `winbench doctor` reports no patches needed.
+> ✅ `verify.sh` ends with "All 14 checks passed" and the readiness report says
+> **READY**.
+
+### Later: upgrade, backup, restore
+
+```bash
+sudo /opt/consilium/deploy/upgrade.sh --config /etc/consilium/consilium.conf --bundle <new bundle>.tar.gz
+sudo /opt/consilium/deploy/backup.sh  --config /etc/consilium/consilium.conf
+sudo /opt/consilium/deploy/restore.sh --config /etc/consilium/consilium.conf --from /var/backups/consilium/<set> --yes
+```
+
+`upgrade.sh` takes a backup first, installs the new release beside the current
+one, migrates, starts, checks health, and on failure prints the exact rollback
+commands. Details in [`OPERATIONS.md`](OPERATIONS.md).
+
+### Development-style Linux bench (not for production)
+
+`winbench init` / `winbench new-site` / `winbench start` still work on Linux
+exactly as on Windows (Phase 1), and the sites directory is byte-compatible
+with upstream `bench`. Use the kit above for a server.
 
 ---
 
@@ -258,6 +338,48 @@ Using AWS names as an example:
 ### Checkpoint 4
 > ✅ Smoke test passes against the load-balanced URL, and a scheduled job runs
 > exactly once per interval.
+
+---
+
+## Windows acceptance script
+
+Nothing has been run on Windows yet. Everything Windows-specific is covered by
+tests that simulate it (`tests/test_compat.py`, 22 tests) and a static audit,
+which is good evidence and not proof. Whoever has the first managed Windows
+workstation: work through this in order, and record the output of every step.
+
+1. **Machine facts.** `winver`; `systeminfo | findstr /B /C:"OS"`; whether the
+   profile is redirected to a sync folder; the corporate proxy settings.
+2. **Prerequisites.** Python 3.11 (`py -3.11 -V`), PostgreSQL 16 (service
+   running), Memurai or another Redis-compatible service on two ports.
+3. **Bundle for Windows**, built on the connected machine:
+   `python deploy/make_bundle.py --frappe-src <src> --target-platform win_amd64 --target-python 3.11 --name consilium-bundle-win`.
+   Record whether it completes (the Windows wheel set has not been built in
+   this rehearsal).
+4. **Offline install.** Disconnect the network (or block it at the firewall),
+   then from the unpacked bundle:
+   `.\install\install.ps1 -Target C:\consilium -Site consilium.local -DbPort 5432 -AdminPassword <pw>`.
+   Expect every step to pass and the health check to end 17/17 (the PDF
+   engine check fails unless the patched-Qt wkhtmltopdf Windows build is
+   installed — record it either way). Keep `C:\consilium\logs\pip-install.log`.
+5. **Doctor.** `cd C:\consilium; .\env\Scripts\python -m winbench.cli doctor` —
+   every service `[ok]`, and the list of *applied* patches (on Windows they are
+   live, unlike on Linux).
+6. **Start.** `.\env\Scripts\python -m winbench.cli start` in one window.
+7. **Smoke.** `.\env\Scripts\python .\deploy\smoke_test.py --site consilium.local --port 8000 --password <pw>` → `8 passed, 0 failed`.
+8. **Browser.** Open http://127.0.0.1:8000, sign in, open a JSON field
+   (code editor loads), print a governing document to PDF.
+9. **Phase 2 primitives.** `.\env\Scripts\python .\deploy\acceptance.py --site consilium.local workflow`
+   (run from `C:\consilium\sites`) → `"ok": true`.
+10. **Workers and scheduler.** Leave `start` running 10 minutes; in the desk,
+    Scheduled Job Log shows each job once per interval.
+11. **Backup and restore.** `.\env\Scripts\python -m winbench.cli backup`,
+    then restore the database file into a *new* site with the framework's
+    `restore` command. This exercises the Windows answer to the framework's
+    `file` probe added in this release.
+12. **Services.** `.\deploy\service\windows\register-services.ps1 -InstallDir C:\consilium -Site consilium.local -Credential (Get-Credential .\svc-consilium)`;
+    reboot; the three tasks are running and the site answers.
+13. **Report** what broke, with the command and its output.
 
 ---
 

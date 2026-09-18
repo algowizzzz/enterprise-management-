@@ -46,6 +46,12 @@ def main() -> int:
 	parser.add_argument("--user", default="Administrator")
 	parser.add_argument("--password", default="admin")
 	parser.add_argument(
+		"--sid",
+		default=None,
+		help="Use this existing session instead of signing in with a password "
+		"(deploy/acceptance.py mint creates one on the server)",
+	)
+	parser.add_argument(
 		"--max-assets", type=int, default=25, help="How many referenced assets to fetch"
 	)
 	args = parser.parse_args()
@@ -66,16 +72,29 @@ def main() -> int:
 		results.check("api ping", False, str(e))
 		return _report(results)
 
-	# 2. login works
-	r = session.post(
-		f"{base}/api/method/login",
-		data={"usr": args.user, "pwd": args.password},
-		headers=headers,
-		timeout=30,
-	)
-	if not results.check("login", r.status_code == 200, r.text[:120]):
-		return _report(results)
-	results.check("session cookie issued", bool(session.cookies.get("sid")))
+	# 2. login works -- by password, or by a session created on the server,
+	#    so a verifier never needs to know or store the password
+	if args.sid:
+		# Replace the Guest session cookie the ping above was given: two cookies
+		# of the same name and the server reads the Guest one.
+		session.cookies.clear()
+		# The jar matches cookies against the Host header, which is the site.
+		session.cookies.set("sid", args.sid, domain=args.site)
+		r = session.get(f"{base}/api/method/frappe.auth.get_logged_user", headers=headers, timeout=30)
+		signed_in = r.status_code == 200 and r.json().get("message") not in (None, "Guest")
+		if not results.check("login (server-created session)", signed_in, r.text[:120]):
+			return _report(results)
+		results.check("session accepted", bool(session.cookies.get("sid")), f"as {r.json().get('message')}")
+	else:
+		r = session.post(
+			f"{base}/api/method/login",
+			data={"usr": args.user, "pwd": args.password},
+			headers=headers,
+			timeout=30,
+		)
+		if not results.check("login", r.status_code == 200, r.text[:120]):
+			return _report(results)
+		results.check("session cookie issued", bool(session.cookies.get("sid")))
 
 	# 3. the desk HTML renders
 	r = session.get(f"{base}/app", headers=headers, timeout=60, allow_redirects=True)

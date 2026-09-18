@@ -3,7 +3,7 @@
  "allow_rename": 0,
  "autoname": "PINT-.#####",
  "creation": "2026-09-17 23:50:00.736486",
- "description": "P-16 intake. Captures the need, the proposed implementation date and who must be engaged, then is classified by Core's rules engine. The rule-set version that classified it is held on the assessment, so a later rule change cannot rewrite this request's history.",
+ "description": "Captures the need, the proposed implementation date and who must be engaged, then is classified by Core's rules engine. The rule-set version that classified it is held on the assessment, so a later rule change cannot rewrite this request's history.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -107,7 +107,7 @@
    "read_only": 1
   },
   {
-   "description": "E13-S3: the requester may challenge the outcome, and the challenge is recorded here.",
+   "description": "The requester may challenge the outcome, and the challenge is recorded here.",
    "fieldname": "classification_challenge",
    "fieldtype": "Text",
    "label": "Classification Challenge"
@@ -179,7 +179,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.736495",
+ "modified": "2026-09-18 03:31:55.000000",
  "modified_by": "Administrator",
  "module": "Policy",
  "name": "Document Intake Request",

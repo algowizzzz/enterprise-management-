@@ -74,8 +74,9 @@ complete flattened set, and without it pip chases transitive dependencies — so
 `--only-binary=:all:` fails on `docopt` (pulled in by `num2words`) even when
 `docopt` is excluded from the file.
 
-**Verified:** all 150 resolve for `win_amd64` / cp311 — 143 wheels plus the 7
-pure-Python sdists.
+**Verified:** all 145 resolve for `win_amd64` / cp311 — 139 wheels plus the 6
+pure-Python sdists. Development-only tools (the browser automation used for
+screenshots and browser journeys) are in `requirements-dev.txt` and never ship.
 
 `check_availability.py` uses whatever index pip is configured with, so an
 internal package mirror is exercised exactly as a real install would be. It then
@@ -234,11 +235,30 @@ app has no front-end build step at all.
 | PostgreSQL 16 | EDB installer | distro package, or a managed service | **Yes** |
 | Redis | **Memurai** (no official Windows Redis) | redis-server, or a managed service | **Yes** |
 | Node 22 + yarn | winget | distro | Build only — not at runtime |
-| wkhtmltopdf | official Windows build | distro | Only for PDF print formats |
+| wkhtmltopdf **0.12.6 with patched Qt** | official Windows build | **carried in the Linux bundle** (the project's official `.deb` for Ubuntu 22.04/24.04 and `.rpm` for RHEL 8/9, pinned by SHA-256) and installed by the kit; its system libraries come from the distribution | **Yes** — every PDF (print, download, attachment) uses it. Distribution builds are unpatched and lose headers, footers and page breaks |
+| `which`, `file` | — | distro (missing from a minimal RHEL 9) | **Yes** — the PDF library finds the engine with `which`; the framework's restore runs `file` |
+| systemd, nginx or Caddy | Task Scheduler; IIS or Caddy if a proxy is wanted | distro | **Yes** on a server — services and TLS |
 | GTK3 runtime | separate installer | usually present | Only for WeasyPrint PDFs |
 
-Note Redis: Frappe wants two logical instances (cache 13000, queue 11000). One
-works, but flushing the cache would also drop queued jobs.
+Note Redis: Frappe wants two logical instances (cache and queue). One server
+with two database numbers is enough (`redis://host:6379/0` and `/1`); the kit
+refuses the same URL for both, because flushing the cache would also drop
+queued jobs.
+
+### A bundle is built for one target
+
+About twenty dependencies ship compiled code, so a bundle carries wheels for
+one operating system, one processor architecture and one Python minor version
+(its `MANIFEST.json` says which, and the installer refuses a mismatch).
+`deploy/make_bundle.py --target-platform linux_x86_64 --target-python 3.11`
+builds a Linux bundle on any machine. With today's pinned set:
+
+| Target | Complete? | Blocked by |
+|---|---|---|
+| Linux x86_64, Python 3.11 | **yes** (rehearsed on Rocky Linux 9) | — |
+| Linux x86_64, Python 3.12 (Ubuntu 24.04's only Python) | no | `hiredis==2.2.3`, the framework's pin, has no 3.12 wheel |
+| Linux aarch64, any Python | no | `psutil==5.9.8` has no aarch64 wheel |
+| Windows x86_64, Python 3.11 | expected (the availability check resolves it) | not built in the rehearsal |
 
 ---
 
@@ -255,19 +275,31 @@ downgrade (see `REPORT.md`). Everything installs per-user — no admin rights
 needed except for the PostgreSQL and Redis-compatible services.
 
 ### Air-gapped Linux server — staging/production
-Stock Frappe territory; the compat layer is inert. Install from the offline
-transfer bundle described in §4. You have a genuine choice of launcher:
+Stock Frappe territory; the compat layer is inert. **Use the deployment kit**:
+fill in `deploy/consilium.conf.example`, run `install.sh`, run `verify.sh`
+(RUNBOOK Phase 3). The kit installs from the offline bundle with no network,
+creates a least-privilege service account, and generates and installs:
 
-- **Use `winbench`** for one toolchain across both environments, no supervisor,
-  no nginx config generation. Simple, and the recommended option for a first
-  rollout.
-- **Use upstream `bench`** for the battle-tested production topology
-  (supervisor + nginx + gunicorn). The sites directory `winbench` creates is
-  byte-compatible with `bench` — it's the same layout — so you can switch later
-  without migrating anything.
+- systemd units (`deploy/service/systemd/`): `consilium-web` (waitress on
+  127.0.0.1), `consilium-worker@N`, exactly one `consilium-scheduler`, a nightly
+  `consilium-backup.timer`, and an inert `consilium-socketio` (needs Node.js,
+  not shipped);
+- the reverse proxy with TLS termination (`deploy/service/nginx/` or
+  `deploy/service/caddy/`), checked with `nginx -t` before it is reloaded.
 
-Put a reverse proxy in front for TLS if the server is reachable by more than
-localhost.
+Rehearsed air-gapped on Rocky Linux 9: install, verify (14/14), migration of a
+real site's backup, upgrade from the previous release, backup and restore,
+OIDC sign-in; see `delivery/DEPLOYMENT-READINESS.md`.
+
+Upstream `bench` (supervisor + nginx + gunicorn) remains possible: the sites
+directory is byte-compatible. The kit is the tested path.
+
+**Single sign-on.** Off by default. OpenID Connect (the framework's Social
+Login Key, "Custom" provider) and LDAP/Active Directory (LDAP Settings) are
+both switched on from `[sso]` in the configuration. LDAP uses `ldap3` 2.9.1 and
+`pyasn1`, both pure-Python `py2.py3-none-any` wheels already in the requirement
+set, so it is allowed under the no-compiler rule. OIDC was rehearsed against a
+local test provider (`scripts/mock_oidc_provider.py`); LDAP was not.
 
 ### Managed cloud infrastructure — optional
 Nothing here is cloud-hostile. Using AWS names as an example:
@@ -302,5 +334,11 @@ fires twice.
   contacts.
 - All front-end assets used by the application are vendored in-repo and
   checksummed; nothing is fetched from a CDN at build or run time.
-- Runtime services: PostgreSQL and Redis. Nothing else listens on a port.
-- No `sudo`, no system-wide install, no kernel modules, no WSL, no Docker.
+- Runtime services: PostgreSQL and Redis. On a server the reverse proxy listens
+  on 443 (and 80, redirect only); the application server listens on
+  127.0.0.1 only. Ports and accounts: `OPERATIONS.md`.
+- On a server, installation is by root (a service account, systemd units, the
+  proxy configuration, the PDF engine package); the services run as an
+  unprivileged account that cannot write its own code. On a Windows
+  workstation, no admin rights beyond the database and Redis services.
+- No kernel modules, no WSL, no container runtime.

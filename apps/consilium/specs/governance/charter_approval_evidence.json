@@ -1,7 +1,7 @@
 {
   "name": "Charter Approval Evidence",
   "module": "Governance",
-  "description": "Proof that a charter was approved, in one of the forms G-5 accepts.",
+  "description": "Proof that a charter was approved, in one of the accepted forms.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",

@@ -39,7 +39,15 @@
       "fieldname": "route_to_role",
       "fieldtype": "Link",
       "label": "Route To Role",
-      "options": "Role"
+      "options": "Role",
+      "description": "Assignment by role: the matter waits in this role's queue until a holder of the role takes ownership of the response."
+    },
+    {
+      "fieldname": "route_to_group",
+      "fieldtype": "Link",
+      "label": "Route To Group",
+      "options": "User Group",
+      "description": "Assignment by group: the matter waits in this group's queue until a member takes ownership of the response. May be set with or instead of the role."
     },
     {
       "fieldname": "sla_definition",

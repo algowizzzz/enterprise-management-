@@ -1,7 +1,7 @@
 {
   "name": "Escalation Closure",
   "module": "Escalation",
-  "description": "The recorded outcome of an escalation matter (E-10, E17-S3). A matter cannot reach a closed state without one.",
+  "description": "The recorded outcome of an escalation matter. A matter cannot reach a closed state without one.",
   "autoname": "ESCC-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "escalation_matter",
@@ -77,7 +77,7 @@
       "fieldtype": "Text",
       "label": "Closure Summary",
       "reqd": 1,
-      "description": "The recorded outcome. E17-S3: closure requires one."
+      "description": "The recorded outcome. A matter cannot be closed without one."
     },
     {
       "fieldname": "criteria_met",

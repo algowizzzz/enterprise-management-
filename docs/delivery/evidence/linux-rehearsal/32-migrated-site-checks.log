@@ -1,0 +1,20 @@
+{"message":"pong"}
+Smoke testing migrated.example.internal via http://127.0.0.1:8001
+
+  [ok ] api ping -- {"message":"pong"}
+  [ok ] login (server-created session) -- {"message":"Administrator"}
+  [ok ] session accepted -- as Administrator
+  [ok ] desk html -- 144449 bytes
+  [ok ] desk references assets -- 10 found in /app
+  [ok ] all referenced assets load -- 10/10 ok
+  [ok ] workflow api -- {"data":[{"name":"Governing Document Lifecycle"}]}
+  [ok ] doctype list api -- {"data":[{"name":"7tovb0h7jg","description":"test doctype"},{"name":"qjsv0fbkdg","description":"Foru
+
+8 passed, 0 failed
+  node not found; JavaScript syntax not checked
+Following links and assets
+Looking for framework branding
+
+
+239 passed, 0 failed
+23 enabled demo users

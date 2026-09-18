@@ -22,3 +22,19 @@ def normalise(doc, method=None) -> None:
         value = doc.get(field.fieldname)
         if isinstance(value, dict | list):
             doc.set(field.fieldname, json.dumps(value, default=str))
+
+
+def normalise_loaded(doc, method=None) -> None:
+    """The same normalisation, for a record that has just been read.
+
+    ``normalise`` covers the way in; this covers the way out. PostgreSQL hands a
+    ``JSON`` column back already parsed, and the framework serialises a record
+    through ``as_dict``, which turns a dict back into text but refuses a list
+    outright ("Value for Holidays cannot be a list"). A record whose JSON field
+    holds a list — a calendar's holidays, the fields that triggered a review, an
+    import row's messages — therefore could not be opened on the desk at all:
+    the form came back blank with that message. Wired to ``onload``, which the
+    desk runs before it sends the record, and called from a controller's
+    ``load_from_db`` where a record is also read over the REST interface.
+    """
+    normalise(doc, method)

@@ -70,10 +70,11 @@
    "label": "Active"
   },
   {
-   "description": "Set the first time this rule set classifies a record. A sealed rule set cannot be edited; a change is a new version. (Named is_sealed, not is_locked: the framework's Document class already has an is_locked property and it would shadow the field.)",
+   "description": "Set the first time this rule set classifies a record. A sealed rule set cannot be edited; a change is a new version. (Named is_sealed, not is_locked: the framework's Document class already has an is_locked property and it would shadow the field.) Never copied: a duplicate is a new rule set that has classified nothing, so it starts unsealed.",
    "fieldname": "is_sealed",
    "fieldtype": "Check",
    "label": "Sealed",
+   "no_copy": 1,
    "read_only": 1
   },
   {
@@ -105,7 +106,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.705900",
+ "modified": "2026-09-18 07:27:38.346519",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Classification Rule Set",

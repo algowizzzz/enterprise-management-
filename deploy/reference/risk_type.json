@@ -1,0 +1,47 @@
+{
+  "doctype": "Risk Type",
+  "key_field": "risk_type_code",
+  "records": [
+    {"risk_type_code": "PROCESS", "risk_type_name": "Process Failure", "tier": 1, "is_group": 1,
+     "description": "A process that is missing, poorly designed or not followed."},
+    {"risk_type_code": "PROCESS_EXEC", "risk_type_name": "Execution and Delivery Error", "tier": 2,
+     "parent_risk_type": "PROCESS", "description": "A transaction or task carried out incorrectly."},
+    {"risk_type_code": "PROCESS_CHANGE", "risk_type_name": "Change Management Failure", "tier": 2,
+     "parent_risk_type": "PROCESS", "description": "A change introduced without adequate control."},
+
+    {"risk_type_code": "TECHNOLOGY", "risk_type_name": "Technology Failure", "tier": 1, "is_group": 1,
+     "description": "Systems that are unavailable, unreliable or insecure."},
+    {"risk_type_code": "TECH_OUTAGE", "risk_type_name": "System Outage", "tier": 2,
+     "parent_risk_type": "TECHNOLOGY", "description": "A service unavailable beyond its tolerance."},
+    {"risk_type_code": "TECH_CYBER", "risk_type_name": "Cyber Incident", "tier": 2,
+     "parent_risk_type": "TECHNOLOGY", "description": "Unauthorised access, attack or data compromise."},
+
+    {"risk_type_code": "THIRD_PARTY", "risk_type_name": "Third-Party Failure", "tier": 1, "is_group": 1,
+     "description": "A supplier or outsourced service that fails to perform."},
+    {"risk_type_code": "TP_SERVICE", "risk_type_name": "Service Level Breach", "tier": 2,
+     "parent_risk_type": "THIRD_PARTY", "description": "A supplier missing an agreed service level."},
+    {"risk_type_code": "TP_CONCENTRATION", "risk_type_name": "Supplier Concentration", "tier": 2,
+     "parent_risk_type": "THIRD_PARTY", "description": "Over-reliance on a single supplier."},
+
+    {"risk_type_code": "PEOPLE", "risk_type_name": "People and Conduct", "tier": 1, "is_group": 1,
+     "description": "Behaviour, capacity or capability of staff."},
+    {"risk_type_code": "PEOPLE_CONDUCT", "risk_type_name": "Misconduct", "tier": 2,
+     "parent_risk_type": "PEOPLE", "description": "Conduct falling short of expected standards."},
+    {"risk_type_code": "PEOPLE_KEY", "risk_type_name": "Key Person Dependency", "tier": 2,
+     "parent_risk_type": "PEOPLE", "description": "A critical activity resting on too few people."},
+
+    {"risk_type_code": "REGULATORY", "risk_type_name": "Regulatory Breach", "tier": 1, "is_group": 1,
+     "description": "Failure to meet a legal or regulatory obligation."},
+    {"risk_type_code": "REG_REPORTING", "risk_type_name": "Reporting Failure", "tier": 2,
+     "parent_risk_type": "REGULATORY", "description": "A required report late, missing or inaccurate."},
+    {"risk_type_code": "REG_DATA", "risk_type_name": "Data Protection Breach", "tier": 2,
+     "parent_risk_type": "REGULATORY", "description": "Personal data handled in breach of the rules."},
+
+    {"risk_type_code": "FINANCIAL", "risk_type_name": "Financial Loss or Exposure", "tier": 1, "is_group": 1,
+     "description": "Credit, market or liquidity exposure outside appetite."},
+    {"risk_type_code": "FIN_LIMIT", "risk_type_name": "Limit Breach", "tier": 2,
+     "parent_risk_type": "FINANCIAL", "description": "An approved risk limit exceeded."},
+    {"risk_type_code": "FIN_MODEL", "risk_type_name": "Model Error", "tier": 2,
+     "parent_risk_type": "FINANCIAL", "description": "A model producing materially wrong results."}
+  ]
+}

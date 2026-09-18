@@ -1,0 +1,111 @@
+
+==> Installing Consilium at /opt/consilium for https://governance.example.internal
+  log: /opt/consilium/logs/kit-install-20260918-073728.log
+  service account consilium exists
+  /opt/consilium (code root-owned, sites/ logs/ config/ owned by consilium); backups in /var/backups/consilium
+
+==> Checking the host
+  Linux-6.10.14-linuxkit-x86_64-with-glibc2.34; running as root (root)
+  PostgreSQL port open at cons-pg:5432
+  Redis reachable
+  client tools: pg_dump (PostgreSQL) 16.15
+
+==> Verifying the bundle
+  unpacking consilium-bundle-PREV-linux-x86_64-py311.tar.gz (288 MB)
+/usr/lib64/python3.9/tarfile.py:2239: RuntimeWarning: The default behavior of tarfile extraction has been changed to disallow common exploits (including CVE-2007-4559). By default, absolute/parent paths are disallowed and some mode bits are cleared. See https://access.redhat.com/articles/7004769 for more details.
+  warnings.warn(
+  release fb46455860b4: consilium 0.1.0 (source c2c8a91), frappe 15.121.0, for linux/x86_64 Python 3.11, built 2026-09-18T07:06:08+00:00
+  all 193 files match their recorded checksums
+
+==> Installing the Python environment from the bundle (no network)
+  195 packages installed from the bundle's wheelhouse; pip log pip-20260918-073728.log
+  pip log: no index, no download, no git (pip-20260918-073728.log); internet from this host: unreachable
+  help-assistant documents -> /opt/consilium/docs; kit -> /opt/consilium/deploy
+
+==> PDF engine
+  already present: wkhtmltopdf 0.12.6.1 (with patched qt)
+
+==> Site
+  common_site_config.json: database cons-pg:5432, assistant documents at /opt/consilium/docs
+    Updating Dashboard for frappe
+    *** Scheduler is disabled ***
+  created site governance.example.internal on database consilium
+    Consilium Policy: 46 database objects re-applied.
+    Consilium Escalation: 7 database objects re-applied.
+    Updating Dashboard for consilium
+  installed the application into the site
+    Updating Dashboard for frappe
+    Updating Dashboard for consilium
+    Consilium Policy: 46 database objects re-applied.
+    Consilium Escalation: 7 database objects re-applied.
+    Consilium Core: 21 database objects re-applied.
+    Consilium: 4 module setup steps ran.
+    
+    Queued rebuilding of search index for governance.example.internal
+  migrated; branding defaults and scope trimming applied
+
+==> Front-end assets
+  front-end assets from frappe-assets-v15.121.0.tar.gz, copied (not linked)
+
+==> Reference data and site settings
+  reference data loaded (idempotent)
+  scheduler          enabled
+  site               Europe/London (changed); links use https://governance.example.internal
+  email              off
+  sso (oidc)         off
+  sso (ldap)         off
+  assistant          not present in this release
+
+==> Services and reverse proxy
+  rendered 8 files into /opt/consilium/config/(systemd|nginx)
+  systemd-analyze verify: no problems
+  systemd: consilium.target, consilium-web.service, consilium-scheduler.service, consilium-backup.timer, consilium-worker@1.service, consilium-worker@2.service enabled and started
+    nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+    nginx: configuration file /etc/nginx/nginx.conf test is successful
+  nginx: /etc/nginx/conf.d/consilium.conf installed, configuration test passed, reloaded
+
+==> Health check
+
+FAILED: `/opt/consilium/env/bin/python /opt/consilium/deploy/healthcheck.py --site governance.example.internal` failed (exit 1).
+      pass  Cache answers                                    redis://cons-redis:6379/0
+      pass  Application is installed on the site             frappe, consilium
+      pass  Application tables exist                         136 entities, all with tables
+      pass  An administrator account exists and is enabled   Administrator enabled
+      pass  Front-end assets are present and readable        322 scripts, 34 stylesheets
+      FAIL  Libraries loaded on demand are present           
+            missing under /opt/consilium/sites/assets/frappe/node_modules: ['ace-builds/src-noconflict/ace.js', 'ace-builds/src-min-noconflict/ace.js', 'frappe-gantt/dist/frappe-gantt.min.js', 'html5-qrcode/html5-qrcode.min.js', 'qz-tray/qz-tray.js', 'js-sha256/build/sha256.min.js']. Re-import the asset bundle; without these every JSON and Code field fails to load its editor.
+      pass  Served assets match the application source       served by copy; 16 files current
+      pass  Vendored libraries are present and unmodified    8 files verified
+      pass  Nothing references an external host              no CDN or external font references
+      pass  PDF engine present                               wkhtmltopdf 0.12.6.1 (with patched qt) at /usr/local/bin/wkhtmltopdf
+      pass  Background queues are reachable                  redis://cons-redis:6379/1
+      pass  Scheduled jobs are registered                    57 job types
+    
+      16/17 checks passed. The installation is not ready to use.
+  Full log: /opt/consilium/logs/kit-install-20260918-073728.log
+
+    
+      pass  Site directory exists                            /opt/consilium/sites/governance.example.internal
+      pass  Site configuration is readable                   database consilium
+      pass  Framework imports                                frappe 15.121.0
+      pass  Database answers                                 PostgreSQL 16.15 on aarch64-unknown-linux-musl
+      pass  Database is PostgreSQL                           postgres
+      pass  Cache answers                                    redis://cons-redis:6379/0
+      pass  Application is installed on the site             frappe, consilium
+      pass  Application tables exist                         136 entities, all with tables
+      pass  An administrator account exists and is enabled   Administrator enabled
+      pass  Front-end assets are present and readable        322 scripts, 34 stylesheets
+      FAIL  Libraries loaded on demand are present           
+            missing under /opt/consilium/sites/assets/frappe/node_modules: ['ace-builds/src-noconflict/ace.js', 'ace-builds/src-min-noconflict/ace.js', 'frappe-gantt/dist/frappe-gantt.min.js', 'html5-qrcode/html5-qrcode.min.js', 'qz-tray/qz-tray.js', 'js-sha256/build/sha256.min.js']. Re-import the asset bundle; without these every JSON and Code field fails to load its editor.
+      pass  Served assets match the application source       served by copy; 16 files current
+      pass  Vendored libraries are present and unmodified    8 files verified
+      pass  Nothing references an external host              no CDN or external font references
+      pass  PDF engine present                               wkhtmltopdf 0.12.6.1 (with patched qt) at /usr/local/bin/wkhtmltopdf
+      pass  Background queues are reachable                  redis://cons-redis:6379/1
+      pass  Scheduled jobs are registered                    57 job types
+    
+      16/17 checks passed. The installation is not ready to use.
+
+real	1m49.010s
+user	1m19.677s
+sys	0m7.229s

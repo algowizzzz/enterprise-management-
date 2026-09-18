@@ -1,7 +1,7 @@
 {
   "name": "Action Plan",
   "module": "Escalation",
-  "description": "A remediation plan against an escalation matter (E-6, E-8, E16-S3). Standalone because it has its own owner, dates and lifecycle; several per matter.",
+  "description": "A remediation plan against an escalation matter. Standalone because it has its own owner, dates and lifecycle; several per matter.",
   "autoname": "ACTP-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "action_plan_name",

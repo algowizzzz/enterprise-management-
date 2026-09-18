@@ -34,6 +34,10 @@ class TestRetention(CoreTestCase):
                 "is_active": 1,
             }
         ).insert(ignore_permissions=True)
+        # Most tests here are refused on purpose, and refusals are committed on
+        # their own connection; take them away with the records they name.
+        self.purge_on_teardown("Guide Article", self.retained.name)
+        self.purge_on_teardown("Guide Article", self.free.name)
 
 
     # ---------------------------------------------------------------- retention
@@ -161,6 +165,8 @@ class TestRetention(CoreTestCase):
         self.assertTrue(first.chain_hash)
         self.assertEqual(second.previous_archive_hash, first.chain_hash)
 
+        # Archive references restart from the same number after the rollback.
+        self.purge_on_teardown("Archive Record", first.name)
         first.payload_sha256 = "1" * 64
         with self.assertRaises(frappe.PermissionError):
             first.save(ignore_permissions=True)

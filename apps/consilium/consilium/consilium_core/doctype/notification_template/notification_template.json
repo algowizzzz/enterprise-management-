@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:{event_code}-{channel}",
+ "creation": "2026-09-18 05:28:03.969766",
+ "description": "The wording of one notification event on one channel. Subject and body are Jinja rendered against the event's context, so an administrator changes what people are told without a release.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "event_code",
+  "channel",
+  "is_active",
+  "subject",
+  "body",
+  "event_description",
+  "context_help"
+ ],
+ "fields": [
+  {
+   "description": "The event the application raises, for example policy.review.overdue. The application raises a fixed set of events; see Event Description and Available Context.",
+   "fieldname": "event_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Event",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "One template per event and channel. Add a second template on another channel to send the event there as well.",
+   "fieldname": "channel",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Channel",
+   "options": "Notification Channel",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "default": "1",
+   "description": "An inactive template sends nothing on its channel. If no template for an event is active, the application's built-in wording is recorded instead, so the event is never silently lost.",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "description": "Jinja. Rendered subjects longer than 140 characters are shortened.",
+   "fieldname": "subject",
+   "fieldtype": "Small Text",
+   "label": "Subject",
+   "reqd": 1
+  },
+  {
+   "description": "Jinja. Plain text is sent with its line breaks kept; text containing HTML tags is sent as HTML.",
+   "fieldname": "body",
+   "fieldtype": "Code",
+   "label": "Body",
+   "options": "Jinja",
+   "reqd": 1
+  },
+  {
+   "description": "When the application raises this event and who receives it. Maintained by the application.",
+   "fieldname": "event_description",
+   "fieldtype": "Small Text",
+   "label": "Event Description",
+   "read_only": 1
+  },
+  {
+   "description": "The names a template may use. Every event also has recipient, recipient_name, subject_doctype, subject_name, link, today and doc (the subject record).",
+   "fieldname": "context_help",
+   "fieldtype": "Small Text",
+   "label": "Available Context",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-18 05:28:03.969936",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Notification Template",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "event_code,channel",
+ "sort_field": "event_code",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "event_code",
+ "track_changes": 1
+}

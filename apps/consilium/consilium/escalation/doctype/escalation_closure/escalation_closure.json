@@ -3,7 +3,7 @@
  "allow_rename": 0,
  "autoname": "ESCC-.#####",
  "creation": "2026-09-17 23:50:00.721401",
- "description": "The recorded outcome of an escalation matter (E-10, E17-S3). A matter cannot reach a closed state without one.",
+ "description": "The recorded outcome of an escalation matter. A matter cannot reach a closed state without one.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -38,7 +38,7 @@
    "reqd": 1
   },
   {
-   "description": "The recorded outcome. E17-S3: closure requires one.",
+   "description": "The recorded outcome. A matter cannot be closed without one.",
    "fieldname": "closure_summary",
    "fieldtype": "Text",
    "label": "Closure Summary",
@@ -83,7 +83,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.721411",
+ "modified": "2026-09-18 03:31:55.000000",
  "modified_by": "Administrator",
  "module": "Escalation",
  "name": "Escalation Closure",

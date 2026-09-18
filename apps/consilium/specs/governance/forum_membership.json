@@ -56,6 +56,13 @@
       "description": "Brings counts_toward_quorum, votes_by_default and can_attest as defaults."
     },
     {
+      "fieldname": "set_voting_rights_manually",
+      "fieldtype": "Check",
+      "label": "Set Voting Rights Manually",
+      "default": "0",
+      "description": "Tick to set Votes and Counts Toward Quorum yourself. Unticked, a new seat takes them from its role."
+    },
+    {
       "fieldname": "votes",
       "fieldtype": "Check",
       "label": "Votes",

@@ -43,6 +43,19 @@ def get_context(context):
 	context.page_description = "Reference {0}".format(name)
 	context.can_edit = frappe.has_permission("Governance Forum", "write", doc=name)
 	context.can_review = frappe.has_permission("Forum Compliance Review", "create")
+	# The annual review panel is for the people in it: the office that starts
+	# it, the compliance reviewers who record it, and the two signatories.
+	from consilium.governance import lifecycle, reviews, voting
+
+	signatories = frappe.db.get_value("Governance Forum", name, ["forum_owner", "compliance_contact"]) or ()
+	context.can_annual_review = bool(
+		reviews.may_run_forum_campaigns()
+		or lifecycle.may_record_review()
+		or frappe.session.user in signatories
+	)
+	context.can_propose_motion = bool(
+		voting.may_administer(name) and frappe.db.get_value("Governance Forum", name, "is_active")
+	)
 	context.breadcrumbs = [
 		{"label": "Home", "url": "/"},
 		{"label": "Forum inventory", "url": "/forums"},

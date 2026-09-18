@@ -220,9 +220,9 @@ Expected results at handover:
 
 | Check | Result |
 |---|---|
-| `pytest tests/` | 20 passed |
+| `pytest tests/` | 51 passed |
 | audit | 18 findings: 10 blocker, 4 warning, 4 note |
-| availability (`--target-windows`) | 143 wheels + 7 pure-Python sdists |
+| availability (`--target-windows`) | 139 wheels + 6 pure-Python sdists (145 packages; dev-only tools are in `requirements-dev.txt`) |
 | smoke test | 8 passed, 0 failed |
 | `frappe.tests.test_document` | 36 run, OK |
 | `frappe.tests.test_permissions` | 34 run, OK |

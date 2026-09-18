@@ -1,0 +1,566 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Guided escalation intake.
+  The form says what will happen before it asks for anything. As the matter is
+  described, the escalation matrix is asked (over `routing.propose_pathway`)
+  what severity and which forums it proposes, and the escalation template for
+  the type is asked (over `templates.template_requirements`) which fields it
+  requires at that severity; those fields are marked as they become required.
+  The server enforces both again on save — the marks are a courtesy, not the
+  control.
+-#}
+
+{% block page_actions %}
+<a class="cns-btn cns-btn-secondary" href="/escalations">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to the register
+</a>
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not can_raise %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
+    <p class="cns-state-title">You cannot raise an escalation</p>
+    <p class="cns-state-message">Raising a matter belongs to escalation owners. Ask one to raise it, or ask
+      for the access that lets you raise it yourself.</p>
+    <a class="cns-btn cns-btn-secondary" href="/escalations">Back to the register</a>
+  </div>
+</div>
+{%- else %}
+
+<section class="cns-card" aria-labelledby="process-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="process-heading">Before you start</h2>
+      <p class="cns-card-subtitle">What this form does, and what happens after you send it.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-alert cns-status-info">
+      <i class="bi bi-info-circle" aria-hidden="true"></i>
+      <div>
+        Raising a matter records it <strong>open</strong>. The <strong>escalation matrix</strong> sets its
+        severity and the forums it goes to, unless you set the severity yourself — which is recorded as your
+        judgement. The <strong>template for the escalation type</strong> decides what else is required at that
+        severity. The forums' chairs, secretaries and attesting members are told if the matter breaches its time
+        limit or affects a material entity.
+      </div>
+    </div>
+    <ol class="cns-workflow" aria-label="What happens to this matter">
+      <li class="cns-workflow-step" data-state="current" aria-current="step">
+        <span class="cns-workflow-marker" aria-hidden="true">1</span> You describe it
+      </li>
+      <li class="cns-workflow-step" data-state="pending">
+        <span class="cns-workflow-marker" aria-hidden="true">2</span> Routed by the matrix
+      </li>
+      <li class="cns-workflow-step" data-state="pending">
+        <span class="cns-workflow-marker" aria-hidden="true">3</span> Worked: plans, acceptances
+      </li>
+      <li class="cns-workflow-step" data-state="pending">
+        <span class="cns-workflow-marker" aria-hidden="true">4</span> Challenged by the second line
+      </li>
+      <li class="cns-workflow-step" data-state="pending">
+        <span class="cns-workflow-marker" aria-hidden="true">5</span> Closed against its criteria
+      </li>
+    </ol>
+  </div>
+</section>
+
+<form id="raise-form" novalidate>
+  <div id="form-status" role="status" aria-live="polite"></div>
+
+  <div class="cns-alert cns-status-danger" id="form-errors" role="alert" hidden>
+    <i class="bi bi-x-octagon" aria-hidden="true"></i>
+    <div>
+      <strong>This matter is not ready to raise.</strong>
+      <ul id="form-errors-list" class="cns-prose" style="margin-top: var(--cns-space-2);"></ul>
+    </div>
+  </div>
+
+  <fieldset class="cns-fieldset">
+    <legend>1. What happened</legend>
+    <div class="cns-form-grid">
+      <div class="cns-field" data-field="escalation_title">
+        <label class="cns-label" for="escalation_title">Title<span class="cns-required" aria-hidden="true">*</span></label>
+        <input class="cns-input" type="text" id="escalation_title" maxlength="140" required
+               data-label="Title" aria-describedby="title-help">
+        <span class="cns-help" id="title-help">One line a forum member would recognise in an agenda.</span>
+      </div>
+      <div class="cns-field" data-field="escalation_type">
+        <label class="cns-label" for="escalation_type">Escalation type<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="escalation_type" required data-label="Escalation type">
+          <option value="">Choose a type</option>
+        </select>
+        <span class="cns-help">The type chooses the template, and with it what else is required.</span>
+      </div>
+      <div class="cns-field" data-field="escalation_identification_date">
+        <label class="cns-label" for="escalation_identification_date">Identified on<span class="cns-required" aria-hidden="true">*</span></label>
+        <input class="cns-input" type="date" id="escalation_identification_date" required data-label="Identified on">
+      </div>
+      <div class="cns-field" data-field="escalation_date">
+        <label class="cns-label" for="escalation_date">Escalated on</label>
+        <input class="cns-input" type="date" id="escalation_date" data-label="Escalated on">
+        <span class="cns-help">Not before it was identified.</span>
+      </div>
+    </div>
+    <div class="cns-field" data-field="escalation_trigger">
+      <label class="cns-label" for="escalation_trigger">What crossed the threshold<span class="cns-required" aria-hidden="true">*</span></label>
+      <input class="cns-input" type="text" id="escalation_trigger" maxlength="240" required data-label="Escalation trigger"
+             aria-describedby="trigger-help">
+      <span class="cns-help" id="trigger-help">The measure and the limit, for example "exposure at 13.2% of capital against a 12% limit".</span>
+    </div>
+    <div class="cns-field" data-field="description">
+      <label class="cns-label" for="description">Description<span class="cns-required" aria-hidden="true">*</span></label>
+      <textarea class="cns-textarea" id="description" rows="5" required data-label="Description"></textarea>
+    </div>
+  </fieldset>
+
+  <fieldset class="cns-fieldset">
+    <legend>2. The risk</legend>
+    <div class="cns-form-grid">
+      <div class="cns-field" data-field="tier_1_risk_type">
+        <label class="cns-label" for="tier_1_risk_type">Tier 1 risk type<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="tier_1_risk_type" required data-label="Tier 1 risk type">
+          <option value="">Choose a risk type</option>
+        </select>
+      </div>
+      <div class="cns-field" data-field="tier_2_risk_type">
+        <label class="cns-label" for="tier_2_risk_type">Tier 2 risk type</label>
+        <select class="cns-select" id="tier_2_risk_type" data-label="Tier 2 risk type">
+          <option value="">Choose tier 1 first</option>
+        </select>
+      </div>
+      <div class="cns-field" data-field="organizational_level">
+        <label class="cns-label" for="organizational_level">Organisational level<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="organizational_level" required data-label="Organisational level">
+          <option value="">Choose a level</option>
+        </select>
+      </div>
+    </div>
+    <div class="cns-field">
+      <div class="cns-check">
+        <input type="checkbox" id="risk_appetite_breach">
+        <label for="risk_appetite_breach">Board-approved risk appetite has been breached</label>
+      </div>
+      <div class="cns-check">
+        <input type="checkbox" id="material_entity_impact">
+        <label for="material_entity_impact">A material entity is affected</label>
+      </div>
+      <div class="cns-check">
+        <input type="checkbox" id="systemic">
+        <label for="systemic">The issue is systemic, not isolated (it follows the systemic route)</label>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="cns-fieldset">
+    <legend>3. Who and what it touches</legend>
+    <div class="cns-form-grid">
+      <div class="cns-field" data-field="identified_by">
+        <label class="cns-label" for="identified_by">Identified by<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="identified_by" required data-label="Identified by"></select>
+      </div>
+      <div class="cns-field" data-field="accountable_executive">
+        <label class="cns-label" for="accountable_executive">Accountable executive<span class="cns-required" aria-hidden="true">*</span></label>
+        <select class="cns-select" id="accountable_executive" required data-label="Accountable executive">
+          <option value="">Choose a person</option>
+        </select>
+      </div>
+      <div class="cns-field" data-field="response_owner">
+        <label class="cns-label" for="response_owner">Response owner</label>
+        <select class="cns-select" id="response_owner" data-label="Response owner">
+          <option value="">Choose a person</option>
+        </select>
+        <span class="cns-help">Who will run the response day to day.</span>
+      </div>
+    </div>
+    <div class="cns-field" data-field="impacted_entities">
+      <p class="cns-label" id="entities-label">Impacted entities<span class="cns-required" aria-hidden="true">*</span></p>
+      <div id="entity-rows"></div>
+      <button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" id="entity-add">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Add an entity
+      </button>
+    </div>
+  </fieldset>
+
+  <fieldset class="cns-fieldset">
+    <legend>4. Severity and where it goes</legend>
+    <div class="cns-form-grid">
+      <div class="cns-field" data-field="severity">
+        <label class="cns-label" for="severity">Severity</label>
+        <select class="cns-select" id="severity" data-label="Severity" aria-describedby="severity-help">
+          <option value="">Let the escalation matrix decide</option>
+        </select>
+        <span class="cns-help" id="severity-help">Setting it yourself is recorded as a manual override.</span>
+      </div>
+    </div>
+    <div id="proposal" class="cns-alert cns-status-neutral" role="status" aria-live="polite">
+      <i class="bi bi-diagram-3" aria-hidden="true"></i>
+      <div>The matrix's proposal appears here once the type and risk are chosen.</div>
+    </div>
+    <div class="cns-field" data-field="governance_forums">
+      <p class="cns-label">More forums on the pathway</p>
+      <p class="cns-help">The forums the matrix proposes are added for you. Add any other active forum that must decide,
+        oversee or be informed.</p>
+      <div id="forum-rows"></div>
+      <button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" id="forum-add">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Add a forum
+      </button>
+    </div>
+  </fieldset>
+
+  <fieldset class="cns-fieldset" id="handling-set" hidden>
+    <legend>5. Handling</legend>
+    <div class="cns-check">
+      <input type="checkbox" id="sensitive" aria-describedby="sensitive-help">
+      <label for="sensitive">Restricted handling: only people cleared for sensitive escalations may see it</label>
+    </div>
+    <span class="cns-help" id="sensitive-help">The restriction applies on every screen, list, report and export, and
+      to the plans, acceptances and closure that hang off the matter.</span>
+  </fieldset>
+
+  <section class="cns-card" aria-labelledby="template-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="template-heading">What the template requires</h2>
+        <p class="cns-card-subtitle" id="template-subtitle">Choose the type to see its template.</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="template-body"></div>
+  </section>
+
+  <div class="cns-form-actions">
+    <button type="submit" class="cns-btn cns-btn-primary" id="raise-submit">
+      <i class="bi bi-send" aria-hidden="true"></i> Raise the escalation
+    </button>
+    <a class="cns-btn cns-btn-ghost" href="/escalations">Cancel</a>
+  </div>
+</form>
+
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if can_raise %}
+<script>
+(function () {
+  "use strict";
+
+  var ME = {{ user_display | tojson }};
+  var ESC = "consilium.escalation.";
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var OPT = null;
+  var proposed = null;          /* the matrix's last answer */
+  var templateRequired = [];    /* [{fieldname, label, guidance}] */
+  var entities = [{ entity_type: "", entity_value: "", impact_note: "" }];
+  var forums = [];
+
+  function $(id) { return document.getElementById(id); }
+
+  function options(list, selected, placeholder) {
+    return (placeholder !== undefined ? '<option value="">' + escapeHtml(placeholder) + "</option>" : "") +
+      list.map(function (o) {
+        var v = typeof o === "string" ? o : o.value;
+        var l = typeof o === "string" ? o : o.label;
+        return '<option value="' + escapeAttr(v) + '"' + (String(v) === String(selected || "") ? " selected" : "") + ">" +
+          escapeHtml(l) + "</option>";
+      }).join("");
+  }
+
+  function people() {
+    return OPT.people.map(function (p) { return { value: p.name, label: p.full_name || p.name }; });
+  }
+
+  /* ----------------------------- the options ---------------------------- */
+
+  Consilium.api.call(ESC + "templates.intake_options", {})
+    .then(function (opt) {
+      OPT = opt;
+      $("escalation_type").innerHTML = options(opt.escalation_types, "", "Choose a type");
+      $("tier_1_risk_type").innerHTML = options(
+        opt.risk_types.filter(function (r) { return +r.tier === 1; }), "", "Choose a risk type");
+      $("organizational_level").innerHTML = options(opt.organizational_levels, "", "Choose a level");
+      $("identified_by").innerHTML = options(people(), ME);
+      $("accountable_executive").innerHTML = options(people(), "", "Choose a person");
+      $("response_owner").innerHTML = options(people(), "", "Choose a person");
+      $("severity").innerHTML = options(opt.severities, "", "Let the escalation matrix decide");
+      $("handling-set").hidden = !opt.may_restrict;
+      $("escalation_identification_date").value = new Date().toISOString().slice(0, 10);
+      drawEntities();
+      drawForums();
+    })
+    .catch(function (error) {
+      $("form-status").innerHTML = '<div class="cns-alert cns-status-danger"><i class="bi bi-x-octagon" aria-hidden="true"></i>' +
+        "<div>The form could not be prepared: " + escapeHtml(error.message || "") + "</div></div>";
+      $("raise-submit").disabled = true;
+    });
+
+  $("tier_1_risk_type").addEventListener("change", function () {
+    var parent = this.value;
+    var children = OPT.risk_types.filter(function (r) { return +r.tier === 2 && r.parent_risk_type === parent; });
+    $("tier_2_risk_type").innerHTML = options(children, "", parent ? (children.length ? "None" : "No tier 2 under this type") : "Choose tier 1 first");
+  });
+
+  /* ------------------------------ entities ------------------------------ */
+
+  function drawEntities() {
+    $("entity-rows").innerHTML = entities.map(function (row, i) {
+      var pool = (OPT.entities[row.entity_type] || []);
+      return '<div class="cns-form-grid" style="margin-bottom: var(--cns-space-2);">' +
+        '<div class="cns-field"><label class="cns-label" for="ent-kind-' + i + '">Kind</label>' +
+        '<select class="cns-select" id="ent-kind-' + i + '" data-e="' + i + '" data-k="entity_type">' +
+        options(OPT.entity_kinds, row.entity_type, "Choose a kind") + "</select></div>" +
+        '<div class="cns-field"><label class="cns-label" for="ent-value-' + i + '">Entity</label>' +
+        '<select class="cns-select" id="ent-value-' + i + '" data-e="' + i + '" data-k="entity_value">' +
+        options(pool, row.entity_value, row.entity_type ? "Choose an entity" : "Choose the kind first") + "</select></div>" +
+        '<div class="cns-field"><label class="cns-label" for="ent-note-' + i + '">Impact</label>' +
+        '<input class="cns-input" id="ent-note-' + i + '" data-e="' + i + '" data-k="impact_note" value="' +
+        escapeAttr(row.impact_note || "") + '"></div>' +
+        '<div class="cns-field" style="align-self: end;"><button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-drop-e="' +
+        i + '">Remove</button></div></div>';
+    }).join("") || '<p class="cns-text-muted">No entity yet.</p>';
+  }
+
+  $("entity-rows").addEventListener("change", function (event) {
+    var node = event.target;
+    if (!node.hasAttribute("data-e")) return;
+    var row = entities[+node.getAttribute("data-e")];
+    row[node.getAttribute("data-k")] = node.value;
+    if (node.getAttribute("data-k") === "entity_type") { row.entity_value = ""; drawEntities(); }
+    scheduleProposal();
+  });
+  $("entity-rows").addEventListener("input", function (event) {
+    var node = event.target;
+    if (node.getAttribute("data-k") === "impact_note") entities[+node.getAttribute("data-e")].impact_note = node.value;
+  });
+  $("entity-rows").addEventListener("click", function (event) {
+    var node = event.target.closest("[data-drop-e]");
+    if (!node) return;
+    entities.splice(+node.getAttribute("data-drop-e"), 1);
+    drawEntities();
+    scheduleProposal();
+  });
+  $("entity-add").addEventListener("click", function () {
+    entities.push({ entity_type: "", entity_value: "", impact_note: "" });
+    drawEntities();
+  });
+
+  /* ------------------------------- forums ------------------------------- */
+
+  function drawForums() {
+    $("forum-rows").innerHTML = forums.map(function (row, i) {
+      return '<div class="cns-form-grid" style="margin-bottom: var(--cns-space-2);">' +
+        '<div class="cns-field"><label class="cns-label" for="forum-' + i + '">Forum</label>' +
+        '<select class="cns-select" id="forum-' + i + '" data-f="' + i + '" data-k="governance_forum">' +
+        options(OPT.forums, row.governance_forum, "Choose a forum") + "</select></div>" +
+        '<div class="cns-field"><label class="cns-label" for="forum-role-' + i + '">Role</label>' +
+        '<select class="cns-select" id="forum-role-' + i + '" data-f="' + i + '" data-k="role_in_escalation">' +
+        options(OPT.forum_roles, row.role_in_escalation) + "</select></div>" +
+        '<div class="cns-field" style="align-self: end;"><button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-drop-f="' +
+        i + '">Remove</button></div></div>';
+    }).join("");
+  }
+
+  $("forum-rows").addEventListener("change", function (event) {
+    var node = event.target;
+    if (node.hasAttribute("data-f")) forums[+node.getAttribute("data-f")][node.getAttribute("data-k")] = node.value;
+  });
+  $("forum-rows").addEventListener("click", function (event) {
+    var node = event.target.closest("[data-drop-f]");
+    if (!node) return;
+    forums.splice(+node.getAttribute("data-drop-f"), 1);
+    drawForums();
+  });
+  $("forum-add").addEventListener("click", function () {
+    forums.push({ governance_forum: "", role_in_escalation: OPT.forum_roles[0] });
+    drawForums();
+  });
+
+  /* ------------------------------ the values ---------------------------- */
+
+  var SIMPLE = ["escalation_title", "escalation_type", "escalation_identification_date", "escalation_date",
+                "escalation_trigger", "description", "tier_1_risk_type", "tier_2_risk_type", "organizational_level",
+                "identified_by", "accountable_executive", "response_owner", "severity"];
+
+  function values() {
+    var v = {};
+    SIMPLE.forEach(function (key) { v[key] = ($(key).value || "").trim(); });
+    v.material_entity_impact = $("material_entity_impact").checked ? 1 : 0;
+    v.risk_appetite_breach = $("risk_appetite_breach").checked ? 1 : 0;
+    v.systemic = $("systemic").checked ? 1 : 0;
+    v.sensitive = $("sensitive").checked ? 1 : 0;
+    v.impacted_entities = entities.filter(function (r) { return r.entity_type && r.entity_value; });
+    v.governance_forums = forums.filter(function (r) { return r.governance_forum; });
+    return v;
+  }
+
+  /* ------------------------- the matrix's proposal ---------------------- */
+
+  var timer = null;
+  function scheduleProposal() {
+    if (timer) window.clearTimeout(timer);
+    timer = window.setTimeout(askMatrix, 250);
+  }
+
+  function askMatrix() {
+    var v = values();
+    if (!v.escalation_type) { refreshTemplate(); return; }
+    var matter = {
+      escalation_type: v.escalation_type, tier_1_risk_type: v.tier_1_risk_type, tier_2_risk_type: v.tier_2_risk_type,
+      organizational_level: v.organizational_level, material_entity_impact: v.material_entity_impact,
+      risk_appetite_breach: v.risk_appetite_breach, systemic: v.systemic, severity: v.severity || null,
+      impacted_entities: v.impacted_entities
+    };
+    Consilium.api.call(ESC + "routing.propose_pathway", { matter: matter }, { trackLoading: false })
+      .then(function (p) {
+        proposed = p;
+        var box = $("proposal");
+        if (!p.matched) {
+          box.className = "cns-alert cns-status-warning";
+          box.innerHTML = '<i class="bi bi-exclamation-circle" aria-hidden="true"></i><div>No escalation matrix rule ' +
+            "matches this matter yet. Choose the severity yourself and name the forums it must reach.</div>";
+        } else {
+          box.className = "cns-alert cns-status-info";
+          box.innerHTML = '<i class="bi bi-diagram-3" aria-hidden="true"></i><div>Matrix rule <strong>' +
+            escapeHtml(p.rule_code) + "</strong> proposes <strong>" + escapeHtml(p.severity || "no severity") +
+            "</strong> severity" + (p.forums.length ? ", routed to " + p.forums.map(function (f) {
+              return escapeHtml(Consilium.reference.label("Governance Forum", f.governance_forum)) +
+                " (" + escapeHtml(f.role_in_escalation) + ")";
+            }).join(", ") : "") + ". " +
+            /* The queue the rule names: its members see the matter in their
+               inbox until one of them takes ownership. */
+            (p.route_to_role || p.route_to_group
+              ? "It waits for an owner from " + [p.route_to_role ? "role " + escapeHtml(p.route_to_role) : "",
+                  p.route_to_group ? "group " + escapeHtml(p.route_to_group) : ""].filter(Boolean).join(" or ") +
+                " unless you name a response owner from that queue. "
+              : "") +
+            (v.severity && v.severity !== p.severity
+              ? "You have set " + escapeHtml(v.severity) + "; that will be recorded as your override."
+              : "") + "</div>";
+        }
+        refreshTemplate();
+      })
+      .catch(function () { refreshTemplate(); });
+  }
+
+  function effectiveSeverity() {
+    var chosen = $("severity").value;
+    return chosen || (proposed && proposed.severity) || "";
+  }
+
+  function refreshTemplate() {
+    var type = $("escalation_type").value;
+    templateRequired = [];
+    markTemplate();
+    if (!type) {
+      $("template-subtitle").textContent = "Choose the type to see its template.";
+      $("template-body").innerHTML = "";
+      return;
+    }
+    Consilium.api.call(ESC + "templates.template_requirements",
+      { escalation_type: type, severity: effectiveSeverity() }, { trackLoading: false })
+      .then(function (answer) {
+        templateRequired = answer.required || [];
+        markTemplate();
+        $("template-subtitle").textContent = answer.template
+          ? "Template " + answer.template + ", at " + (effectiveSeverity() || "the lowest") + " severity."
+          : "No template is configured for this type; only the standard fields are required.";
+        var missing = templateRequired.filter(function (r) { return !document.querySelector('[data-field="' + r.fieldname + '"]'); });
+        $("template-body").innerHTML = templateRequired.length
+          ? '<ul class="cns-prose">' + templateRequired.map(function (r) {
+              return "<li><strong>" + escapeHtml(r.label) + "</strong>" + (r.guidance ? " — " + escapeHtml(r.guidance) : "") + "</li>";
+            }).join("") + "</ul>" +
+            (missing.length ? '<div class="cns-alert cns-status-warning"><i class="bi bi-exclamation-circle" aria-hidden="true"></i><div>' +
+              "This form does not collect " + escapeHtml(missing.map(function (r) { return r.label; }).join(", ")) +
+              ". Raise the matter in the workspace instead, where every field is available.</div></div>" : "")
+          : '<p class="cns-text-muted">The template adds nothing at this severity.</p>';
+      })
+      .catch(function () { $("template-body").innerHTML = ""; });
+  }
+
+  /** Mark the fields the template requires, and unmark the ones it no longer does. */
+  function markTemplate() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-template-mark]"), function (n) { n.remove(); });
+    templateRequired.forEach(function (r) {
+      var wrapper = document.querySelector('[data-field="' + r.fieldname + '"]');
+      if (!wrapper) return;
+      var label = wrapper.querySelector(".cns-label");
+      if (label && !label.querySelector(".cns-required")) {
+        var mark = document.createElement("span");
+        mark.className = "cns-required";
+        mark.setAttribute("aria-hidden", "true");
+        mark.setAttribute("data-template-mark", "");
+        mark.textContent = "*";
+        label.appendChild(mark);
+      }
+    });
+  }
+
+  ["escalation_type", "tier_1_risk_type", "tier_2_risk_type", "organizational_level", "severity",
+   "material_entity_impact", "risk_appetite_breach", "systemic"].forEach(function (id) {
+    $(id).addEventListener("change", scheduleProposal);
+  });
+
+  /* ------------------------------ sending ------------------------------ */
+
+  function problems(v) {
+    var list = [];
+    Array.prototype.forEach.call(document.querySelectorAll("#raise-form [required]"), function (node) {
+      if (!(node.value || "").trim()) list.push({ node: node, text: (node.getAttribute("data-label") || node.id) + " is required." });
+    });
+    if (!v.impacted_entities.length) list.push({ node: $("entity-add"), text: "Name at least one impacted entity." });
+    if (!v.severity && !(proposed && proposed.matched && proposed.severity)) {
+      list.push({ node: $("severity"), text: "No matrix rule sets a severity for this matter; choose one." });
+    }
+    if (v.escalation_date && v.escalation_identification_date && v.escalation_date < v.escalation_identification_date) {
+      list.push({ node: $("escalation_date"), text: "A matter cannot be escalated before it was identified." });
+    }
+    templateRequired.forEach(function (r) {
+      var value = v[r.fieldname];
+      var empty = Array.isArray(value) ? !value.length && !(r.fieldname === "governance_forums" && proposed && proposed.forums && proposed.forums.length)
+                                       : !value;
+      if (empty && document.querySelector('[data-field="' + r.fieldname + '"]')) {
+        list.push({ node: document.querySelector('[data-field="' + r.fieldname + '"] input, [data-field="' + r.fieldname + '"] select, [data-field="' + r.fieldname + '"] textarea, [data-field="' + r.fieldname + '"] button'),
+                    text: r.label + " is required by the template for this type and severity." });
+      }
+    });
+    return list;
+  }
+
+  $("raise-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var v = values();
+    var found = problems(v);
+    var box = $("form-errors");
+    if (found.length) {
+      $("form-errors-list").innerHTML = found.map(function (p) { return "<li>" + escapeHtml(p.text) + "</li>"; }).join("");
+      box.hidden = false;
+      box.scrollIntoView({ block: "start" });
+      if (found[0].node) found[0].node.focus();
+      return;
+    }
+    box.hidden = true;
+    $("raise-submit").disabled = true;
+    Consilium.api.call(ESC + "templates.raise_escalation", { values: v }, { method: "POST" })
+      .then(function (result) {
+        Consilium.toast.success("Escalation " + result.name + " raised.", { title: "Raised" });
+        window.location.href = result.url;
+      })
+      .catch(function (error) {
+        $("raise-submit").disabled = false;
+        $("form-errors-list").innerHTML = "<li>" + escapeHtml(error.message || "The server refused the matter.") + "</li>";
+        box.hidden = false;
+        box.scrollIntoView({ block: "start" });
+        Consilium.toast.error(error.message || "The server refused the matter.", { title: "Not raised" });
+      });
+  });
+
+  Consilium.reference.load(["Governance Forum"]).catch(function () { /* codes still display */ });
+})();
+</script>
+{%- endif %}
+{% endblock %}

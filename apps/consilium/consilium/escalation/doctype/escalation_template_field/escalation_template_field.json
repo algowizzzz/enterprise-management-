@@ -38,7 +38,7 @@
   },
   {
    "default": "Always",
-   "description": "E-5: the required-field set varies by type and by severity.",
+   "description": "The fields required vary with the escalation type and severity.",
    "fieldname": "required_when_severity",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -59,7 +59,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-09-17 23:50:00.725587",
+ "modified": "2026-09-18 03:31:55.000000",
  "modified_by": "Administrator",
  "module": "Escalation",
  "name": "Escalation Template Field",

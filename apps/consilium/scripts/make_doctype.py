@@ -143,7 +143,7 @@ def build_doctype(spec: dict) -> dict:
         # §3.1), append-only artefacts forbid copying, and several entities want
         # an explicit document_type for reporting.
         "allow_import", "allow_copy", "document_type", "max_attachments",
-        "allow_events_in_timeline", "read_only",
+        "allow_events_in_timeline", "read_only", "issingle",
     ):
         if key in spec:
             doc[key] = spec[key]

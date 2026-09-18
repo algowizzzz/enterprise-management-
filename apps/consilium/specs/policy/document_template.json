@@ -1,7 +1,7 @@
 {
   "name": "Document Template",
   "module": "Policy",
-  "description": "P-15. A template per document type and action, with its predefined sections and its required-field set.",
+  "description": "A template per document type and action, with its predefined sections and its required-field set.",
   "autoname": "field:template_title",
   "allow_rename": 1,
   "title_field": "template_title",

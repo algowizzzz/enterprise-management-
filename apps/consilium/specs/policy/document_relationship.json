@@ -1,7 +1,7 @@
 {
   "name": "Document Relationship",
   "module": "Policy",
-  "description": "P-4 lineage: children, addenda, supersession and plain references. `owner_approval_required` is what makes P-8's parent-owner approval a derived step rather than a hand-added one.",
+  "description": "Children, addenda, supersession and plain references. When the parent owner's approval is required, it is added to the approval steps automatically.",
   "istable": 1,
   "fields": [
     {

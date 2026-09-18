@@ -156,23 +156,14 @@ def notify_affected(document: str, event: str, *, detail: str | None = None) -> 
     ``event`` is a plain description — published, changed, retired — used in the
     message. It is not a workflow state and nothing branches on it.
     """
-    doc = frappe.get_doc(DOCTYPE, document)
     recipients = affected_parties(document)
     if not recipients:
         return []
-
-    subject = f"{doc.document_name} ({doc.name}) — {event}"
-    body = detail or (
-        f"{doc.document_name} has been {event.lower()}. You are receiving this because the document's "
-        f"recorded applicability reaches you."
-    )
-    return notification.notify_many(
-        CHANNEL,
-        recipients,
-        subject=subject,
-        body=body,
-        subject_doctype=DOCTYPE,
-        subject_name=document,
+    # Raised as ``policy.document.audience``: the wording is the template's, and
+    # the template reads the document itself (``doc``) for its name.
+    return notification.notify(
+        "policy.document.audience", recipients, {"event": event, "detail": detail or ""},
+        subject_doctype=DOCTYPE, subject_name=document,
     )
 
 

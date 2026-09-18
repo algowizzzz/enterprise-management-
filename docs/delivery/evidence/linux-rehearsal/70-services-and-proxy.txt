@@ -1,0 +1,29 @@
+exit=0
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+{
+ "runs": [
+  {
+   "at": "2026-09-18T07:38:06+00:00",
+   "pip_log": "/opt/consilium/logs/pip-20260918-073728.log",
+   "pip_index": "none (--no-index, PIP_NO_INDEX=1, PIP_CONFIG_FILE=/dev/null)",
+   "proxies": "http://127.0.0.1:9",
+   "network_lines_in_pip_log": [],
+   "network_line_count": 0,
+   "internet_reachable_from_host": false
+  },
+  {
+   "at": "2026-09-18T07:41:11+00:00",
+   "pip_log": "/opt/consilium/logs/pip-20260918-074031.log",
+   "pip_index": "none (--no-index, PIP_NO_INDEX=1, PIP_CONFIG_FILE=/dev/null)",
+   "proxies": "http://127.0.0.1:9",
+   "network_lines_in_pip_log": [],
+   "network_line_count": 0,
+   "internet_reachable_from_host": false
+  }
+ ]
+}User=consilium
+ReadWritePaths=/opt/consilium
+PrivateTmp=yes
+ProtectSystem=full
+NoNewPrivileges=yes

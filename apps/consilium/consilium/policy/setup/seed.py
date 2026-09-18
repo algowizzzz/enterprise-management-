@@ -27,9 +27,15 @@ DOCUMENT_DOCTYPE = "Governing Document"
 STATE_FIELD = "lifecycle_phase"
 
 #: (state, docstatus, roles allowed to edit in this state)
+#:
+#: Under review the *owner* edits — answering the reviewer with a new version —
+#: and the reviewer does not: a reviewer returns a document with comments and
+#: never changes its content. The first seed named the reviewer here, which
+#: told the workspace to open the form for editing to exactly the wrong person;
+#: ``correct_review_edit_role`` repairs sites seeded that way.
 LIFECYCLE_STATES = [
     ("Draft", "0", "Policy Owner"),
-    ("Review", "0", "Policy Reviewer"),
+    ("Review", "0", "Policy Owner"),
     ("Approved", "0", "Enterprise Policy Office"),
     ("Published", "0", "Enterprise Policy Office"),
     ("Implemented", "0", "Policy Owner"),
@@ -55,6 +61,11 @@ LIFECYCLE_TRANSITIONS = [
 LIFECYCLE_GATES = [
     ("Approved", "Required Metadata Complete",
      "A document cannot be approved while a field its template requires is empty."),
+    ("Approved", "Complete Approval Chain",
+     "P-25 / E12-S6. Recording the approval is refused until every step of the routed approval path "
+     "has been decided — by its approver or a live delegate, through Core — without an outstanding "
+     "objection. Without this row the policy office's own approval could be recorded over an approver "
+     "who had not decided, or had rejected, and the chain was checked only at publication."),
     ("Published", "Complete Approval Chain",
      "P-25 / E12-S6. Publication is refused unless every step of the routed approval path has been "
      "decided without an outstanding objection. A bypass needs a recorded Exception Authorisation."),
@@ -339,10 +350,40 @@ def seed_service_levels() -> None:
         )
 
 
+#: What the first seed wrote for the review state's editor, and what replaces it.
+_SHIPPED_REVIEW_EDITOR = "Policy Reviewer"
+
+
+def correct_review_edit_role() -> bool:
+    """Move editing under review from the reviewer to the owner, on a site seeded before.
+
+    Only a row still holding the value this module first shipped is changed: an
+    administrator who has since chosen a different role has made a decision,
+    and it is left alone.
+    """
+    if not frappe.db.exists("Workflow", WORKFLOW_NAME):
+        return False
+    wanted = dict((state, role) for state, _docstatus, role in LIFECYCLE_STATES)
+    workflow = frappe.get_doc("Workflow", WORKFLOW_NAME)
+    changed = False
+    for row in workflow.states:
+        if row.state in wanted and row.allow_edit == _SHIPPED_REVIEW_EDITOR and wanted[row.state] != row.allow_edit:
+            row.allow_edit = wanted[row.state]
+            changed = True
+    if changed:
+        workflow.save(ignore_permissions=True)
+    return changed
+
+
 def seed_all() -> None:
     seed_state_flags()
     seed_lifecycle_workflow()
+    correct_review_edit_role()
     seed_lifecycle_gates()
     seed_approval_routes()
     seed_classification_rule_set()
     seed_service_levels()
+    # P-6/O-7: the regulatory-change file import is configuration too.
+    from consilium.policy import regulatory_import
+
+    regulatory_import.ensure_profile()

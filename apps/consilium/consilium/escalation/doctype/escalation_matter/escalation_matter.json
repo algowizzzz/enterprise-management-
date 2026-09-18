@@ -28,9 +28,14 @@
   "severity_source",
   "escalation_matrix",
   "matched_matrix_rule",
+  "assigned_role",
+  "assigned_group",
+  "assignment_rule",
+  "ownership_taken_on",
   "governance_forums",
   "material_entity_impact",
   "risk_appetite_breach",
+  "systemic",
   "risk_appetite_reference",
   "related_risk_reference",
   "source_policy_violation",
@@ -176,7 +181,7 @@
   },
   {
    "default": "Matrix",
-   "description": "[Inferred \u2014 ] Manual Override keeps a person's severity; Matrix lets the matrix resolve it.",
+   "description": "Manual Override keeps the severity a person chose; Matrix lets the escalation matrix set it.",
    "fieldname": "severity_source",
    "fieldtype": "Select",
    "label": "Severity Source",
@@ -198,6 +203,36 @@
    "read_only": 1
   },
   {
+   "description": "The role whose queue the matched matrix rule routed the matter to.",
+   "fieldname": "assigned_role",
+   "fieldtype": "Link",
+   "label": "Assigned Role",
+   "options": "Role",
+   "read_only": 1
+  },
+  {
+   "description": "The user group whose queue the matched matrix rule routed the matter to.",
+   "fieldname": "assigned_group",
+   "fieldtype": "Link",
+   "label": "Assigned Group",
+   "options": "User Group",
+   "read_only": 1
+  },
+  {
+   "description": "The matrix rule that set the queue.",
+   "fieldname": "assignment_rule",
+   "fieldtype": "Data",
+   "label": "Assigned By Rule",
+   "read_only": 1
+  },
+  {
+   "description": "When a member of the queue took ownership and became the response owner.",
+   "fieldname": "ownership_taken_on",
+   "fieldtype": "Datetime",
+   "label": "Ownership Taken On",
+   "read_only": 1
+  },
+  {
    "fieldname": "governance_forums",
    "fieldtype": "Table",
    "label": "Governance Forums",
@@ -214,6 +249,13 @@
    "fieldname": "risk_appetite_breach",
    "fieldtype": "Check",
    "label": "Risk Appetite Breach"
+  },
+  {
+   "default": "0",
+   "description": "The issue is systemic rather than isolated. A matrix rule may test this flag to send the matter on the systemic route, and a service level may time the second-line challenge of systemic matters.",
+   "fieldname": "systemic",
+   "fieldtype": "Check",
+   "label": "Systemic"
   },
   {
    "fieldname": "risk_appetite_reference",
@@ -235,7 +277,7 @@
   },
   {
    "default": "0",
-   "description": "E-16 restricted visibility. A sensitive matter is excluded from list, search, report and API reads for users without the Sensitive Escalation Access role.",
+   "description": "A sensitive matter is hidden from lists, search, reports and the API for anyone without the Sensitive Escalation Access role.",
    "fieldname": "sensitive",
    "fieldtype": "Check",
    "label": "Sensitive"
@@ -314,6 +356,7 @@
    "options": "External Reference"
   },
   {
+   "default": "Now",
    "fieldname": "opened_on",
    "fieldtype": "Datetime",
    "label": "Opened On",
@@ -327,7 +370,7 @@
   },
   {
    "default": "0",
-   "description": "E-9 makes this mandatory for every escalation, including externally-tracked ones.",
+   "description": "Must be completed for every escalation, including one tracked outside this system, before it is closed.",
    "fieldname": "response_template_completed",
    "fieldtype": "Check",
    "label": "Response Template Completed"
@@ -339,7 +382,7 @@
    "options": "Retention Class"
   },
   {
-   "description": "[Inferred] The time threshold the matched matrix rule imposed.",
+   "description": "The time threshold the matched matrix rule imposed.",
    "fieldname": "sla_definition",
    "fieldtype": "Link",
    "label": "SLA Definition",
@@ -347,7 +390,7 @@
    "read_only": 1
   },
   {
-   "description": "[Inferred] Core's clock for this matter. The module writes no timing logic of its own.",
+   "description": "Core's clock for this matter. The module writes no timing logic of its own.",
    "fieldname": "sla_clock",
    "fieldtype": "Link",
    "label": "SLA Clock",
@@ -356,7 +399,7 @@
   },
   {
    "default": "0",
-   "description": "[Inferred \u2014 E17-S4 requires the breach to be recorded.]",
+   "description": "",
    "fieldname": "threshold_breached",
    "fieldtype": "Check",
    "label": "Threshold Breached",
@@ -376,7 +419,7 @@
   },
   {
    "default": "0",
-   "description": "[Inferred] Set when a breach raised the matter without a person acting.",
+   "description": "Set when a breach raised the matter without a person acting.",
    "fieldname": "auto_escalated",
    "fieldtype": "Check",
    "label": "Auto Escalated",
@@ -391,7 +434,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.723989",
+ "modified": "2026-09-18 06:40:43.319862",
  "modified_by": "Administrator",
  "module": "Escalation",
  "name": "Escalation Matter",
@@ -445,6 +488,7 @@
   }
  ],
  "search_fields": "escalation_title,escalation_id",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

@@ -1,7 +1,7 @@
 {
   "name": "Monitoring Result",
   "module": "Policy",
-  "description": "P-11 logging: what was performed, when, by whom, with what outcome and what evidence.",
+  "description": "What was performed, when, by whom, with what outcome and what evidence.",
   "autoname": "PMRS-.#####",
   "naming_rule": "Expression (old style)",
   "search_fields": "monitoring_activity,period_label",

@@ -3,7 +3,7 @@
  "allow_rename": 0,
  "autoname": "CFR-.YYYY.-.#####",
  "creation": "2026-09-17 23:50:00.727597",
- "description": "The single intake artefact for creating, modifying or retiring a forum (G-17, G-18; conflict resolved to one entity). Carries the nine-state formation flow; the forum carries the five-state compliance flow. An approved request creates the forum in draft.",
+ "description": "The single intake artefact for creating, modifying or retiring a forum. Carries the nine-state formation flow; the forum carries the five-state compliance flow. An approved request creates the forum in draft.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -84,7 +84,7 @@
   },
   {
    "default": "1",
-   "description": "The G-17 gating question.",
+   "description": "Whether this request creates a forum that does not exist yet.",
    "fieldname": "is_new_committee",
    "fieldtype": "Check",
    "label": "Is New Committee"
@@ -134,7 +134,7 @@
    "label": "First Meeting Date"
   },
   {
-   "description": "G-18's standardized field list, named committee-centrically by decision.",
+   "description": "",
    "fieldname": "forum_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -212,7 +212,7 @@
    "reqd": 1
   },
   {
-   "description": "The five G-5 criteria, each with a finding.",
+   "description": "The five evaluation criteria, each with a finding.",
    "fieldname": "evaluations",
    "fieldtype": "Table",
    "label": "Evaluations",
@@ -220,13 +220,13 @@
   },
   {
    "default": "0",
-   "description": "The G-7 gate on workflow progression.",
+   "description": "Confirms the request is complete before it moves on.",
    "fieldname": "completeness_confirmed",
    "fieldtype": "Check",
    "label": "Completeness Confirmed"
   },
   {
-   "description": "Output of the G-7 overlap check against the inventory.",
+   "description": "The result of the check for overlap with forums already on the inventory.",
    "fieldname": "duplicate_check_result",
    "fieldtype": "Text",
    "label": "Duplicate Check Result"
@@ -368,7 +368,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.727612",
+ "modified": "2026-09-18 03:31:55.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Committee Formation Request",

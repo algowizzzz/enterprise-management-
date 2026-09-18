@@ -1,0 +1,51 @@
+# Workers and scheduler under systemd (Rocky 9 rehearsal)
+Fri Sep 18 07:25:12 UTC 2026
+
+$ systemctl list-units consilium* --no-legend
+  consilium-backup.service    loaded inactive dead    Consilium backup
+  consilium-scheduler.service loaded active   running Consilium scheduler (exactly one per deployment)
+  consilium-web.service       loaded active   running Consilium web server
+  consilium-worker@1.service  loaded active   running Consilium background worker 1
+  consilium-worker@2.service  loaded active   running Consilium background worker 2
+  consilium.target            loaded active   active  Consilium (all processes)
+  consilium-backup.timer      loaded active   waiting Consilium nightly backup
+
+$ ps -eo pid,user,etime,args | grep winbench.cli
+  352 consili+       01:26 /run/rosetta/rosetta /opt/consilium/env/bin/python /opt/consilium/env/bin/python -m winbench.cli scheduler --site governance.example.internal
+  355 consili+       01:26 /run/rosetta/rosetta /opt/consilium/env/bin/python /opt/consilium/env/bin/python -m winbench.cli serve --site governance.example.internal --host 127.0.0.1 --port 8000 --threads 8 --proxy
+  358 consili+       01:25 /run/rosetta/rosetta /opt/consilium/env/bin/python /opt/consilium/env/bin/python -m winbench.cli worker --site governance.example.internal
+  361 consili+       01:25 /run/rosetta/rosetta /opt/consilium/env/bin/python /opt/consilium/env/bin/python -m winbench.cli worker --site governance.example.internal
+
+scheduler processes: 1 (the ps listing above; pgrep -fc also counted the shell running this capture, whose command line contains the same words)
+
+# All 11 consilium scheduled jobs were made due (last_execution two days ago) at 08:24:31 site time.
+# Scheduled Job Log afterwards: job, status, run at (site time), and runs per job:
+  applicability_exemption.lapse_expired      Complete  2026-09-18 08:24:48.856888
+  sla.sweep                                  Complete  2026-09-18 08:24:48.857647
+  horizon.remind_due                         Complete  2026-09-18 08:24:49.616791
+  reminders.hourly                           Complete  2026-09-18 08:24:49.621156
+  notification.retry_failed                  Complete  2026-09-18 08:24:50.330006
+  delegation.refresh_all                     Complete  2026-09-18 08:24:50.346731
+  reminders.daily                            Complete  2026-09-18 08:24:51.021680
+  membership.officer_drift                   Complete  2026-09-18 08:24:51.062500
+  attestation.expire_overdue                 Complete  2026-09-18 08:24:51.775997
+  resolution.sweep_breaches                  Complete  2026-09-18 08:24:51.878676
+  retention.flag_due_for_disposal            Complete  2026-09-18 08:24:52.466443
+
+  duplicate runs: none
+
+# the worker log lines for those jobs
+2026-09-18 07:24:48,351 opt-consilium:default: frappe.utils.background_jobs.execute_job(event=None, is_async=True, job_name='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., kwargs={'job_type': 'consilium.policy.doctype.applicability_exemption.applicabilit..., method='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., site='governance.example.internal', user='Administrator') (governance.example.internal::scheduled_job::consilium.policy.doctype.applicability_exemption.applicability_exemption.lapse_expired)
+2026-09-18 07:24:48,357 opt-consilium:default: frappe.utils.background_jobs.execute_job(event=None, is_async=True, job_name='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., kwargs={'job_type': 'consilium.consilium_core.sla.sweep'}, method='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., site='governance.example.internal', user='Administrator') (governance.example.internal::scheduled_job::consilium.consilium_core.sla.sweep)
+2026-09-18 07:24:49,157 opt-consilium:default: Job OK (governance.example.internal::scheduled_job::consilium.consilium_core.sla.sweep)
+2026-09-18 07:24:49,164 opt-consilium:default: Job OK (governance.example.internal::scheduled_job::consilium.policy.doctype.applicability_exemption.applicability_exemption.lapse_expired)
+2026-09-18 07:24:49,164 opt-consilium:default: frappe.utils.background_jobs.execute_job(event=None, is_async=True, job_name='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., kwargs={'job_type': 'consilium.policy.horizon.remind_due'}, method='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., site='governance.example.internal', user='Administrator') (governance.example.internal::scheduled_job::consilium.policy.horizon.remind_due)
+2026-09-18 07:24:49,171 opt-consilium:default: frappe.utils.background_jobs.execute_job(event=None, is_async=True, job_name='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., kwargs={'job_type': 'consilium.consilium_core.reminders.hourly'}, method='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., site='governance.example.internal', user='Administrator') (governance.example.internal::scheduled_job::consilium.consilium_core.reminders.hourly)
+2026-09-18 07:24:49,862 opt-consilium:default: Job OK (governance.example.internal::scheduled_job::consilium.policy.horizon.remind_due)
+2026-09-18 07:24:49,868 opt-consilium:default: frappe.utils.background_jobs.execute_job(event=None, is_async=True, job_name='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., kwargs={'job_type': 'consilium.consilium_core.delegation.refresh_all'}, method='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., site='governance.example.internal', user='Administrator') (governance.example.internal::scheduled_job::consilium.consilium_core.delegation.refresh_all)
+2026-09-18 07:24:49,871 opt-consilium:default: Job OK (governance.example.internal::scheduled_job::consilium.consilium_core.reminders.hourly)
+2026-09-18 07:24:49,878 opt-consilium:default: frappe.utils.background_jobs.execute_job(event=None, is_async=True, job_name='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., kwargs={'job_type': 'consilium.consilium_core.notification.retry_failed'}, method='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., site='governance.example.internal', user='Administrator') (governance.example.internal::scheduled_job::consilium.consilium_core.notification.retry_failed)
+2026-09-18 07:24:50,586 opt-consilium:default: Job OK (governance.example.internal::scheduled_job::consilium.consilium_core.delegation.refresh_all)
+2026-09-18 07:24:50,593 opt-consilium:default: frappe.utils.background_jobs.execute_job(event=None, is_async=True, job_name='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., kwargs={'job_type': 'consilium.consilium_core.reminders.daily'}, method='frappe.core.doctype.scheduled_job_type.scheduled_job_type.run_scheduled_jo..., site='governance.example.internal', user='Administrator') (governance.example.internal::scheduled_job::consilium.consilium_core.reminders.daily)
+
+Note: the container runs x86_64 under Rosetta emulation on an Apple M2 (hence /run/rosetta/rosetta in the process list).

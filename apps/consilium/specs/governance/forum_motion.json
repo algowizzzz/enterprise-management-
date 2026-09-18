@@ -1,7 +1,7 @@
 {
   "name": "Forum Motion",
   "module": "Governance",
-  "description": "A matter put to a forum for decision (E10-S1). Entitlement to vote is drawn from membership as at decision_date, not as at today, and the quorum counters are stored when the outcome is recorded so that a later membership change cannot rewrite a past decision.",
+  "description": "A matter put to a forum for decision. Entitlement to vote is drawn from membership as at decision_date, not as at today, and the quorum counters are stored when the outcome is recorded so that a later membership change cannot rewrite a past decision.",
   "autoname": "FMOT-.YYYY.-.#####",
   "naming_rule": "Expression (old style)",
   "allow_rename": 0,

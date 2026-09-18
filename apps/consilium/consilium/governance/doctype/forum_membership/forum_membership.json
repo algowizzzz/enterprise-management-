@@ -14,6 +14,7 @@
   "member",
   "position_title",
   "forum_role",
+  "set_voting_rights_manually",
   "votes",
   "counts_toward_quorum",
   "is_voting_chair",
@@ -72,6 +73,13 @@
    "label": "Seat Role",
    "options": "Governance Forum Role",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Tick to set Votes and Counts Toward Quorum yourself. Unticked, a new seat takes them from its role.",
+   "fieldname": "set_voting_rights_manually",
+   "fieldtype": "Check",
+   "label": "Set Voting Rights Manually"
   },
   {
    "default": "0",
@@ -159,7 +167,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.732108",
+ "modified": "2026-09-18 04:31:42.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Forum Membership",

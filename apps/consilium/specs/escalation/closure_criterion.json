@@ -1,7 +1,7 @@
 {
   "name": "Closure Criterion",
   "module": "Escalation",
-  "description": "One criterion a closure must satisfy (E-10). [Inferred \u2014 E-10 requires closure criteria to be enforced but names none, so they are rows rather than code.]",
+  "description": "One criterion a closure must satisfy.",
   "istable": 1,
   "permissions": [],
   "fields": [

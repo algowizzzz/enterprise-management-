@@ -1,7 +1,7 @@
 {
   "name": "Business Calendar",
   "module": "Consilium Core",
-  "description": "Working days and hours for business-hours service levels. [Inferred \u2014. Without it every service level is 24x7 and will misreport.]",
+  "description": "Working days and hours for business-hours service levels.",
   "allow_rename": 1,
   "track_changes": 1,
   "sort_field": "modified",

@@ -1,0 +1,543 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Policy inventory.
+  One table, the shared component, reading Governing Document over the REST API.
+  Sorting, search and pagination happen on the server; the filter bar hands the
+  component a filter set and lets it reload. Every filter can also be named in
+  the address (?lifecycle_phase=Review, ?standing=overdue), which is how the
+  reports page links a number straight to the records behind it.
+-#}
+
+{% block page_actions %}
+<a class="cns-btn cns-btn-primary" href="/policy-intake">
+  <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Request a new document
+</a>
+{%- if can_create %}
+<a class="cns-btn cns-btn-secondary" href="/app/governing-document/new">
+  <i class="bi bi-plus-lg" aria-hidden="true"></i> New document in the workspace
+</a>
+{%- endif %}
+<a class="cns-btn cns-btn-secondary" href="/reports#documents">
+  <i class="bi bi-bar-chart" aria-hidden="true"></i> Document reporting
+</a>
+{% endblock %}
+
+{% block page_content %}
+
+{#- Approval steps waiting on the viewer. Approval decisions are not readable
+    over the REST interface except by administrators and audit, so the list
+    comes from a server method that returns only the viewer's own. Hidden when
+    there is nothing to decide. -#}
+<section class="cns-card" id="my-steps-card" aria-labelledby="my-steps-heading" hidden>
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="my-steps-heading">Waiting on your decision</h2>
+      <p class="cns-card-subtitle">Approval steps on governing documents assigned to you, or to someone whose
+        live delegation you hold.</p>
+    </div>
+  </div>
+  <div class="cns-card-body"><ul class="cns-timeline" id="my-steps"></ul></div>
+</section>
+
+<section class="cns-card" aria-labelledby="filter-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="filter-heading">Narrow the list</h2>
+      <p class="cns-card-subtitle">Filters apply on the server and combine with whatever you
+        type in the table's search box.</p>
+    </div>
+    <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" id="filter-clear">
+      <i class="bi bi-x-circle" aria-hidden="true"></i> Clear filters
+    </button>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-form-grid">
+      <div class="cns-field">
+        <label class="cns-label" for="f-type">Document type</label>
+        <select class="cns-select" id="f-type" data-filter-field="document_type">
+          <option value="">Any type</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-phase">Lifecycle phase</label>
+        <select class="cns-select" id="f-phase" data-filter-field="lifecycle_phase">
+          <option value="">Any phase</option>
+          {%- for option in phase_options %}
+          <option value="{{ option }}">{{ option }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-group">Owning operating group</label>
+        <select class="cns-select" id="f-group" data-filter-field="owning_operating_group">
+          <option value="">Any operating group</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-risk">Primary risk category</label>
+        <select class="cns-select" id="f-risk" data-filter-field="primary_risk_category">
+          <option value="">Any category</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-handling">Handling classification</label>
+        <select class="cns-select" id="f-handling" data-filter-field="handling_classification">
+          <option value="">Any classification</option>
+          {%- for option in handling_options %}
+          <option value="{{ option }}">{{ option }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-owner">Owner</label>
+        <select class="cns-select" id="f-owner" data-filter-field="document_owner">
+          <option value="">Any owner</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-standing">Standing</label>
+        <select class="cns-select" id="f-standing" aria-describedby="f-standing-help">
+          <option value="all">Every document</option>
+          <option value="inforce">In force</option>
+          <option value="editable">Open for editing</option>
+          <option value="review">Awaiting review</option>
+          <option value="overdue">Review overdue</option>
+          <option value="due90">Review due within 90 days</option>
+          <option value="noreview">No review date set</option>
+          <option value="regulatory">Regulatory-required</option>
+          <option value="training">Training required</option>
+        </select>
+        <span class="cns-help" id="f-standing-help">Read from the record's own flags, not its phase name.</span>
+      </div>
+    </div>
+    {#- E11-S2: full-text search. The table's own search box matches the title,
+        reference and abstract; this one also searches the text of each
+        document's current version, on the server, through the same
+        permission check as the list. -#}
+    <form class="cns-form-grid" id="content-search" role="search" style="margin-top: var(--cns-space-4);">
+      <div class="cns-field cns-field--wide">
+        <label class="cns-label" for="f-content">Search the text of the documents</label>
+        <input class="cns-input" type="search" id="f-content" data-content-param="text" maxlength="200"
+               aria-describedby="f-content-help">
+        <span class="cns-help" id="f-content-help">Matches the title, reference, abstract and the words of the
+          version now in force or in draft. Only documents you may read are found.</span>
+      </div>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-secondary">
+          <i class="bi bi-search" aria-hidden="true"></i> Search the text
+        </button>
+      </div>
+    </form>
+    <p class="cns-text-sm" id="content-status" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
+<div id="policy-table"></div>
+
+<p class="cns-text-muted cns-text-sm" style="margin-top: var(--cns-space-3);">
+  The table scrolls sideways to reach the later columns. A document's scope — business
+  units, legal entities, jurisdictions, risk types — and its version history are shown
+  on its own page.
+</p>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  var f = Consilium.Table.formatters;
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+
+  /* Display tones only. Nothing below decides anything from a phase name:
+     "in force", "awaiting review" and "open for editing" are the semantic
+     flags the lifecycle maintains. */
+  var PHASE_TONES = {
+    Draft: "neutral", Review: "warning", Approved: "info",
+    Published: "success", Implemented: "primary", Retired: "neutral"
+  };
+  var HANDLING_TONES = {
+    Public: "success", Internal: "neutral", Confidential: "warning", Restricted: "danger"
+  };
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+
+  function plain(value) { return value ? escapeHtml(value) : dash(); }
+  function day(value) { return value ? f.date(value) : dash(); }
+
+  /** A yes/no cell that reads as a word, not a tick nobody can search for. */
+  function flag(yes, no, tone) {
+    return function (value) {
+      return value
+        ? '<span class="cns-pill cns-status-' + tone + '">' + escapeHtml(yes) + "</span>"
+        : '<span class="cns-text-muted">' + escapeHtml(no) + "</span>";
+    };
+  }
+
+  /** A reference code shown by its name, because nobody says "OPS_RISK". */
+  function named(doctype) {
+    return function (value) {
+      if (!value) return dash();
+      return escapeHtml(Consilium.reference.label(doctype, value));
+    };
+  }
+
+  /* Line of defence is not one of the shared reference lists, so its labels
+     are read here, once, in the same way. */
+  var defenceLabels = {};
+  function defence(value) {
+    return value ? escapeHtml(defenceLabels[value] || value) : dash();
+  }
+
+  function documentLink(value) {
+    if (!value) return dash();
+    return '<a href="/policy?name=' + escapeAttr(encodeURIComponent(value)) + '">' +
+      escapeHtml(value) + "</a>";
+  }
+
+  function todayISO(offsetDays) {
+    var d = new Date();
+    if (offsetDays) d.setDate(d.getDate() + offsetDays);
+    return d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+  }
+
+  /** A review date that says plainly when it has passed. */
+  function dueDate(value, row) {
+    if (!value) return dash();
+    var text = escapeHtml(Consilium.util.formatDate(value, false));
+    var due = new Date(String(value) + "T00:00:00");
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (due < today && row && row.is_active) {
+      return text + ' <span class="cns-pill cns-status-danger">Overdue</span>';
+    }
+    return text;
+  }
+
+  /* --- filters --------------------------------------------------------- */
+
+  var selects = Array.prototype.slice.call(document.querySelectorAll("[data-filter-field]"));
+  var standing = document.getElementById("f-standing");
+
+  /* A date comparison on a column that may be empty needs a lower bound:
+     the framework reads an empty date as the earliest possible day for "<",
+     so a document with no review date would otherwise count as overdue. */
+  var HAS_DATE = ["next_review_on", ">", "1900-01-01"];
+
+  function standingFilters(value) {
+    switch (value) {
+      case "inforce": return [["is_active", "=", 1]];
+      case "editable": return [["is_editable", "=", 1]];
+      case "review": return [["requires_review", "=", 1]];
+      case "overdue": return [HAS_DATE, ["next_review_on", "<", todayISO()], ["is_active", "=", 1]];
+      case "due90": return [["next_review_on", ">=", todayISO()], ["next_review_on", "<=", todayISO(90)],
+                            ["is_active", "=", 1]];
+      case "noreview": return [["next_review_on", "=", null]];
+      case "regulatory": return [["regulatory_required", "=", 1]];
+      case "training": return [["training_required", "=", 1]];
+      default: return [];
+    }
+  }
+
+  /* Names found by the content search, or null when no content search is in
+     force. An empty list matches nothing, on purpose. */
+  var contentNames = null;
+
+  function currentFilters() {
+    var filters = standingFilters(standing.value);
+    selects.forEach(function (select) {
+      if (select.value) filters.push([select.getAttribute("data-filter-field"), "=", select.value]);
+    });
+    if (contentNames !== null) {
+      filters.push(contentNames.length ? ["name", "in", contentNames] : ["name", "=", ""]);
+    }
+    return filters;
+  }
+
+  /* Values named in the address. A link-backed list is filled later, so the
+     asked-for value is held as a provisional option until the real one lands. */
+  var asked = {};
+  (function readAddress() {
+    var params;
+    try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
+    var q = params.get("q");
+    if (q) document.getElementById("f-content").value = q;
+    var s = params.get("standing");
+    if (s && Array.prototype.some.call(standing.options, function (o) { return o.value === s; })) {
+      standing.value = s;
+    }
+    selects.forEach(function (select) {
+      var value = params.get(select.getAttribute("data-filter-field"));
+      if (!value) return;
+      asked[select.id] = value;
+      var known = Array.prototype.some.call(select.options, function (o) { return o.value === value; });
+      if (!known) {
+        var option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        option.setAttribute("data-provisional", "");
+        select.appendChild(option);
+      }
+      select.value = value;
+    });
+  })();
+
+  var table = null;
+
+  function applyFilters() {
+    writeAddress();
+    if (!table) return;
+    table.setFilters(currentFilters());
+    Consilium.announce("Filters applied.");
+  }
+
+  /* The filters are written back to the address as they change, the way the
+     forum inventory does, so a filtered view can be bookmarked or shared and
+     reads back through readAddress above. The content search travels as "q". */
+  function writeAddress() {
+    var params = new URLSearchParams();
+    selects.forEach(function (select) {
+      if (select.value) params.set(select.getAttribute("data-filter-field"), select.value);
+    });
+    if (standing.value && standing.value !== "all") params.set("standing", standing.value);
+    var text = (document.getElementById("f-content").value || "").trim();
+    if (text && contentNames !== null) params.set("q", text);
+    var query = params.toString();
+    try {
+      window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : ""));
+    } catch (e) { /* the list still filters; only the address is not updated */ }
+  }
+
+  selects.concat([standing]).forEach(function (node) {
+    node.addEventListener("change", applyFilters);
+  });
+
+  document.getElementById("filter-clear").addEventListener("click", function () {
+    selects.forEach(function (select) { select.value = ""; });
+    standing.value = "all";
+    contentBox.value = "";
+    contentNames = null;
+    contentStatus.textContent = "";
+    applyFilters();
+  });
+
+  /* --- content search (E11-S2) ------------------------------------------ */
+
+  var contentBox = document.getElementById("f-content");
+  var contentStatus = document.getElementById("content-status");
+
+  document.getElementById("content-search").addEventListener("submit", function (event) {
+    event.preventDefault();
+    runContentSearch();
+  });
+  /* Enter runs the search from the box itself: the shared page script may
+     claim Enter in search fields before the form sees it. */
+  contentBox.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") { event.preventDefault(); runContentSearch(); }
+  });
+
+  function runContentSearch() {
+    var text = contentBox.value.trim();
+    if (!text) {
+      contentNames = null;
+      contentStatus.textContent = "";
+      applyFilters();
+      return;
+    }
+    contentStatus.textContent = "Searching…";
+    Consilium.api
+      .call("consilium.policy.repository.search", { text: text, limit: 500 }, { trackLoading: false })
+      .then(function (rows) {
+        contentNames = (rows || []).map(function (row) { return row.name; });
+        contentStatus.textContent = contentNames.length
+          ? contentNames.length + (contentNames.length === 1 ? " document mentions" : " documents mention") +
+            " “" + text + "”. The list below shows them, with any other filters applied."
+          : "No document you may read mentions “" + text + "”.";
+        applyFilters();
+      })
+      .catch(function (error) {
+        contentStatus.textContent = "The search could not be run: " + ((error && error.message) || "unknown error");
+      });
+  }
+
+  /* The owner list is the owners of documents this viewer may read, counted on
+     the server through the same permission check as the list itself. */
+  Consilium.api
+    .call("consilium.policy.repository.owners", {}, { trackLoading: false })
+    .then(function (rows) {
+      var select = document.getElementById("f-owner");
+      var provisional = select.querySelector("[data-provisional]");
+      (rows || []).forEach(function (row) {
+        var option = document.createElement("option");
+        option.value = row.user;
+        option.textContent = (row.full_name || row.user) + " (" + row.count + ")";
+        select.appendChild(option);
+      });
+      if (provisional && (rows || []).some(function (r) { return r.user === provisional.value; })) {
+        provisional.parentNode.removeChild(provisional);
+      }
+      if (asked["f-owner"]) select.value = asked["f-owner"];
+    })
+    .catch(function () {
+      var select = document.getElementById("f-owner");
+      select.disabled = true;
+      select.setAttribute("title", "This filter is unavailable because the owner list could not be read.");
+    });
+
+  /* Reference data for the link-backed filters. Read over the same API as
+     everything else, so a viewer only ever sees values they may read. */
+  function fillSelect(id, doctype, labelField) {
+    var select = document.getElementById(id);
+    Consilium.api
+      .list(doctype, {
+        fields: ["name", labelField],
+        filters: [["is_active", "=", 1]],
+        order_by: labelField + " asc",
+        limit_page_length: 200,
+        trackLoading: false
+      })
+      .then(function (rows) {
+        var provisional = select.querySelector("[data-provisional]");
+        rows.forEach(function (row) {
+          var option = document.createElement("option");
+          option.value = row.name;
+          option.textContent = row[labelField] || row.name;
+          select.appendChild(option);
+        });
+        if (provisional && rows.some(function (r) { return r.name === provisional.value; })) {
+          provisional.parentNode.removeChild(provisional);
+        }
+        if (asked[id]) select.value = asked[id];
+      })
+      .catch(function () {
+        select.disabled = true;
+        select.setAttribute("title", "This filter is unavailable because the reference list could not be read.");
+      });
+  }
+
+  fillSelect("f-type", "Governing Document Type", "document_type_name");
+  fillSelect("f-group", "Organization Unit", "org_unit_name");
+  fillSelect("f-risk", "Risk Category", "risk_category_name");
+
+  /* --- the table ------------------------------------------------------- */
+
+  function buildTable() {
+    table = Consilium.Table.create({
+      target: "#policy-table",
+      doctype: "Governing Document",
+      title: "Governing documents",
+      description: "Sort any column, search by title, reference or abstract, and set the page size to suit.",
+      caption: "Governing document inventory",
+      storageKey: "policy-inventory",
+      rowKey: "name",
+      searchPlaceholder: "Search by title, reference or abstract",
+      searchFields: ["document_name", "name", "document_abstract", "version_label"],
+      defaultSort: { field: "document_name", order: "asc" },
+      pageSize: 25,
+      striped: true,
+      filters: currentFilters(),
+      onRowClick: function (row) {
+        window.location.href = "/policy?name=" + encodeURIComponent(row.name);
+      },
+      emptyTitle: "No documents match",
+      emptyMessage: "Clear a filter or widen the search to see more of the inventory.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono",
+          width: "9rem", formatter: f.link("/policy?name=") },
+        { field: "document_name", label: "Document", sortable: true, searchable: true,
+          width: "18rem", formatter: f.truncate(70) },
+        { field: "document_type", label: "Type", sortable: true, width: "10rem",
+          formatter: named("Governing Document Type") },
+        { field: "lifecycle_phase", label: "Phase", sortable: true, formatter: f.status(PHASE_TONES) },
+        { field: "version_label", label: "Version", sortable: true, formatter: plain },
+        { field: "is_active", label: "In force", sortable: true,
+          formatter: flag("In force", "Not in force", "success") },
+        { field: "requires_review", label: "Review", sortable: true,
+          formatter: flag("Awaiting review", "No", "warning") },
+        { field: "next_review_on", label: "Next review", sortable: true, formatter: dueDate },
+        { field: "effective_on", label: "Effective", sortable: true, formatter: day },
+        { field: "document_owner", label: "Owner", sortable: true, formatter: Consilium.Table.formatters.person },
+        { field: "document_approver", label: "Approver", sortable: true, formatter: Consilium.Table.formatters.person },
+        { field: "document_sponsor", label: "Sponsor", sortable: true, formatter: plain },
+        { field: "owning_operating_group", label: "Operating group", sortable: true,
+          formatter: named("Organization Unit") },
+        { field: "owning_line_of_business", label: "Line of business", sortable: true,
+          formatter: named("Organization Unit") },
+        { field: "primary_risk_category", label: "Primary risk", sortable: true,
+          formatter: named("Risk Category") },
+        { field: "line_of_defence", label: "Line of defence", sortable: true, formatter: defence },
+        { field: "handling_classification", label: "Handling", sortable: true,
+          formatter: f.status(HANDLING_TONES) },
+        { field: "regulatory_required", label: "Regulatory", sortable: true,
+          formatter: flag("Required", "Not required", "info") },
+        { field: "training_required", label: "Training", sortable: true,
+          formatter: flag("Required", "No", "info") },
+        { field: "review_frequency_months", label: "Review every (months)", sortable: true,
+          align: "end",
+          formatter: function (v) { return v ? f.number(v) : dash(); } },
+        { field: "approving_forum", label: "Approving forum", sortable: true,
+          formatter: function (value) {
+            if (!value) return dash();
+            return '<a href="/forum?name=' + escapeAttr(encodeURIComponent(value)) + '">' +
+              escapeHtml(Consilium.reference.label("Governance Forum", value)) + "</a>";
+          } },
+        { field: "parent_document", label: "Parent document", sortable: true, formatter: documentLink },
+        { field: "superseded_by", label: "Superseded by", sortable: true, formatter: documentLink },
+        { field: "retired_on", label: "Retired", sortable: true, formatter: day },
+        { field: "retention_class", label: "Retention", sortable: true, formatter: named("Retention Class") },
+        { field: "modified", label: "Updated", sortable: true, formatter: f.datetime }
+      ]
+    });
+  }
+
+  var defencePromise = Consilium.api
+    .list("Line Of Defence", {
+      fields: ["name", "line_of_defence_name"],
+      limit_page_length: 50,
+      trackLoading: false
+    })
+    .then(function (rows) {
+      rows.forEach(function (r) { defenceLabels[r.name] = r.line_of_defence_name || r.name; });
+    })
+    .catch(function () { /* codes still display */ });
+
+  /* --- approval steps waiting on the viewer ----------------------------- */
+
+  Consilium.api
+    .call("consilium.policy.routing.my_open_steps", {}, { trackLoading: false })
+    .then(function (rows) {
+      if (!rows || !rows.length) return;
+      document.getElementById("my-steps").innerHTML = rows.map(function (row) {
+        return '<li><a href="/policy?name=' + escapeAttr(encodeURIComponent(row.document)) + '#approval">' +
+          escapeHtml(row.document_name || row.document) + "</a> &middot; " + escapeHtml(row.approval_step) +
+          (row.on_behalf ? ' <span class="cns-badge cns-status-info">On behalf of ' +
+            Consilium.Table.formatters.person(row.assigned_to) + "</span>" : "") +
+          '<span class="cns-timeline-meta">' + escapeHtml(row.document) + " &middot; " +
+          escapeHtml(row.lifecycle_phase || "") + " &middot; raised " +
+          escapeHtml(Consilium.util.formatDate(row.raised_on, true)) + "</span></li>";
+      }).join("");
+      document.getElementById("my-steps-card").hidden = false;
+    })
+    .catch(function () { /* the inventory stands without it */ });
+
+  /* The reference lists are read once, so the table can show a type by its
+     name rather than its code. The table is built when they are in. */
+  Promise.all([
+    Consilium.reference.load(["Governing Document Type", "Risk Category", "Organization Unit",
+                              "Retention Class", "Governance Forum"]),
+    defencePromise
+  ])
+    .then(buildTable)
+    .catch(buildTable)
+    .then(function () {
+      /* A content search named in the address (?q=) is run again on arrival. */
+      if (contentBox.value.trim()) runContentSearch();
+    });
+})();
+</script>
+{% endblock %}

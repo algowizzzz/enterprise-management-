@@ -303,7 +303,7 @@
    "label": "Relationships"
   },
   {
-   "description": "P-4 lineage. A circular chain is refused.",
+   "description": "The document this one sits beneath. A circular chain is refused.",
    "fieldname": "parent_document",
    "fieldtype": "Link",
    "label": "Parent Document",
@@ -478,7 +478,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.741118",
+ "modified": "2026-09-18 03:32:53.000000",
  "modified_by": "Administrator",
  "module": "Policy",
  "name": "Governing Document",
@@ -541,6 +541,7 @@
   }
  ],
  "search_fields": "document_name,document_type,document_owner",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

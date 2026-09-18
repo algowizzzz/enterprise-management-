@@ -21,19 +21,42 @@
 -#}
 {%- set _nav_items = nav_items or [
   {"id": "home",        "label": "Home",        "url": "/",            "icon": "bi-house"},
+  {"id": "inbox",       "label": "Inbox",       "url": "/tasks",       "icon": "bi-inbox"},
   {"id": "forums",      "label": "Forums",      "url": "/forums",      "icon": "bi-chat-square-text"},
   {"id": "policies",    "label": "Policies",    "url": "/policies",    "icon": "bi-file-earmark-text"},
   {"id": "escalations", "label": "Escalations", "url": "/escalations", "icon": "bi-exclamation-diamond"},
   {"id": "reports",     "label": "Reports",     "url": "/reports",     "icon": "bi-bar-chart"},
   {"id": "admin",       "label": "Admin",       "url": "/admin",       "icon": "bi-sliders"}
 ] -%}
+{%- set brand = get_brand() -%}
+{#- The formation queue is the governance office's working list; everyone else
+    reaches a request from the forum inventory, so the tab is shown only to
+    the roles that act on it. #}
+{%- if not nav_items and cns_has_any_role("Risk Governance Office", "Head of Risk Governance", "System Manager") -%}
+{%- set _nav_items = _nav_items[:2] + [{"id": "requests", "label": "Requests", "url": "/formation-requests", "icon": "bi-inboxes"}] + _nav_items[2:] -%}
+{%- endif -%}
+{#- A tab someone cannot use is noise at best and a dead end at worst, so each
+    area's tab shows only to those who may read its records. #}
+{%- if not nav_items and frappe.session.user != "Guest" -%}
+{%- set _hidden = [] -%}
+{%- if not cns_can_read("Governing Document") %}{% set _ = _hidden.append("policies") %}{% endif -%}
+{%- if not cns_can_read("Escalation Matter") %}{% set _ = _hidden.append("escalations") %}{% endif -%}
+{%- if not cns_has_any_role("System Manager", "Consilium Administrator") %}{% set _ = _hidden.append("admin") %}{% endif -%}
+{%- set _nav_items = _nav_items | rejectattr("id", "in", _hidden) | list -%}
+{%- endif -%}
+{%- set is_guest = frappe.session.user == "Guest" -%}
 <!DOCTYPE html>
 <html lang="{{ frappe.local.lang or 'en' }}" class="cns-root" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="same-origin">
-<title>{% block title %}{{ page_title or title or "Portal" }}{% endblock %}</title>
+<meta name="cns-time-zone" content="{{ system_time_zone() }}">
+{#- The framework's Jinja does not autoescape, and several pages build their
+    title or breadcrumbs from the address (?name=...). Everything the shell
+    prints from context is escaped here, so a crafted link cannot inject markup. #}
+<title>{% block title %}{{ (page_title or title or brand.portal_name) | e }}{% if (page_title or title) and (page_title or title) != brand.portal_name %} · {{ brand.portal_name | e }}{% endif %}{% endblock %}</title>
+<link rel="icon" href="{{ brand.favicon_url }}">
 
 <script>
 /* Pre-paint bootstrap.
@@ -65,24 +88,35 @@ window.frappe = window.frappe || {};
 </script>
 <!-- csrf_token -->
 
-<link rel="stylesheet" href="/assets/consilium/vendor/bootstrap/css/bootstrap.min.css">
-<link rel="stylesheet" href="/assets/consilium/vendor/bootstrap-icons/font/bootstrap-icons.min.css">
-<link rel="stylesheet" href="/assets/consilium/css/tokens.css">
-<link rel="stylesheet" href="/assets/consilium/css/consilium.css">
+<link rel="stylesheet" href="{{ asset_url('/assets/consilium/vendor/bootstrap/css/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ asset_url('/assets/consilium/vendor/bootstrap-icons/font/bootstrap-icons.min.css') }}">
+<link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/tokens.css') }}">
+<link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/consilium.css') }}">
+<link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/brand.css') }}">
+<link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/assistant.css') }}">
+{#- The saved brand, as token overrides. Generated from validated values only;
+    see consilium/consilium_core/branding.py. #}
+<style id="cns-brand">{{ brand_style() }}</style>
 {% block head_extra %}{% endblock %}
 </head>
 
-<body class="cns-portal">
+<body class="cns-portal{% if brand.header_style == 'White' %} cns-header-light{% endif %}{% if is_guest %} cns-guest{% endif %}">
 <a class="cns-skip-link" href="#cns-main">Skip to main content</a>
 
 {% block header %}
 <header class="cns-header">
   <div class="cns-container cns-header-inner">
     <a class="cns-brand" href="/">
-      <span class="cns-brand-mark" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
-      <span>{{ portal_name or "Governance Portal" }}</span>
+      {%- if brand.has_custom_logo %}
+      <img class="cns-brand-logo" src="{{ brand.logo_url }}" alt="{{ brand.organisation_name or brand.portal_name }}">
+      <span class="cns-brand-divider" aria-hidden="true"></span>
+      {%- else %}
+      <img class="cns-brand-mark-img" src="{{ brand.logo_url }}" alt="" aria-hidden="true">
+      {%- endif %}
+      <span class="cns-brand-name">{{ portal_name or brand.portal_name }}</span>
     </a>
 
+    {%- if not is_guest %}
     <nav class="cns-header-nav" aria-label="Primary">
       <ul class="cns-nav">
         {%- for item in _nav_items %}
@@ -91,11 +125,13 @@ window.frappe = window.frappe || {};
              {% if active_nav == item.id %}aria-current="page"{% endif %}>
             <i class="bi {{ item.icon }}" aria-hidden="true"></i>
             <span>{{ item.label }}</span>
+            {%- if item.id == "inbox" %}<span class="cns-nav-badge" data-cns-inbox-badge hidden></span>{% endif %}
           </a>
         </li>
         {%- endfor %}
       </ul>
     </nav>
+    {%- endif %}
 
     <div class="cns-controls">
       {# --- Font size ------------------------------------------------- #}
@@ -127,23 +163,32 @@ window.frappe = window.frappe || {};
       </button>
 
       {# --- User menu -------------------------------------------------- #}
+      {%- if is_guest %}
+      <a class="cns-control-btn" href="/login?redirect-to={{ cns_here() | urlencode }}">
+        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> <span>Sign in</span>
+      </a>
+      {%- else %}
       <div class="dropdown">
         <button class="cns-control-btn" type="button" id="cns-user-menu"
                 data-bs-toggle="dropdown" aria-expanded="false">
           <i class="bi bi-person-circle" aria-hidden="true"></i>
-          <span>{{ user_display or frappe.session.user or "Account" }}</span>
+          {%- set _who = frappe.get_fullname(frappe.session.user) or user_display or "Account" %}
+          <span class="cns-user-name" title="{{ _who | e }}">{{ _who | e }}</span>
           <i class="bi bi-chevron-down" aria-hidden="true"></i>
         </button>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cns-user-menu">
           {% block user_menu_items %}
-          <li><h6 class="dropdown-header">Signed in</h6></li>
+          <li><h6 class="dropdown-header">Signed in as {{ frappe.session.user }}</h6></li>
           <li><a class="dropdown-item" href="/me">Profile</a></li>
+          {%- if cns_has_any_role("System Manager", "Consilium Administrator") %}
           <li><a class="dropdown-item" href="/ui-kit">Interface reference</a></li>
+          {%- endif %}
           <li><hr class="dropdown-divider"></li>
           <li><a class="dropdown-item" href="/?cmd=web_logout">Sign out</a></li>
           {% endblock %}
         </ul>
       </div>
+      {%- endif %}
     </div>
   </div>
 </header>
@@ -157,9 +202,9 @@ window.frappe = window.frappe || {};
       <ol class="cns-breadcrumb">
         {%- for crumb in breadcrumbs %}
         {%- if loop.last %}
-        <li><span aria-current="page">{{ crumb.label }}</span></li>
+        <li><span aria-current="page">{{ crumb.label | e }}</span></li>
         {%- else %}
-        <li><a href="{{ crumb.url or '#' }}">{{ crumb.label }}</a></li>
+        <li><a href="{{ (crumb.url or '#') | e }}">{{ crumb.label | e }}</a></li>
         {%- endif %}
         {%- endfor %}
       </ol>
@@ -175,9 +220,9 @@ window.frappe = window.frappe || {};
     {%- if page_title %}
     <div class="cns-page-header">
       <div>
-        <h1 class="cns-page-title">{{ page_title }}</h1>
+        <h1 class="cns-page-title">{{ page_title | e }}</h1>
         {%- if page_description %}
-        <p class="cns-page-description">{{ page_description }}</p>
+        <p class="cns-page-description">{{ page_description | e }}</p>
         {%- endif %}
       </div>
       <div class="cns-page-actions">{% block page_actions %}{% endblock %}</div>
@@ -185,25 +230,47 @@ window.frappe = window.frappe || {};
     {%- endif %}
     {% endblock %}
 
+    {%- if is_guest and not allow_guest %}
+    {#- Every screen reads its records through the API, which refuses a signed-out
+        visitor. Rendering the page anyway left tiles counting forever with no
+        explanation, so a visitor is told to sign in instead. #}
+    <section class="cns-card cns-signin-card" aria-labelledby="signin-heading">
+      <div class="cns-card-body">
+        <h2 class="cns-card-title" id="signin-heading">Sign in to continue</h2>
+        <p>{{ brand.portal_name }} shows records to signed-in colleagues only. Sign in with your
+          work account and you will come straight back to this page.</p>
+        <a class="cns-btn cns-btn-primary"
+           href="/login?redirect-to={{ cns_here() | urlencode }}">
+          <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Sign in
+        </a>
+      </div>
+    </section>
+    {%- else %}
     {% block page_content %}{% endblock %}
+    {%- endif %}
   </div>
 </main>
 
 {% block footer %}
 <footer class="cns-footer">
   <div class="cns-container cns-footer-inner">
-    <span>{% block footer_text %}Governance, risk and policy portal{% endblock %}</span>
+    <span>{% block footer_text %}{{ brand.organisation_name or brand.portal_name }}{% if brand.footer_text %} · {{ brand.footer_text }}{% endif %}{% endblock %}</span>
     <span>
-      <a href="/ui-kit">Interface reference</a>
+      {%- if cns_has_any_role("System Manager", "Consilium Administrator") %}<a href="/ui-kit">Interface reference</a>{% endif %}
     </span>
   </div>
 </footer>
 {% endblock %}
 
-<script src="/assets/consilium/vendor/jquery/jquery.min.js"></script>
-<script src="/assets/consilium/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="/assets/consilium/js/consilium.js"></script>
-<script src="/assets/consilium/js/consilium-table.js"></script>
+<script src="{{ asset_url('/assets/consilium/vendor/jquery/jquery.min.js') }}"></script>
+<script src="{{ asset_url('/assets/consilium/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset_url('/assets/consilium/js/consilium.js') }}"></script>
+<script src="{{ asset_url('/assets/consilium/js/consilium-table.js') }}"></script>
+<script src="{{ asset_url('/assets/consilium/js/consilium-reference.js') }}"></script>
+{#- The help assistant. It hides itself from signed-out visitors. #}
+<script src="{{ asset_url('/assets/consilium/js/consilium-assistant.js') }}"></script>
+{%- if not is_guest or allow_guest %}
 {% block scripts %}{% endblock %}
+{%- endif %}
 </body>
 </html>

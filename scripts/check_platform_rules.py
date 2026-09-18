@@ -33,7 +33,7 @@ RED, GREEN, YELLOW, DIM, RESET = "\033[31m", "\033[32m", "\033[33m", "\033[2m", 
 # checksums are recorded, and changing a byte breaks verification on the target.
 VENDORED = ("public/vendor", "assets/")
 
-SKIP_DIRS = {".git", "__pycache__", "node_modules", ".pytest_cache", "dist", ".venv", "env"}
+SKIP_DIRS = {".git", "__pycache__", "node_modules", ".pytest_cache", "dist", ".venv", ".bench", "env"}
 
 TEXT_SUFFIXES = {".py", ".js", ".css", ".html", ".md", ".txt", ".json", ".yml",
                  ".yaml", ".sh", ".ps1", ".toml", ".cfg", ".ini"}
@@ -132,16 +132,19 @@ def _():
     """This repository is public. Nothing may identify who it was built for."""
     terms = ("bmo", "servicenow", "riskgpt", "ashutosh", "algowizzzz",
              "bank of montreal", "cmrods", "grce")
+    # Whole words only: a term inside another word ("tabMonitoring" holds
+    # "bmo") names nobody, while "bmo_theme" or "BMO-logo.png" still does.
+    patterns = {term: re.compile(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])") for term in terms}
     found = []
     for path, rel in walk_text_files():
         text = path.read_text(errors="ignore")
         if EXEMPT in text:
             continue
         lowered = text.lower()
-        for term in terms:
-            if term in lowered:
+        for term, pattern in patterns.items():
+            if pattern.search(lowered):
                 for i, line in enumerate(lowered.splitlines(), 1):
-                    if term in line:
+                    if pattern.search(line):
                         found.append(f"{rel}:{i}  contains {term!r}")
                         break
     return found

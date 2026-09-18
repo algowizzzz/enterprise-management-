@@ -1,7 +1,9 @@
 """Restricted handling of sensitive escalations (E-16).
 
 A sensitive matter is invisible to a user without the
-`Sensitive Escalation Access` role **on every read path**: the list view, search,
+`Sensitive Escalation Access` role — unless the matter names them (its raiser,
+the person who identified it, its accountable executive, its response owner, or
+a member of the group queue it is assigned to) — **on every read path**: the list view, search,
 reports, the REST API and any query the desk builds. That is why the restriction
 is a permission-query condition and a controller permission rather than anything
 in the interface — both run inside the query builder and inside
@@ -55,10 +57,43 @@ def may_see_sensitive(user: str | None = None) -> bool:
     return SENSITIVE_ROLE in frappe.get_roles(user)
 
 
+#: The people a matter names. Each of them sees the matter, sensitive or not:
+#: restricted handling keeps a matter from people with no part in it, not from
+#: the person who raised it, answers for it or is asked to work it. The creator
+#: of the record is its raiser.
+NAMED_FIELDS = ("owner", "identified_by", "accountable_executive", "response_owner")
+
+#: The queue field whose members are named too (E-5, E-8): a group is a list of
+#: named people. A *role* queue is not — a role can be held by anyone an
+#: administrator chooses, so a sensitive matter in a role queue reaches only the
+#: cleared holders of the role.
+NAMED_GROUP_FIELD = "assigned_group"
+
+MATTER = "Escalation Matter"
+
+
+def _named_clause(table: str, user: str) -> str:
+    """SQL: the row of ``table`` (an Escalation Matter) names ``user``."""
+    quoted = frappe.db.escape(user)
+    fields = " or ".join(f"`{table}`.`{field}` = {quoted}" for field in NAMED_FIELDS)
+    group = (
+        f"`{table}`.`{NAMED_GROUP_FIELD}` in (select `parent` from `tabUser Group Member` "
+        f"where `parenttype` = 'User Group' and `user` = {quoted})"
+    )
+    return f"{fields} or {group}"
+
+
 def _conditions(doctype: str, user: str | None = None) -> str:
+    user = user or frappe.session.user
     if may_see_sensitive(user):
         return ""
-    return f"(`tab{doctype}`.`sensitive` = 0 or `tab{doctype}`.`sensitive` is null)"
+    open_rows = f"`tab{doctype}`.`sensitive` = 0 or `tab{doctype}`.`sensitive` is null"
+    if doctype == MATTER:
+        return f"({open_rows} or {_named_clause('tabEscalation Matter', user)})"
+    # A record hanging off a matter is visible to the people that matter names,
+    # so its page shows them its plans, acceptances and closure.
+    named = f"select `m`.`name` from `tabEscalation Matter` `m` where {_named_clause('m', user)}"
+    return f"({open_rows} or `tab{doctype}`.`escalation_matter` in ({named}))"
 
 
 def matter_conditions(user: str | None = None) -> str:
@@ -77,17 +112,40 @@ def closure_conditions(user: str | None = None) -> str:
     return _conditions("Escalation Closure", user)
 
 
+def names_user(matter, user: str) -> bool:
+    """Whether the matter (a document or a dict of its fields) names ``user``."""
+    if any(matter.get(field) == user for field in NAMED_FIELDS):
+        return True
+    group = matter.get(NAMED_GROUP_FIELD)
+    return bool(group and frappe.db.exists(
+        "User Group Member", {"parent": group, "parenttype": "User Group", "user": user}))
+
+
+def _matter_of(doc):
+    if doc.doctype == MATTER:
+        return doc
+    if not doc.get("escalation_matter"):
+        return None
+    return frappe.db.get_value(MATTER, doc.escalation_matter, [*NAMED_FIELDS, NAMED_GROUP_FIELD], as_dict=True)
+
+
 def has_permission(doc, ptype=None, user=None, debug=False):
-    """Deny every access to a sensitive record for a user without the right.
+    """Deny every access to a sensitive record for a user without the right,
+    unless the matter names them (see ``NAMED_FIELDS``).
 
     Returns ``None`` when it has nothing to say, which is how a controller hook
-    declines to intervene: it may deny, never grant.
+    declines to intervene: it may deny, never grant — a named person still needs
+    a role that carries the access asked for.
     """
     if doc.doctype not in RESTRICTED_DOCTYPES:
         return None
     if not doc.get("sensitive"):
         return None
-    return True if may_see_sensitive(user) else False
+    user = user or frappe.session.user
+    if may_see_sensitive(user):
+        return True
+    matter = _matter_of(doc)
+    return bool(matter and names_user(matter, user))
 
 
 def inherited_sensitivity(escalation_matter: str | None) -> int:

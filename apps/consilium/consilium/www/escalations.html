@@ -1,0 +1,474 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Escalation register.
+  One table, the shared component, reading Escalation Matter over the REST API
+  so that the sensitive-matter restriction applies to every row and every count.
+  Open and closed are the matter's `is_open` flag, never its status label. Every
+  filter can be named in the address (?severity=High, ?standing=breached,
+  ?age=31-90), which is how the reports page links a number to its records.
+  Above it, what is waiting on the viewer — acceptances to decide, matters to
+  review, matters they answer for — from `resolution.my_escalation_queue`, read
+  with the viewer's own permissions.
+-#}
+
+{% block page_actions %}
+{%- if can_raise %}
+<a class="cns-btn cns-btn-primary" href="/raise-escalation">
+  <i class="bi bi-plus-lg" aria-hidden="true"></i> Raise an escalation
+</a>
+{%- endif %}
+<a class="cns-btn cns-btn-secondary" href="/reports#escalations">
+  <i class="bi bi-bar-chart" aria-hidden="true"></i> Escalation reporting
+</a>
+{% endblock %}
+
+{% block page_content %}
+
+<section class="cns-card" id="queue-card" aria-labelledby="queue-heading" hidden>
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="queue-heading">Waiting on you</h2>
+      <p class="cns-card-subtitle">Open a matter to act on it; its page offers only what you can do now.</p>
+    </div>
+  </div>
+  <div class="cns-card-body" id="queue-body"></div>
+</section>
+
+<section class="cns-card" aria-labelledby="filter-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="filter-heading">Narrow the list</h2>
+      <p class="cns-card-subtitle">Filters apply on the server and combine with whatever you
+        type in the table's search box.</p>
+    </div>
+    <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" id="filter-clear">
+      <i class="bi bi-x-circle" aria-hidden="true"></i> Clear filters
+    </button>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-form-grid">
+      <div class="cns-field">
+        <label class="cns-label" for="f-standing">Open or closed</label>
+        <select class="cns-select" id="f-standing">
+          <option value="open">Open matters</option>
+          <option value="all">Open and closed</option>
+          <option value="closed">Closed only</option>
+          <option value="review">Awaiting review</option>
+          <option value="breached">Open, time threshold breached</option>
+          <option value="everbreached">Time threshold breached, open or closed</option>
+          <option value="appetite">Risk appetite breached</option>
+          <option value="auto">Raised automatically on a breach</option>
+          <option value="material">Material entity impact</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-severity">Severity</label>
+        <select class="cns-select" id="f-severity" data-filter-field="severity">
+          <option value="">Any severity</option>
+          {%- for option in severity_options %}
+          <option value="{{ option }}">{{ option }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-status">Status</label>
+        <select class="cns-select" id="f-status" data-filter-field="status">
+          <option value="">Any status</option>
+          {%- for option in status_options %}
+          <option value="{{ option }}">{{ option }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-type">Escalation type</label>
+        <select class="cns-select" id="f-type" data-filter-field="escalation_type">
+          <option value="">Any type</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-level">Organisational level</label>
+        <select class="cns-select" id="f-level" data-filter-field="organizational_level">
+          <option value="">Any level</option>
+        </select>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="f-age">Time since opened</label>
+        <select class="cns-select" id="f-age">
+          <option value="">Any age</option>
+          <option value="0-7">Up to 7 days</option>
+          <option value="8-30">8 to 30 days</option>
+          <option value="31-90">31 to 90 days</option>
+          <option value="91+">More than 90 days</option>
+          <option value="31+">More than 30 days</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="escalation-table"></div>
+
+<p class="cns-text-muted cns-text-sm" style="margin-top: var(--cns-space-3);">
+  The table scrolls sideways to reach the later columns. Age is counted from when the
+  matter was opened to when it closed, or to today if it is still open. A matter's
+  impacted entities, forums, action plans and closure are shown on its own page.
+</p>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  var f = Consilium.Table.formatters;
+  var escapeHtml = Consilium.util.escapeHtml;
+
+  /* Display tones only. Whether a matter is open is read from `is_open`;
+     no filter or decision below depends on a status label. */
+  var SEVERITY_TONES = { High: "danger", Medium: "warning", Low: "info" };
+  var STATUS_TONES = {
+    Open: "warning", "In Progress": "info", "Under Review": "primary",
+    "Pending Review": "primary", Closed: "success", "Closed — Tracked Externally": "neutral"
+  };
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+  function plain(value) { return value ? escapeHtml(value) : dash(); }
+
+  function flag(yes, no, tone) {
+    return function (value) {
+      return value
+        ? '<span class="cns-pill cns-status-' + tone + '">' + escapeHtml(yes) + "</span>"
+        : '<span class="cns-text-muted">' + escapeHtml(no) + "</span>";
+    };
+  }
+
+  function named(doctype) {
+    return function (value) {
+      if (!value) return dash();
+      return escapeHtml(Consilium.reference.label(doctype, value));
+    };
+  }
+
+  /* Organisational level is not one of the shared reference lists; its labels
+     are read here once, the same way. */
+  var levelLabels = {};
+  function level(value) {
+    return value ? escapeHtml(levelLabels[value] || value) : dash();
+  }
+
+  /* Timestamps from the server carry no zone: they are wall-clock times in the
+     site's zone (the page names it in a meta tag). Ages and age bands are
+     therefore worked out in that zone too, or a matter opened late in the day
+     would fall into the wrong band for anyone reading from elsewhere. */
+  function siteZone() {
+    return (document.querySelector('meta[name="cns-time-zone"]') || {}).content || "UTC";
+  }
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  /** An instant as the site's wall clock, in the framework's datetime format. */
+  function siteWallClock(date) {
+    try {
+      var p = {};
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: siteZone(), year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
+      }).formatToParts(date).forEach(function (part) { p[part.type] = part.value; });
+      return p.year + "-" + p.month + "-" + p.day + " " + p.hour + ":" + p.minute + ":" + p.second;
+    } catch (e) {
+      return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + " " +
+        pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds());
+    }
+  }
+
+  /** Now minus `days`, as the site's wall clock. */
+  function daysAgo(days) {
+    return siteWallClock(new Date(Date.now() - days * 86400000));
+  }
+
+  /** A site wall-clock string as a comparable number; both ends of an age are
+      read the same way, so the zone cancels out. */
+  function wallClockValue(value) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(value || ""));
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)) : null;
+  }
+
+  /** Whole days from opening to closing, or to now while the matter is open. */
+  function ageDays(row) {
+    var opened = wallClockValue(row.opened_on);
+    if (opened === null) return null;
+    var closed = !row.is_open ? wallClockValue(row.closed_on) : null;
+    var end = closed !== null ? closed : wallClockValue(siteWallClock(new Date()));
+    return Math.max(0, Math.floor((end - opened) / 86400000));
+  }
+
+  function ageCell(value, row) {
+    var days = ageDays(row);
+    if (days === null) return dash();
+    var text = days + (days === 1 ? " day" : " days");
+    if (row.is_open && days > 90) return '<span class="cns-pill cns-status-danger">' + text + "</span>";
+    if (row.is_open && days > 30) return '<span class="cns-pill cns-status-warning">' + text + "</span>";
+    return escapeHtml(text);
+  }
+
+  /* --- filters --------------------------------------------------------- */
+
+  var selects = Array.prototype.slice.call(document.querySelectorAll("[data-filter-field]"));
+  var standing = document.getElementById("f-standing");
+  var age = document.getElementById("f-age");
+
+  /* An empty datetime reads as the earliest possible moment for "<=", so a
+     lower bound keeps a matter with no opening time out of every age band. */
+  var HAS_OPENED = ["opened_on", ">", "1900-01-01"];
+
+  function standingFilters(value) {
+    switch (value) {
+      case "all": return [];
+      case "closed": return [["is_open", "=", 0]];
+      case "review": return [["requires_review", "=", 1]];
+      case "breached": return [["is_open", "=", 1], ["threshold_breached", "=", 1]];
+      case "everbreached": return [["threshold_breached", "=", 1]];
+      case "appetite": return [["risk_appetite_breach", "=", 1]];
+      case "auto": return [["auto_escalated", "=", 1]];
+      case "material": return [["material_entity_impact", "=", 1]];
+      default: return [["is_open", "=", 1]];
+    }
+  }
+
+  function ageFilters(value) {
+    var bands = {
+      "0-7": [0, 7], "8-30": [8, 30], "31-90": [31, 90], "91+": [91, null], "31+": [31, null]
+    };
+    var band = bands[value];
+    if (!band) return [];
+    var out = [HAS_OPENED, ["opened_on", "<=", daysAgo(band[0])]];
+    if (band[1] !== null) out.push(["opened_on", ">", daysAgo(band[1] + 1)]);
+    return out;
+  }
+
+  function currentFilters() {
+    var filters = standingFilters(standing.value).concat(ageFilters(age.value));
+    selects.forEach(function (select) {
+      if (select.value) filters.push([select.getAttribute("data-filter-field"), "=", select.value]);
+    });
+    return filters;
+  }
+
+  /* Values named in the address. A link-backed list is filled later, so the
+     asked-for value is held as a provisional option until the real one lands. */
+  var asked = {};
+  (function readAddress() {
+    var params;
+    try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
+    [[standing, "standing"], [age, "age"]].forEach(function (pair) {
+      var v = params.get(pair[1]);
+      if (v && Array.prototype.some.call(pair[0].options, function (o) { return o.value === v; })) {
+        pair[0].value = v;
+      }
+    });
+    selects.forEach(function (select) {
+      var value = params.get(select.getAttribute("data-filter-field"));
+      if (!value) return;
+      asked[select.id] = value;
+      var known = Array.prototype.some.call(select.options, function (o) { return o.value === value; });
+      if (!known) {
+        var option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        option.setAttribute("data-provisional", "");
+        select.appendChild(option);
+      }
+      select.value = value;
+    });
+  })();
+
+  var table = null;
+
+  /* The filters live in the address as well as on screen, so a filtered
+     register can be bookmarked, shared and returned to (as on /forums). The
+     defaults are left out, so the plain register keeps a plain address. */
+  function writeAddress() {
+    var params;
+    try { params = new URLSearchParams(); } catch (e) { return; }
+    if (standing.value && standing.value !== "open") params.set("standing", standing.value);
+    if (age.value) params.set("age", age.value);
+    selects.forEach(function (select) {
+      if (select.value) params.set(select.getAttribute("data-filter-field"), select.value);
+    });
+    var query = params.toString();
+    try {
+      window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : "") +
+        window.location.hash);
+    } catch (e) { /* the list still filters; only the address is not updated */ }
+  }
+
+  function applyFilters() {
+    writeAddress();
+    if (!table) return;
+    table.setFilters(currentFilters());
+    Consilium.announce("Filters applied.");
+  }
+
+  selects.concat([standing, age]).forEach(function (node) {
+    node.addEventListener("change", applyFilters);
+  });
+
+  document.getElementById("filter-clear").addEventListener("click", function () {
+    selects.forEach(function (select) { select.value = ""; });
+    standing.value = "open";
+    age.value = "";
+    applyFilters();
+  });
+
+  function fillSelect(id, doctype, labelField, labels) {
+    var select = document.getElementById(id);
+    return Consilium.api
+      .list(doctype, {
+        fields: ["name", labelField],
+        filters: [["is_active", "=", 1]],
+        order_by: labelField + " asc",
+        limit_page_length: 200,
+        trackLoading: false
+      })
+      .then(function (rows) {
+        var provisional = select.querySelector("[data-provisional]");
+        rows.forEach(function (row) {
+          if (labels) labels[row.name] = row[labelField] || row.name;
+          var option = document.createElement("option");
+          option.value = row.name;
+          option.textContent = row[labelField] || row.name;
+          select.appendChild(option);
+        });
+        if (provisional && rows.some(function (r) { return r.name === provisional.value; })) {
+          provisional.parentNode.removeChild(provisional);
+        }
+        if (asked[id]) select.value = asked[id];
+      })
+      .catch(function () {
+        select.disabled = true;
+        select.setAttribute("title", "This filter is unavailable because the reference list could not be read.");
+      });
+  }
+
+  fillSelect("f-type", "Escalation Type", "escalation_type_name");
+  var levelsPromise = fillSelect("f-level", "Organizational Level", "organizational_level_name", levelLabels);
+
+  /* --- the table ------------------------------------------------------- */
+
+  var COLUMNS = [
+    { field: "name", label: "Reference", sortable: true, className: "cns-mono",
+      width: "10rem", formatter: f.link("/escalation?name=") },
+    { field: "escalation_title", label: "Matter", sortable: true, width: "18rem",
+      formatter: function (value, row) {
+        var text = f.truncate(70)(value);
+        return row.sensitive
+          ? text + ' <span class="cns-badge cns-status-warning" title="Restricted handling">Restricted</span>'
+          : text;
+      } },
+    { field: "severity", label: "Severity", sortable: true, formatter: f.status(SEVERITY_TONES) },
+    { field: "status", label: "Status", sortable: true, formatter: f.status(STATUS_TONES) },
+    { field: "is_open", label: "Open", sortable: true, formatter: flag("Open", "Closed", "warning") },
+    { field: "escalation_type", label: "Type", sortable: true, width: "11rem",
+      formatter: named("Escalation Type") },
+    { field: "organizational_level", label: "Level", sortable: true, formatter: level },
+    { field: "opened_on", label: "Opened", sortable: true, formatter: f.date },
+    { field: "age", label: "Age", formatter: ageCell },
+    { field: "closed_on", label: "Closed", sortable: true, formatter: f.date },
+    { field: "threshold_breached", label: "Time threshold", sortable: true,
+      formatter: flag("Breached", "Within", "danger") },
+    { field: "breach_count", label: "Breaches", sortable: true, align: "end", formatter: f.number },
+    { field: "risk_appetite_breach", label: "Risk appetite", sortable: true,
+      formatter: flag("Breached", "Within", "danger") },
+    { field: "requires_review", label: "Review", sortable: true,
+      formatter: flag("Awaiting review", "No", "warning") },
+    { field: "accountable_executive", label: "Accountable executive", sortable: true, formatter: Consilium.Table.formatters.person },
+    { field: "response_owner", label: "Response owner", sortable: true, formatter: Consilium.Table.formatters.person },
+    { field: "identified_by", label: "Identified by", sortable: true, formatter: Consilium.Table.formatters.person },
+    { field: "escalation_identification_date", label: "Identified", sortable: true, formatter: f.date },
+    { field: "escalation_date", label: "Escalated", sortable: true, formatter: f.date },
+    { field: "tier_1_risk_type", label: "Tier 1 risk", sortable: true, formatter: named("Risk Type") },
+    { field: "tier_2_risk_type", label: "Tier 2 risk", sortable: true, formatter: named("Risk Type") },
+    { field: "severity_source", label: "Severity set by", sortable: true, formatter: plain },
+    { field: "material_entity_impact", label: "Material entity", sortable: true,
+      formatter: flag("Impacted", "No", "info") },
+    { field: "auto_escalated", label: "Raised by", sortable: true,
+      formatter: function (v) { return v ? "A breach" : "A person"; } },
+    { field: "escalation_id", label: "Escalation ID", sortable: true, className: "cns-mono", formatter: plain },
+    { field: "modified", label: "Updated", sortable: true, formatter: f.datetime }
+  ];
+
+  /* The field list is given explicitly because "age" is worked out from the
+     opening and closing times; it is not a column the server holds. */
+  var FIELDS = COLUMNS
+    .map(function (c) { return c.field; })
+    .filter(function (field) { return field !== "age"; })
+    .concat(["sensitive"]);
+
+  function buildTable() {
+    table = Consilium.Table.create({
+      target: "#escalation-table",
+      doctype: "Escalation Matter",
+      title: "Escalation matters",
+      description: "Sort any column, search by title or reference, and set the page size to suit.",
+      caption: "Escalation register",
+      storageKey: "escalation-register",
+      rowKey: "name",
+      fields: FIELDS,
+      searchPlaceholder: "Search by title, reference or trigger",
+      searchFields: ["escalation_title", "name", "escalation_id", "escalation_trigger"],
+      defaultSort: { field: "opened_on", order: "desc" },
+      pageSize: 25,
+      striped: true,
+      filters: currentFilters(),
+      onRowClick: function (row) {
+        window.location.href = "/escalation?name=" + encodeURIComponent(row.name);
+      },
+      emptyTitle: "No matters match",
+      emptyMessage: "Clear a filter or widen the search. Matters with restricted handling are shown only to those cleared to see them.",
+      columns: COLUMNS
+    });
+  }
+
+  Promise.all([
+    Consilium.reference.load(["Escalation Type", "Risk Type"]),
+    levelsPromise
+  ])
+    .then(buildTable)
+    .catch(buildTable);
+
+  /* ------------------------------ your queue ---------------------------- */
+
+  function matterLink(name, title) {
+    return '<a href="/escalation?name=' + encodeURIComponent(name) + '">' + escapeHtml(title || name) + "</a>" +
+      ' <span class="cns-text-muted cns-text-sm cns-mono">' + escapeHtml(name) + "</span>";
+  }
+
+  Consilium.api.call("consilium.escalation.resolution.my_escalation_queue", {}, { trackLoading: false })
+    .then(function (q) {
+      var groups = [];
+      if (q.approvals.length) {
+        groups.push("<p class=\"cns-eyebrow\">Risk acceptances for you to decide</p><ul class=\"cns-prose\">" +
+          q.approvals.map(function (a) {
+            return '<li><a href="/escalation?name=' + encodeURIComponent(a.escalation_matter) + '#response">' +
+              escapeHtml(a.risk_acceptance_name) + '</a> <span class="cns-text-muted cns-text-sm">on ' +
+              escapeHtml(a.escalation_matter) + "</span></li>";
+          }).join("") + "</ul>");
+      }
+      if (q.reviews.length) {
+        groups.push("<p class=\"cns-eyebrow\">Matters awaiting second-line review</p><ul class=\"cns-prose\">" +
+          q.reviews.map(function (m) { return "<li>" + matterLink(m.name, m.escalation_title) + "</li>"; }).join("") + "</ul>");
+      }
+      if (q.owned.length) {
+        groups.push("<p class=\"cns-eyebrow\">Open matters you answer for</p><ul class=\"cns-prose\">" +
+          q.owned.map(function (m) { return "<li>" + matterLink(m.name, m.escalation_title) + "</li>"; }).join("") + "</ul>");
+      }
+      if (!groups.length) return;
+      document.getElementById("queue-body").innerHTML = groups.join("");
+      document.getElementById("queue-card").hidden = false;
+    })
+    .catch(function () { /* the register stands on its own */ });
+})();
+</script>
+{% endblock %}

@@ -1,7 +1,7 @@
 {
   "name": "Formation Child Forum",
   "module": "Governance",
-  "description": "One proposed child forum named on a formation request (G-18). Its own child table rather than Forum Link, because at request time the parent forum does not yet exist.",
+  "description": "One proposed child forum named on a formation request. Its own child table rather than Forum Link, because at request time the parent forum does not yet exist.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",

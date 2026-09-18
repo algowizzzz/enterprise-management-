@@ -1,7 +1,7 @@
 {
   "name": "Document Intake Request",
   "module": "Policy",
-  "description": "P-16 intake. Captures the need, the proposed implementation date and who must be engaged, then is classified by Core's rules engine. The rule-set version that classified it is held on the assessment, so a later rule change cannot rewrite this request's history.",
+  "description": "Captures the need, the proposed implementation date and who must be engaged, then is classified by Core's rules engine. The rule-set version that classified it is held on the assessment, so a later rule change cannot rewrite this request's history.",
   "autoname": "PINT-.#####",
   "naming_rule": "Expression (old style)",
   "search_fields": "proposed_document_name,requester",
@@ -85,7 +85,7 @@
       "fieldname": "classification_challenge",
       "fieldtype": "Text",
       "label": "Classification Challenge",
-      "description": "E13-S3: the requester may challenge the outcome, and the challenge is recorded here."
+      "description": "The requester may challenge the outcome, and the challenge is recorded here."
     },
     {
       "fieldname": "challenged_by",

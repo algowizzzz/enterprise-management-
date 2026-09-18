@@ -43,8 +43,8 @@
       "fieldname": "population_filter",
       "fieldtype": "JSON",
       "label": "Population Filter",
-      "description": "Stored, not recomputed, so the population that was attested can be reproduced. [Inferred \u2014.]",
-      "provenance": "\u00a711; I-4"
+      "description": "Stored, not recomputed, so the population that was attested can be reproduced.",
+      "provenance": "§11; I-4"
     },
     {
       "fieldname": "participant_source",
@@ -52,8 +52,8 @@
       "label": "Participant Source",
       "reqd": 1,
       "default": "Record Field",
-      "options": "Record Field\nSeat Role",
-      "description": "How the accountable person for each record in the population is resolved. Record Field reads a user field on the record; Seat Role reads a dated seat table. [Inferred \u2014 the model names the populations but not the resolution mechanism.]"
+      "options": "Record Field\nSeat Role\nRegistered Source",
+      "description": "How the accountable person for each record in the population is resolved. Record Field reads a user field on the record; Seat Role reads a dated seat table; Registered Source asks a resolver a module registers by name, for populations neither of the other two can express, such as everyone a document applies to."
     },
     {
       "fieldname": "participant_field",
@@ -61,6 +61,13 @@
       "label": "Participant Field",
       "depends_on": "eval:doc.participant_source=='Record Field'",
       "description": "The fieldname on the target record holding the accountable user."
+    },
+    {
+      "fieldname": "participant_resolver",
+      "fieldtype": "Data",
+      "label": "Participant Resolver",
+      "depends_on": "eval:doc.participant_source=='Registered Source'",
+      "description": "The name a module registers its resolver under (the consilium_attestation_participants hook). A name, never a code path: an unknown name is refused."
     },
     {
       "fieldname": "second_signatory_field",
@@ -196,5 +203,5 @@
   "naming_rule": "Expression (old style)",
   "title_field": "campaign_title",
   "search_fields": "campaign_title,period_label",
-  "provenance": "02-data-model.md \u00a75.1"
+  "provenance": "02-data-model.md §5.1"
 }

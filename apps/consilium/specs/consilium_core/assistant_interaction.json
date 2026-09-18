@@ -1,0 +1,142 @@
+{
+  "name": "Assistant Interaction",
+  "module": "Consilium Core",
+  "description": "One question put to the help assistant and the answer given: who asked, on which page, how it was answered and how long it took. Append-only. The per-person rate limit is counted from these rows.",
+  "allow_rename": 0,
+  "allow_copy": 0,
+  "track_changes": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "user",
+      "fieldtype": "Link",
+      "label": "Asked By",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "asked_on",
+      "fieldtype": "Datetime",
+      "label": "Asked On",
+      "reqd": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "route",
+      "fieldtype": "Data",
+      "label": "Page",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "The portal path the question was asked from, without its query string."
+    },
+    {
+      "fieldname": "subject_doctype",
+      "fieldtype": "Link",
+      "label": "Record Type",
+      "options": "DocType"
+    },
+    {
+      "fieldname": "subject_name",
+      "fieldtype": "Data",
+      "label": "Record",
+      "description": "Only for a record the person could read that is not sensitive, confidential or restricted. Otherwise left blank, so this log cannot confirm that a restricted reference exists."
+    },
+    {
+      "fieldname": "intent",
+      "fieldtype": "Data",
+      "label": "Question Kind"
+    },
+    {
+      "fieldname": "qa_section",
+      "fieldtype": "Section Break",
+      "label": "Question and answer"
+    },
+    {
+      "fieldname": "question",
+      "fieldtype": "Small Text",
+      "label": "Question",
+      "reqd": 1
+    },
+    {
+      "fieldname": "answer",
+      "fieldtype": "Long Text",
+      "label": "Answer"
+    },
+    {
+      "fieldname": "sources",
+      "fieldtype": "Small Text",
+      "label": "Sources Used"
+    },
+    {
+      "fieldname": "how_section",
+      "fieldtype": "Section Break",
+      "label": "How it was answered"
+    },
+    {
+      "fieldname": "mode",
+      "fieldtype": "Select",
+      "label": "Mode",
+      "options": "Built-in\nAI-assisted",
+      "default": "Built-in",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "ai_used",
+      "fieldtype": "Check",
+      "label": "AI Answer Shown",
+      "default": "0"
+    },
+    {
+      "fieldname": "provider",
+      "fieldtype": "Data",
+      "label": "Request Format"
+    },
+    {
+      "fieldname": "fallback_reason",
+      "fieldtype": "Small Text",
+      "label": "Why the Built-in Answer Was Used",
+      "description": "Set when an AI answer was attempted but the built-in one was shown."
+    },
+    {
+      "fieldname": "ai_service_request",
+      "fieldtype": "Link",
+      "label": "AI Service Request",
+      "options": "AI Service Request",
+      "description": "What left the platform for this question, if anything did."
+    },
+    {
+      "fieldname": "latency_ms",
+      "fieldtype": "Int",
+      "label": "Time Taken (ms)"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "autoname": "hash",
+  "provenance": "01-requirements-baseline.md O-6/O-7 (AI integration); help assistant audit"
+}

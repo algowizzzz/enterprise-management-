@@ -1,0 +1,513 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Import batch review (CS-11).
+  Without a batch in the address: the batches on record and a form to upload a
+  file against an import profile. With one: its rows, each with the file's
+  values, what the profile mapped them to, and why any was refused — then the
+  reviewer's decisions (leave a row out, validate again, commit, discard).
+  Every action is a call to the governed pipeline, which re-checks the Import
+  Batch permissions; the page offers only what the batch's payload allows.
+-#}
+
+{% block page_actions %}
+{%- if batch_name %}
+<a class="cns-btn cns-btn-secondary" href="/imports">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> All imports
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+{%- if not can_read %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
+    <p class="cns-state-title">Imports are not open to you</p>
+    <p class="cns-state-message">File imports are reviewed and committed by administrators. Ask one if a
+      file needs bringing in.</p>
+    <a class="cns-btn cns-btn-secondary" href="/">Home</a>
+  </div>
+</div>
+{%- elif batch_name and not found %}
+<div class="cns-card">
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">That batch is not on record</p>
+    <p class="cns-state-message">Batch <span class="cns-mono">{{ batch_name | e }}</span> does not exist.</p>
+    <a class="cns-btn cns-btn-secondary" href="/imports">All imports</a>
+  </div>
+</div>
+{%- elif batch_name %}
+
+<section class="cns-card" aria-labelledby="batch-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="batch-heading">The batch</h2>
+      <p class="cns-card-subtitle" id="batch-subtitle">Reading&hellip;</p>
+    </div>
+    <span id="batch-status"></span>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-metric-grid" id="batch-metrics"></div>
+    <dl class="cns-dl" id="batch-facts" style="margin-top: var(--cns-space-4);"></dl>
+    <div id="batch-notice"></div>
+  </div>
+</section>
+
+<section class="cns-card" id="actions-card" aria-labelledby="actions-heading" hidden style="margin-top: var(--cns-space-5);">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="actions-heading">Your decision</h2>
+      <p class="cns-card-subtitle">Commit writes every row that passed validation and is not left out.
+        Discard closes the batch and writes nothing; the file, its rows and your reason are kept.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-form-actions" id="action-buttons"></div>
+    <form id="discard-form" class="cns-fieldset" hidden novalidate style="margin-top: var(--cns-space-4);">
+      <legend>Discard this batch</legend>
+      <div class="cns-field">
+        <label class="cns-label" for="discard-reason">Reason<span class="cns-required" aria-hidden="true">*</span></label>
+        <textarea class="cns-textarea" id="discard-reason" rows="3" aria-describedby="discard-help"></textarea>
+        <span class="cns-help" id="discard-help">Kept with the batch, so anyone who later asks why this file
+          was not brought in can read the answer.</span>
+      </div>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-danger">Discard the batch</button>
+        <button type="button" class="cns-btn cns-btn-ghost" id="discard-cancel">Cancel</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="cns-card" aria-labelledby="rows-heading" style="margin-top: var(--cns-space-5);">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="rows-heading">Rows</h2>
+      <p class="cns-card-subtitle">One line per row of the file. Open a row's payload to compare what the file
+        said with what the profile mapped it to.</p>
+    </div>
+    <div class="cns-field" style="min-width: 14rem;">
+      <label class="cns-label" for="row-filter">Show</label>
+      <select class="cns-select" id="row-filter">
+        <option value="">Every row</option>
+      </select>
+    </div>
+  </div>
+  <div class="cns-card-body"><div id="row-table"></div></div>
+</section>
+
+{%- else %}
+
+{%- if can_upload %}
+<section class="cns-card" aria-labelledby="upload-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="upload-heading">Upload a file</h2>
+      <p class="cns-card-subtitle">A comma-separated file with a header row. It is kept exactly as received,
+        with its hash, and validated straight away. Nothing is written until the batch is committed.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <form id="upload-form" novalidate>
+      <div class="cns-form-grid">
+        <div class="cns-field">
+          <label class="cns-label" for="upload-profile">Import profile<span class="cns-required" aria-hidden="true">*</span></label>
+          <select class="cns-select" id="upload-profile" required aria-describedby="upload-profile-help">
+            <option value="">Reading profiles&hellip;</option>
+          </select>
+          <span class="cns-help" id="upload-profile-help">The profile says which columns the file needs and
+            what each becomes.</span>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="upload-file">File<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" id="upload-file" type="file" accept=".csv,text/csv" required>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="upload-reference">Batch reference</label>
+          <input class="cns-input" id="upload-reference" aria-describedby="upload-reference-help">
+          <span class="cns-help" id="upload-reference-help">Optional. The sender's own reference for the file,
+            if it has one.</span>
+        </div>
+      </div>
+      <div id="profile-columns"></div>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-primary">
+          <i class="bi bi-upload" aria-hidden="true"></i> Upload and validate
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{%- endif %}
+
+<section class="cns-card" aria-labelledby="list-heading" style="margin-top: var(--cns-space-5);">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="list-heading">Batches</h2>
+      <p class="cns-card-subtitle">Open a batch to review its rows.</p>
+    </div>
+    <div class="cns-field" style="min-width: 14rem;">
+      <label class="cns-label" for="batch-filter">Show</label>
+      <select class="cns-select" id="batch-filter">
+        <option value="open">Awaiting a decision</option>
+        <option value="closed">Committed or discarded</option>
+        <option value="all">Every batch</option>
+      </select>
+    </div>
+  </div>
+  <div class="cns-card-body"><div id="batch-table"></div></div>
+</section>
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if can_read and (found or not batch_name) %}
+<script>
+(function () {
+  "use strict";
+
+  var BATCH = {{ batch_name | tojson }};
+  var M = "consilium.consilium_core.importing.";
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var f = Consilium.Table.formatters;
+
+  /* Display tones only; what may be done is read from the payload's actions. */
+  var BATCH_TONES = { Uploaded: "neutral", Validated: "info", "Partially Committed": "warning",
+                      Committed: "success", Rejected: "danger" };
+  var ROW_TONES = { Valid: "success", Warning: "warning", Error: "danger", Committed: "primary", Skipped: "neutral" };
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+
+  function toast(error, title) {
+    Consilium.toast.error((error && error.message) || "The server refused.", { title: title || "Not done" });
+  }
+
+  /* ============================== list view ============================== */
+
+  if (!BATCH) {
+    var FILTERS = { open: [["is_editable", "=", 1]], closed: [["is_editable", "=", 0]], all: [] };
+    var filterSelect = document.getElementById("batch-filter");
+    var table = Consilium.Table.create({
+      target: "#batch-table",
+      doctype: "Import Batch",
+      caption: "Import batches",
+      storageKey: "import-batches",
+      rowKey: "name",
+      pageSize: 25,
+      filters: FILTERS[filterSelect.value],
+      searchFields: ["name", "batch_reference", "import_profile"],
+      searchPlaceholder: "Search by batch, reference or profile",
+      defaultSort: { field: "received_on", order: "desc" },
+      fields: ["name", "batch_reference", "import_profile", "source_system", "target_doctype", "status",
+               "row_count", "valid_count", "warning_count", "error_count", "received_on", "imported_by"],
+      onRowClick: function (row) { window.location.href = "/imports?batch=" + encodeURIComponent(row.name); },
+      emptyTitle: "No batch here",
+      emptyMessage: "Nothing is waiting for a decision. Choose “Every batch” to see the whole record.",
+      columns: [
+        { field: "name", label: "Batch", sortable: true, className: "cns-mono", formatter: f.link("/imports?batch=") },
+        { field: "batch_reference", label: "Reference", sortable: true, formatter: f.truncate(40) },
+        { field: "import_profile", label: "Profile", sortable: true },
+        { field: "target_doctype", label: "Creates", sortable: true },
+        { field: "status", label: "Status", sortable: true, formatter: f.status(BATCH_TONES) },
+        { field: "row_count", label: "Rows", sortable: true, align: "end", formatter: f.number },
+        { field: "valid_count", label: "Valid", sortable: true, align: "end", formatter: f.number },
+        { field: "warning_count", label: "Warnings", sortable: true, align: "end", formatter: f.number },
+        { field: "error_count", label: "Errors", sortable: true, align: "end",
+          formatter: function (v) {
+            return v ? '<span class="cns-pill cns-status-danger">' + escapeHtml(v) + "</span>" : "0";
+          } },
+        { field: "received_on", label: "Received", sortable: true, formatter: f.datetime },
+        { field: "imported_by", label: "By", sortable: true, formatter: f.person }
+      ]
+    });
+    filterSelect.addEventListener("change", function () { table.setFilters(FILTERS[filterSelect.value]); });
+
+    var uploadForm = document.getElementById("upload-form");
+    if (uploadForm) {
+      var profileSelect = document.getElementById("upload-profile");
+      var profiles = {};
+
+      Consilium.api.call(M + "import_profiles", {})
+        .then(function (rows) {
+          profileSelect.innerHTML = '<option value="">Choose a profile</option>' + rows.map(function (p) {
+            profiles[p.name] = p;
+            return '<option value="' + escapeAttr(p.name) + '">' + escapeHtml(p.profile_title) + " (" +
+              escapeHtml(p.target_doctype) + ")</option>";
+          }).join("");
+          if (rows.length === 1) { profileSelect.value = rows[0].name; showColumns(); }
+        })
+        .catch(function (error) {
+          profileSelect.innerHTML = '<option value="">No profile could be read</option>';
+          profileSelect.disabled = true;
+          toast(error, "Profiles unavailable");
+        });
+
+      function showColumns() {
+        var p = profiles[profileSelect.value];
+        var node = document.getElementById("profile-columns");
+        if (!p) { node.innerHTML = ""; return; }
+        node.innerHTML = '<p class="cns-text-sm" style="margin-top: var(--cns-space-4);"><strong>Columns this profile reads</strong>' +
+          (p.may_create_target ? "" : ' — <span class="cns-text-muted">you may upload and review, but not commit: ' +
+            "you cannot create " + escapeHtml(p.target_doctype) + " records.</span>") + "</p>" +
+          '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><thead><tr>' +
+          "<th>Column</th><th>Becomes</th><th>Required</th><th>Treatment</th></tr></thead><tbody>" +
+          p.columns.map(function (c) {
+            return "<tr><td class=\"cns-mono\">" + escapeHtml(c.column) + "</td><td>" +
+              (c.field ? escapeHtml(c.field) : '<span class="cns-text-muted">the sender’s key</span>') + "</td><td>" +
+              (c.required ? "Yes" : "No") + "</td><td>" + escapeHtml(c.transform) + "</td></tr>";
+          }).join("") + "</tbody></table></div>";
+      }
+      profileSelect.addEventListener("change", showColumns);
+
+      uploadForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        var fileInput = document.getElementById("upload-file");
+        var file = fileInput.files && fileInput.files[0];
+        if (!profileSelect.value) { Consilium.toast.error("Choose the profile the file follows."); profileSelect.focus(); return; }
+        if (!file) { Consilium.toast.error("Choose the file to upload."); fileInput.focus(); return; }
+        if (file.size > 5 * 1024 * 1024) { Consilium.toast.error("The file is larger than 5 MB. Split it into several batches."); return; }
+        var button = uploadForm.querySelector('button[type="submit"]');
+        button.disabled = true;
+        var reader = new FileReader();
+        reader.onerror = function () { button.disabled = false; Consilium.toast.error("The file could not be read."); };
+        reader.onload = function () {
+          Consilium.api.call(M + "upload_batch", {
+            import_profile: profileSelect.value,
+            file_name: file.name,
+            content: String(reader.result || "").replace(/^﻿/, ""),
+            batch_reference: document.getElementById("upload-reference").value
+          }, { method: "POST" })
+            .then(function (ctx) {
+              window.location.href = "/imports?batch=" + encodeURIComponent(ctx.batch.name);
+            })
+            .catch(function (error) { button.disabled = false; toast(error, "Not uploaded"); });
+        };
+        reader.readAsText(file);
+      });
+    }
+    return;
+  }
+
+  /* ============================= batch view ============================== */
+
+  var ctx = null;
+  var rowTable = null;
+  var rowFilter = document.getElementById("row-filter");
+
+  function metric(value, label) {
+    return '<div class="cns-card"><div class="cns-card-body cns-stat">' +
+      '<span class="cns-stat-value">' + escapeHtml(value) + "</span>" +
+      '<span class="cns-stat-label">' + escapeHtml(label) + "</span></div></div>";
+  }
+
+  function renderBatch() {
+    var b = ctx.batch;
+    document.getElementById("batch-subtitle").textContent =
+      (b.batch_reference || b.name) + " — " + ctx.profile.profile_title + ", creating " + ctx.profile.target_doctype + " records";
+    document.getElementById("batch-status").innerHTML = f.status(BATCH_TONES)(b.status);
+    document.getElementById("batch-metrics").innerHTML =
+      metric(b.row_count, "Rows") + metric(b.valid_count, "Valid") + metric(b.warning_count, "With warnings") +
+      metric(b.error_count, "Refused") + metric(ctx.committable, "Would be committed");
+    var facts = [
+      ["Source system", escapeHtml(b.source_system)],
+      ["Profile", escapeHtml(ctx.profile.profile_title) + ' <span class="cns-mono cns-text-sm">' + escapeHtml(ctx.profile.name) + "</span>"],
+      ["Matching", escapeHtml(ctx.profile.key_strategy) + "; an existing record is " +
+        escapeHtml(({ Update: "updated", Skip: "left alone", Reject: "refused" })[ctx.profile.on_duplicate_key] ||
+          ctx.profile.on_duplicate_key)],
+      ["Received", escapeHtml(Consilium.util.formatDate(b.received_on, true))],
+      ["Imported by", b.imported_by ? Consilium.person(b.imported_by) : dash()],
+      ["File", b.source_file ? '<a href="' + escapeAttr(b.source_file) + '">' + escapeHtml(b.source_file.split("/").pop()) + "</a>" : dash()],
+      ["File hash (SHA-256)", b.source_file_sha256 ? '<span class="cns-mono cns-text-sm" style="word-break: break-all;">' + escapeHtml(b.source_file_sha256) + "</span>" : dash()],
+      ["Committed", b.committed_on ? escapeHtml(Consilium.util.formatDate(b.committed_on, true)) : dash()]
+    ];
+    document.getElementById("batch-facts").innerHTML = facts.map(function (pair) {
+      return "<dt>" + escapeHtml(pair[0]) + "</dt><dd>" + pair[1] + "</dd>";
+    }).join("");
+
+    var report = b.validation_report || {};
+    var notice = "";
+    if (report.discarded) {
+      notice = '<div class="cns-alert cns-status-neutral" style="margin-top: var(--cns-space-4);"><i class="bi bi-archive" aria-hidden="true"></i><div>' +
+        "Discarded by " + Consilium.person(report.discarded.by) + " on " +
+        escapeHtml(Consilium.util.formatDate(report.discarded.on, true)) + ": " + escapeHtml(report.discarded.reason) + "</div></div>";
+    } else if (report.rejected) {
+      notice = '<div class="cns-alert cns-status-danger" style="margin-top: var(--cns-space-4);"><i class="bi bi-x-octagon" aria-hidden="true"></i><div>' +
+        "The profile rejects a whole file on this fault: " + escapeHtml(report.rejected) + "</div></div>";
+    } else if (!b.is_editable) {
+      notice = '<div class="cns-alert cns-status-info" style="margin-top: var(--cns-space-4);"><i class="bi bi-info-circle" aria-hidden="true"></i><div>' +
+        "This batch is closed. Its rows are kept as the record of what the file contained and what became of each.</div></div>";
+    } else if (ctx.committable && !ctx.may_create_target) {
+      notice = '<div class="cns-alert cns-status-warning" style="margin-top: var(--cns-space-4);"><i class="bi bi-lock" aria-hidden="true"></i><div>' +
+        "You may review this batch but not commit it: you cannot create " + escapeHtml(ctx.profile.target_doctype) + " records.</div></div>";
+    }
+    document.getElementById("batch-notice").innerHTML = notice;
+
+    var a = ctx.actions;
+    var buttons = [];
+    if (a.commit) {
+      buttons.push('<button type="button" class="cns-btn cns-btn-primary" data-act="commit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Commit ' +
+        ctx.committable + " row" + (ctx.committable === 1 ? "" : "s") + "</button>");
+    }
+    if (a.revalidate) buttons.push('<button type="button" class="cns-btn cns-btn-secondary" data-act="revalidate"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Validate the file again</button>');
+    if (a.discard) buttons.push('<button type="button" class="cns-btn cns-btn-ghost" data-act="discard">Discard the batch</button>');
+    document.getElementById("action-buttons").innerHTML = buttons.join("");
+    document.getElementById("actions-card").hidden = !buttons.length;
+  }
+
+  function payload(value) {
+    var keys = Object.keys(value || {});
+    if (!keys.length) return dash();
+    return "<dl class=\"cns-import-payload\">" + keys.map(function (k) {
+      var v = value[k];
+      if (v !== null && typeof v === "object") v = JSON.stringify(v);
+      return "<dt>" + escapeHtml(k) + "</dt><dd>" + (v === null || v === undefined || v === "" ? dash() : escapeHtml(v)) + "</dd>";
+    }).join("") + "</dl>";
+  }
+
+  function renderRows() {
+    var statuses = {};
+    ctx.rows.forEach(function (r) { statuses[r.status] = (statuses[r.status] || 0) + 1; });
+    var current = rowFilter.value;
+    rowFilter.innerHTML = '<option value="">Every row (' + ctx.rows.length + ")</option>" +
+      Object.keys(statuses).sort().map(function (s) {
+        return '<option value="' + escapeAttr(s) + '">' + escapeHtml(s) + " (" + statuses[s] + ")</option>";
+      }).join("");
+    if (statuses[current]) rowFilter.value = current;
+
+    /* A view filter over the rows on screen, by the value each row shows. */
+    var rows = rowFilter.value
+      ? ctx.rows.filter(function (r) { return r.status === rowFilter.value; })
+      : ctx.rows;
+
+    var config = {
+      target: "#row-table",
+      data: rows,
+      caption: "Rows of batch " + BATCH,
+      storageKey: "import-rows",
+      rowKey: "name",
+      pageSize: 25,
+      compact: true,
+      searchFields: ["external_key", "target_name"],
+      searchPlaceholder: "Search by the sender's key or created record",
+      defaultSort: { field: "row_number", order: "asc" },
+      emptyTitle: "No rows",
+      emptyMessage: "The file had no data rows, or none match what is shown.",
+      columns: [
+        { field: "row_number", label: "Row", sortable: true, align: "end", width: "4rem" },
+        { field: "status", label: "Outcome", sortable: true, formatter: f.status(ROW_TONES) },
+        { field: "messages", label: "Why",
+          formatter: function (v) {
+            if (!v || !v.length) return '<span class="cns-text-muted">No remarks</span>';
+            return '<ul class="cns-import-messages">' + v.map(function (m) { return "<li>" + escapeHtml(m) + "</li>"; }).join("") + "</ul>";
+          } },
+        { field: "external_key", label: "Sender’s key", sortable: true, className: "cns-mono",
+          formatter: function (v) { return v ? escapeHtml(v) : dash(); } },
+        { field: "raw_payload", label: "Payload",
+          formatter: function (v, row) {
+            return '<details class="cns-import-details"><summary>File and mapped values</summary>' +
+              '<div class="cns-import-compare"><div><p class="cns-eyebrow">As the file gave it</p>' + payload(row.raw_payload) +
+              '</div><div><p class="cns-eyebrow">As the profile mapped it</p>' + payload(row.mapped_payload) + "</div></div></details>";
+          } },
+        { field: "target_name", label: "Record", sortable: true,
+          formatter: function (v) { return v ? '<span class="cns-mono">' + escapeHtml(v) + "</span>" : dash(); } },
+        { field: "name", label: "",
+          formatter: function (v, row) {
+            // Read from the current payload on every draw: the table keeps
+            // these formatters across refreshes, and a commit closes the batch.
+            if (!ctx.actions.exclude_row || !row.is_committable) return "";
+            return '<button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-exclude="' + escapeAttr(v) +
+              '" aria-label="Leave row ' + escapeAttr(row.row_number) + ' out of the commit">Leave out</button>';
+          } }
+      ]
+    };
+    if (rowTable) rowTable.setData(rows);
+    else rowTable = Consilium.Table.create(config);
+  }
+
+  function render(next) {
+    ctx = next;
+    renderBatch();
+    renderRows();
+  }
+
+  function act(method, args, message) {
+    var buttons = document.querySelectorAll("#actions-card button, #row-table button");
+    Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+    return Consilium.api.call(M + method, Object.assign({ batch: BATCH }, args || {}), { method: "POST" })
+      .then(function (next) {
+        render(next);
+        var outcome = next.outcome;
+        var text = outcome
+          ? outcome.committed + " committed, " + outcome.skipped + " not committed, " + outcome.failed + " failed on writing."
+          : message;
+        Consilium.toast.success(text, { title: "Done" });
+        Consilium.announce(text);
+      })
+      .catch(function (error) {
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+        toast(error);
+      });
+  }
+
+  document.getElementById("action-buttons").addEventListener("click", function (event) {
+    var button = event.target.closest("button[data-act]");
+    if (!button) return;
+    var what = button.getAttribute("data-act");
+    if (what === "commit") {
+      if (!window.confirm("Commit " + ctx.committable + " row(s)? Each is written as a " + ctx.profile.target_doctype +
+          " record and the batch closes.")) return;
+      act("commit_reviewed_batch", {}, "Committed.");
+    } else if (what === "revalidate") {
+      act("revalidate_batch", {}, "Validated again from the kept file.");
+    } else if (what === "discard") {
+      var form = document.getElementById("discard-form");
+      form.hidden = false;
+      document.getElementById("discard-reason").focus();
+    }
+  });
+
+  document.getElementById("discard-cancel").addEventListener("click", function () {
+    document.getElementById("discard-form").hidden = true;
+  });
+
+  document.getElementById("discard-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var reason = document.getElementById("discard-reason");
+    if (!reason.value.trim()) {
+      Consilium.toast.error("Say why the batch is being discarded.");
+      reason.focus();
+      return;
+    }
+    act("discard_batch", { reason: reason.value.trim() }, "The batch is discarded.").then(function () {
+      document.getElementById("discard-form").hidden = true;
+    });
+  });
+
+  document.getElementById("row-table").addEventListener("click", function (event) {
+    var button = event.target.closest("button[data-exclude]");
+    if (!button) return;
+    var reason = window.prompt("Leave this row out of the commit. Why? (optional)", "");
+    if (reason === null) return;
+    button.disabled = true;
+    Consilium.api.call(M + "exclude_row", { row: button.getAttribute("data-exclude"), reason: reason }, { method: "POST" })
+      .then(function (next) {
+        render(next);
+        Consilium.toast.success("The row is left out. Validating the file again restores it.", { title: "Left out" });
+      })
+      .catch(function (error) { button.disabled = false; toast(error); });
+  });
+
+  rowFilter.addEventListener("change", renderRows);
+
+  Consilium.api.call(M + "get_batch_review", { batch: BATCH })
+    .then(render)
+    .catch(function (error) {
+      document.getElementById("batch-subtitle").textContent = (error && error.message) || "The batch could not be read.";
+    });
+})();
+</script>
+{%- endif %}
+{% endblock %}

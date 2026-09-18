@@ -87,12 +87,19 @@ class TestClassification(PolicyTestCase):
         self.assertTrue(rule_set.rules)
 
     def test_an_administrator_can_add_a_question_without_a_code_change(self):
-        rule_set = frappe.get_doc("Classification Rule Set", intake.active_rule_set())
+        # A rule set that has classified anything is sealed, so the question is
+        # added the way an administrator does it on a live system: by publishing
+        # a new version, which the next classification picks up.
+        rule_set = frappe.copy_doc(frappe.get_doc("Classification Rule Set", intake.active_rule_set()))
+        rule_set.version_label = frappe.generate_hash(length=6)
+        rule_set.effective_from = frappe.utils.nowdate()
+        rule_set.is_sealed = 0
         rule_set.append("questions", {"question_code": "q_new", "question_text": "Anything else?",
                                       "answer_mode": "Single", "display_order": 99})
         rule_set.append("answer_options", {"question_code": "q_new", "option_code": "yes",
                                            "option_text": "Yes", "display_order": 1})
-        rule_set.save(ignore_permissions=True)
+        rule_set.insert(ignore_permissions=True)
+        self.assertEqual(intake.active_rule_set(), rule_set.name)
         request = make_request()
         assessment = intake.classify(request.name, {**MINOR_ANSWERS, "q_new": "yes"})
         self.assertEqual(as_dict(assessment.evaluation_trace)["answers"]["q_new"], "yes")

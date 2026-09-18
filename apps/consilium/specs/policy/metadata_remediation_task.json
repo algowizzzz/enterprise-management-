@@ -1,7 +1,7 @@
 {
   "name": "Metadata Remediation Task",
   "module": "Policy",
-  "description": "P-23. Raised when a lifecycle event invalidates a required field on a different record, or when the maintenance view finds a record with required metadata missing. Generic on purpose: one entity, several triggers, rather than a special case each.",
+  "description": "Raised when a lifecycle event invalidates a required field on a different record, or when the maintenance view finds a record with required metadata missing. Generic on purpose: one entity, several triggers, rather than a special case each.",
   "autoname": "PMRT-.#####",
   "naming_rule": "Expression (old style)",
   "search_fields": "subject_name,invalid_fieldname",

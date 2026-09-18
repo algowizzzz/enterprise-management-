@@ -1,0 +1,32 @@
+
+==> Restoring devsite-backup: a framework backup without this kit's manifest, so there are no recorded checksums to verify against
+  site encryption key set to the backup's
+  database and files restored in 40s
+  migrated in 7s
+  front-end assets from frappe-assets-v15.121.0.tar.gz, copied (not linked)
+    
+      pass  Site directory exists                            /opt/consilium/sites/migrated.example.internal
+      pass  Site configuration is readable                   database consilium_migrated
+      pass  Framework imports                                frappe 15.121.0
+      pass  Database answers                                 PostgreSQL 16.15 on aarch64-unknown-linux-musl
+      pass  Database is PostgreSQL                           postgres
+      pass  Cache answers                                    redis://cons-redis:6379/0
+      pass  Application is installed on the site             frappe, consilium
+      pass  Application tables exist                         143 entities, all with tables
+      pass  An administrator account exists and is enabled   Administrator enabled
+      pass  Front-end assets are present and readable        2180 scripts, 38 stylesheets
+      pass  Libraries loaded on demand are present           6 files, including the code editor
+      pass  Served assets match the application source       served by copy; 22 files current
+      pass  Vendored libraries are present and unmodified    8 files verified
+      pass  Nothing references an external host              no CDN or external font references
+      pass  PDF engine present                               wkhtmltopdf 0.12.6.1 (with patched qt) at /usr/local/bin/wkhtmltopdf
+      pass  Background queues are reachable                  redis://cons-redis:6379/1
+      pass  Scheduled jobs are registered                    59 job types
+    
+      17/17 checks passed. The installation is healthy.
+
+==> Restored into migrated.example.internal in 56s
+
+real	0m56.513s
+user	0m34.642s
+sys	0m3.882s

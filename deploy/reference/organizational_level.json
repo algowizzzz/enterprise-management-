@@ -1,0 +1,14 @@
+{
+  "doctype": "Organizational Level",
+  "key_field": "organizational_level_code",
+  "records": [
+    {"organizational_level_code": "ENTERPRISE", "organizational_level_name": "Enterprise", "level_rank": 1,
+     "description": "The organisation as a whole; matters for the most senior forums."},
+    {"organizational_level_code": "OPERATING_GROUP", "organizational_level_name": "Operating Group", "level_rank": 2,
+     "description": "A single operating group or corporate support function."},
+    {"organizational_level_code": "LINE_OF_BUSINESS", "organizational_level_name": "Line of Business", "level_rank": 3,
+     "description": "A line of business within an operating group."},
+    {"organizational_level_code": "BUSINESS_UNIT", "organizational_level_name": "Business Unit", "level_rank": 4,
+     "description": "A business unit or team within a line of business."}
+  ]
+}

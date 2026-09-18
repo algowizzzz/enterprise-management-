@@ -17,6 +17,14 @@ SEAL_EXEMPT_FIELDS = ("is_active", "effective_to", "is_sealed")
 
 
 class ClassificationRuleSet(Document):
+    def before_insert(self):
+        # A new rule set — typed in, duplicated on desk, or copied in code —
+        # has classified nothing, so it cannot be sealed. The field is also
+        # no_copy, but that covers only the paths that honour it; a copy made
+        # with the seal set would accept its first save and refuse every edit
+        # after it, as though it had decided records it never saw.
+        self.is_sealed = 0
+
     def validate(self):
         self._refuse_edit_when_sealed()
         self._validate_questions()

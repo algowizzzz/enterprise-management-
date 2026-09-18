@@ -1,7 +1,7 @@
 {
   "name": "Applicability Exemption",
   "module": "Policy",
-  "description": "P-21's formal exemption or deviation. Standalone because it carries its own approval and its own expiry, and because it suppresses the notification the applicability row would otherwise produce.",
+  "description": "Formal exemption or deviation. Standalone because it carries its own approval and its own expiry, and because it suppresses the notification the applicability row would otherwise produce.",
   "autoname": "PEXM-.#####",
   "naming_rule": "Expression (old style)",
   "search_fields": "document,scope_value",

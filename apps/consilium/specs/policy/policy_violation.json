@@ -1,7 +1,7 @@
 {
   "name": "Policy Violation",
   "module": "Policy",
-  "description": "P-22. A breach of a governing document, tracked to resolution and optionally escalated.",
+  "description": "A breach of a governing document, tracked to resolution and optionally escalated.",
   "autoname": "PVIO-.#####",
   "naming_rule": "Expression (old style)",
   "search_fields": "document,responsible_party",

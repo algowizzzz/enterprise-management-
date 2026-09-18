@@ -145,6 +145,12 @@ body.cns-portal {
 .cns-portal a.cns-btn-ghost:hover { color: var(--cns-text-link); }
 .cns-portal a.cns-btn-danger,
 .cns-portal a.cns-btn-danger:hover { color: var(--cns-on-primary); }
+/* The same applies in the header: the brand and tabs take the header's
+   foreground, and without this they render link-blue on the navy header. */
+.cns-portal a.cns-brand,
+.cns-portal a.cns-brand:hover,
+.cns-portal a.cns-nav-link,
+.cns-portal a.cns-nav-link:hover { color: inherit; }
 
 .cns-portal .cns-breadcrumb a:hover,
 .cns-portal .cns-footer a:hover {
@@ -1120,4 +1126,212 @@ a.cns-metric-link:hover { background: var(--cns-surface-hover); }
 @media print {
   .cns-header, .cns-footer, .cns-dt-toolbar, .cns-dt-footer, .cns-toast-region { display: none !important; }
   body.cns-portal { background: #fff; color: #000; }
+}
+
+/* --- pages: document viewer --- */
+/* /document-view: one version of a governing document. The body sits in a
+   "stage" so a watermark can be laid over it; the watermark lets clicks and
+   scrolling through to the viewer beneath (pointer-events: none). */
+
+.cns-docview-notice { margin-bottom: var(--cns-space-4); }
+.cns-docview-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: var(--cns-space-4);
+  align-items: start;
+}
+.cns-docview-side { display: flex; flex-direction: column; gap: var(--cns-space-4); }
+.cns-docview-side > .cns-card, .cns-docview-main { margin-bottom: 0; }
+.cns-docview-stage { position: relative; overflow: hidden; background: var(--cns-surface-sunken); }
+.cns-docview-frame { display: block; width: 100%; height: 78vh; min-height: 32rem; border: 0; background: var(--cns-surface); }
+.cns-docview-frame--text { height: 60vh; }
+.cns-docview-image { display: block; max-width: 100%; margin: 0 auto; }
+.cns-docview-html { padding: var(--cns-space-5); background: var(--cns-surface); min-height: 16rem; }
+.cns-docview-html h1, .cns-docview-html h2, .cns-docview-html h3 { margin-top: var(--cns-space-4); }
+.cns-docview-extracted { padding: var(--cns-space-3) var(--cns-space-4); border-top: var(--cns-border-width) solid var(--cns-border-subtle); }
+.cns-docview-extracted summary { cursor: pointer; font-size: var(--cns-text-sm); color: var(--cns-text-secondary); }
+
+.cns-docview-watermark {
+  position: absolute;
+  inset: -20% -20%;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: space-around;
+  justify-content: space-around;
+  gap: var(--cns-space-7) var(--cns-space-6);
+  transform: rotate(-24deg);
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+}
+.cns-docview-watermark span {
+  font-size: var(--cns-text-sm);
+  font-weight: var(--cns-weight-semibold);
+  color: var(--cns-text);
+  opacity: 0.13;
+  white-space: nowrap;
+}
+
+.cns-docview-dl { grid-template-columns: 1fr; gap: var(--cns-space-2); }
+.cns-docview-subhead { font-size: var(--cns-text-sm); font-weight: var(--cns-weight-semibold); margin: var(--cns-space-4) 0 var(--cns-space-1); }
+.cns-docview-versions { list-style: none; margin: 0; padding: 0; }
+.cns-docview-versions li { padding: var(--cns-space-2) 0; border-bottom: var(--cns-border-width) solid var(--cns-border-subtle); }
+.cns-docview-versions li:last-child { border-bottom: 0; }
+.cns-docview-versions li.is-this .cns-docview-vlabel { font-weight: var(--cns-weight-semibold); }
+.cns-docview-vmeta, .cns-docview-vsummary, .cns-docview-syn { display: block; }
+.cns-docview-terms { margin: 0; }
+.cns-docview-terms > div { padding: var(--cns-space-2) 0; border-bottom: var(--cns-border-width) solid var(--cns-border-subtle); }
+.cns-docview-terms > div:last-child { border-bottom: 0; }
+.cns-docview-terms dt { font-weight: var(--cns-weight-semibold); }
+.cns-docview-terms dd { margin: 0; font-size: var(--cns-text-sm); }
+.cns-docview-terms > div.is-unused dt { color: var(--cns-text-secondary); }
+.cns-docview-print-refusal { display: none; }
+
+@media (max-width: 991.98px) {
+  .cns-docview-layout { grid-template-columns: minmax(0, 1fr); }
+  .cns-docview-frame { height: 70vh; min-height: 24rem; }
+}
+
+@media print {
+  /* A rendition that may not be printed prints a refusal instead of the body.
+     The browser's own PDF viewer has its own print button, which this cannot
+     reach; the page notice says so. */
+  .cns-docview--noprint .cns-docview-stage,
+  .cns-docview--noprint .cns-docview-extracted,
+  .cns-docview--noprint .cns-docview-side { display: none !important; }
+  .cns-docview--noprint .cns-docview-print-refusal { display: block; font-weight: 600; }
+  .cns-docview-watermark span { opacity: 0.2; color: #000; }
+  .cns-docview-layout { grid-template-columns: 1fr; }
+}
+
+/* --- pages: inbox and imports --- */
+/* The personal inbox (/tasks), attestation campaigns, import batch review
+   (/imports) and the coverage-gap matrix on /reports. Built only from the
+   tokens, so both themes and every text size follow. */
+
+.cns-inbox-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--cns-space-4); }
+.cns-inbox-summary { margin: 0; font-weight: var(--cns-weight-medium); }
+.cns-inbox-show { min-width: 16rem; margin: 0; }
+.cns-inbox-groups { display: grid; gap: var(--cns-space-5); margin-top: var(--cns-space-5); }
+.cns-inbox-group .cns-card-title .bi { color: var(--cns-text-muted); margin-right: var(--cns-space-1); }
+.cns-inbox-list { list-style: none; margin: 0; padding: 0; }
+.cns-inbox-item {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--cns-space-3);
+  padding: var(--cns-space-3) 0 var(--cns-space-3) var(--cns-space-3);
+  border-bottom: var(--cns-border-width) solid var(--cns-border-subtle);
+  border-left: var(--cns-border-width-thick) solid transparent;
+}
+.cns-inbox-item:last-child { border-bottom: 0; }
+.cns-inbox-item--overdue { border-left-color: var(--cns-danger); }
+.cns-inbox-main { flex: 1 1 22rem; min-width: 0; }
+.cns-inbox-title { font-weight: var(--cns-weight-semibold); display: flex; flex-wrap: wrap; align-items: center; gap: var(--cns-space-2); }
+.cns-inbox-meta { font-size: var(--cns-text-sm); color: var(--cns-text-muted); margin-top: var(--cns-space-1); }
+.cns-inbox-actions { display: flex; flex-wrap: wrap; gap: var(--cns-space-2); align-items: center; }
+.cns-inbox-form { flex: 1 1 100%; margin: var(--cns-space-2) 0 0; }
+.cns-inbox-quote { margin-top: var(--cns-space-2); font-size: var(--cns-text-sm); }
+.cns-inbox-quote p { margin: 0 0 var(--cns-space-1); }
+.cns-inbox-quote blockquote {
+  margin: 0; padding: var(--cns-space-2) var(--cns-space-3);
+  border-left: var(--cns-border-width-thick) solid var(--cns-border); background: var(--cns-surface-muted);
+  white-space: pre-wrap;
+}
+.cns-inbox-gaps { margin: var(--cns-space-2) 0 0; padding-left: var(--cns-space-5); }
+
+.cns-import-messages { margin: 0; padding-left: var(--cns-space-4); font-size: var(--cns-text-sm); }
+.cns-import-details summary { cursor: pointer; color: var(--cns-text-link); font-size: var(--cns-text-sm); }
+.cns-import-compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--cns-space-4); margin-top: var(--cns-space-2); }
+.cns-import-payload { display: grid; grid-template-columns: max-content 1fr; gap: var(--cns-space-1) var(--cns-space-3); margin: 0; font-size: var(--cns-text-xs); }
+.cns-import-payload dt { font-family: var(--cns-font-mono); color: var(--cns-text-muted); font-weight: var(--cns-weight-normal); }
+.cns-import-payload dd { margin: 0; word-break: break-word; }
+
+.cns-coverage th[scope="row"] { font-weight: var(--cns-weight-medium); white-space: nowrap; }
+.cns-coverage-cell a { display: inline-block; min-width: 1.5rem; font-weight: var(--cns-weight-semibold); }
+.cns-portal table.cns-table > tbody > tr > td.cns-coverage-gap { background: var(--cns-danger-bg); }
+.cns-portal table.cns-table > tbody > tr > td.cns-coverage-gap a { color: var(--cns-danger-fg); }
+.cns-portal table.cns-table > tbody > tr > td.cns-coverage-sub { background: var(--cns-warning-bg); }
+
+@media print {
+  .cns-inbox-actions, .cns-inbox-form { display: none !important; }
+  .cns-portal table.cns-table > tbody > tr > td.cns-coverage-gap { background: none; outline: 2px solid #000; }
+}
+
+/* --- pages: governance gaps --- */
+/* The forum page's charter panel, the disbandment page's inline forms, and the
+   home page's forum map. Colours come from the theme tokens so each follows
+   light, dark and high-contrast themes like the rest of the portal. */
+
+.cns-divider { border: 0; border-top: 1px solid var(--cns-border); margin: var(--cns-space-5) 0; }
+.cns-charter .cns-alert { margin-top: var(--cns-space-3); }
+.cns-charter-text { margin-top: var(--cns-space-3); }
+.cns-charter-text > summary { cursor: pointer; font-weight: 600; }
+.cns-charter-text .cns-prose { white-space: pre-wrap; margin-top: var(--cns-space-2); }
+#charter-actions form + form { border-top: 1px solid var(--cns-border); margin-top: var(--cns-space-5); padding-top: var(--cns-space-5); }
+
+.cns-inline-form { display: grid; gap: var(--cns-space-2); margin-top: var(--cns-space-3); max-width: 28rem; }
+.cns-inline-form .cns-btn { justify-self: start; }
+
+.cns-map svg { min-height: 12rem; }
+.cns-map .cns-map-link { fill: none; stroke: var(--cns-primary); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.cns-map .cns-map-arrow { fill: var(--cns-primary); }
+.cns-map .cns-map-dot { stroke: var(--cns-border-strong); stroke-width: 1; }
+.cns-map .cns-map-dot--success { fill: var(--cns-success-fg); }
+.cns-map .cns-map-dot--warning { fill: var(--cns-warning-fg); }
+.cns-map .cns-map-dot--danger { fill: var(--cns-danger-fg); }
+.cns-map .cns-map-dot--info { fill: var(--cns-info-fg); }
+.cns-map .cns-map-dot--neutral { fill: var(--cns-text-muted); }
+.cns-map a:hover rect { stroke: var(--cns-primary); }
+.cns-map-list { margin-top: var(--cns-space-3); }
+.cns-map-list > summary { cursor: pointer; }
+.cns-map-tree, .cns-map-tree ul { list-style: disc; padding-left: 1.25rem; }
+
+/* --- pages: ai features --- */
+/* Governance gaps and risk (/governance-gaps), emerging risks (/emerging-risks),
+   regulatory updates (/regulatory-updates) and the Impact panel on /policy.
+   The machine-generated box is deliberately unlike every other card — a dashed
+   information-coloured border and a labelled head — so machine text is never
+   mistaken for the record. Built only from the tokens, so both themes and every
+   text size follow. */
+
+.cns-ai-box {
+  margin: var(--cns-space-4) 0; padding: var(--cns-space-3) var(--cns-space-4);
+  border: var(--cns-border-width-thick) dashed var(--cns-info-border); border-radius: var(--cns-radius-md);
+  background: var(--cns-info-bg);
+}
+.cns-ai-box-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cns-space-2); margin-bottom: var(--cns-space-2); }
+.cns-ai-label .bi { margin-right: var(--cns-space-1); }
+.cns-ai-meta { font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
+.cns-ai-text { margin: var(--cns-space-2) 0; }
+.cns-ai-foot { margin: var(--cns-space-2) 0; font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
+.cns-ai-ask { margin-top: var(--cns-space-1); }
+
+.cns-ai-filter { margin: 0; min-width: 12rem; }
+.cns-ai-kinds { display: flex; flex-wrap: wrap; gap: var(--cns-space-2); list-style: none; margin: 0 0 var(--cns-space-3); padding: 0; }
+.cns-ai-details { margin-top: var(--cns-space-1); }
+.cns-ai-details summary { cursor: pointer; color: var(--cns-text-link); font-size: var(--cns-text-xs); }
+.cns-ai-factors { margin-top: var(--cns-space-2); font-size: var(--cns-text-xs); }
+.cns-ai-list { margin: 0; padding-left: var(--cns-space-5); font-size: var(--cns-text-sm); }
+.cns-ai-list li { margin-bottom: var(--cns-space-1); }
+
+.cns-ai-indicators { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--cns-space-4); }
+.cns-ai-indicators .cns-card { margin-bottom: 0; }
+.cns-ai-indicators .cns-ai-list { margin-top: var(--cns-space-2); }
+
+.cns-spark { display: block; margin-top: var(--cns-space-1); stroke: var(--cns-neutral); }
+.cns-spark--rising { stroke: var(--cns-danger); }
+
+.cns-ai-run .cns-card-title .cns-pill { margin-right: var(--cns-space-2); }
+.cns-ai-suggestions { list-style: none; margin: 0; padding: 0; }
+.cns-ai-suggestions > li { padding: var(--cns-space-3) 0; border-bottom: var(--cns-border-width) solid var(--cns-border-subtle); }
+.cns-ai-suggestions > li:last-child { border-bottom: 0; }
+.cns-ai-suggestion-head { font-weight: var(--cns-weight-semibold); margin-bottom: var(--cns-space-1); }
+
+.cns-field--wide { grid-column: 1 / -1; }
+.cns-ai-impact-rating { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cns-space-2); margin: var(--cns-space-3) 0; }
+.cns-ai-impact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--cns-space-4); }
+.cns-ai-impact-part { margin-bottom: var(--cns-space-3); }
+.cns-ai-impact-title { font-size: var(--cns-text-sm); font-weight: var(--cns-weight-semibold); margin: 0 0 var(--cns-space-2); }
+
+@media print {
+  .cns-ai-ask, #ai-impact-form { display: none !important; }
+  .cns-ai-box { background: none; border-color: #000; }
 }

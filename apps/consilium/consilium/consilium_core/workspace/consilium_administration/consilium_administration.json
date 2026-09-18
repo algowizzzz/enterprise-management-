@@ -1,0 +1,501 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"2e50106a84\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Consilium Administration</b></span>\", \"col\": 12}}, {\"id\": \"ee2ea26a84\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Portal Branding\", \"col\": 3}}, {\"id\": \"9a940b47d0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Users\", \"col\": 3}}, {\"id\": \"b4779393d4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Administration (portal)\", \"col\": 3}}, {\"id\": \"24ad246a4a\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"68b1e73e09\", \"type\": \"card\", \"data\": {\"card_name\": \"Organisation\", \"col\": 4}}, {\"id\": \"c54d07a48c\", \"type\": \"card\", \"data\": {\"card_name\": \"Risk Taxonomy\", \"col\": 4}}, {\"id\": \"d7b1716b0f\", \"type\": \"card\", \"data\": {\"card_name\": \"Approvals and Delegation\", \"col\": 4}}, {\"id\": \"94342da08f\", \"type\": \"card\", \"data\": {\"card_name\": \"Attestation\", \"col\": 4}}, {\"id\": \"52feef347f\", \"type\": \"card\", \"data\": {\"card_name\": \"Records\", \"col\": 4}}, {\"id\": \"43e5cc821a\", \"type\": \"card\", \"data\": {\"card_name\": \"Service Levels and Notices\", \"col\": 4}}, {\"id\": \"9d0b2c15c0\", \"type\": \"card\", \"data\": {\"card_name\": \"Rules and Controls\", \"col\": 4}}, {\"id\": \"2714353ce1\", \"type\": \"card\", \"data\": {\"card_name\": \"Data Exchange\", \"col\": 4}}, {\"id\": \"9ad7ba1418\", \"type\": \"card\", \"data\": {\"card_name\": \"Portal\", \"col\": 4}}]",
+ "creation": "2026-09-18 03:45:10.469781",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "setting",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Consilium Administration",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Organisation",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Organization Unit",
+   "link_count": 0,
+   "link_to": "Organization Unit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Organizational Level",
+   "link_count": 0,
+   "link_to": "Organizational Level",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Legal Entity",
+   "link_count": 0,
+   "link_to": "Legal Entity",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Material Entity",
+   "link_count": 0,
+   "link_to": "Material Entity",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Jurisdiction",
+   "link_count": 0,
+   "link_to": "Jurisdiction",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Line Of Defence",
+   "link_count": 0,
+   "link_to": "Line Of Defence",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Risk Taxonomy",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Risk Category",
+   "link_count": 0,
+   "link_to": "Risk Category",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Risk Type",
+   "link_count": 0,
+   "link_to": "Risk Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Regulatory Requirement",
+   "link_count": 0,
+   "link_to": "Regulatory Requirement",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Approvals and Delegation",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Approval Decision",
+   "link_count": 0,
+   "link_to": "Approval Decision",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Authority Delegation",
+   "link_count": 0,
+   "link_to": "Authority Delegation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Delegable Action",
+   "link_count": 0,
+   "link_to": "Delegable Action",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Exception Authorisation",
+   "link_count": 0,
+   "link_to": "Exception Authorisation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attestation",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attestation Campaign",
+   "link_count": 0,
+   "link_to": "Attestation Campaign",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attestation Task",
+   "link_count": 0,
+   "link_to": "Attestation Task",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Records",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Retention Class",
+   "link_count": 0,
+   "link_to": "Retention Class",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Retention Assignment",
+   "link_count": 0,
+   "link_to": "Retention Assignment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Legal Hold",
+   "link_count": 0,
+   "link_to": "Legal Hold",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Archive Record",
+   "link_count": 0,
+   "link_to": "Archive Record",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Disposition Event",
+   "link_count": 0,
+   "link_to": "Disposition Event",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Levels and Notices",
+   "link_count": 7,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "SLA Definition",
+   "link_count": 0,
+   "link_to": "SLA Definition",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "SLA Clock",
+   "link_count": 0,
+   "link_to": "SLA Clock",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Business Calendar",
+   "link_count": 0,
+   "link_to": "Business Calendar",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Notification Channel",
+   "link_count": 0,
+   "link_to": "Notification Channel",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Notification Dispatch",
+   "link_count": 0,
+   "link_to": "Notification Dispatch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Notification Template",
+   "link_count": 0,
+   "link_to": "Notification Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reminder Log",
+   "link_count": 0,
+   "link_to": "Reminder Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Rules and Controls",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Classification Rule Set",
+   "link_count": 0,
+   "link_to": "Classification Rule Set",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Workflow State Flag",
+   "link_count": 0,
+   "link_to": "Workflow State Flag",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Watched Field Set",
+   "link_count": 0,
+   "link_to": "Watched Field Set",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Governance Refusal Log",
+   "link_count": 0,
+   "link_to": "Governance Refusal Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Data Exchange",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Import Profile",
+   "link_count": 0,
+   "link_to": "Import Profile",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Import Batch",
+   "link_count": 0,
+   "link_to": "Import Batch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Export Batch",
+   "link_count": 0,
+   "link_to": "Export Batch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "External System",
+   "link_count": 0,
+   "link_to": "External System",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Portal",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Portal Branding",
+   "link_count": 0,
+   "link_to": "Portal Branding",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Guide Article",
+   "link_count": 0,
+   "link_to": "Guide Article",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-09-18 06:40:26.531327",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Consilium Administration",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 4.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Portal Branding",
+   "link_to": "Portal Branding",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Users",
+   "link_to": "User",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "",
+   "label": "Administration (portal)",
+   "type": "URL",
+   "url": "/admin"
+  }
+ ],
+ "title": "Consilium Administration"
+}

@@ -1,7 +1,7 @@
 {
   "name": "Committee Formation Request",
   "module": "Governance",
-  "description": "The single intake artefact for creating, modifying or retiring a forum (G-17, G-18; conflict resolved to one entity). Carries the nine-state formation flow; the forum carries the five-state compliance flow. An approved request creates the forum in draft.",
+  "description": "The single intake artefact for creating, modifying or retiring a forum. Carries the nine-state formation flow; the forum carries the five-state compliance flow. An approved request creates the forum in draft.",
   "autoname": "CFR-.YYYY.-.#####",
   "naming_rule": "Expression (old style)",
   "allow_rename": 0,
@@ -43,7 +43,7 @@
       "fieldtype": "Check",
       "label": "Is New Committee",
       "default": "1",
-      "description": "The G-17 gating question."
+      "description": "Whether this request creates a forum that does not exist yet."
     },
     {
       "fieldname": "rationale",
@@ -95,7 +95,7 @@
       "label": "Forum Name",
       "reqd": 1,
       "in_list_view": 1,
-      "description": "G-18's standardized field list, named committee-centrically by decision.",
+      "description": "",
       "provenance": "D-2"
     },
     {
@@ -173,20 +173,20 @@
       "fieldtype": "Table",
       "label": "Evaluations",
       "options": "Formation Evaluation",
-      "description": "The five G-5 criteria, each with a finding."
+      "description": "The five evaluation criteria, each with a finding."
     },
     {
       "fieldname": "completeness_confirmed",
       "fieldtype": "Check",
       "label": "Completeness Confirmed",
       "default": "0",
-      "description": "The G-7 gate on workflow progression."
+      "description": "Confirms the request is complete before it moves on."
     },
     {
       "fieldname": "duplicate_check_result",
       "fieldtype": "Text",
       "label": "Duplicate Check Result",
-      "description": "Output of the G-7 overlap check against the inventory."
+      "description": "The result of the check for overlap with forums already on the inventory."
     },
     {
       "fieldname": "charter",

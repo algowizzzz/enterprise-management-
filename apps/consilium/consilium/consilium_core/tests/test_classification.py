@@ -106,6 +106,31 @@ class TestClassification(CoreTestCase):
         )
         self.purge_on_teardown("Classification Rule Set", self.rule_set.name)
 
+    def test_a_duplicate_of_a_sealed_rule_set_starts_unsealed_and_stays_editable(self):
+        """Duplicating a sealed set used to copy the seal: the first save passed
+        and every later edit was refused, as though the copy had classified
+        records it never saw."""
+        self._classify({"scope": "wording", "cost": 10})
+        self.rule_set.reload()
+        self.assertTrue(self.rule_set.is_sealed)
+        self.assertTrue(self.rule_set.meta.get_field("is_sealed").no_copy)
+
+        # The desk's Duplicate and frappe.copy_doc honour no_copy; a copy that
+        # arrives with the seal set anyway (a path that ignores no_copy) is
+        # unsealed on insert.
+        honoured = frappe.copy_doc(self.rule_set)
+        ignored = frappe.copy_doc(self.rule_set)
+        ignored.is_sealed = 1
+        for draft in (honoured, ignored):
+            draft.version_label = unique("2.")
+            draft.insert(ignore_permissions=True)
+            self.assertFalse(draft.is_sealed)
+            draft.rules[0].outcome = "Minor"
+            draft.save(ignore_permissions=True)
+            draft.default_outcome = "Minor"
+            draft.save(ignore_permissions=True)
+            self.assertFalse(frappe.db.get_value("Classification Rule Set", draft.name, "is_sealed"))
+
     def test_history_survives_a_new_rule_set_version(self):
         assessment = self._classify({"scope": "wording", "cost": 10})
         self.assertEqual(assessment.outcome, "Minor")
@@ -141,6 +166,9 @@ class TestClassification(CoreTestCase):
         with self.assertRaises(frappe.PermissionError):
             frappe.delete_doc("Classification Assessment", assessment.name, ignore_permissions=True, force=True)
         self.purge_on_teardown("Guide Article", self.subject.name)
+        # The refusals name the assessment, not its subject, and assessment
+        # references restart from the same number once this test rolls back.
+        self.purge_on_teardown("Classification Assessment", assessment.name)
 
     def test_an_override_is_recorded_beside_the_original_outcome(self):
         assessment = self._classify({"scope": "wording", "cost": 10})

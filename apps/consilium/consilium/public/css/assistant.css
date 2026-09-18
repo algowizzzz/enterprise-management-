@@ -1,0 +1,366 @@
+/* ==========================================================================
+   Help assistant — the floating Help button and its panel.
+
+   Every colour, size and radius is a token from tokens.css, so the dark theme
+   and the portal's brand overrides apply without a line here, and every size
+   is in rem, so the portal's text-size control (which sets the root font
+   size) scales the panel with the page.
+
+   Stacking: above page content and the sticky header, below toasts, so a
+   notice raised while the panel is open is still seen.
+   ========================================================================== */
+
+.cns-assistant-toggle {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: calc(var(--cns-z-dropdown) + 5);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;            /* a comfortable target for touch */
+  padding: 0.5rem 1.1rem;
+  border: var(--cns-border-width) solid transparent;
+  border-radius: var(--cns-radius-pill);
+  background: var(--cns-primary);
+  color: var(--cns-on-primary);
+  font-family: var(--cns-font-sans);
+  font-size: var(--cns-text-md);
+  font-weight: var(--cns-weight-semibold);
+  box-shadow: var(--cns-shadow-lg);
+  cursor: pointer;
+  transition: background var(--cns-transition-fast), transform var(--cns-transition-fast);
+}
+
+.cns-assistant-toggle:hover {
+  background: var(--cns-primary-hover);
+}
+
+.cns-assistant-toggle:focus-visible,
+.cns-assistant-panel :focus-visible {
+  outline: var(--cns-focus-ring-width) solid var(--cns-focus-ring);
+  outline-offset: 2px;
+}
+
+.cns-assistant-toggle[aria-expanded="true"] {
+  background: var(--cns-primary-active);
+}
+
+.cns-assistant-toggle .bi {
+  font-size: 1.15em;
+}
+
+/* ------------------------------------------------------------------ panel */
+
+.cns-assistant-panel {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 4.75rem;
+  z-index: calc(var(--cns-z-dropdown) + 6);
+  display: flex;
+  flex-direction: column;
+  width: min(26rem, calc(100vw - 2.5rem));
+  height: min(38rem, calc(100vh - 7rem));
+  background: var(--cns-surface-raised);
+  color: var(--cns-text);
+  border: var(--cns-border-width) solid var(--cns-border);
+  border-radius: var(--cns-radius-lg);
+  box-shadow: var(--cns-shadow-lg);
+  font-family: var(--cns-font-sans);
+  font-size: var(--cns-text-sm);
+  line-height: var(--cns-leading-normal);
+  overflow: hidden;
+}
+
+.cns-assistant-panel[hidden] {
+  display: none;
+}
+
+.cns-assistant-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem 0.75rem;
+  border-bottom: var(--cns-border-width) solid var(--cns-border-subtle);
+  background: var(--cns-surface-muted);
+}
+
+.cns-assistant-title {
+  margin: 0;
+  font-size: var(--cns-text-lg);
+  font-weight: var(--cns-weight-semibold);
+  line-height: var(--cns-leading-tight);
+}
+
+.cns-assistant-mode {
+  margin: 0.15rem 0 0;
+  color: var(--cns-text-muted);
+  font-size: var(--cns-text-xs);
+}
+
+.cns-assistant-tools {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.cns-assistant-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: var(--cns-radius-md);
+  background: transparent;
+  color: var(--cns-text-secondary);
+  cursor: pointer;
+}
+
+.cns-assistant-icon-btn:hover {
+  background: var(--cns-surface-hover);
+  color: var(--cns-text);
+}
+
+/* ---------------------------------------------------------------- messages */
+
+.cns-assistant-log {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--cns-surface);
+}
+
+.cns-assistant-msg {
+  max-width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--cns-radius-md);
+  overflow-wrap: anywhere;
+}
+
+.cns-assistant-msg p {
+  margin: 0 0 0.45rem;
+}
+
+.cns-assistant-msg p:last-child {
+  margin-bottom: 0;
+}
+
+.cns-assistant-msg ul,
+.cns-assistant-msg ol {
+  margin: 0 0 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.cns-assistant-msg li + li {
+  margin-top: 0.2rem;
+}
+
+.cns-assistant-msg a {
+  color: var(--cns-text-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cns-assistant-msg a:hover {
+  color: var(--cns-text-link-hover);
+}
+
+.cns-assistant-msg-question {
+  align-self: flex-end;
+  max-width: 85%;
+  background: var(--cns-primary-subtle);
+  border: var(--cns-border-width) solid var(--cns-primary-subtle-border);
+  color: var(--cns-text);
+}
+
+.cns-assistant-msg-answer {
+  align-self: stretch;
+  background: var(--cns-surface-muted);
+  border: var(--cns-border-width) solid var(--cns-border-subtle);
+}
+
+.cns-assistant-msg-error {
+  background: var(--cns-danger-bg);
+  border: var(--cns-border-width) solid var(--cns-danger-border);
+  color: var(--cns-danger-fg);
+}
+
+.cns-assistant-notice {
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--cns-radius-sm);
+  background: var(--cns-warning-bg);
+  color: var(--cns-warning-fg);
+  font-size: var(--cns-text-xs);
+}
+
+.cns-assistant-byline {
+  color: var(--cns-text-muted);
+  font-size: var(--cns-text-xs);
+  font-style: italic;
+}
+
+/* The guide sections an answer drew on: folded away, one click to open. */
+.cns-assistant-sources {
+  margin-top: 0.55rem;
+  padding-top: 0.45rem;
+  border-top: var(--cns-border-width) solid var(--cns-border-subtle);
+}
+
+.cns-assistant-sources summary {
+  cursor: pointer;
+  color: var(--cns-text-secondary);
+  font-size: var(--cns-text-xs);
+  font-weight: var(--cns-weight-semibold);
+}
+
+.cns-assistant-sources ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1rem;
+}
+
+.cns-assistant-sources q {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--cns-text-secondary);
+  font-size: var(--cns-text-xs);
+}
+
+.cns-assistant-sources q::before { content: "“"; }
+.cns-assistant-sources q::after { content: "”"; }
+
+/* ---------------------------------------------------- chips and next steps */
+
+.cns-assistant-next,
+.cns-assistant-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cns-assistant-next {
+  margin-top: 0.6rem;
+}
+
+.cns-assistant-starters {
+  padding: 0.5rem 1rem 0;
+  background: var(--cns-surface);
+}
+
+.cns-assistant-starters[hidden],
+.cns-assistant-starters:empty {
+  display: none;
+}
+
+.cns-assistant-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.25rem 0.7rem;
+  border: var(--cns-border-width) solid var(--cns-border);
+  border-radius: var(--cns-radius-pill);
+  background: var(--cns-surface-raised);
+  color: var(--cns-text);
+  font-family: inherit;
+  font-size: var(--cns-text-xs);
+  line-height: var(--cns-leading-tight);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cns-assistant-chip:hover {
+  background: var(--cns-surface-hover);
+  border-color: var(--cns-border-strong);
+}
+
+.cns-assistant-msg a.cns-assistant-chip-link {
+  color: var(--cns-text-link);
+  text-decoration: none;
+}
+
+.cns-assistant-chip-link::after {
+  content: "→";
+  margin-left: 0.3rem;
+}
+
+/* ------------------------------------------------------------------- form */
+
+.cns-assistant-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem 0.9rem;
+  background: var(--cns-surface);
+}
+
+.cns-assistant-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.7rem;
+  border: var(--cns-border-width) solid var(--cns-border-strong);
+  border-radius: var(--cns-radius-md);
+  background: var(--cns-surface);
+  color: var(--cns-text);
+  font: inherit;
+  font-size: var(--cns-text-sm);
+}
+
+.cns-assistant-input::placeholder {
+  color: var(--cns-text-muted);
+}
+
+.cns-assistant-send {
+  flex: 0 0 auto;
+  min-width: 2.75rem;
+}
+
+.cns-assistant-panel[aria-busy="true"] .cns-assistant-log::after {
+  content: "Looking that up…";
+  align-self: flex-start;
+  color: var(--cns-text-muted);
+  font-size: var(--cns-text-xs);
+}
+
+/* ----------------------------------------------------------------- small */
+
+@media (max-width: 575.98px) {
+  .cns-assistant-toggle {
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+
+  .cns-assistant-toggle-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .cns-assistant-panel {
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: min(85vh, 40rem);
+    border-radius: var(--cns-radius-lg) var(--cns-radius-lg) 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cns-assistant-toggle {
+    transition: none;
+  }
+}
+
+@media print {
+  .cns-assistant-toggle,
+  .cns-assistant-panel {
+    display: none !important;
+  }
+}

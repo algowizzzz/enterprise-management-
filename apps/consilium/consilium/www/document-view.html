@@ -1,0 +1,247 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  One version of a governing document, read in the portal.
+  The body is an uploaded file shown by the browser's own viewer (served by a
+  permission-checked, same-origin endpoint) or authored text rendered as
+  sanitised HTML. Beside it: the version's metadata, the rest of the chain and
+  the glossary definitions that apply. Every decision about what to offer was
+  made on the server (www/document_view.py); this template only draws it.
+-#}
+
+{% block page_actions %}
+{%- if found %}
+{%- if download_url %}
+<a class="cns-btn cns-btn-primary" href="{{ download_url | e }}" download>
+  <i class="bi bi-download" aria-hidden="true"></i> Download
+</a>
+{%- endif %}
+<a class="cns-btn cns-btn-secondary" href="/policy?name={{ document.name | urlencode }}#versions">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to the document
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not version_name %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-signpost" aria-hidden="true"></i></span>
+    <p class="cns-state-title">No version was named</p>
+    <p class="cns-state-message">Open a document from the inventory and choose a version from its Versions tab.</p>
+    <a class="cns-btn cns-btn-primary" href="/policies">Go to the inventory</a>
+  </div>
+</div>
+{%- elif not found %}
+<div class="cns-card">
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">That version is not available</p>
+    <p class="cns-state-message">Version <span class="cns-mono">{{ version_name | e }}</span> is not a version of a
+      governing document on the inventory.</p>
+    <a class="cns-btn cns-btn-secondary" href="/policies">Back to the inventory</a>
+  </div>
+</div>
+{%- else %}
+
+<div class="cns-docview{% if print_blocked %} cns-docview--noprint{% endif %}"
+     data-version="{{ version.name | e }}">
+
+  {#- What the reader may do with this rendition, and what no browser can stop. #}
+  {%- if view_only or print_blocked or watermark %}
+  <div class="cns-alert cns-status-warning cns-docview-notice" role="note">
+    <i class="bi bi-shield-lock" aria-hidden="true"></i>
+    <div>
+      <strong>
+        {%- if document.classification %}{{ document.classification | e }} document. {% endif -%}
+        {%- if view_only and print_blocked %}View only: download and printing are not offered.
+        {%- elif view_only %}View only: download is not offered.
+        {%- elif print_blocked %}Printing is not offered.{% endif %}
+      </strong>
+      {%- if view_only %}
+      This page does not offer a copy and asks the browser not to keep one{% if watermark %}. It also marks the view with your name and the time{% endif %}.
+      {%- elif watermark %}
+      You may download it as one of its stewards. The view is marked with your name and the time.
+      {%- endif %}
+      A browser can still capture anything it can display, through a screenshot or a photograph of the screen,
+      so these controls deter and attribute a copy. They cannot prevent one. Your view has been recorded.
+    </div>
+  </div>
+  {%- endif %}
+
+  <div class="cns-docview-layout">
+    <section class="cns-card cns-docview-main" aria-labelledby="docview-body-title">
+      <div class="cns-card-header">
+        <div>
+          <h2 class="cns-card-title" id="docview-body-title">
+            Version {{ (version.label or version.number) | e }}
+            {%- if version.is_current %} <span class="cns-pill cns-status-primary">Current</span>{% endif %}
+            {%- if version.published %} <span class="cns-pill cns-status-success">Published</span>
+            {%- else %} <span class="cns-pill cns-status-neutral">Not published</span>{% endif %}
+          </h2>
+          {%- if body.file_name %}
+          <p class="cns-card-subtitle cns-mono">{{ body.file_name | e }}</p>
+          {%- endif %}
+        </div>
+      </div>
+
+      <div class="cns-docview-stage">
+        {%- if body.kind == "pdf" %}
+        <iframe class="cns-docview-frame" src="{{ body.src | e }}"
+                title="Version {{ (version.label or version.number) | e }} of {{ document.title | e }}"></iframe>
+        {%- elif body.kind == "image" %}
+        <img class="cns-docview-image" src="{{ body.src | e }}"
+             alt="Version {{ (version.label or version.number) | e }} of {{ document.title | e }}">
+        {%- elif body.kind == "text" %}
+        <iframe class="cns-docview-frame cns-docview-frame--text" src="{{ body.src | e }}"
+                title="Version {{ (version.label or version.number) | e }} of {{ document.title | e }}"></iframe>
+        {%- elif body.kind == "html" %}
+        <article class="cns-prose cns-docview-html">{{ body.html }}</article>
+        {%- elif body.kind == "file" %}
+        <div class="cns-state">
+          <span class="cns-state-icon"><i class="bi bi-file-earmark" aria-hidden="true"></i></span>
+          <p class="cns-state-title">This file cannot be shown in the browser</p>
+          <p class="cns-state-message">A {{ body.mimetype | e }} file is not displayed inline.
+            {%- if download_url %} Download it to read it.{% else %} Its handling does not allow a download;
+            ask the document owner for access to the source.{% endif %}</p>
+        </div>
+        {%- else %}
+        <div class="cns-state">
+          <span class="cns-state-icon"><i class="bi bi-file-earmark-x" aria-hidden="true"></i></span>
+          <p class="cns-state-title">No body was captured for this version</p>
+          <p class="cns-state-message">The version records the document's metadata only.</p>
+        </div>
+        {%- endif %}
+
+        {%- if watermark %}
+        <div class="cns-docview-watermark" aria-hidden="true">
+          {%- for i in range(24) %}<span>{{ watermark | e }}</span>{% endfor -%}
+        </div>
+        {%- endif %}
+      </div>
+
+      {%- if body.kind == "pdf" %}
+      <div class="cns-card-footer cns-text-sm cns-text-muted">
+        Shown by your browser's own PDF viewer. If nothing appears, this browser cannot show PDF files
+        inline{% if download_url %}; use Download instead{% endif %}.
+      </div>
+      {%- endif %}
+      {%- if body.html and body.kind != "html" %}
+      <details class="cns-docview-extracted">
+        <summary>Extracted text (for search; the file above is authoritative)</summary>
+        <div class="cns-prose">{{ body.html }}</div>
+      </details>
+      {%- endif %}
+
+      {%- if print_blocked %}
+      <p class="cns-docview-print-refusal">Printing is not permitted for this rendition of
+        {{ document.title | e }} ({{ document.name | e }}).</p>
+      {%- endif %}
+    </section>
+
+    <aside class="cns-docview-side">
+      <section class="cns-card" aria-labelledby="docview-meta-title">
+        <div class="cns-card-header"><h2 class="cns-card-title" id="docview-meta-title">This version</h2></div>
+        <div class="cns-card-body">
+          <dl class="cns-dl cns-docview-dl">
+            <div><dt>Document</dt><dd><a href="/policy?name={{ document.name | urlencode }}">{{ document.title | e }}</a>
+              <span class="cns-mono cns-text-muted">{{ document.name | e }}</span></dd></div>
+            <div><dt>Version number</dt><dd>{{ version.number | e }}</dd></div>
+            <div><dt>Label</dt><dd>{{ (version.label or "—") | e }}</dd></div>
+            <div><dt>Change</dt><dd>{{ (version.change_classification or "—") | e }}</dd></div>
+            <div><dt>Origin</dt><dd>{{ (version.origin or "—") | e }}</dd></div>
+            <div><dt>Captured by</dt><dd data-cns-person-id="{{ version.captured_by | e }}">{{ version.captured_by | e }}</dd></div>
+            <div><dt>Captured</dt><dd data-cns-date="{{ version.captured_on | e }}" data-cns-with-time="1">{{ version.captured_on | e }}</dd></div>
+            <div><dt>Handling</dt><dd>{{ (document.classification or "—") | e }}</dd></div>
+          </dl>
+          <h3 class="cns-docview-subhead">Why this version exists</h3>
+          <p class="cns-prose">{{ (version.change_summary or "—") | e }}</p>
+        </div>
+      </section>
+
+      <section class="cns-card" aria-labelledby="docview-chain-title">
+        <div class="cns-card-header"><h2 class="cns-card-title" id="docview-chain-title">Other versions</h2></div>
+        <div class="cns-card-body">
+          {%- if versions | length > 1 %}
+          <ol class="cns-docview-versions">
+            {%- for row in versions %}
+            <li{% if row.name == version.name %} aria-current="page" class="is-this"{% endif %}>
+              {%- if row.name == version.name %}
+              <span class="cns-docview-vlabel">Version {{ (row.version_label or row.version_number) | e }}</span>
+              {%- else %}
+              <a class="cns-docview-vlabel" href="/document-view?version={{ row.name | urlencode }}">Version {{ (row.version_label or row.version_number) | e }}</a>
+              {%- endif %}
+              {%- if row.is_current %} <span class="cns-pill cns-status-primary">Current</span>{% endif %}
+              {%- if row.published %} <span class="cns-pill cns-status-success">Published</span>{% endif %}
+              <span class="cns-text-xs cns-text-muted cns-docview-vmeta">
+                No. {{ row.version_number | e }}{% if row.origin %} · {{ row.origin | e }}{% endif %}
+                {%- if row.creation %} · <span data-cns-date="{{ row.creation | e }}">{{ row.creation | e }}</span>{% endif %}
+              </span>
+              {%- if row.change_summary %}<span class="cns-text-sm cns-docview-vsummary">{{ row.change_summary | e }}</span>{% endif %}
+            </li>
+            {%- endfor %}
+          </ol>
+          {%- else %}
+          <p class="cns-text-sm cns-text-muted">This is the only version in the chain.</p>
+          {%- endif %}
+        </div>
+      </section>
+
+      {%- if glossary.terms %}
+      <section class="cns-card" aria-labelledby="docview-terms-title">
+        <div class="cns-card-header">
+          <h2 class="cns-card-title" id="docview-terms-title">Definitions</h2>
+          <p class="cns-card-subtitle">From the approved glossary, as they apply to this document.</p>
+        </div>
+        <div class="cns-card-body">
+          {%- if glossary.findings %}
+          <div class="cns-alert cns-status-warning" role="note">
+            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+            <div>The current text uses wording the glossary does not allow:
+              {% for item in glossary.findings %}&ldquo;{{ item.found | e }}&rdquo; (use &ldquo;{{ item.use | e }}&rdquo;){% if not loop.last %}; {% endif %}{% endfor %}.
+              It will be refused the next time that text is saved.</div>
+          </div>
+          {%- endif %}
+          <dl class="cns-docview-terms">
+            {%- for term in glossary.terms %}
+            <div{% if not term.used %} class="is-unused"{% endif %}>
+              <dt>{{ term.term | e }}
+                {%- if term.enforce_usage %} <span class="cns-pill cns-status-info" title="Only this wording may be used">Enforced</span>{% endif %}
+                {%- if term.used %} <span class="cns-text-xs cns-text-muted">used {{ term.occurrences | e }}&times;</span>{% endif %}
+              </dt>
+              <dd>{{ term.definition | e }}
+                {%- if term.synonyms %}<span class="cns-text-xs cns-text-muted cns-docview-syn">Also written: {{ (term.synonyms | join(", ")) | e }}</span>{% endif %}
+                {%- if term.context_note %}<span class="cns-text-xs cns-text-muted cns-docview-syn">{{ term.context_note | e }}</span>{% endif %}
+              </dd>
+            </div>
+            {%- endfor %}
+          </dl>
+        </div>
+      </section>
+      {%- endif %}
+    </aside>
+  </div>
+</div>
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if found %}
+<script>
+(function () {
+  "use strict";
+  /* Dates arrive in the site's time zone; the shared formatter converts them. */
+  document.querySelectorAll("[data-cns-date]").forEach(function (node) {
+    var value = node.getAttribute("data-cns-date");
+    if (value) node.textContent = Consilium.util.formatDate(value, node.hasAttribute("data-cns-with-time"));
+  });
+  /* People are shown by name once the names are in (see Consilium.person). */
+  document.querySelectorAll("[data-cns-person-id]").forEach(function (node) {
+    var id = node.getAttribute("data-cns-person-id");
+    if (id) node.innerHTML = Consilium.Table.formatters.person(id);
+  });
+})();
+</script>
+{%- endif %}
+{% endblock %}

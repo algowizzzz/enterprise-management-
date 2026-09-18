@@ -57,7 +57,7 @@
    "label": "Sort Order"
   },
   {
-   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration. [Inferred \u2014",
+   "description": "The identifier this value carries in whatever system of record eventually owns it. Reserved now so a future reconciliation needs no migration.",
    "fieldname": "external_code",
    "fieldtype": "Data",
    "label": "External Code"
@@ -104,7 +104,7 @@
  "index_web_pages_for_search": 0,
  "is_tree": 1,
  "links": [],
- "modified": "2026-09-17 23:50:00.718091",
+ "modified": "2026-09-18 03:32:53.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Risk Category",
@@ -143,6 +143,7 @@
   }
  ],
  "search_fields": "risk_category_name,risk_category_code",
+ "show_title_field_in_link": 1,
  "sort_field": "risk_category_name",
  "sort_order": "ASC",
  "states": [],

@@ -57,6 +57,10 @@ class ForumMembership(Document):
         if not self.forum_role:
             return
         defaults = membership_api.role_defaults(self.forum_role)
+        # An unticked box and "not given" look the same, so without this a seat
+        # whose role votes by default could never be created as non-voting.
+        if self.get("set_voting_rights_manually"):
+            return
         if self.is_new():
             if self.votes is None or self.votes == 0:
                 self.votes = defaults.get("votes_by_default") or 0

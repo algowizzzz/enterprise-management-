@@ -1,7 +1,7 @@
 {
   "name": "Periodic Submission",
   "module": "Escalation",
-  "description": "A periodic escalation return, including the nil return that confirms no activity (E-11).",
+  "description": "A periodic escalation return, including the nil return that confirms no activity.",
   "autoname": "ESPS-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "period_label",

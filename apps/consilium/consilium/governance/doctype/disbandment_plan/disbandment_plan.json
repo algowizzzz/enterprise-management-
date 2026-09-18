@@ -3,7 +3,7 @@
  "allow_rename": 0,
  "autoname": "FDIS-.YYYY.-.#####",
  "creation": "2026-09-17 23:50:00.728464",
- "description": "The controlled dissolution of a forum (G-11): a plan, the named approvals, a successor and a records disposition decision. Disbandment makes the forum inactive; nothing is deleted and retention continues to apply.",
+ "description": "The controlled dissolution of a forum: a plan, the named approvals, a successor and a records disposition decision. Disbandment makes the forum inactive; nothing is deleted and retention continues to apply.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -55,7 +55,7 @@
    "reqd": 1
   },
   {
-   "description": "The four approvers G-11 names. Each decision is a Core Approval Decision.",
+   "description": "The four approvals a disbandment needs.",
    "fieldname": "approvals",
    "fieldtype": "Table",
    "label": "Approvals",
@@ -76,7 +76,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.728474",
+ "modified": "2026-09-18 03:31:55.000000",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Disbandment Plan",

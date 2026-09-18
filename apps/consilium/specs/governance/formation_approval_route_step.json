@@ -1,7 +1,7 @@
 {
   "name": "Formation Approval Route Step",
   "module": "Governance",
-  "description": "One configured step of a formation approval route. Steps are configuration: a step can be added, reordered or made parallel without a deployment (E7-S4).",
+  "description": "One configured step of a formation approval route. Steps are configuration: a step can be added, reordered or made parallel without a deployment.",
   "allow_rename": 0,
   "track_changes": 1,
   "sort_field": "modified",

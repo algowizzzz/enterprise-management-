@@ -1,0 +1,2255 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  One governing document, and everything the policy module lets a person do to it.
+
+  A summary and "What you can do now" sit above the panels: the record, its
+  lifecycle, its approval chain, its versions and publications, its reviews and
+  horizon scans, its monitoring and violations, and its lineage.
+
+  The page never decides what may be done. The server's payloads
+  (`lifecycle.document_actions`, `horizon.document_reviews`,
+  `monitoring.document_monitoring`) say which actions this viewer may take at
+  this stage; each button posts to a thin entry point that checks both again on
+  the way in, and the page redraws from what that entry point returns.
+
+  An approver who cannot otherwise read the document sees its summary and its
+  approval panel only.
+-#}
+
+{% block page_actions %}
+{%- if found %}
+{%- if desk_access and readable %}
+<a class="cns-btn cns-btn-secondary" href="/app/governing-document/{{ record_name | urlencode }}">
+  <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Open in the workspace
+</a>
+{%- endif %}
+{%- if readable and cns_has_any_role("Consilium Audit", "Consilium Administrator", "System Manager") %}
+{#- E4-S4. The server checks the role and read access again, and audits a refusal. #}
+<a class="cns-btn cns-btn-secondary" href="/api/method/consilium.consilium_core.evidence.export_pack?doctype=Governing%20Document&amp;name={{ record_name | urlencode }}">
+  <i class="bi bi-file-earmark-zip" aria-hidden="true"></i> Export evidence pack
+</a>
+{%- endif %}
+<a class="cns-btn cns-btn-secondary" href="/policies">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to inventory
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not record_name %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-signpost" aria-hidden="true"></i></span>
+    <p class="cns-state-title">No document was named</p>
+    <p class="cns-state-message">Open a document from the inventory to see its record.</p>
+    <a class="cns-btn cns-btn-primary" href="/policies">Go to the inventory</a>
+  </div>
+</div>
+{%- elif not found %}
+<div class="cns-card">
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">That document is not on the inventory</p>
+    <p class="cns-state-message">Reference <span class="cns-mono">{{ record_name | e }}</span> does not exist,
+      or it has been removed.</p>
+    <a class="cns-btn cns-btn-secondary" href="/policies">Back to the inventory</a>
+  </div>
+</div>
+{%- else %}
+
+<div id="doc-summary" class="cns-card">
+  <div class="cns-card-body">
+    <p class="cns-text-muted cns-text-sm">Loading the record&hellip;</p>
+  </div>
+</div>
+
+<div id="outcome" role="status" aria-live="polite"></div>
+
+<section class="cns-card" id="actions-card" aria-labelledby="actions-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="actions-heading">What you can do now</h2>
+      <p class="cns-card-subtitle" id="actions-subtitle">Checking what is open to you&hellip;</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div class="cns-btn-group" id="action-buttons"></div>
+    <div id="action-notes"></div>
+    <div id="action-panel"></div>
+  </div>
+</section>
+
+{%- if not readable %}
+<div class="cns-alert cns-status-info" style="margin-bottom: var(--cns-space-4);">
+  <i class="bi bi-info-circle" aria-hidden="true"></i>
+  <div>You are seeing this document because you are asked to decide one of its approval steps.
+    The rest of the record is not open to you.</div>
+</div>
+{%- endif %}
+
+<div class="cns-tabs" role="tablist" aria-label="Document detail sections">
+  {%- if readable %}
+  <button class="cns-tab" role="tab" id="tab-details"    aria-controls="panel-details"    aria-selected="true">Details</button>
+  <button class="cns-tab" role="tab" id="tab-lifecycle"  aria-controls="panel-lifecycle"  aria-selected="false" tabindex="-1">Lifecycle</button>
+  {%- endif %}
+  <button class="cns-tab" role="tab" id="tab-approval"   aria-controls="panel-approval"   aria-selected="{{ 'false' if readable else 'true' }}"{% if readable %} tabindex="-1"{% endif %}>Approval</button>
+  {%- if readable %}
+  <button class="cns-tab" role="tab" id="tab-versions"   aria-controls="panel-versions"   aria-selected="false" tabindex="-1">Versions</button>
+  <button class="cns-tab" role="tab" id="tab-reviews"    aria-controls="panel-reviews"    aria-selected="false" tabindex="-1">Reviews</button>
+  <button class="cns-tab" role="tab" id="tab-monitoring" aria-controls="panel-monitoring" aria-selected="false" tabindex="-1">Monitoring</button>
+  <button class="cns-tab" role="tab" id="tab-lineage"    aria-controls="panel-lineage"    aria-selected="false" tabindex="-1">Lineage</button>
+  {%- endif %}
+</div>
+
+{%- if readable %}
+<!-- ------------------------------ Details ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-details" aria-labelledby="tab-details" tabindex="0">
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Abstract</h2></div>
+    <div class="cns-card-body"><p id="detail-abstract" class="cns-prose">&nbsp;</p></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">The record</h2></div>
+    <div class="cns-card-body"><dl class="cns-dl" id="detail-fields"></dl></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Accountability</h2>
+        <p class="cns-card-subtitle">Who answers for this document, and the named roles held against it.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <dl class="cns-dl" id="detail-people"></dl>
+      <div id="roles-table" style="margin-top: var(--cns-space-4);"></div>
+    </div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Scope</h2>
+        <p class="cns-card-subtitle">The multi-value attributes the document covers.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><dl class="cns-dl" id="detail-scope"></dl></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Applicability</h2>
+        <p class="cns-card-subtitle">Who the document applies to, and so who is told when it changes.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="applicability-table"></div></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Regulatory references</h2></div>
+    <div class="cns-card-body"><div id="regulatory-table"></div></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Handling</h2></div>
+    <div class="cns-card-body"><dl class="cns-dl" id="detail-handling"></dl></div>
+  </section>
+
+  {#- P-24 / E15-S4: definitions in context, from `glossary.in_context`, which
+      counts where each term is used in the current text and reports any
+      wording the approved glossary does not allow. -#}
+  <section class="cns-card" id="glossary-section">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Definitions in force for this document</h2>
+        <p class="cns-card-subtitle">Terms linked to this document and every enterprise term in force,
+          from the glossary. The terms the text uses come first, with how often it uses them.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="glossary-findings"></div>
+      <div id="glossary-body"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div>
+    </div>
+  </section>
+
+  {#- E15-S5: correcting metadata in place, with a reason, making no new version. -#}
+  <section class="cns-card" id="correct" aria-labelledby="correct-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="correct-heading" tabindex="-1">Correct metadata</h2>
+        <p class="cns-card-subtitle">Put right a field that is wrong or missing, at any stage — published
+          documents included. A correction changes the record, not the text: no new version is made and the
+          document does not go back through approval. Each correction is kept with its reason.</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="correct-body"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div>
+  </section>
+
+  {% include "consilium/templates/includes/ai_impact_panel.html" %}
+</div>
+
+<!-- ----------------------------- Lifecycle ----------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-lifecycle" aria-labelledby="tab-lifecycle" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Where it stands</h2>
+        <p class="cns-card-subtitle">The phases in the order the lifecycle is configured.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <ol class="cns-workflow" id="phase-strip" aria-label="Lifecycle phase"></ol>
+      <dl class="cns-dl" id="lifecycle-flags" style="margin-top: var(--cns-space-4);"></dl>
+    </div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Every action configured from here</h2>
+        <p class="cns-card-subtitle">Who takes each one, and anything that would refuse it today.
+          The ones open to you are buttons under "What you can do now".</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="readiness-body">
+      <p class="cns-text-muted cns-text-sm">Checking&hellip;</p>
+    </div>
+  </section>
+
+  <section class="cns-card" aria-labelledby="dispositions-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="dispositions-heading">Dispositions</h2>
+        <p class="cns-card-subtitle">How each review round ended — returned with comments or accepted — and,
+          on retirement, why and what retention now holds the record to. Nothing is deleted.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="dispositions-table"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div></div>
+  </section>
+</div>
+{%- endif %}
+
+<!-- ------------------------------ Approval ----------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-approval" aria-labelledby="tab-approval" tabindex="0"{% if readable %} hidden{% endif %}>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Approval chain</h2>
+        <p class="cns-card-subtitle">The mandatory approvals of the version now in the chain. Publication
+          is refused until every one is decided without objection, or excused by a written exception.</p>
+      </div>
+    </div>
+    <div class="cns-card-body" id="chain-body">
+      <p class="cns-text-muted cns-text-sm">Checking&hellip;</p>
+    </div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Approval steps</h2>
+        <p class="cns-card-subtitle" id="route-note">Each step is decided by the person it is assigned to,
+          or someone holding their live delegation.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="planned-steps"></div>
+      <div id="steps-table"></div>
+      <div id="step-forms"></div>
+      <div id="earlier-steps"></div>
+    </div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Exceptions</h2>
+        <p class="cns-card-subtitle">No step is skipped and no gate is passed without a written, approved
+          exception authorisation recorded against this document.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="exception-body"></div>
+      <div id="exception-requests"></div>
+      <div id="bypass-forms"></div>
+    </div>
+  </section>
+</div>
+
+{%- if readable %}
+<!-- ----------------------------- Versions ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-versions" aria-labelledby="tab-versions" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Version chain</h2>
+        <p class="cns-card-subtitle">Every version reads forward: a revert writes a new version rather
+          than rewriting an old one.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="versions-table"></div>
+      <div id="version-forms"></div>
+    </div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Publications</h2>
+        <p class="cns-card-subtitle">Each records the version published, its audience and its renditions,
+          and how many affected parties were told.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="publications-table"></div>
+      <div id="publication-forms"></div>
+    </div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Record changes</h2></div>
+    <div class="cns-card-body">
+      <ul class="cns-timeline" id="change-list">
+        <li class="cns-text-muted">Loading&hellip;</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<!-- ------------------------------ Reviews ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-reviews" aria-labelledby="tab-reviews" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Review cycles</h2>
+        <p class="cns-card-subtitle">The periodic review of the document in force, and what each concluded.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="cycles-table"></div>
+      <div id="review-forms"></div>
+    </div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Horizon scanning</h2>
+        <p class="cns-card-subtitle">When the external environment was last scanned for changes that
+          touch this document, what each scan concluded, and which coverage areas were not reached.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="horizon-body"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div>
+      <div id="scans-table" style="margin-top: var(--cns-space-4);"></div>
+      <div id="scan-forms"></div>
+    </div>
+  </section>
+
+  <section class="cns-card" id="attestation" aria-labelledby="attestation-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="attestation-heading">Attestation campaigns</h2>
+        <p class="cns-card-subtitle">Everyone the document applies to, asked to attest that they have read
+          it and will comply. The people asked are the document's applicability audience, worked out when
+          the campaign opens.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="campaigns-table"></div>
+      <div id="campaign-forms"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ----------------------------- Monitoring ---------------------------- -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-monitoring" aria-labelledby="tab-monitoring" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Monitoring activities</h2>
+        <p class="cns-card-subtitle">How adherence to this document is checked, by whom, and when each
+          check is next due.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="activities-table"></div>
+      <div id="result-forms"></div>
+    </div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Monitoring results</h2></div>
+    <div class="cns-card-body"><div id="results-table"></div></div>
+  </section>
+
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Violations</h2>
+        <p class="cns-card-subtitle">Breaches of this document, logged when found.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div id="violations-table"></div>
+      <div id="violation-update-forms"></div>
+      <div id="violation-forms"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ------------------------------ Lineage ------------------------------ -->
+<div class="cns-tabpanel" role="tabpanel" id="panel-lineage" aria-labelledby="tab-lineage" tabindex="0" hidden>
+  <section class="cns-card">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title">Above and below this document</h2>
+        <p class="cns-card-subtitle">Parents and children from both directions of the graph: a child's
+          own parent link and a parent's relationship table.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><dl class="cns-dl" id="lineage-list"><div><dt>Lineage</dt><dd class="cns-text-muted">Loading&hellip;</dd></div></dl></div>
+  </section>
+  <section class="cns-card">
+    <div class="cns-card-header"><h2 class="cns-card-title">Recorded relationships</h2></div>
+    <div class="cns-card-body"><div id="relationships-table"></div></div>
+  </section>
+</div>
+{%- endif %}
+
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if found %}
+<script>
+(function () {
+  "use strict";
+
+  var DOCUMENT = {{ record_name | tojson }};
+  var READABLE = {{ (readable and true or false) | tojson }};
+  var FIELD_LABELS = {{ (field_labels or {}) | tojson }};
+  var PHASES = {{ phases | tojson }};
+  var VIEWER = {{ viewer_route | tojson }};
+  var POLICY = "consilium.policy.";
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var f = Consilium.Table.formatters;
+
+  /* Display tones only; nothing on this page decides anything from a phase,
+     decision or status name. */
+  var PHASE_TONES = {
+    Draft: "neutral", Review: "warning", Approved: "info",
+    Published: "success", Implemented: "primary", Retired: "neutral"
+  };
+  var HANDLING_TONES = {
+    Public: "success", Internal: "neutral", Confidential: "warning", Restricted: "danger"
+  };
+  var DECISION_TONES = {
+    Pending: "neutral", Approved: "success", Rejected: "danger",
+    "Changes Requested": "warning", Abstained: "info", Bypassed: "warning"
+  };
+  var OUTCOME_TONES = {
+    Effective: "success", "Partially Effective": "warning", "Not Effective": "danger", "Not Performed": "neutral"
+  };
+  var SEVERITY_TONES = { Low: "neutral", Medium: "info", High: "warning", Critical: "danger" };
+  var IMPACT_TONES = { "No Change": "success", "Review Triggered": "warning", "Immediate Update Required": "danger" };
+
+  /* Where the document stands, keyed by the server's stage (derived from the
+     record's flags, never its phase label). */
+  var STAGE_TEXT = {
+    drafting: "Being drafted. Versions can be uploaded; it goes to review when submitted.",
+    review: "Under review. Approval steps are raised and decided against the version now in the chain.",
+    settled: "Neither editable nor in force: approved and awaiting publication, or retired.",
+    in_force: "In force. Publications, periodic reviews and horizon scans are recorded against it."
+  };
+
+  var ctx = null;          /* lifecycle.document_actions */
+  var reviews = null;      /* horizon.document_reviews */
+  var monitoring = null;   /* monitoring.document_monitoring */
+  var tables = {};
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+  function named(doctype, code) {
+    return code ? escapeHtml(Consilium.reference.label(doctype, code)) : dash();
+  }
+  function value(v) { return (v === null || v === undefined || v === "") ? dash() : escapeHtml(v); }
+  function prose(v) {
+    return v ? '<span style="white-space: pre-line;">' + escapeHtml(v) + "</span>" : dash();
+  }
+  function person(v) { return v ? f.person(v) : dash(); }
+  function dateValue(v) { return v ? escapeHtml(Consilium.util.formatDate(v, false)) : dash(); }
+  function datetimeValue(v) { return v ? escapeHtml(Consilium.util.formatDate(v, true)) : dash(); }
+  function yesNo(v) { return v ? "Yes" : "No"; }
+  function pill(text, tone) {
+    return '<span class="cns-pill cns-status-' + escapeAttr(tone || "neutral") + '">' + escapeHtml(text) + "</span>";
+  }
+  function label(action) { return ((ctx && ctx.action_labels) || {})[action] || action; }
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+  }
+
+  function docLink(name, text) {
+    if (!name) return dash();
+    return '<a href="/policy?name=' + escapeAttr(encodeURIComponent(name)) + '">' +
+      escapeHtml(text || name) + "</a>";
+  }
+
+  function forumLink(name) {
+    if (!name) return dash();
+    return '<a href="/forum?name=' + escapeAttr(encodeURIComponent(name)) + '">' +
+      escapeHtml(Consilium.reference.label("Governance Forum", name)) + "</a>";
+  }
+
+  /* A link held as free text is shown as a link only when it is plainly a web
+     address; anything else — a share path, a javascript: string — is text. */
+  function safeLink(v) {
+    if (!v) return dash();
+    var text = String(v).trim();
+    if (/^https?:\/\//i.test(text)) {
+      return '<a href="' + escapeAttr(text) + '" rel="noopener noreferrer">' + escapeHtml(text) + "</a>";
+    }
+    return escapeHtml(text);
+  }
+
+  function fillList(target, rows) {
+    var node = document.getElementById(target);
+    if (!node) return;
+    node.innerHTML = rows.map(function (row) {
+      return "<div><dt>" + escapeHtml(row[0]) + "</dt><dd>" + row[1] + "</dd></div>";
+    }).join("");
+  }
+
+  function chips(rows, field, doctype, tone) {
+    if (!rows || !rows.length) return dash();
+    return '<ul class="cns-chips">' + rows.map(function (row) {
+      var text = typeof row === "string" ? row : (doctype ? Consilium.reference.label(doctype, row[field]) : row[field]);
+      return '<li><span class="cns-badge cns-status-' + (tone || "neutral") + '">' + escapeHtml(text) + "</span></li>";
+    }).join("") + "</ul>";
+  }
+
+  function errorState(target, title, error) {
+    var node = document.getElementById(target);
+    if (!node) return;
+    node.innerHTML =
+      '<div class="cns-state cns-state--error"><p class="cns-state-title">' + escapeHtml(title) +
+      '</p><p class="cns-state-message">' + escapeHtml((error && error.message) || "") + "</p></div>";
+  }
+
+  function isOverdue(dateString) {
+    if (!dateString) return false;
+    var due = new Date(String(dateString).slice(0, 10) + "T00:00:00");
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return due < today;
+  }
+
+  /** Create a table once, then only replace its rows. */
+  function table(key, options) {
+    if (tables[key]) { tables[key].setData(options.data || []); return tables[key]; }
+    tables[key] = Consilium.Table.create(Object.assign({
+      storageKey: "policy-" + key, rowKey: "name", pageSize: 10, compact: true
+    }, options));
+    return tables[key];
+  }
+
+  /* ------------------------------- tabs -------------------------------- */
+
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  var loaders = {};
+  var loaded = {};
+  var record = null;
+  var recordReady = null;
+
+  function selectTab(tab, focus) {
+    tabs.forEach(function (other) {
+      var selected = other === tab;
+      other.setAttribute("aria-selected", selected ? "true" : "false");
+      other.tabIndex = selected ? 0 : -1;
+      document.getElementById(other.getAttribute("aria-controls")).hidden = !selected;
+    });
+    if (focus) tab.focus();
+    var key = tab.id.replace("tab-", "");
+    if (loaders[key] && !loaded[key]) { loaded[key] = true; loaders[key](); }
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search + "#" + key);
+    }
+  }
+
+  function openTab(key) {
+    var tab = document.getElementById("tab-" + key);
+    if (tab) selectTab(tab, true);
+  }
+
+  tabs.forEach(function (tab, index) {
+    tab.addEventListener("click", function () { selectTab(tab); });
+    tab.addEventListener("keydown", function (event) {
+      var step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (step) {
+        event.preventDefault();
+        selectTab(tabs[(index + step + tabs.length) % tabs.length], true);
+      } else if (event.key === "Home") {
+        event.preventDefault(); selectTab(tabs[0], true);
+      } else if (event.key === "End") {
+        event.preventDefault(); selectTab(tabs[tabs.length - 1], true);
+      }
+    });
+  });
+
+  /* ------------------------------ forms -------------------------------- */
+
+  /* A small form from a field list. The server validates everything again;
+     this only catches an empty required field before a round trip. */
+  function fieldHtml(prefix, field) {
+    var id = prefix + "-" + field.name;
+    var req = field.required ? '<span class="cns-required" aria-hidden="true">*</span>' : "";
+    var help = field.help ? '<span class="cns-help" id="' + id + '-help">' + escapeHtml(field.help) + "</span>" : "";
+    var described = field.help ? ' aria-describedby="' + id + '-help"' : "";
+    var val = field.value === undefined || field.value === null ? "" : field.value;
+    var control;
+    if (field.type === "checkbox") {
+      return '<div class="cns-field"><div class="cns-check"><input type="checkbox" id="' + id + '" data-name="' +
+        escapeAttr(field.name) + '"' + (val ? " checked" : "") + described + '><label for="' + id + '">' +
+        escapeHtml(field.label) + "</label></div>" + help + "</div>";
+    }
+    if (field.type === "checkboxes") {
+      return '<fieldset class="cns-field" data-group="' + escapeAttr(field.name) + '"><legend class="cns-label">' +
+        escapeHtml(field.label) + req + "</legend>" +
+        (field.options || []).map(function (o, i) {
+          return '<div class="cns-check"><input type="checkbox" id="' + id + "-" + i + '" value="' +
+            escapeAttr(o.value) + '"><label for="' + id + "-" + i + '">' + escapeHtml(o.label) + "</label></div>";
+        }).join("") + help + "</fieldset>";
+    }
+    if (field.type === "select") {
+      control = '<select class="cns-select" id="' + id + '" data-name="' + escapeAttr(field.name) + '"' + described + ">" +
+        (field.blank ? '<option value="">' + escapeHtml(field.blank) + "</option>" : "") +
+        (field.options || []).map(function (o) {
+          var opt = typeof o === "string" ? { value: o, label: o } : o;
+          return '<option value="' + escapeAttr(opt.value) + '"' + (String(opt.value) === String(val) ? " selected" : "") +
+            ">" + escapeHtml(opt.label) + "</option>";
+        }).join("") + "</select>";
+    } else if (field.type === "textarea") {
+      control = '<textarea class="cns-textarea" id="' + id + '" rows="' + (field.rows || 3) + '" data-name="' +
+        escapeAttr(field.name) + '"' + (field.required ? " required" : "") + described + ">" + escapeHtml(val) + "</textarea>";
+    } else {
+      control = '<input class="cns-input" type="' + (field.type || "text") + '" id="' + id + '" data-name="' +
+        escapeAttr(field.name) + '" value="' + escapeAttr(val) + '"' + (field.required ? " required" : "") + described + ">";
+    }
+    return '<div class="cns-field"><label class="cns-label" for="' + id + '">' + escapeHtml(field.label) + req +
+      "</label>" + control + help + "</div>";
+  }
+
+  function formHtml(opts) {
+    return '<form class="cns-fieldset cns-policy-form" id="' + opts.id + '" novalidate style="margin-top: var(--cns-space-4);">' +
+      "<legend>" + escapeHtml(opts.legend) + "</legend>" +
+      (opts.intro || "") +
+      '<div class="cns-form-grid">' + opts.fields.filter(function (x) { return !x.wide; }).map(function (x) {
+        return fieldHtml(opts.id, x);
+      }).join("") + "</div>" +
+      opts.fields.filter(function (x) { return x.wide; }).map(function (x) { return fieldHtml(opts.id, x); }).join("") +
+      (opts.extra || "") +
+      '<div class="cns-form-actions"><button type="submit" class="cns-btn ' +
+      (opts.danger ? "cns-btn-danger" : "cns-btn-primary") + '">' + escapeHtml(opts.submit) + "</button>" +
+      (opts.cancel ? '<button type="button" class="cns-btn cns-btn-ghost" data-cancel>Cancel</button>' : "") +
+      "</div></form>";
+  }
+
+  /** Show or clear a field's error. Returns true when the field is valid. */
+  function setError(node, message) {
+    var wrapper = node.closest(".cns-field");
+    var existing = wrapper.querySelector(".cns-error-text");
+    if (message) {
+      node.setAttribute("aria-invalid", "true");
+      if (!existing) {
+        existing = document.createElement("span");
+        existing.className = "cns-error-text";
+        existing.id = (node.id || "field") + "-error";
+        wrapper.appendChild(existing);
+      }
+      existing.textContent = message;
+      var described = (node.getAttribute("aria-describedby") || "").split(" ")
+        .filter(function (v) { return v && v !== existing.id; });
+      described.push(existing.id);
+      node.setAttribute("aria-describedby", described.join(" "));
+      return false;
+    }
+    node.removeAttribute("aria-invalid");
+    if (existing) existing.remove();
+    return true;
+  }
+
+  /** Read a form built by formHtml. Returns null (and marks the fields) when a required one is empty. */
+  function readForm(form, fields) {
+    var values = {};
+    var firstBad = null;
+    fields.forEach(function (field) {
+      if (field.type === "checkboxes") {
+        var group = form.querySelector('[data-group="' + field.name + '"]');
+        values[field.name] = Array.prototype.filter.call(group.querySelectorAll("input"), function (i) {
+          return i.checked;
+        }).map(function (i) { return i.value; });
+        if (field.required && !values[field.name].length) {
+          var first = group.querySelector("input");
+          if (first && !setError(first, "Choose at least one.") && !firstBad) firstBad = first;
+        }
+        return;
+      }
+      var node = form.querySelector('[data-name="' + field.name + '"]');
+      if (!node) return;
+      if (field.type === "checkbox") { values[field.name] = node.checked ? 1 : 0; return; }
+      var v = (node.value || "").trim();
+      values[field.name] = v;
+      var bad = field.required && !v ? (field.requiredMessage || "This is required.") : null;
+      if (!setError(node, bad) && !firstBad) firstBad = node;
+    });
+    if (firstBad) { firstBad.focus(); return null; }
+    return values;
+  }
+
+  /* ------------------------------ calling ------------------------------ */
+
+  /** Post one action, redraw from what the server returns, and say what happened.
+      A refusal is shown where the action was taken as well as in a toast, with
+      the server's own reason, because a refusal is information. */
+  function post(method, args, success, redraw) {
+    var buttons = document.querySelectorAll("#actions-card button, .cns-tabpanel button");
+    Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+    document.getElementById("outcome").innerHTML = "";
+    return Consilium.api.call(POLICY + method, args, { method: "POST" })
+      .then(function (next) {
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+        redraw(next);
+        Consilium.toast.success(success, { title: "Recorded" });
+        Consilium.announce(success);
+        return next;
+      })
+      .catch(function (error) {
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+        var message = (error && error.message) || "The server refused the action.";
+        document.getElementById("outcome").innerHTML =
+          '<div class="cns-alert cns-status-danger" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i>' +
+          "<div><strong>Not done.</strong> " + escapeHtml(message) + "</div></div>";
+        Consilium.toast.error(message, { title: "Not done" });
+        /* Whatever was refused, the page may be stale: read it again. */
+        loadActions();
+        throw error;
+      });
+  }
+
+  function wireForm(containerId, formId, fields, submit) {
+    var form = document.getElementById(formId);
+    if (!form) return;
+    form.addEventListener("input", function (event) {
+      if (event.target.getAttribute && event.target.getAttribute("aria-invalid")) setError(event.target, null);
+    });
+    var cancel = form.querySelector("[data-cancel]");
+    if (cancel) cancel.addEventListener("click", function () { document.getElementById(containerId).innerHTML = ""; });
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var values = readForm(form, fields);
+      if (!values) return;
+      submit(values, form);
+    });
+  }
+
+  /* ------------------------------ the record --------------------------- */
+
+  var defenceLabels = {};
+
+  function readRecord() {
+    return Consilium.api.get("Governing Document", DOCUMENT).then(function (doc) {
+      record = doc;
+      renderSummary(doc);
+      renderDetails(doc);
+      renderPhaseStrip(doc);
+      return doc;
+    });
+  }
+
+  if (READABLE) {
+    recordReady = Promise.all([
+      Consilium.reference.load(["Governing Document Type", "Risk Category", "Organization Unit",
+                                "Risk Type", "Legal Entity", "Jurisdiction", "Regulatory Requirement",
+                                "Retention Class", "Governance Forum"]),
+      Consilium.api.list("Line Of Defence", {
+        fields: ["name", "line_of_defence_name"], limit_page_length: 50, trackLoading: false
+      }).then(function (rows) {
+        rows.forEach(function (r) { defenceLabels[r.name] = r.line_of_defence_name || r.name; });
+      }).catch(function () { /* codes still display */ })
+    ]).then(readRecord);
+    recordReady.catch(function (error) {
+      errorState("doc-summary", "The record could not be read", error);
+    });
+  } else {
+    recordReady = Promise.reject(new Error("not readable"));
+    recordReady.catch(function () { /* summary comes from the action payload */ });
+  }
+
+  function renderSummary(doc) {
+    var tone = PHASE_TONES[doc.lifecycle_phase] || "neutral";
+    var flags = [];
+    flags.push(doc.is_active ? pill("In force", "success") : pill("Not in force", "neutral"));
+    if (doc.requires_review) flags.push(pill("Awaiting review", "warning"));
+    if (doc.is_editable) flags.push(pill("Open for editing", "info"));
+    if (doc.is_active && isOverdue(doc.next_review_on)) flags.push(pill("Review overdue", "danger"));
+    if (doc.regulatory_required) flags.push(pill("Regulatory", "info"));
+    if (doc.handling_classification) {
+      flags.push(pill(doc.handling_classification, HANDLING_TONES[doc.handling_classification]));
+    }
+    document.getElementById("doc-summary").innerHTML =
+      '<div class="cns-card-body">' +
+      '<p class="cns-eyebrow">' + named("Governing Document Type", doc.document_type) + "</p>" +
+      '<p style="margin-bottom: var(--cns-space-3);">' + pill(doc.lifecycle_phase || "", tone) + " " +
+      flags.join(" ") + "</p>" +
+      '<dl class="cns-dl">' +
+      "<div><dt>Reference</dt><dd class=\"cns-mono\">" + escapeHtml(doc.name) + "</dd></div>" +
+      "<div><dt>Version</dt><dd>" + value(doc.version_label) + "</dd></div>" +
+      "<div><dt>Owner</dt><dd>" + person(doc.document_owner) + "</dd></div>" +
+      "<div><dt>Approver</dt><dd>" + person(doc.document_approver) + "</dd></div>" +
+      (doc.effective_on !== undefined ? "<div><dt>Effective</dt><dd>" + dateValue(doc.effective_on) + "</dd></div>" : "") +
+      (doc.next_review_on !== undefined ? "<div><dt>Next review</dt><dd>" + dateValue(doc.next_review_on) + "</dd></div>" : "") +
+      "</dl>" +
+      (!READABLE && doc.document_abstract
+        ? '<p class="cns-prose" style="margin-top: var(--cns-space-3);">' + escapeHtml(doc.document_abstract) + "</p>"
+        : "") +
+      "</div>";
+  }
+
+  function renderDetails(doc) {
+    document.getElementById("detail-abstract").innerHTML =
+      doc.document_abstract ? escapeHtml(doc.document_abstract) : dash();
+
+    fillList("detail-fields", [
+      ["Document name", value(doc.document_name)],
+      ["Document type", named("Governing Document Type", doc.document_type)],
+      ["Lifecycle phase", value(doc.lifecycle_phase)],
+      ["Version", value(doc.version_label)],
+      ["Primary risk category", named("Risk Category", doc.primary_risk_category)],
+      ["Owning operating group", named("Organization Unit", doc.owning_operating_group)],
+      ["Owning line of business", named("Organization Unit", doc.owning_line_of_business)],
+      ["Line of defence", doc.line_of_defence
+        ? escapeHtml(defenceLabels[doc.line_of_defence] || doc.line_of_defence) : dash()],
+      ["Approving forum", forumLink(doc.approving_forum)],
+      ["Parent document", docLink(doc.parent_document)],
+      ["Superseded by", docLink(doc.superseded_by)],
+      ["Effective on", dateValue(doc.effective_on)],
+      ["Next review on", dateValue(doc.next_review_on)],
+      ["Review every", doc.review_frequency_months
+        ? escapeHtml(doc.review_frequency_months + " months") : dash()],
+      ["Retired on", dateValue(doc.retired_on)],
+      ["Regulatory required", yesNo(doc.regulatory_required)],
+      ["Training required", yesNo(doc.training_required)],
+      ["Material entity impact", yesNo(doc.material_entity_impact)],
+      ["Retention class", named("Retention Class", doc.retention_class)],
+      ["Where the text is held", safeLink(doc.direct_document_link)],
+      ["Last updated", datetimeValue(doc.modified)]
+    ]);
+
+    fillList("detail-people", [
+      ["Owner", person(doc.document_owner)],
+      ["Approver", person(doc.document_approver)],
+      ["Sponsor", person(doc.document_sponsor)],
+      ["Liaison", person(doc.document_liaison)],
+      ["Delegate", person(doc.document_delegate)],
+      ["Key contact", person(doc.key_contact)]
+    ]);
+
+    table("roles", {
+      target: "#roles-table",
+      data: doc.accountability_roles || [],
+      caption: "Accountability roles held against this document",
+      searchable: false,
+      defaultSort: { field: "role", order: "asc" },
+      emptyTitle: "No named roles",
+      emptyMessage: "No accountability role is recorded beyond the people above.",
+      columns: [
+        { field: "role", label: "Role", sortable: true },
+        { field: "user", label: "Person", sortable: true, formatter: person },
+        { field: "user_group", label: "Group", sortable: true, formatter: function (v) { return value(v); } },
+        { field: "is_primary", label: "Primary", sortable: true, formatter: function (v) { return yesNo(v); } },
+        { field: "from_date", label: "From", sortable: true, formatter: f.date },
+        { field: "to_date", label: "To", sortable: true,
+          formatter: function (v) { return v ? dateValue(v) : "Current"; } }
+      ]
+    });
+
+    fillList("detail-scope", [
+      ["Business units", chips(doc.owning_business_units, "organization_unit", "Organization Unit")],
+      ["Legal entities", chips(doc.legal_entities, "legal_entity", "Legal Entity")],
+      ["Jurisdictions", chips(doc.jurisdictions, "jurisdiction", "Jurisdiction")],
+      ["Risk types", chips(doc.risk_types, "risk_type", "Risk Type")],
+      ["Material entities", chips(doc.material_entities, "material_entity", null)]
+    ]);
+
+    table("applicability", {
+      target: "#applicability-table",
+      data: doc.applicability || [],
+      caption: "Where this document applies",
+      searchFields: ["scope_type", "scope_label", "scope_value"],
+      searchPlaceholder: "Search applicability",
+      defaultSort: { field: "scope_type", order: "asc" },
+      emptyTitle: "No applicability recorded",
+      emptyMessage: "Until applicability is recorded, nobody can be told when this document changes.",
+      columns: [
+        { field: "scope_type", label: "Applies to", sortable: true },
+        { field: "scope_label", label: "Scope", sortable: true,
+          formatter: function (v, row) { return value(v || row.scope_value); } },
+        { field: "applies_from", label: "From", sortable: true, formatter: f.date },
+        { field: "applies_to", label: "To", sortable: true,
+          formatter: function (v) { return v ? dateValue(v) : "Open-ended"; } },
+        { field: "notification_group", label: "Notified group", formatter: function (v) { return value(v); } },
+        { field: "notes", label: "Note", formatter: f.truncate(80) }
+      ]
+    });
+
+    table("regulatory", {
+      target: "#regulatory-table",
+      data: doc.regulatory_references || [],
+      caption: "Regulatory references",
+      searchFields: ["citation", "obligation_summary"],
+      searchPlaceholder: "Search references",
+      defaultSort: { field: "regulatory_requirement", order: "asc" },
+      emptyTitle: "No regulatory references",
+      emptyMessage: "This document cites no regulatory requirement.",
+      columns: [
+        { field: "regulatory_requirement", label: "Requirement", sortable: true,
+          formatter: function (v) { return named("Regulatory Requirement", v); } },
+        { field: "citation", label: "Citation", sortable: true, formatter: function (v) { return value(v); } },
+        { field: "jurisdiction", label: "Jurisdiction", sortable: true,
+          formatter: function (v) { return named("Jurisdiction", v); } },
+        { field: "obligation_summary", label: "Obligation", formatter: f.truncate(90) },
+        { field: "effective_from", label: "Effective", sortable: true, formatter: f.date },
+        { field: "last_verified_on", label: "Last verified", sortable: true, formatter: f.date }
+      ]
+    });
+
+    fillList("detail-handling", [
+      ["Handling classification", value(doc.handling_classification)],
+      ["Confidential", yesNo(doc.confidential)],
+      ["Download allowed", yesNo(doc.allow_download)],
+      ["Printing allowed", yesNo(doc.allow_print)],
+      ["Sharing allowed", yesNo(doc.allow_share)]
+    ]);
+  }
+
+  /* P-24 / E15-S4: the definitions in context. `glossary.in_context` checks read
+     access, counts each term's use in the current text (the terms used come
+     first) and reports wording the approved glossary does not allow. */
+  function loadGlossary() {
+    Consilium.api
+      .call(POLICY + "glossary.in_context", { document: DOCUMENT }, { trackLoading: false })
+      .then(function (result) {
+        var findings = (result && result.findings) || [];
+        document.getElementById("glossary-findings").innerHTML = findings.length
+          ? '<div class="cns-alert cns-status-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>' +
+            "<div><strong>Wording the approved glossary does not allow.</strong> It is refused the next time that " +
+            'text is saved or a version with it is uploaded.<ul class="cns-prose" style="margin-top: var(--cns-space-2);">' +
+            findings.map(function (item) {
+              return "<li>“" + escapeHtml(item.found) + "” in " + escapeHtml(FIELD_LABELS[item.field] || item.field) +
+                ": use “" + escapeHtml(item.use) + "”</li>";
+            }).join("") + "</ul></div></div>"
+          : "";
+        table("glossary", {
+          target: "#glossary-body",
+          data: (result && result.terms) || [],
+          caption: "Glossary terms that apply to this document",
+          searchFields: ["term", "definition"],
+          searchPlaceholder: "Search definitions",
+          defaultSort: { field: "occurrences", order: "desc" },
+          emptyTitle: "No definitions apply",
+          emptyMessage: "No glossary term is linked to this document and no enterprise term is in force.",
+          columns: [
+            { field: "term", label: "Term", sortable: true,
+              formatter: function (v, row) {
+                return "<strong>" + escapeHtml(v) + "</strong>" + (row.enforce_usage ? " " + pill("Enforced", "info") : "");
+              } },
+            { field: "occurrences", label: "Used in the text", sortable: true, align: "end",
+              formatter: function (v, row) {
+                return row.used ? escapeHtml(String(v)) + (v === 1 ? " time" : " times")
+                  : '<span class="cns-text-muted">Not used</span>';
+              } },
+            { field: "definition", label: "Definition", formatter: function (v) { return prose(v); } },
+            { field: "scope_level", label: "Scope", sortable: true, formatter: function (v) { return value(v); } },
+            { field: "synonyms", label: "Also called",
+              formatter: function (v) { return v && v.length ? escapeHtml(v.join(", ")) : dash(); } },
+            { field: "context_note", label: "In this document", formatter: f.truncate(90) },
+            { field: "version_label", label: "Version", formatter: function (v) { return value(v); } }
+          ]
+        });
+      })
+      .catch(function (error) { errorState("glossary-body", "Definitions could not be read", error); });
+  }
+
+  /* --------------------------- correcting metadata --------------------- */
+
+  /* E15-S5. The server lists the fields a correction may set (never the text,
+     the version or the lifecycle), the missing ones first, with the values a
+     select or taxonomy may take — active values only, plus whatever the record
+     already holds. One field at a time, with a reason. */
+  var correction = null;
+
+  /* A comment is stored escaped for the workspace timeline; decode it to text
+     through a textarea, which never runs markup, then escape it for display. */
+  function commentText(html) {
+    var box = document.createElement("textarea");
+    box.innerHTML = String(html || "").replace(/<[^>]*>/g, " ");
+    return box.value;
+  }
+
+  function correctionControl(field) {
+    var id = "correct-value";
+    if (field.fieldtype === "Check") {
+      return '<div class="cns-check"><input type="checkbox" id="' + id + '"' + (field.value === "1" ? " checked" : "") +
+        '><label for="' + id + '">' + escapeHtml(field.label) + "</label></div>";
+    }
+    if (field.choices) {
+      return '<select class="cns-select" id="' + id + '"><option value="">(empty)</option>' +
+        field.choices.map(function (c) {
+          return '<option value="' + escapeAttr(c.value) + '"' + (String(c.value) === String(field.value) ? " selected" : "") +
+            ">" + escapeHtml(c.label) + "</option>";
+        }).join("") + "</select>";
+    }
+    if (/Text/.test(field.fieldtype)) {
+      return '<textarea class="cns-textarea" id="' + id + '" rows="3">' + escapeHtml(field.value || "") + "</textarea>";
+    }
+    var type = field.fieldtype === "Date" ? "date" : field.fieldtype === "Int" || field.fieldtype === "Float" ? "number" : "text";
+    var value = field.fieldtype === "Date" ? String(field.value || "").slice(0, 10) : (field.value || "");
+    return '<input class="cns-input" type="' + type + '" id="' + id + '" value="' + escapeAttr(value) + '"' +
+      (field.link_doctype ? ' aria-describedby="correct-value-help"' : "") + ">" +
+      (field.link_doctype ? '<span class="cns-help" id="correct-value-help">The reference of the ' +
+        escapeHtml(field.link_doctype) + " record.</span>" : "");
+  }
+
+  function renderCorrection(ctx) {
+    correction = ctx;
+    var body = document.getElementById("correct-body");
+    if (!body) return;
+    var history = (ctx.history || []).length
+      ? '<details style="margin-top: var(--cns-space-4);"><summary>Earlier corrections (' + ctx.history.length +
+        ')</summary><ul class="cns-timeline">' + ctx.history.map(function (h) {
+          return "<li>" + escapeHtml(commentText(h.content)) + '<span class="cns-timeline-meta">' +
+            datetimeValue(h.creation) + "</span></li>";
+        }).join("") + "</ul></details>"
+      : "";
+    var missing = (ctx.missing || []).map(function (m) { return FIELD_LABELS[m] || m; });
+    var intro = missing.length
+      ? '<div class="cns-alert cns-status-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><div>' +
+        "<strong>Required metadata missing:</strong> " + escapeHtml(missing.join(", ")) + "</div></div>"
+      : '<p class="cns-text-muted cns-text-sm">No required metadata is missing.</p>';
+    if (!ctx.can_correct) {
+      body.innerHTML = intro + '<p class="cns-text-muted cns-text-sm">Corrections are made by the owner of the ' +
+        "document or the policy office.</p>" + history;
+      return;
+    }
+    body.innerHTML = intro +
+      '<form class="cns-fieldset cns-policy-form" id="correct-form" novalidate style="margin-top: var(--cns-space-4);">' +
+      "<legend>Correct a field</legend><div class=\"cns-form-grid\">" +
+      '<div class="cns-field"><label class="cns-label" for="correct-field">Field</label>' +
+      '<select class="cns-select" id="correct-field">' + ctx.fields.map(function (field) {
+        return '<option value="' + escapeAttr(field.fieldname) + '">' + escapeHtml(field.label) +
+          (field.missing ? " (missing)" : field.required ? " (required)" : "") + "</option>";
+      }).join("") + "</select></div>" +
+      '<div class="cns-field" id="correct-value-field"></div></div>' +
+      '<div class="cns-field"><label class="cns-label" for="correct-reason">Why the value was wrong' +
+      '<span class="cns-required" aria-hidden="true">*</span></label>' +
+      '<textarea class="cns-textarea" id="correct-reason" rows="2" required aria-describedby="correct-reason-help"></textarea>' +
+      '<span class="cns-help" id="correct-reason-help">Kept on the record with the old and new values.</span></div>' +
+      '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">Record the correction</button></div>' +
+      "</form>" + history;
+
+    var select = document.getElementById("correct-field");
+    function showValue() {
+      var field = ctx.fields.filter(function (x) { return x.fieldname === select.value; })[0];
+      var holder = document.getElementById("correct-value-field");
+      holder.innerHTML = field.fieldtype === "Check" ? correctionControl(field)
+        : '<label class="cns-label" for="correct-value">New value</label>' + correctionControl(field) +
+          '<span class="cns-help">Now: ' + (field.value ? escapeHtml(field.value) : "empty") + "</span>";
+    }
+    select.addEventListener("change", showValue);
+    showValue();
+
+    document.getElementById("correct-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      var reason = document.getElementById("correct-reason");
+      if (!setError(reason, reason.value.trim() ? null : "Say why the value was wrong.")) { reason.focus(); return; }
+      var control = document.getElementById("correct-value");
+      var value = control.type === "checkbox" ? (control.checked ? 1 : 0) : control.value.trim();
+      post("metadata.correct_metadata", { document: DOCUMENT, fieldname: select.value, value: value,
+        reason: reason.value.trim() }, "Correction recorded; no new version was made.", function (next) {
+        renderCorrection(next);
+        if (READABLE) readRecord().catch(function () { /* the summary keeps its last reading */ });
+      }).catch(function () { /* shown above */ });
+    });
+  }
+
+  function loadCorrection() {
+    Consilium.api.call(POLICY + "metadata.correction_form", { document: DOCUMENT }, { trackLoading: false })
+      .then(renderCorrection)
+      .catch(function (error) { errorState("correct-body", "The correction panel could not be read", error); });
+  }
+
+  /* ------------------------------ lifecycle ---------------------------- */
+
+  function renderPhaseStrip(doc) {
+    var strip = document.getElementById("phase-strip");
+    if (!strip) return;
+    /* The strip follows the configured order. A phase before the current one
+       is shown as passed; that is a reading of position, not a decision. */
+    var current = PHASES.indexOf(doc.lifecycle_phase);
+    strip.innerHTML = PHASES.map(function (phase, i) {
+      var state = current === -1 ? "pending" : i < current ? "done" : i === current ? "current" : "pending";
+      var marker = state === "done" ? '<i class="bi bi-check"></i>' : String(i + 1);
+      return '<li class="cns-workflow-step" data-state="' + state + '"' +
+        (state === "current" ? ' aria-current="step"' : "") + ">" +
+        '<span class="cns-workflow-marker" aria-hidden="true">' + marker + "</span>" +
+        escapeHtml(phase) +
+        (state === "done" ? '<span class="cns-visually-hidden"> (passed)</span>' : "") +
+        (state === "current" ? '<span class="cns-visually-hidden"> (current)</span>' : "") +
+        "</li>";
+    }).join("");
+
+    fillList("lifecycle-flags", [
+      ["In force", yesNo(doc.is_active)],
+      ["Open for editing", yesNo(doc.is_editable)],
+      ["Awaiting review", yesNo(doc.requires_review)],
+      ["Implementation confirmed", doc.implementation_confirmed_on
+        ? dateValue(doc.implementation_confirmed_on) + " by " + person(doc.implementation_confirmed_by)
+        : dash()],
+      ["Implementation verified", doc.implementation_verified_on
+        ? dateValue(doc.implementation_verified_on) + " by " + person(doc.implementation_verified_by)
+        : dash()]
+    ]);
+  }
+
+  function renderReadiness() {
+    var body = document.getElementById("readiness-body");
+    if (!body) return;
+    var actions = ctx.lifecycle || [];
+    if (!actions.length) {
+      body.innerHTML = '<p class="cns-text-muted">No action is configured from the current phase.</p>';
+      return;
+    }
+    body.innerHTML = '<div class="cns-table-wrap"><table class="cns-table cns-table--compact">' +
+      '<caption class="cns-visually-hidden">Lifecycle actions configured from the current phase</caption>' +
+      '<thead><tr><th scope="col">Action</th><th scope="col">Leads to</th>' +
+      '<th scope="col">Taken by</th><th scope="col">Open to you</th>' +
+      '<th scope="col">Would be refused because</th></tr></thead><tbody>' +
+      actions.map(function (a) {
+        var blocked = a.blocked_by || [];
+        return "<tr><th scope=\"row\">" + escapeHtml(a.action) + "</th>" +
+          "<td>" + escapeHtml(a.next_state || "") + "</td>" +
+          "<td>" + value(a.allowed_role) + "</td>" +
+          "<td>" + (a.offered ? "Yes" : "No") + "</td>" +
+          "<td>" + (blocked.length
+            ? '<ul class="cns-prose" style="margin:0;">' + blocked.map(function (b) {
+                return "<li>" + escapeHtml(b) + "</li>";
+              }).join("") + "</ul>"
+            : pill("Nothing — the way is clear", "success")) +
+          "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+
+  /* --- dispositions (P-26) ------------------------------------------------ */
+
+  var DISPOSITION_TONES = { "Review Returned": "warning", "Review Accepted": "success", Retired: "neutral" };
+
+  function loadDispositions() {
+    Consilium.api.call(POLICY + "disposition.document_dispositions", { document: DOCUMENT }, { trackLoading: false })
+      .then(function (rows) {
+        table("dispositions", {
+          target: "#dispositions-table", data: rows || [], caption: "Dispositions of this document",
+          searchFields: ["disposition_kind", "reason"], searchPlaceholder: "Search dispositions",
+          defaultSort: { field: "decided_on", order: "desc" },
+          emptyTitle: "No dispositions yet",
+          emptyMessage: "A disposition is recorded when a review round ends or the document is retired.",
+          columns: [
+            { field: "disposition_kind", label: "Disposition", sortable: true, formatter: f.status(DISPOSITION_TONES) },
+            { field: "version_label", label: "Version", sortable: true, formatter: function (v) { return value(v); } },
+            { field: "decided_by", label: "By", sortable: true, formatter: person },
+            { field: "decided_on", label: "When", sortable: true, formatter: f.datetime },
+            { field: "reason", label: "Comments or reason", formatter: function (v) { return prose(v); } },
+            { field: "notified_count", label: "Told", sortable: true, align: "end", formatter: f.number },
+            { field: "retention_outcome", label: "Retention", formatter: function (v, row) {
+                return v ? prose(v) + (row.legal_hold ? " " + pill("Legal hold", "danger") : "") : dash();
+              } }
+          ]
+        });
+      })
+      .catch(function (error) { errorState("dispositions-table", "Dispositions could not be read", error); });
+  }
+
+  /* --- asking for, and approving, a gate exception (P-25) ------------------ */
+
+  function renderExceptionRequests() {
+    var holder = document.getElementById("exception-requests");
+    if (!holder) return;
+    var pending = ctx.pending_exception_authorisations || [];
+    var html = pending.length
+      ? '<h3 class="cns-card-title" style="margin-top: var(--cns-space-4);">Waiting for approval</h3>' +
+        '<dl class="cns-dl cns-dl--stacked">' + pending.map(function (ea) {
+          return "<div><dt><span class=\"cns-mono\">" + escapeHtml(ea.name) + "</span> &middot; asked by " +
+            person(ea.requested_by) + "</dt><dd>" + prose(ea.justification) +
+            (ea.valid_to ? '<br><span class="cns-text-muted cns-text-xs">Would be valid to ' + dateValue(ea.valid_to) +
+              "</span>" : "") +
+            (ea.can_approve ? '<br><button type="button" class="cns-btn cns-btn-primary cns-btn-sm" data-approve-exception="' +
+              escapeAttr(ea.name) + '">Approve this exception</button>'
+              : '<br><span class="cns-text-muted cns-text-xs">Approved by the policy office, by someone other than ' +
+                "the person who asked.</span>") +
+            "</dd></div>";
+        }).join("") + "</dl>"
+      : "";
+    if (ctx.actions.request_gate_exception) {
+      var blocked = (ctx.lifecycle || []).filter(function (a) { return (a.blocked_by || []).length; });
+      html += formHtml({
+        id: "exception-request-form", legend: label("request_gate_exception"), submit: "Ask for the exception",
+        intro: '<p class="cns-help" style="margin-bottom: var(--cns-space-3);">Refused today: ' +
+          escapeHtml(blocked.map(function (a) { return a.action; }).join(", ")) +
+          ". The policy office approves an exception, never the person who asked for it; only then can it be " +
+          "named to take the action.</p>",
+        fields: [
+          { name: "justification", label: "Justification", type: "textarea", wide: true, rows: 3, required: true,
+            requiredMessage: "Say why the gate should be excused." },
+          { name: "valid_to", label: "Valid to (optional)", type: "date" }
+        ]
+      });
+    }
+    holder.innerHTML = html;
+    wireForm("exception-requests", "exception-request-form",
+      [{ name: "justification", required: true, requiredMessage: "Say why the gate should be excused." },
+       { name: "valid_to" }],
+      function (values) {
+        post("lifecycle.request_gate_exception", { document: DOCUMENT, justification: values.justification,
+          valid_to: values.valid_to || null }, "Exception requested; the policy office approves it.", renderContext)
+          .then(function () { openTab("approval"); }).catch(function () {});
+      });
+  }
+
+  document.getElementById("panel-approval").addEventListener("click", function (event) {
+    var button = event.target.closest("[data-approve-exception]");
+    if (!button) return;
+    post("lifecycle.approve_gate_exception", { exception_authorisation: button.getAttribute("data-approve-exception") },
+      "Exception approved.", renderContext).then(function () { openTab("approval"); }).catch(function () {});
+  });
+
+  /* --- the action bar --------------------------------------------------- */
+
+  /* Everything that is not a lifecycle transition is taken where its detail
+     lives; the bar only points there. Which appear is the server's decision. */
+  var SHORTCUTS = [
+    { key: "raise_approval_steps", tab: "approval", icon: "bi-diagram-3" },
+    { key: "record_step_decision", tab: "approval", icon: "bi-check2-square", tone: "primary" },
+    { key: "authorise_bypass", tab: "approval", icon: "bi-skip-forward" },
+    { key: "upload_version", tab: "versions", icon: "bi-upload" },
+    { key: "revert_version", tab: "versions", icon: "bi-arrow-counterclockwise" },
+    { key: "record_publication", tab: "versions", icon: "bi-megaphone" },
+    { key: "open_review_cycle", tab: "reviews", icon: "bi-calendar-check" },
+    { key: "record_horizon_scan", tab: "reviews", icon: "bi-binoculars" },
+    { key: "log_violation", tab: "monitoring", icon: "bi-exclamation-diamond" },
+    { key: "request_gate_exception", tab: "approval", icon: "bi-shield-exclamation" },
+    { key: "approve_gate_exception", tab: "approval", icon: "bi-shield-check", tone: "primary" },
+    { key: "open_attestation_campaign", tab: "reviews", icon: "bi-person-check" },
+    { key: "correct_metadata", tab: "details", icon: "bi-pencil-square" }
+  ];
+
+  function renderActions() {
+    var buttons = document.getElementById("action-buttons");
+    var notes = document.getElementById("action-notes");
+    document.getElementById("action-panel").innerHTML = "";
+    document.getElementById("actions-subtitle").textContent = STAGE_TEXT[ctx.stage] || "";
+
+    var html = [];
+    var noteHtml = [];
+    (ctx.lifecycle || []).filter(function (a) { return a.offered; }).forEach(function (a, i) {
+      var blocked = a.blocked_by || [];
+      var excusable = blocked.length && (ctx.exception_authorisations || []).length;
+      var noteId = "lifecycle-note-" + i;
+      if (blocked.length) {
+        noteHtml.push('<div class="cns-alert cns-status-warning" id="' + noteId + '">' +
+          '<i class="bi bi-exclamation-triangle" aria-hidden="true"></i><div><strong>' +
+          escapeHtml(a.action) + " would be refused today.</strong>" +
+          '<ul class="cns-prose" style="margin-top: var(--cns-space-2);">' +
+          blocked.map(function (b) { return "<li>" + escapeHtml(b) + "</li>"; }).join("") + "</ul>" +
+          (excusable ? "<p>An approved exception authorisation is recorded for this document; you may name it to proceed.</p>" : "") +
+          "</div></div>");
+      }
+      html.push('<button type="button" class="cns-btn cns-btn-primary" data-lifecycle="' + escapeAttr(a.action) + '"' +
+        (blocked.length && !excusable ? ' disabled aria-describedby="' + noteId + '"' : "") + ">" +
+        '<i class="bi bi-arrow-right-circle" aria-hidden="true"></i> ' + escapeHtml(a.action) + "</button>");
+    });
+    SHORTCUTS.forEach(function (s) {
+      if (!ctx.actions[s.key]) return;
+      html.push('<button type="button" class="cns-btn ' + (s.tone === "primary" ? "cns-btn-primary" : "cns-btn-secondary") +
+        '" data-tab="' + s.tab + '"><i class="bi ' + s.icon + '" aria-hidden="true"></i> ' +
+        escapeHtml(label(s.key)) + "</button>");
+    });
+    buttons.innerHTML = html.join("");
+    notes.innerHTML = html.length ? noteHtml.join("")
+      : '<p class="cns-text-muted">Nothing here is yours to do at this stage.</p>';
+  }
+
+  document.getElementById("action-buttons").addEventListener("click", function (event) {
+    var button = event.target.closest("button");
+    if (!button || button.disabled) return;
+    if (button.getAttribute("data-tab")) { openTab(button.getAttribute("data-tab")); return; }
+    var name = button.getAttribute("data-lifecycle");
+    var entry = (ctx.lifecycle || []).filter(function (a) { return a.action === name; })[0];
+    if (entry) openLifecyclePanel(entry);
+  });
+
+  function openLifecyclePanel(entry) {
+    var panel = document.getElementById("action-panel");
+    var blocked = entry.blocked_by || [];
+    var fields = [];
+    if (blocked.length) {
+      fields.push({ name: "exception_authorisation", label: "Exception authorisation that excuses the refusal",
+        type: "select", required: true, requiredMessage: "Name the exception authorisation.",
+        blank: "Choose an authorisation",
+        options: (ctx.exception_authorisations || []).map(function (ea) {
+          return { value: ea.name, label: ea.name + " — " + (ea.exception_type || "") + ", approved by " + (ea.approved_by || "") };
+        }),
+        help: "Only approved, unexpired authorisations recorded for this document are listed." });
+    }
+    /* P-26: a return from review carries the reviewer's comments to the owner,
+       and a retirement its reason to the audience. The server says which
+       transitions need them (from the flags, never the phase name). */
+    fields.push({ name: "comments", label: entry.comments_required ? "Comments" : "Comments (optional)",
+      type: "textarea", wide: true, rows: 4, required: !!entry.comments_required,
+      requiredMessage: "Enter your comments.",
+      help: entry.comments_required || "Recorded with the disposition this transition produces, where it produces one." });
+    panel.innerHTML = formHtml({
+      id: "lifecycle-form", legend: entry.action,
+      intro: '<div class="cns-alert cns-status-info"><i class="bi bi-info-circle" aria-hidden="true"></i><div>' +
+        "This moves the document from " + escapeHtml(ctx.document.lifecycle_phase || "") + " to " +
+        escapeHtml(entry.next_state || "") + ". Every gate on " + escapeHtml(entry.next_state || "") +
+        " is checked again when you confirm, and a refusal is recorded with its reason.</div></div>",
+      fields: fields, submit: "Confirm: " + entry.action, cancel: true
+    });
+    panel.querySelector("button[type=submit]").focus();
+    wireForm("action-panel", "lifecycle-form", fields, function (values) {
+      post("lifecycle.take_action",
+        { document: DOCUMENT, action: entry.action, exception_authorisation: values.exception_authorisation || null,
+          comments: values.comments || null },
+        entry.action + " done.", function (next) {
+          renderContext(next);
+          if (READABLE) {
+            readRecord().catch(function () { /* the summary keeps its last reading */ });
+            if (loaded.lifecycle) loadDispositions();
+          }
+        }).catch(function () { /* shown above */ });
+    });
+  }
+
+  /* --- approval ---------------------------------------------------------- */
+
+  function renderChain(chain) {
+    var body = document.getElementById("chain-body");
+    function list(items) {
+      return items && items.length
+        ? '<ul class="cns-chips">' + items.map(function (i) {
+            return '<li><span class="cns-badge cns-status-neutral">' + escapeHtml(i) + "</span></li>";
+          }).join("") + "</ul>"
+        : dash();
+    }
+    body.innerHTML =
+      '<p style="margin-bottom: var(--cns-space-3);">' + (chain.complete
+        ? pill("Complete", "success") : pill("Not yet complete", "warning")) + "</p>" +
+      '<dl class="cns-dl">' +
+      "<div><dt>Approvals required</dt><dd>" + list(chain.expected_steps) + "</dd></div>" +
+      "<div><dt>Not yet requested</dt><dd>" + list(chain.missing) + "</dd></div>" +
+      "<div><dt>Awaiting a decision</dt><dd>" + list(chain.outstanding) + "</dd></div>" +
+      "<div><dt>Carrying an objection</dt><dd>" + list(chain.objections) + "</dd></div>" +
+      "</dl>";
+  }
+
+  function decisionColumns() {
+    return [
+      { field: "approval_step", label: "Step", sortable: true },
+      { field: "step_sequence", label: "Order", sortable: true, align: "end", formatter: f.number },
+      { field: "assigned_to", label: "Assigned to", sortable: true,
+        formatter: function (v, row) { return person(v) + (row.can_decide ? " " + pill("Yours to decide", "primary") : ""); } },
+      { field: "decision", label: "Decision", sortable: true, formatter: f.status(DECISION_TONES) },
+      { field: "acted_by", label: "Decided by", sortable: true,
+        formatter: function (v, row) {
+          return person(v) + (row.acting_delegation ? ' <span class="cns-text-muted cns-text-xs">under ' +
+            escapeHtml(row.acting_delegation) + "</span>" : "");
+        } },
+      { field: "decided_on", label: "Decided", sortable: true, formatter: function (v) { return datetimeValue(v); } },
+      { field: "comments", label: "Comments", formatter: f.truncate(90) },
+      { field: "exception_authorisation", label: "Exception", formatter: function (v) { return value(v); } }
+    ];
+  }
+
+  function renderApproval() {
+    var a = ctx.approval;
+    renderChain(a.chain);
+    document.getElementById("route-note").textContent =
+      (a.route ? "Route “" + a.route + "”" : "No configured route matches; only lineage steps apply") +
+      (a.change_classification ? ", for a " + a.change_classification + " change" : "") +
+      ". Each step is decided by the person it is assigned to, or someone holding their live delegation.";
+
+    var planned = document.getElementById("planned-steps");
+    if (a.unraised.length) {
+      planned.innerHTML = '<div class="cns-alert cns-status-info"><i class="bi bi-diagram-3" aria-hidden="true"></i><div>' +
+        "<strong>Not yet raised for this version:</strong>" +
+        '<ul class="cns-prose" style="margin-top: var(--cns-space-2);">' +
+        a.planned_steps.filter(function (s) { return a.unraised.indexOf(s.approval_step) !== -1; }).map(function (s) {
+          return "<li>" + escapeHtml(s.approval_step) + " — " + person(s.assigned_to) +
+            (s.assignee_fallback ? " (the document approver, because the route's assignee could not be resolved)" : "") +
+            "</li>";
+        }).join("") + "</ul>" +
+        (ctx.actions.raise_approval_steps
+          ? '<button type="button" class="cns-btn cns-btn-primary" id="raise-steps">' +
+            '<i class="bi bi-diagram-3" aria-hidden="true"></i> ' + escapeHtml(label("raise_approval_steps")) + "</button>"
+          : (ctx.document.requires_review
+            ? '<p class="cns-text-muted cns-text-sm">The document owner or the policy office raises them.</p>'
+            : '<p class="cns-text-muted cns-text-sm">They are raised while the document is under review.</p>')) +
+        "</div></div>";
+    } else {
+      planned.innerHTML = "";
+    }
+
+    var current = a.decisions.filter(function (r) { return r.current_cycle; });
+    var earlier = a.decisions.filter(function (r) { return !r.current_cycle; });
+    table("steps", {
+      target: "#steps-table", data: current, caption: "Approval steps on the current version",
+      searchable: false, defaultSort: { field: "step_sequence", order: "asc" },
+      emptyTitle: "No approval steps raised for this version",
+      emptyMessage: "Approvals are of a version: steps raised on an earlier version do not count.",
+      columns: decisionColumns()
+    });
+    document.getElementById("earlier-steps").innerHTML = earlier.length
+      ? '<details style="margin-top: var(--cns-space-4);"><summary>Decisions on earlier versions (' + earlier.length +
+        ')</summary><div id="earlier-table"></div></details>'
+      : "";
+    if (earlier.length) {
+      delete tables.earlier;
+      table("earlier", {
+        target: "#earlier-table", data: earlier, caption: "Approval decisions on earlier versions",
+        searchable: false, defaultSort: { field: "decided_on", order: "desc" }, columns: decisionColumns()
+      });
+    }
+
+    var mine = current.filter(function (row) { return row.can_decide && row.is_open; });
+    var choices = a.step_decisions.map(function (c) {
+      return { value: c.decision, label: c.decision + (c.needs_reason ? " (needs a reason)" : "") };
+    });
+    document.getElementById("step-forms").innerHTML = mine.map(function (row) {
+      return formHtml({
+        id: "decide-" + row.name.replace(/[^A-Za-z0-9_-]/g, ""),
+        legend: "Your decision: " + row.approval_step,
+        intro: '<p class="cns-help" style="margin-bottom: var(--cns-space-3);">Assigned to ' +
+          person(row.assigned_to) + ". If you are acting under a delegation it is recorded with your decision.</p>",
+        fields: [
+          { name: "decision", label: "Decision", type: "select", options: choices },
+          { name: "comments", label: "Comments", type: "textarea", wide: true,
+            help: "Required unless you approve. Recorded against the step in your name." }
+        ],
+        submit: "Record decision"
+      });
+    }).join("");
+    mine.forEach(function (row) {
+      var formId = "decide-" + row.name.replace(/[^A-Za-z0-9_-]/g, "");
+      var fields = [{ name: "decision", type: "select" }, { name: "comments", type: "textarea" }];
+      wireForm("step-forms", formId, fields, function (values, form) {
+        var needs = a.step_decisions.filter(function (c) { return c.decision === values.decision; })[0];
+        var box = form.querySelector('[data-name="comments"]');
+        if (needs && needs.needs_reason && !values.comments) {
+          setError(box, "Enter the reason for this decision."); box.focus(); return;
+        }
+        post("routing.decide_step",
+          { document: DOCUMENT, approval_decision: row.name, decision: values.decision, comments: values.comments },
+          "Your decision on " + row.approval_step + " is recorded.", renderContext)
+          .then(function () { openTab("approval"); }).catch(function () {});
+      });
+    });
+
+    renderExceptions();
+    renderExceptionRequests();
+  }
+
+  document.getElementById("panel-approval").addEventListener("click", function (event) {
+    if (event.target.closest("#raise-steps")) {
+      post("routing.raise_steps", { document: DOCUMENT }, "Approval steps raised; each approver has been told.",
+        renderContext).catch(function () {});
+    }
+  });
+
+  function renderExceptions() {
+    var list = ctx.exception_authorisations || [];
+    document.getElementById("exception-body").innerHTML = list.length
+      ? '<dl class="cns-dl cns-dl--stacked">' + list.map(function (ea) {
+          return "<div><dt><span class=\"cns-mono\">" + escapeHtml(ea.name) + "</span> &middot; " +
+            escapeHtml(ea.exception_type || "") + "</dt><dd>" + prose(ea.justification) +
+            '<br><span class="cns-text-muted cns-text-xs">Approved by ' + escapeHtml(ea.approved_by || "") +
+            " on " + datetimeValue(ea.approved_on) + (ea.valid_to ? ", valid to " + dateValue(ea.valid_to) : "") +
+            "</span></dd></div>";
+        }).join("") + "</dl>"
+      : '<p class="cns-text-muted">No exception authorisation is recorded for this document.</p>';
+
+    var open = ctx.approval.decisions.filter(function (r) { return ctx.approval.bypassable.indexOf(r.name) !== -1; });
+    var holder = document.getElementById("bypass-forms");
+    if (!ctx.actions.authorise_bypass || !open.length) { holder.innerHTML = ""; return; }
+    var fields = [
+      { name: "approval_decision", label: "Step to bypass", type: "select",
+        options: open.map(function (r) { return { value: r.name, label: r.approval_step + " (" + r.assigned_to + ")" }; }) },
+      { name: "justification", label: "Justification", type: "textarea", wide: true, required: true, rows: 4,
+        requiredMessage: "Enter the justification for bypassing the step.",
+        help: "Recorded on the exception authorisation in your name. It is permanent and it is what an auditor will read." }
+    ];
+    holder.innerHTML = formHtml({
+      id: "bypass-form", legend: label("authorise_bypass"), danger: true, submit: "Authorise the bypass",
+      intro: '<div class="cns-alert cns-status-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>' +
+        "<div>This records an exception authorisation in your name and marks the step bypassed. Steps assigned to you are not listed: nobody waives their own approval.</div></div>",
+      fields: fields
+    });
+    wireForm("bypass-forms", "bypass-form", fields, function (values) {
+      post("routing.bypass_step", { document: DOCUMENT, approval_decision: values.approval_decision,
+        justification: values.justification }, "Bypass authorised and recorded.", renderContext)
+        .then(function () { openTab("approval"); }).catch(function () {});
+    });
+  }
+
+  /* --- versions ---------------------------------------------------------- */
+
+  function renderVersions() {
+    if (!document.getElementById("versions-table")) return;
+    table("versions", {
+      target: "#versions-table", data: ctx.versions || [], caption: "Version chain of this document",
+      searchFields: ["version_label", "change_summary", "origin"], searchPlaceholder: "Search versions",
+      defaultSort: { field: "version_number", order: "desc" },
+      emptyTitle: "No version recorded",
+      emptyMessage: "No version of this document has been captured in the chain yet.",
+      columns: [
+        { field: "version_number", label: "No.", sortable: true, align: "end", formatter: f.number },
+        { field: "version_label", label: "Label", sortable: true, formatter: function (v) { return value(v); } },
+        { field: "is_current", label: "Current", sortable: true,
+          formatter: function (v) { return v ? pill("Current", "primary") : dash(); } },
+        { field: "published", label: "Published", sortable: true, formatter: function (v) { return yesNo(v); } },
+        { field: "origin", label: "Origin", sortable: true, formatter: function (v) { return value(v); } },
+        { field: "change_classification", label: "Change", sortable: true, formatter: function (v) { return value(v); } },
+        { field: "change_summary", label: "Summary", formatter: f.truncate(90) },
+        { field: "owner", label: "Captured by", sortable: true, formatter: person },
+        { field: "creation", label: "Captured", sortable: true, formatter: f.datetime },
+        { field: "name", label: "Text", formatter: function (v) {
+            return '<a href="' + escapeAttr(VIEWER + "?version=" + encodeURIComponent(v)) + '">View</a>';
+          } }
+      ]
+    });
+
+    var forms = [];
+    if (ctx.actions.upload_version) {
+      forms.push(formHtml({
+        id: "upload-form", legend: label("upload_version"), submit: "Add the version",
+        intro: '<p class="cns-help" style="margin-bottom: var(--cns-space-3);">The body is authored elsewhere. ' +
+          "Upload the file, or paste the text; the new version becomes current and any approval steps raised on the " +
+          "previous version stop counting.</p>",
+        fields: [
+          { name: "version_label", label: "Version label", help: "For example 2.1. Optional." },
+          { name: "body_file", label: "File", type: "file", help: "A file is attached to this document privately." },
+          { name: "change_summary", label: "What changed, and why", type: "textarea", wide: true, required: true,
+            requiredMessage: "Enter the change summary." },
+          { name: "body_text", label: "Or the text itself", type: "textarea", wide: true, rows: 8 }
+        ]
+      }));
+    }
+    var targets = (ctx.versions || []).filter(function (v) { return v.revertible; });
+    var blockedOnes = (ctx.versions || []).filter(function (v) { return !v.revertible && !v.is_current; });
+    if (ctx.actions.revert_version || (ctx.actions.upload_version && blockedOnes.length)) {
+      if (ctx.actions.revert_version && targets.length) {
+        forms.push(formHtml({
+          id: "revert-form", legend: label("revert_version"), submit: "Revert", danger: true,
+          intro: '<p class="cns-help" style="margin-bottom: var(--cns-space-3);">A revert writes a new version carrying ' +
+            "the earlier one's text and record; nothing in the chain is rewritten.</p>",
+          fields: [
+            { name: "target_version", label: "Revert to", type: "select",
+              options: targets.map(function (v) {
+                return { value: v.name, label: "No. " + v.version_number + (v.version_label ? " (" + v.version_label + ")" : "") +
+                  " — " + (v.change_summary || "").slice(0, 60) };
+              }) },
+            { name: "justification", label: "Why", type: "textarea", wide: true, required: true,
+              requiredMessage: "A revert is recorded with its justification." }
+          ]
+        }));
+      } else if (blockedOnes.length) {
+        forms.push('<p class="cns-text-muted cns-text-sm" style="margin-top: var(--cns-space-4);">No earlier version can ' +
+          "be reverted to from here: " + escapeHtml(blockedOnes[0].not_revertible_because) + "</p>");
+      }
+    }
+    document.getElementById("version-forms").innerHTML = forms.join("");
+
+    wireForm("version-forms", "upload-form",
+      [{ name: "version_label" }, { name: "change_summary", required: true, requiredMessage: "Enter the change summary." },
+       { name: "body_text" }],
+      function (values, form) {
+        var fileInput = form.querySelector('[data-name="body_file"]');
+        var file = fileInput && fileInput.files && fileInput.files[0];
+        if (!file && !values.body_text) {
+          setError(form.querySelector('[data-name="body_text"]'), "Upload a file or enter the text.");
+          return;
+        }
+        var upload = file ? uploadFile(file) : Promise.resolve(null);
+        upload.then(function (fileUrl) {
+          return post("publication.upload_new_version", {
+            document: DOCUMENT, change_summary: values.change_summary, version_label: values.version_label,
+            body_text: values.body_text, body_file: fileUrl
+          }, "New version added.", function (next) {
+            renderContext(next);
+            readRecord().catch(function () {});
+          });
+        }).catch(function (error) {
+          if (error && error.uploadFailed) Consilium.toast.error(error.message, { title: "Upload failed" });
+        });
+      });
+
+    wireForm("version-forms", "revert-form",
+      [{ name: "target_version" }, { name: "justification", required: true, requiredMessage: "A revert is recorded with its justification." }],
+      function (values) {
+        post("publication.revert_version", { document: DOCUMENT, target_version: values.target_version,
+          justification: values.justification }, "Reverted: a new version carries the earlier text.", function (next) {
+          renderContext(next);
+          readRecord().catch(function () {});
+        }).catch(function () {});
+      });
+  }
+
+  /* The framework's own upload endpoint, attached to this document and private.
+     The server then accepts the file only because it is attached here. */
+  function uploadFile(file) {
+    var data = new FormData();
+    data.append("file", file, file.name);
+    data.append("is_private", "1");
+    data.append("doctype", "Governing Document");
+    data.append("docname", DOCUMENT);
+    var headers = { Accept: "application/json" };
+    var token = (window.frappe && window.frappe.csrf_token) ||
+      (document.querySelector('meta[name="csrf-token"]') || { getAttribute: function () { return null; } }).getAttribute("content");
+    if (token && token !== "None") headers["X-Frappe-CSRF-Token"] = token;
+    return window.fetch("/api/method/upload_file", { method: "POST", body: data, headers: headers, credentials: "same-origin" })
+      .then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (payload) {
+          if (!response.ok || !payload.message || !payload.message.file_url) {
+            var error = new Error("The file could not be uploaded (" + response.status + ").");
+            error.uploadFailed = true;
+            throw error;
+          }
+          return payload.message.file_url;
+        });
+      });
+  }
+
+  function renderPublications() {
+    if (!document.getElementById("publications-table")) return;
+    table("publications", {
+      target: "#publications-table", data: ctx.publications || [], caption: "Publications of this document",
+      searchable: false, defaultSort: { field: "published_on", order: "desc" },
+      emptyTitle: "Never published", emptyMessage: "This document has no publication record.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono" },
+        { field: "version_label", label: "Version", sortable: true,
+          formatter: function (v, row) { return value(v || row.document_version); } },
+        { field: "published_on", label: "Published", sortable: true, formatter: f.datetime },
+        { field: "published_by", label: "By", sortable: true, formatter: person },
+        { field: "audience_type", label: "Audience", sortable: true,
+          formatter: function (v, row) {
+            return value(v) + (row.audiences && row.audiences.length
+              ? '<br><span class="cns-text-muted cns-text-xs">' + escapeHtml(row.audiences.map(function (x) {
+                  return x.audience_kind + ": " + x.audience_value; }).join("; ")) + "</span>" : "");
+          } },
+        { field: "rendition_view_only", label: "Renditions",
+          formatter: function (v, row) {
+            if (v) return pill("View only", "warning");
+            var parts = ["View"];
+            if (row.rendition_print) parts.push("print");
+            if (row.rendition_download) parts.push("download");
+            return escapeHtml(parts.join(", "));
+          } },
+        { field: "notified_count", label: "Notified", sortable: true, align: "end", formatter: f.number },
+        { field: "withdrawn_on", label: "Standing", sortable: true,
+          formatter: function (v, row) {
+            if (v) return pill("Withdrawn " + Consilium.util.formatDate(v, false), "neutral");
+            return pill("Current", "success") + (ctx.actions.withdraw_publication
+              ? ' <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-withdraw="' +
+                escapeAttr(row.name) + '">Withdraw</button>' : "");
+          } }
+      ]
+    });
+
+    var holder = document.getElementById("publication-forms");
+    if (!ctx.actions.record_publication) { holder.innerHTML = ""; return; }
+    var defaults = ctx.rendition_defaults || {};
+    var fields = [
+      { name: "audience_type", label: "Audience", type: "select", options: ctx.audience_types,
+        help: "Targeted and restricted publications name who they reach below." },
+      { name: "view_only", label: "View only (no print, no download)", type: "checkbox",
+        value: !(defaults.allow_print || defaults.allow_download) },
+      { name: "allow_print", label: "Printing allowed", type: "checkbox", value: defaults.allow_print },
+      { name: "allow_download", label: "Download allowed", type: "checkbox", value: defaults.allow_download }
+    ];
+    holder.innerHTML = formHtml({
+      id: "publish-form", legend: label("record_publication") + " — version " + (ctx.document.version_label || ctx.document.current_version || ""),
+      submit: "Record the publication",
+      intro: '<p class="cns-help" style="margin-bottom: var(--cns-space-3);">Records that the current version was ' +
+        "published. Everyone the document's applicability reaches is notified. The rendition defaults follow the " +
+        'document\'s handling.</p><div id="audience-preview"><button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" ' +
+        'id="preview-audience"><i class="bi bi-people" aria-hidden="true"></i> Who would be notified?</button></div>',
+      fields: fields,
+      extra: '<div class="cns-field"><span class="cns-label">Named audiences</span><div id="audience-rows"></div>' +
+        '<button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" id="add-audience">' +
+        '<i class="bi bi-plus" aria-hidden="true"></i> Add an audience</button></div>'
+    });
+    addAudienceRow();
+    wireForm("publication-forms", "publish-form", fields, function (values) {
+      var audiences = Array.prototype.map.call(document.querySelectorAll("#audience-rows [data-audience-row]"), function (row) {
+        return { audience_kind: row.querySelector("select").value, audience_value: row.querySelector("input").value.trim() };
+      }).filter(function (x) { return x.audience_value; });
+      post("publication.publish_record", {
+        document: DOCUMENT, audience_type: values.audience_type, audiences: audiences,
+        view_only: values.view_only, allow_print: values.allow_print, allow_download: values.allow_download
+      }, "Publication recorded; the affected parties have been told.", renderContext).catch(function () {});
+    });
+  }
+
+  var audienceCount = 0;
+  function addAudienceRow() {
+    var rows = document.getElementById("audience-rows");
+    if (!rows) return;
+    audienceCount += 1;
+    var id = "aud-" + audienceCount;
+    var node = document.createElement("div");
+    node.className = "cns-form-grid";
+    node.setAttribute("data-audience-row", "");
+    node.innerHTML = '<div class="cns-field"><label class="cns-label" for="' + id + '-kind">Kind</label>' +
+      '<select class="cns-select" id="' + id + '-kind">' + (ctx.audience_kinds || []).map(function (k) {
+        return '<option value="' + escapeAttr(k) + '">' + escapeHtml(k) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="cns-field"><label class="cns-label" for="' + id + '-value">Who</label>' +
+      '<input class="cns-input" id="' + id + '-value" type="text" placeholder="The group, role, unit, entity or user reference"></div>';
+    rows.appendChild(node);
+  }
+
+  document.addEventListener("click", function (event) {
+    if (event.target.closest("#add-audience")) { addAudienceRow(); return; }
+    if (event.target.closest("#preview-audience")) {
+      Consilium.api.call(POLICY + "publication.audience_preview", { document: DOCUMENT })
+        .then(function (p) {
+          document.getElementById("audience-preview").innerHTML =
+            '<div class="cns-alert cns-status-info"><i class="bi bi-people" aria-hidden="true"></i><div>' +
+            "<strong>" + escapeHtml(String(p.recipient_count)) + " people</strong> would be notified." +
+            (p.recipients.length ? '<ul class="cns-chips" style="margin-top: var(--cns-space-2);">' +
+              p.recipients.slice(0, 40).map(function (r) { return "<li>" + person(r) + "</li>"; }).join("") + "</ul>" : "") +
+            (p.scopes_without_recipients.length ? "<p>" + escapeHtml(p.scopes_without_recipients.length +
+              " applicability scope(s) reach nobody.") + "</p>" : "") +
+            (p.exemptions.length ? "<p>" + escapeHtml(p.exemptions.length + " authorised exemption(s) apply.") + "</p>" : "") +
+            "</div></div>";
+        })
+        .catch(function (error) { Consilium.toast.error(error.message, { title: "Preview unavailable" }); });
+      return;
+    }
+    var withdraw = event.target.closest("[data-withdraw]");
+    if (withdraw && !withdraw.disabled) {
+      var name = withdraw.getAttribute("data-withdraw");
+      if (!window.confirm("Withdraw publication " + name + "? It stays on the record, marked withdrawn today.")) return;
+      post("publication.withdraw_publication", { publication: name }, "Publication " + name + " withdrawn.", renderContext)
+        .catch(function () {});
+    }
+  });
+
+  function loadChangeLog() {
+    Consilium.api
+      .list("Version", {
+        fields: ["name", "owner", "creation", "data"],
+        filters: [["ref_doctype", "=", "Governing Document"], ["docname", "=", DOCUMENT]],
+        order_by: "creation desc",
+        limit_page_length: 20
+      })
+      .then(function (rows) {
+        var list = document.getElementById("change-list");
+        if (!rows.length) {
+          list.innerHTML = '<li class="cns-text-muted">No change has been recorded against this record yet.</li>';
+          return;
+        }
+        list.innerHTML = rows.map(function (row) {
+          var changed = [];
+          try {
+            var data = JSON.parse(row.data || "{}");
+            changed = (data.changed || []).map(function (entry) { return FIELD_LABELS[entry[0]] || entry[0]; });
+            if ((data.added || []).length) changed.push("rows added");
+            if ((data.removed || []).length) changed.push("rows removed");
+          } catch (e) { /* a version whose payload cannot be read is still a change */ }
+          return "<li>" +
+            (changed.length ? "Changed " + escapeHtml(changed.slice(0, 6).join(", ")) : "Record updated") +
+            '<span class="cns-timeline-meta">' + escapeHtml(row.owner) + " &middot; " +
+            escapeHtml(Consilium.util.formatDate(row.creation, true)) + "</span></li>";
+        }).join("");
+      })
+      .catch(function () {
+        document.getElementById("change-list").innerHTML =
+          '<li class="cns-text-muted">The change log is not available to you. ' +
+          "The version chain above is the record of how this document's content moved.</li>";
+      });
+  }
+
+  /* ------------------------------ context ------------------------------ */
+
+  function renderContext(next) {
+    ctx = next;
+    if (!READABLE) renderSummary(ctx.document);
+    renderActions();
+    renderReadiness();
+    renderApproval();
+    renderVersions();
+    renderPublications();
+    /* The campaign form depends on what this payload allows. */
+    if (campaignRows) renderCampaigns(campaignRows);
+  }
+
+  function loadActions() {
+    return Consilium.api.call(POLICY + "lifecycle.document_actions", { document: DOCUMENT })
+      .then(renderContext)
+      .catch(function (error) {
+        document.getElementById("actions-subtitle").textContent = "";
+        errorState("action-notes", "What you may do could not be read", error);
+        errorState("chain-body", "The approval chain could not be read", error);
+      });
+  }
+
+  /* ------------------------------ reviews ------------------------------ */
+
+  function renderReviews(next) {
+    reviews = next;
+    var c = reviews.position;
+    function areas(items, tone) { return chips(items || [], null, null, tone); }
+    var areaLabels = {};
+    reviews.coverage_areas.forEach(function (a) { areaLabels[a.name] = a.coverage_area_name || a.name; });
+    document.getElementById("horizon-body").innerHTML =
+      '<dl class="cns-dl">' +
+      "<div><dt>Scanned every</dt><dd>" + (c.cadence_months ? escapeHtml(c.cadence_months + " months") : dash()) + "</dd></div>" +
+      "<div><dt>Last scan</dt><dd>" + (c.last_scan ? escapeHtml(c.last_scan) + " &middot; " + dateValue(c.last_scan_date)
+        : "Never scanned") + "</dd></div>" +
+      "<div><dt>Next scan due</dt><dd>" + dateValue(c.due_on) +
+      (isOverdue(c.due_on) ? " " + pill("Overdue", "danger") : "") + "</dd></div></dl>" +
+      '<dl class="cns-dl cns-dl--stacked" style="margin-top: var(--cns-space-4);">' +
+      "<div><dt>Areas the last scan covered</dt><dd>" +
+      areas((c.areas_covered || []).map(function (a) { return areaLabels[a] || a; }), "success") + "</dd></div>" +
+      "<div><dt>Areas it did not reach</dt><dd>" +
+      areas((c.areas_not_covered || []).map(function (a) { return areaLabels[a] || a; }), "warning") + "</dd></div></dl>";
+
+    table("cycles", {
+      target: "#cycles-table", data: reviews.cycles, caption: "Review cycles of this document",
+      searchable: false, defaultSort: { field: "due_on", order: "desc" },
+      emptyTitle: "No review cycle recorded", emptyMessage: "This document has not been through a review yet.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono" },
+        { field: "cycle_year", label: "Cycle", sortable: true },
+        { field: "cycle_status", label: "Status", sortable: true,
+          formatter: f.status({ Planned: "info", Underway: "warning", Concluded: "success", Abandoned: "neutral" }) },
+        { field: "reviewer", label: "Reviewer", sortable: true, formatter: person },
+        { field: "scheduled_start", label: "Starts", sortable: true, formatter: f.date },
+        { field: "due_on", label: "Due", sortable: true,
+          formatter: function (v, row) { return dateValue(v) + (row.is_open && isOverdue(v) ? " " + pill("Overdue", "danger") : ""); } },
+        { field: "outcome", label: "Outcome", sortable: true, formatter: function (v) { return value(v); } },
+        { field: "triggered_by_horizon_scan", label: "Opened by scan", formatter: function (v) { return value(v); } },
+        { field: "outcome_notes", label: "Notes", formatter: f.truncate(90) }
+      ]
+    });
+
+    var forms = [];
+    var openFields = [
+      { name: "due_on", label: "Due on", type: "date", required: true, requiredMessage: "Enter when the review is due." },
+      { name: "scheduled_start", label: "Starts", type: "date", value: todayISO() },
+      { name: "reviewer", label: "Reviewer", help: "Their account reference. Left empty, the document owner reviews it." }
+    ];
+    var concludeFields = [
+      { name: "cycle", label: "Review cycle", type: "select", options: reviews.open_cycles },
+      { name: "outcome", label: "Outcome", type: "select", options: reviews.review_outcomes, blank: "Choose the outcome",
+        required: true, requiredMessage: "Choose the outcome." },
+      { name: "outcome_notes", label: "What the review found", type: "textarea", wide: true, required: true,
+        requiredMessage: "Record what the review found." }
+    ];
+    if (reviews.actions.open_review_cycle) {
+      forms.push(formHtml({ id: "open-review-form", legend: label("open_review_cycle"), fields: openFields,
+        submit: "Open the review" }));
+    }
+    if (reviews.actions.conclude_review_cycle) {
+      forms.push(formHtml({ id: "conclude-review-form", legend: label("conclude_review_cycle"), fields: concludeFields,
+        submit: "Conclude the review",
+        intro: '<p class="cns-help" style="margin-bottom: var(--cns-space-3);">Concluding sets the next review date from ' +
+          "the document's review frequency. A change the review calls for is made by reopening the document.</p>" }));
+    }
+    document.getElementById("review-forms").innerHTML = forms.join("");
+    wireForm("review-forms", "open-review-form", openFields, function (values) {
+      post("horizon.open_review", { document: DOCUMENT, due_on: values.due_on, scheduled_start: values.scheduled_start,
+        reviewer: values.reviewer || null }, "Review cycle opened.", renderReviews).catch(function () {});
+    });
+    wireForm("review-forms", "conclude-review-form", concludeFields, function (values) {
+      post("horizon.conclude_review", { cycle: values.cycle, outcome: values.outcome, outcome_notes: values.outcome_notes },
+        "Review concluded.", function (next) { renderReviews(next); readRecord().catch(function () {}); })
+        .catch(function () {});
+    });
+
+    table("scans", {
+      target: "#scans-table", data: reviews.scans, caption: "Horizon scans of this document",
+      searchable: false, defaultSort: { field: "scan_date", order: "desc" },
+      emptyTitle: "No scan recorded", emptyMessage: "Nobody has recorded a horizon scan for this document.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono" },
+        { field: "scan_date", label: "Scanned", sortable: true, formatter: f.date },
+        { field: "scanned_by", label: "By", sortable: true, formatter: person },
+        { field: "period_covered", label: "Period", formatter: function (v) { return value(v); } },
+        { field: "impact_assessment", label: "Impact", sortable: true, formatter: f.status(IMPACT_TONES) },
+        { field: "resulting_review_cycle", label: "Review opened", formatter: function (v) { return value(v); } },
+        { field: "summary", label: "Summary", formatter: f.truncate(90) }
+      ]
+    });
+
+    var scanHolder = document.getElementById("scan-forms");
+    if (!reviews.actions.record_horizon_scan) { scanHolder.innerHTML = ""; return; }
+    var scanFields = [
+      { name: "scan_date", label: "Scanned on", type: "date", value: todayISO(), required: true },
+      { name: "period_covered", label: "Period covered", required: true, help: "For example: Q3 of this year.",
+        requiredMessage: "Say what period the scan covers." },
+      { name: "impact_assessment", label: "Impact on this document", type: "select", options: reviews.impact_assessments,
+        help: "\"" + reviews.triggers_review.join("\" or \"") + "\" opens a review cycle, linked back to this scan." },
+      { name: "coverage_areas", label: "Areas covered", type: "checkboxes", wide: true, required: true,
+        options: reviews.coverage_areas.map(function (a) { return { value: a.name, label: a.coverage_area_name || a.name }; }) },
+      { name: "summary", label: "What you read, and what you concluded", type: "textarea", wide: true, required: true, rows: 4,
+        requiredMessage: "Summarise the scan." }
+    ];
+    scanHolder.innerHTML = formHtml({
+      id: "scan-form", legend: label("record_horizon_scan"), fields: scanFields, submit: "Record the scan",
+      extra: '<div class="cns-field"><span class="cns-label">Sources reviewed<span class="cns-required" aria-hidden="true">*</span></span>' +
+        '<div id="source-rows"></div><button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" id="add-source">' +
+        '<i class="bi bi-plus" aria-hidden="true"></i> Add a source</button></div>'
+    });
+    addSourceRow();
+    wireForm("scan-forms", "scan-form", scanFields, function (values) {
+      var sources = Array.prototype.map.call(document.querySelectorAll("#source-rows [data-source-row]"), function (row) {
+        return { source_type: row.querySelector("select").value, reference: row.querySelector('input[type="text"]').value.trim(),
+                 reviewed_on: row.querySelector('input[type="date"]').value || null };
+      }).filter(function (s) { return s.reference; });
+      if (!sources.length) {
+        var first = document.querySelector('#source-rows input[type="text"]');
+        setError(first, "Name at least one source you reviewed."); first.focus(); return;
+      }
+      post("horizon.record_scan", { document: DOCUMENT, scan_date: values.scan_date, period_covered: values.period_covered,
+        summary: values.summary, impact_assessment: values.impact_assessment, coverage_areas: values.coverage_areas,
+        sources: sources }, "Horizon scan recorded.", renderReviews).catch(function () {});
+    });
+  }
+
+  var sourceCount = 0;
+  function addSourceRow() {
+    var rows = document.getElementById("source-rows");
+    if (!rows) return;
+    sourceCount += 1;
+    var id = "src-" + sourceCount;
+    var node = document.createElement("div");
+    node.className = "cns-form-grid";
+    node.setAttribute("data-source-row", "");
+    node.innerHTML = '<div class="cns-field"><label class="cns-label" for="' + id + '-type">Kind of source</label>' +
+      '<select class="cns-select" id="' + id + '-type">' + reviews.source_types.map(function (k) {
+        return '<option value="' + escapeAttr(k) + '">' + escapeHtml(k) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="cns-field"><label class="cns-label" for="' + id + '-ref">Reference</label>' +
+      '<input class="cns-input" id="' + id + '-ref" type="text" placeholder="Title, citation or address"></div>' +
+      '<div class="cns-field"><label class="cns-label" for="' + id + '-on">Reviewed on</label>' +
+      '<input class="cns-input" id="' + id + '-on" type="date"></div>';
+    rows.appendChild(node);
+  }
+  document.addEventListener("click", function (event) {
+    if (event.target.closest("#add-source")) addSourceRow();
+  });
+
+  /* ----------------------------- monitoring ---------------------------- */
+
+  function renderMonitoring(next) {
+    monitoring = next;
+    table("activities", {
+      target: "#activities-table", data: monitoring.activities, caption: "Monitoring activities for this document",
+      searchable: false, defaultSort: { field: "activity_title", order: "asc" },
+      emptyTitle: "No monitoring defined", emptyMessage: "No monitoring activity is defined for this document.",
+      columns: [
+        { field: "activity_title", label: "Activity", sortable: true },
+        { field: "frequency", label: "Frequency", sortable: true },
+        { field: "responsible", label: "Responsible", sortable: true, formatter: person },
+        { field: "next_due_on", label: "Next due", sortable: true,
+          formatter: function (v, row) { return dateValue(v) + (row.is_active && isOverdue(v) ? " " + pill("Overdue", "danger") : ""); } },
+        { field: "is_active", label: "Active", sortable: true, formatter: function (v) { return yesNo(v); } },
+        { field: "control_reference", label: "Control", formatter: function (v) { return value(v); } },
+        { field: "name", label: "", formatter: function (v, row) {
+            return row.can_record ? '<button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" data-record-result="' +
+              escapeAttr(v) + '">Record a result</button>' : "";
+          } }
+      ]
+    });
+
+    table("results", {
+      target: "#results-table", data: monitoring.results, caption: "Monitoring results for this document",
+      searchFields: ["period_label", "findings"], searchPlaceholder: "Search results",
+      defaultSort: { field: "performed_on", order: "desc" },
+      emptyTitle: "No results recorded", emptyMessage: "No monitoring result has been recorded yet.",
+      columns: [
+        { field: "monitoring_activity", label: "Activity", sortable: true,
+          formatter: function (v) {
+            var a = monitoring.activities.filter(function (x) { return x.name === v; })[0];
+            return escapeHtml(a ? a.activity_title : v);
+          } },
+        { field: "period_label", label: "Period", sortable: true },
+        { field: "performed_on", label: "Performed", sortable: true, formatter: f.date },
+        { field: "performed_by", label: "By", sortable: true, formatter: person },
+        { field: "outcome", label: "Outcome", sortable: true, formatter: f.status(OUTCOME_TONES) },
+        { field: "findings", label: "Findings", formatter: f.truncate(90) },
+        { field: "resulting_violation", label: "Violation", formatter: function (v) { return value(v); } }
+      ]
+    });
+
+    table("violations", {
+      target: "#violations-table", data: monitoring.violations, caption: "Violations of this document",
+      searchFields: ["description", "violation_type"], searchPlaceholder: "Search violations",
+      defaultSort: { field: "identified_on", order: "desc" },
+      emptyTitle: "No violations logged", emptyMessage: "No breach of this document has been logged.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono" },
+        { field: "identified_on", label: "Identified", sortable: true, formatter: f.date },
+        { field: "violation_type", label: "Type", sortable: true },
+        { field: "severity", label: "Severity", sortable: true, formatter: f.status(SEVERITY_TONES) },
+        { field: "violation_status", label: "Status", sortable: true,
+          formatter: function (v, row) { return pill(v || "", row.is_open ? "warning" : "neutral"); } },
+        { field: "responsible_party", label: "Responsible", formatter: person },
+        { field: "description", label: "What happened", formatter: f.truncate(90) },
+        { field: "resulting_escalation", label: "Escalation",
+          formatter: function (v) {
+            return v ? '<a href="/escalation?name=' + escapeAttr(encodeURIComponent(v)) + '">' + escapeHtml(v) + "</a>" : dash();
+          } }
+      ]
+    });
+
+    document.getElementById("result-forms").innerHTML = "";
+    renderViolationUpdate();
+    var holder = document.getElementById("violation-forms");
+    if (!monitoring.actions.log_violation) { holder.innerHTML = ""; return; }
+    var fields = violationFields();
+    holder.innerHTML = formHtml({ id: "violation-form", legend: label("log_violation"), fields: fields,
+      submit: "Log the violation" });
+    wireForm("violation-forms", "violation-form", fields, function (values) {
+      post("monitoring.log_violation", Object.assign({ document: DOCUMENT }, values), "Violation logged.",
+        renderMonitoring).catch(function () {});
+    });
+  }
+
+  /* P-22: moving an open violation on. Only open violations are offered; the
+     violation's controller refuses reopening a closed one and closing one
+     without its resolution note, whichever route the change comes by. */
+  function renderViolationUpdate() {
+    var holder = document.getElementById("violation-update-forms");
+    var open = (monitoring.violations || []).filter(function (v) { return v.is_open; });
+    if (!monitoring.actions.update_violation || !open.length) { holder.innerHTML = ""; return; }
+    var fields = [
+      { name: "violation", label: "Violation", type: "select",
+        options: open.map(function (v) {
+          return { value: v.name, label: v.name + " — " + (v.violation_status || "") + ", " + (v.severity || "") };
+        }) },
+      { name: "violation_status", label: "Move to", type: "select", options: monitoring.violation_statuses || [] },
+      { name: "resolution_note", label: "Resolution note", type: "textarea", wide: true,
+        help: "Required when the violation is closed: what was done, or why it is dismissed." },
+      { name: "corrective_actions", label: "Corrective actions", type: "textarea", wide: true }
+    ];
+    holder.innerHTML = formHtml({ id: "violation-update-form", legend: label("update_violation"), fields: fields,
+      submit: "Record the move" });
+    wireForm("violation-update-forms", "violation-update-form", fields, function (values) {
+      post("monitoring.update_violation", values, "Violation updated.", renderMonitoring).catch(function () {});
+    });
+  }
+
+  function violationFields() {
+    return [
+      { name: "violation_type", label: "Type", type: "select", options: monitoring.violation_types },
+      { name: "severity", label: "Severity", type: "select", options: monitoring.severities },
+      { name: "identified_on", label: "Identified on", type: "date", value: todayISO(), required: true },
+      { name: "occurred_on", label: "Occurred on", type: "date" },
+      { name: "responsible_party", label: "Responsible party", help: "Their account reference, if known." },
+      { name: "description", label: "What happened", type: "textarea", wide: true, required: true,
+        requiredMessage: "Describe the violation." },
+      { name: "corrective_actions", label: "Corrective actions", type: "textarea", wide: true }
+    ];
+  }
+
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-record-result]");
+    if (!button || button.disabled) return;
+    var name = button.getAttribute("data-record-result");
+    var activity = monitoring.activities.filter(function (a) { return a.name === name; })[0];
+    var fields = [
+      { name: "period_label", label: "Period", required: true, help: "For example: August, or Q3.",
+        requiredMessage: "Say which period this result covers." },
+      { name: "performed_on", label: "Performed on", type: "date", value: todayISO() },
+      { name: "outcome", label: "Outcome", type: "select", options: monitoring.result_outcomes },
+      { name: "findings", label: "Findings", type: "textarea", wide: true,
+        help: "A performed activity records its findings." }
+    ];
+    document.getElementById("result-forms").innerHTML = formHtml({
+      id: "result-form", legend: "Result: " + (activity ? activity.activity_title : name), fields: fields,
+      submit: "Record the result", cancel: true
+    });
+    document.querySelector('#result-form [data-name="period_label"]').focus();
+    wireForm("result-forms", "result-form", fields, function (values) {
+      post("monitoring.record_result", Object.assign({ monitoring_activity: name }, values), "Monitoring result recorded.",
+        renderMonitoring).catch(function () {});
+    });
+  });
+
+  /* ------------------------------ loaders ------------------------------ */
+
+  loaders.details = function () { loadGlossary(); loadCorrection(); };
+  loaders.lifecycle = loadDispositions;
+  loaders.versions = loadChangeLog;
+  loaders.reviews = function () {
+    Consilium.api.call(POLICY + "horizon.document_reviews", { document: DOCUMENT })
+      .then(renderReviews)
+      .catch(function (error) { errorState("horizon-body", "Reviews could not be read", error); });
+    loadCampaigns();
+  };
+
+  /* ----------------------- attestation campaigns ----------------------- */
+
+  function loadCampaigns() {
+    Consilium.api.call(POLICY + "attestation.campaigns_for", { document: DOCUMENT }, { trackLoading: false })
+      .then(renderCampaigns)
+      .catch(function (error) { errorState("campaigns-table", "Campaigns could not be read", error); });
+  }
+
+  var campaignRows = null;
+
+  function renderCampaigns(rows) {
+    campaignRows = rows || [];
+    table("campaigns", {
+      target: "#campaigns-table", data: rows || [], caption: "Attestation campaigns for this document",
+      searchable: false, defaultSort: { field: "opens_on", order: "desc" },
+      emptyTitle: "No campaign yet",
+      emptyMessage: "Nobody has yet been asked to attest to this document.",
+      columns: [
+        { field: "campaign_title", label: "Campaign", sortable: true, formatter: function (v) { return value(v); } },
+        { field: "status", label: "Status", sortable: true,
+          formatter: function (v, row) { return pill(v || "", row.is_open ? "warning" : "neutral"); } },
+        { field: "opens_on", label: "Opened", sortable: true, formatter: f.date },
+        { field: "due_on", label: "Due", sortable: true, formatter: f.date },
+        { field: "tasks", label: "Asked", sortable: true, align: "end", formatter: f.number },
+        { field: "answered", label: "Answered", sortable: true, align: "end", formatter: f.number },
+        { field: "overdue", label: "Overdue", sortable: true, align: "end", formatter: f.number }
+      ]
+    });
+    var holder = document.getElementById("campaign-forms");
+    if (!ctx || !ctx.actions.open_attestation_campaign) { holder.innerHTML = ""; return; }
+    var fields = [
+      { name: "due_on", label: "Attestations due by", type: "date", required: true,
+        requiredMessage: "Enter when the attestations are due." },
+      { name: "period_label", label: "Period", help: "For example 2026, or 2026 H2. Defaults to this year." }
+    ];
+    holder.innerHTML = formHtml({ id: "campaign-form", legend: label("open_attestation_campaign"), fields: fields,
+      submit: "Open the campaign",
+      intro: '<p class="cns-help" style="margin-bottom: var(--cns-space-3);">Everyone this document applies to ' +
+        "today is asked, and told. Formally exempt parties are left out.</p>" });
+    wireForm("campaign-forms", "campaign-form", fields, function (values) {
+      post("attestation.open_campaign", { document: DOCUMENT, due_on: values.due_on,
+        period_label: values.period_label || null }, "Campaign opened; each person asked has been told.",
+        function (next) { renderContext(next); loadCampaigns(); }).catch(function () {});
+    });
+  }
+  loaders.monitoring = function () {
+    Consilium.api.call(POLICY + "monitoring.document_monitoring", { document: DOCUMENT })
+      .then(renderMonitoring)
+      .catch(function (error) { errorState("activities-table", "Monitoring could not be read", error); });
+  };
+
+  /* ------------------------------ lineage ------------------------------ */
+
+  function titlesFor(names) {
+    var unique = names.filter(function (n, i) { return n && names.indexOf(n) === i; });
+    if (!unique.length) return Promise.resolve({});
+    return Consilium.api
+      .list("Governing Document", {
+        fields: ["name", "document_name"],
+        filters: [["name", "in", unique]],
+        limit_page_length: 500
+      })
+      .then(function (rows) {
+        var map = {};
+        rows.forEach(function (row) { map[row.name] = row.document_name; });
+        return map;
+      })
+      .catch(function () { return {}; });
+  }
+
+  loaders.lineage = function () {
+    Consilium.api
+      .call(POLICY + "lineage.lineage_of", { document: DOCUMENT })
+      .then(function (lineage) {
+        var childNames = (lineage.children || []).map(function (c) { return c.document; });
+        var all = [].concat(lineage.parents || [], lineage.ancestors || [], childNames, lineage.descendants || []);
+        return titlesFor(all).then(function (titles) {
+          function links(names) {
+            if (!names || !names.length) return dash();
+            return '<ul class="cns-chips">' + names.map(function (n) {
+              return "<li>" + docLink(n, titles[n] ? titles[n] + " (" + n + ")" : n) + "</li>";
+            }).join("") + "</ul>";
+          }
+          var childLinks = (lineage.children || []).length
+            ? '<ul class="cns-chips">' + lineage.children.map(function (c) {
+                return "<li>" + docLink(c.document, titles[c.document] || c.document) +
+                  ' <span class="cns-badge cns-status-neutral">' + escapeHtml(c.relationship_type) +
+                  "</span>" + (c.owner_approval_required
+                    ? ' <span class="cns-badge cns-status-info">Owner approval</span>' : "") + "</li>";
+              }).join("") + "</ul>"
+            : dash();
+          fillList("lineage-list", [
+            ["Parents", links(lineage.parents)],
+            ["All ancestors", links(lineage.ancestors)],
+            ["Children and addenda", childLinks],
+            ["All descendants", links(lineage.descendants)]
+          ]);
+        });
+      })
+      .catch(function (error) { errorState("lineage-list", "The lineage could not be read", error); });
+
+    recordReady.then(function (doc) {
+      var rows = doc.relationships || [];
+      return titlesFor(rows.map(function (r) { return r.related_document; })).then(function (titles) {
+        rows.forEach(function (r) { r.related_label = titles[r.related_document] || r.related_document; });
+        table("relationships", {
+          target: "#relationships-table", data: rows, caption: "Relationships recorded on this document",
+          searchFields: ["related_label", "relationship_type", "notes"], searchPlaceholder: "Search relationships",
+          defaultSort: { field: "relationship_type", order: "asc" },
+          emptyTitle: "No relationships recorded",
+          emptyMessage: "This document names no child, addendum, supersession or reference.",
+          columns: [
+            { field: "related_label", label: "Document", sortable: true,
+              formatter: function (v, row) { return docLink(row.related_document, v); } },
+            { field: "relationship_type", label: "Relationship", sortable: true,
+              formatter: f.status({ Child: "info", Addendum: "primary", Supersedes: "warning", References: "neutral" }) },
+            { field: "owner_approval_required", label: "Owner approval", sortable: true,
+              formatter: function (v) { return yesNo(v); } },
+            { field: "notes", label: "Note", formatter: f.truncate(90) }
+          ]
+        });
+      });
+    }).catch(function (error) { errorState("relationships-table", "Relationships could not be read", error); });
+  };
+
+  /* ------------------------------ start -------------------------------- */
+
+  loadActions();
+
+  /* Open the tab named in the address, if there is one. The old "horizon" tab
+     now lives under Reviews. */
+  var initial = (window.location.hash || "").replace("#", "");
+  if (initial === "horizon") initial = "reviews";
+  selectTab(document.getElementById("tab-" + initial) || tabs[0]);
+})();
+</script>
+{%- endif %}
+{% endblock %}

@@ -83,7 +83,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.717785",
+ "modified": "2026-09-18 03:32:53.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Retention Class",
@@ -119,6 +119,7 @@
   }
  ],
  "search_fields": "title,class_code",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

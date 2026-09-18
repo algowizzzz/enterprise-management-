@@ -12,6 +12,10 @@ no_cache = 1
 
 
 def get_context(context):
+	# A developer's reference for the shared components, not a business screen:
+	# administrators only.
+	if not ({"System Manager", "Consilium Administrator"} & set(frappe.get_roles())):
+		raise frappe.PermissionError
 	context.no_cache = 1
 	context.page_title = "Interface reference"
 	context.page_description = (

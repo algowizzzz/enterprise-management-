@@ -1,7 +1,7 @@
 {
   "name": "Glossary Term",
   "module": "Policy",
-  "description": "P-24. A centrally maintained, versioned term. Each approved change writes a new Document Version through Core's versioning engine, so the wording in force on any past date has exactly one answer.",
+  "description": "A centrally maintained, versioned term. Each approved change writes a new Document Version through Core's versioning engine, so the wording in force on any past date has exactly one answer.",
   "autoname": "GTRM-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "term",

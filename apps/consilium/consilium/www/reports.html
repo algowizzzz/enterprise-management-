@@ -1,0 +1,1461 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Management reporting.
+  Headline figures and breakdowns across the three modules. Every figure is a
+  count made over the REST API with the viewer's own permissions, so it agrees
+  with the inventory it links to: a number here is exactly the rows the viewer
+  will see after following it. Bars are plain CSS widths; there is no chart
+  library, and there does not need to be one.
+-#}
+
+{% block page_actions %}
+<button type="button" class="cns-btn cns-btn-ghost" id="print-report">
+  <i class="bi bi-printer" aria-hidden="true"></i> Print
+</button>
+<button type="button" class="cns-btn cns-btn-secondary" id="refresh-report">
+  <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Refresh the figures
+</button>
+{% endblock %}
+
+{% block page_content %}
+{% set analysis_page = "reports" %}
+{% include "consilium/templates/includes/analysis_nav.html" %}
+
+<p class="cns-text-muted cns-text-sm" id="report-stamp" role="status">Counting&hellip;</p>
+
+<!-- ============================ Headline ============================ -->
+<section aria-labelledby="headline-heading">
+  <h2 id="headline-heading" class="cns-eyebrow">The headline</h2>
+  <div class="cns-metric-grid">
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/forums">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="forums-active">&nbsp;</span>
+          <span class="cns-stat-label">Active forums</span>
+          <span class="cns-metric-note">Recorded and not disbanded</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/policies?standing=inforce">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="docs-inforce">&nbsp;</span>
+          <span class="cns-stat-label">Documents in force</span>
+          <span class="cns-metric-note">Of <span data-metric="docs-total">&hellip;</span> on record</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/policies?standing=overdue">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="docs-overdue">&nbsp;</span>
+          <span class="cns-stat-label">Document reviews overdue</span>
+          <span class="cns-metric-note">In force, past the recorded review date</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/escalations">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="esc-open">&nbsp;</span>
+          <span class="cns-stat-label">Open escalations</span>
+          <span class="cns-metric-note">Of those you may see</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/escalations?severity=High">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="esc-high">&nbsp;</span>
+          <span class="cns-stat-label">Open at high severity</span>
+          <span class="cns-metric-note">Open the register, filtered to these</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/escalations?standing=breached">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="esc-breached">&nbsp;</span>
+          <span class="cns-stat-label">Open past their time limit</span>
+          <span class="cns-metric-note">Time threshold breached and still open</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= Forums ============================= -->
+<section id="forums" aria-labelledby="forums-heading" style="margin-top: var(--cns-space-6);">
+  <h2 id="forums-heading" class="cns-eyebrow">Governance forums</h2>
+
+  <div class="cns-metric-grid">
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/forums?standing=review">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="forums-review">&nbsp;</span>
+          <span class="cns-stat-label">Awaiting compliance review</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/forums?standing=overdue">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="forums-overdue">&nbsp;</span>
+          <span class="cns-stat-label">Forum reviews overdue</span>
+          <span class="cns-metric-note">Active, past a recorded review date</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/forums?standing=regulatory">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="forums-regulatory">&nbsp;</span>
+          <span class="cns-stat-label">Regulatory-required</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/forums?standing=disbanded">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="forums-disbanded">&nbsp;</span>
+          <span class="cns-stat-label">Disbanded</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="cns-form-grid">
+    <section class="cns-card" aria-labelledby="forum-status-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="forum-status-heading">By compliance status</h3>
+          <p class="cns-card-subtitle">Every forum on record, active or disbanded.</p>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-forum-status" class="cns-bars" role="list" aria-label="Forums by compliance status">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+      </div>
+    </section>
+    <section class="cns-card" aria-labelledby="forum-type-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="forum-type-heading">Active forums by type</h3>
+          <p class="cns-card-subtitle">The forum inventory is filtered by type from its own filter bar.</p>
+        </div>
+        <a class="cns-btn cns-btn-ghost cns-btn-sm" href="/forums">Open the inventory</a>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-forum-type" class="cns-bars" role="list" aria-label="Active forums by forum type">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ===================== Coverage gaps (O-3) ======================= -->
+<section id="coverage" aria-labelledby="coverage-heading" style="margin-top: var(--cns-space-6);">
+  <h2 id="coverage-heading" class="cns-eyebrow">Coverage gaps</h2>
+  <section class="cns-card" aria-labelledby="coverage-title">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="coverage-title">Risk category by owning group</h3>
+        <p class="cns-card-subtitle">Each cell counts the records whose primary risk category and owning group
+          meet there. An empty cell is a combination nothing covers, and is highlighted, because finding the
+          gaps is what this view is for. Every cell opens the inventory filtered to it.</p>
+      </div>
+      <div class="cns-field" style="min-width: 14rem;">
+        <label class="cns-label" for="coverage-subject">Count</label>
+        <select class="cns-select" id="coverage-subject">
+          <option value="forums">Active governance forums</option>
+          <option value="documents">Governing documents in force</option>
+        </select>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <p class="cns-text-sm" id="coverage-summary" role="status">Counting&hellip;</p>
+      <div class="cns-table-wrap" id="coverage-matrix"></div>
+      <p class="cns-text-muted cns-text-xs" style="margin-top: var(--cns-space-3);">
+        A sub-category is shown under its parent. A parent's cell counts only records filed against the parent
+        itself; where its sub-categories cover the combination, the cell says so rather than showing a gap.
+      </p>
+    </div>
+  </section>
+</section>
+
+<!-- ======================= Governing documents ====================== -->
+<section id="documents" aria-labelledby="documents-heading" style="margin-top: var(--cns-space-6);">
+  <h2 id="documents-heading" class="cns-eyebrow">Governing documents</h2>
+
+  <div class="cns-metric-grid">
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/policies?standing=review">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="docs-review">&nbsp;</span>
+          <span class="cns-stat-label">Awaiting review</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/policies?standing=due90">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="docs-due90">&nbsp;</span>
+          <span class="cns-stat-label">Review due within 90 days</span>
+          <span class="cns-metric-note">In force, not yet overdue</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/policies?standing=noreview">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="docs-noreview">&nbsp;</span>
+          <span class="cns-stat-label">No review date set</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="#missing-heading">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="docs-incomplete">&nbsp;</span>
+          <span class="cns-stat-label">Missing required metadata</span>
+          <span class="cns-metric-note">Listed below, field by field</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="cns-form-grid">
+    <section class="cns-card" aria-labelledby="doc-phase-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="doc-phase-heading">By lifecycle phase</h3>
+          <p class="cns-card-subtitle">Every document on record.</p>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-doc-phase" class="cns-bars" role="list" aria-label="Documents by lifecycle phase">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+      </div>
+    </section>
+    <section class="cns-card" aria-labelledby="doc-type-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="doc-type-heading">By document type</h3>
+          <p class="cns-card-subtitle">Every document on record.</p>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-doc-type" class="cns-bars" role="list" aria-label="Documents by document type">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+      </div>
+    </section>
+    <section class="cns-card" aria-labelledby="doc-group-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="doc-group-heading">By owning operating group</h3>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-doc-group" class="cns-bars" role="list" aria-label="Documents by owning operating group">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+      </div>
+    </section>
+    <section class="cns-card" aria-labelledby="doc-handling-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="doc-handling-heading">By handling classification</h3>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-doc-handling" class="cns-bars" role="list" aria-label="Documents by handling classification">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="cns-card" aria-labelledby="missing-heading">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="missing-heading" tabindex="-1">Required metadata missing</h3>
+        <p class="cns-card-subtitle">Fields the document type's template or the record itself requires,
+          left empty. Historical and imported records are the usual source.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="missing-table"></div></div>
+  </section>
+
+  {#- P-4, P-12, P-22: document families, monitoring outcomes, exceptions,
+      violations and dispositions. Counted on the server by
+      `consilium.policy.reporting.policy_sections` over the documents this
+      viewer may read; each section downloads as the same rows. -#}
+  <section class="cns-card" id="families" aria-labelledby="families-heading">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="families-heading">Document families</h3>
+        <p class="cns-card-subtitle">Each document that heads a family, how many documents sit below it, and how
+          many of them are in force, overdue for review, or still in force under a parent that is not.</p>
+      </div>
+      <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-policy-export="families">
+        <i class="bi bi-download" aria-hidden="true"></i> Download
+      </button>
+    </div>
+    <div class="cns-card-body"><div id="families-table"><p class="cns-text-muted cns-text-sm">Counting&hellip;</p></div></div>
+  </section>
+
+  <div class="cns-form-grid">
+    <section class="cns-card" aria-labelledby="monitoring-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="monitoring-heading">Monitoring outcomes</h3>
+          <p class="cns-card-subtitle" id="monitoring-subtitle">Results recorded over the last year, by outcome.</p>
+        </div>
+        <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-policy-export="monitoring">
+          <i class="bi bi-download" aria-hidden="true"></i> Download overdue
+        </button>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-monitoring" class="cns-bars" role="list" aria-label="Monitoring results by outcome">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+        <dl class="cns-dl" id="monitoring-facts" style="margin-top: var(--cns-space-4);"></dl>
+      </div>
+    </section>
+    <section class="cns-card" aria-labelledby="violations-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="violations-heading">Open violations, by severity</h3>
+          <p class="cns-card-subtitle">Breaches of documents you may read, still being dealt with.</p>
+        </div>
+        <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-policy-export="violations">
+          <i class="bi bi-download" aria-hidden="true"></i> Download
+        </button>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-violations" class="cns-bars" role="list" aria-label="Open violations by severity">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+        <dl class="cns-dl" id="violation-facts" style="margin-top: var(--cns-space-4);"></dl>
+      </div>
+    </section>
+  </div>
+
+  <section class="cns-card" aria-labelledby="open-violations-heading">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="open-violations-heading">Open violations</h3>
+        <p class="cns-card-subtitle">Oldest first. Each opens its document's monitoring panel.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="violations-table"></div></div>
+  </section>
+
+  <section class="cns-card" aria-labelledby="exceptions-heading">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="exceptions-heading">Exceptions</h3>
+        <p class="cns-card-subtitle">Formal exemptions from where a document applies, in force now, and every
+          exception authorisation recorded against a document — with whether it can excuse a gate.</p>
+      </div>
+      <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-policy-export="exceptions">
+        <i class="bi bi-download" aria-hidden="true"></i> Download
+      </button>
+    </div>
+    <div class="cns-card-body">
+      <dl class="cns-dl" id="exception-facts"></dl>
+      <div id="exceptions-table" style="margin-top: var(--cns-space-4);"></div>
+    </div>
+  </section>
+
+  <section class="cns-card" aria-labelledby="dispositions-heading">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="dispositions-heading">Review and retirement dispositions</h3>
+        <p class="cns-card-subtitle">The last year's review outcomes and retirements, with the retention each
+          retired record is now held to.</p>
+      </div>
+      <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-policy-export="dispositions">
+        <i class="bi bi-download" aria-hidden="true"></i> Download
+      </button>
+    </div>
+    <div class="cns-card-body"><div id="dispositions-table"></div></div>
+  </section>
+</section>
+
+<!-- =========================== Escalations ========================== -->
+<section id="escalations" aria-labelledby="escalations-heading" style="margin-top: var(--cns-space-6);">
+  <h2 id="escalations-heading" class="cns-eyebrow">Escalations</h2>
+
+  <div class="cns-metric-grid">
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/escalations?age=31%2B">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="esc-aged">&nbsp;</span>
+          <span class="cns-stat-label">Open more than 30 days</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/escalations?standing=review">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="esc-review">&nbsp;</span>
+          <span class="cns-stat-label">Awaiting review</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/escalations?standing=everbreached">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="esc-everbreached">&nbsp;</span>
+          <span class="cns-stat-label">Time limit ever breached</span>
+          <span class="cns-metric-note">Open or closed</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/escalations?standing=appetite">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="esc-appetite">&nbsp;</span>
+          <span class="cns-stat-label">Risk appetite breached</span>
+          <span class="cns-metric-note">Open or closed</span>
+        </div>
+      </a>
+    </div>
+    <div class="cns-card">
+      <a class="cns-metric-link" href="/escalations?standing=closed">
+        <div class="cns-card-body cns-stat">
+          <span class="cns-stat-value" data-metric="esc-closed">&nbsp;</span>
+          <span class="cns-stat-label">Closed</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="cns-form-grid">
+    <section class="cns-card" aria-labelledby="esc-severity-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="esc-severity-heading">Open, by severity</h3>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-esc-severity" class="cns-bars" role="list" aria-label="Open escalations by severity">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+      </div>
+    </section>
+    <section class="cns-card" aria-labelledby="esc-age-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="esc-age-heading">Open, by age</h3>
+          <p class="cns-card-subtitle">Days since the matter was opened.</p>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-esc-age" class="cns-bars" role="list" aria-label="Open escalations by age">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+      </div>
+    </section>
+    <section class="cns-card" aria-labelledby="esc-type-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="esc-type-heading">Open, by type</h3>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-esc-type" class="cns-bars" role="list" aria-label="Open escalations by escalation type">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+      </div>
+    </section>
+    <section class="cns-card" aria-labelledby="esc-level-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="esc-level-heading">Open, by organisational level</h3>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <div id="bars-esc-level" class="cns-bars" role="list" aria-label="Open escalations by organisational level">
+          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="cns-card" aria-labelledby="sla-heading">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="sla-heading">Time-limit clocks</h3>
+        <p class="cns-card-subtitle">Every running clock across the platform — escalations, reviews and
+          requests alike — by the kind of record it times.</p>
+      </div>
+      {%- if desk_access %}
+      <a class="cns-btn cns-btn-ghost cns-btn-sm" href="/app/sla-clock">Open the clocks</a>
+      {%- endif %}
+    </div>
+    <div class="cns-card-body"><div id="sla-body"><p class="cns-text-muted cns-text-sm">Counting&hellip;</p></div></div>
+  </section>
+
+  <section class="cns-card" aria-labelledby="analysis-heading">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="analysis-heading">Volumes, durations and outcomes</h3>
+        <p class="cns-card-subtitle">From the escalation analysis, over the matters you may read.
+          Download any view as a spreadsheet file.</p>
+      </div>
+      <div class="cns-field" style="margin-bottom:0;">
+        <label class="cns-label" for="analysis-period">Group by</label>
+        <select class="cns-select" id="analysis-period">
+          <option value="Month">Month</option>
+          <option value="Quarter">Quarter</option>
+          <option value="Year">Year</option>
+        </select>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <div class="cns-form-actions" style="margin-bottom: var(--cns-space-3);">
+        <p class="cns-eyebrow" style="margin:0;">Raised and closed</p>
+        <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-export="volumes">
+          <i class="bi bi-download" aria-hidden="true"></i> Download
+        </button>
+      </div>
+      <div id="volumes-table"></div>
+
+      <div class="cns-form-actions" style="margin: var(--cns-space-5) 0 var(--cns-space-3);">
+        <p class="cns-eyebrow" style="margin:0;">Time open, for closed matters</p>
+        <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-export="durations">
+          <i class="bi bi-download" aria-hidden="true"></i> Download
+        </button>
+      </div>
+      <div id="durations-table"></div>
+
+      <div class="cns-form-grid" style="margin-top: var(--cns-space-5);">
+        <div>
+          <div class="cns-form-actions" style="margin-bottom: var(--cns-space-3);">
+            <p class="cns-eyebrow" style="margin:0;">Where matters went</p>
+            <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-export="destinations">
+              <i class="bi bi-download" aria-hidden="true"></i> Download
+            </button>
+          </div>
+          <div id="destinations-table"></div>
+        </div>
+        <div>
+          <div class="cns-form-actions" style="margin-bottom: var(--cns-space-3);">
+            <p class="cns-eyebrow" style="margin:0;">How matters ended</p>
+            <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-export="outcomes">
+              <i class="bi bi-download" aria-hidden="true"></i> Download
+            </button>
+          </div>
+          <div id="outcomes-table"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  var DOC_FIELD_LABELS = {{ document_field_labels | tojson }};
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var f = Consilium.Table.formatters;
+  var api = Consilium.api;
+
+  /* Display tones only. */
+  var FORUM_STATUS_TONES = {
+    Draft: "neutral", Pending: "warning", Compliant: "success",
+    "Non-Compliant": "danger", "Not Applicable": "info", Disbanded: "neutral"
+  };
+  var PHASE_TONES = {
+    Draft: "neutral", Review: "warning", Approved: "info",
+    Published: "success", Implemented: "primary", Retired: "neutral"
+  };
+  var HANDLING_TONES = { Public: "success", Internal: "neutral", Confidential: "warning", Restricted: "danger" };
+  var SEVERITY_TONES = { High: "danger", Medium: "warning", Low: "info" };
+
+  /* Timestamps from the server carry no zone: they are wall-clock times in the
+     site's zone (the page names it in a meta tag). The age bands are
+     worked out in that zone too, exactly as the escalation register does, or a matter opened late in the day
+     would fall into the wrong band for anyone reading from elsewhere. */
+  function siteZone() {
+    return (document.querySelector('meta[name="cns-time-zone"]') || {}).content || "UTC";
+  }
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  /** An instant as the site's wall clock, in the framework's datetime format. */
+  function siteWallClock(date) {
+    try {
+      var p = {};
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: siteZone(), year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
+      }).formatToParts(date).forEach(function (part) { p[part.type] = part.value; });
+      return p.year + "-" + p.month + "-" + p.day + " " + p.hour + ":" + p.minute + ":" + p.second;
+    } catch (e) {
+      return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + " " +
+        pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds());
+    }
+  }
+
+  /** Now minus `days`, as the site's wall clock. */
+  function daysAgo(days) {
+    return siteWallClock(new Date(Date.now() - days * 86400000));
+  }
+
+
+  function todayISO(offsetDays) {
+    var d = new Date();
+    if (offsetDays) d.setDate(d.getDate() + offsetDays);
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
+  /* An empty date reads as the earliest possible day for "<" and "<=", so every
+     date comparison below carries a lower bound to keep empty dates out. */
+  var FILTERS = {
+    forumsActive: [["is_active", "=", 1]],
+    forumsReview: [["requires_review", "=", 1]],
+    forumsOverdue: function () {
+      return [["next_review_on", ">", "1900-01-01"], ["next_review_on", "<", todayISO()], ["is_active", "=", 1]];
+    },
+    forumsRegulatory: [["regulatory_required", "=", 1]],
+    forumsDisbanded: [["is_active", "=", 0]],
+    docsInforce: [["is_active", "=", 1]],
+    docsReview: [["requires_review", "=", 1]],
+    docsOverdue: function () {
+      return [["next_review_on", ">", "1900-01-01"], ["next_review_on", "<", todayISO()], ["is_active", "=", 1]];
+    },
+    docsDue90: function () {
+      return [["next_review_on", ">=", todayISO()], ["next_review_on", "<=", todayISO(90)], ["is_active", "=", 1]];
+    },
+    docsNoReview: [["next_review_on", "=", null]],
+    escOpen: [["is_open", "=", 1]],
+    escClosed: [["is_open", "=", 0]],
+    escReview: [["requires_review", "=", 1]],
+    escBreached: [["is_open", "=", 1], ["threshold_breached", "=", 1]],
+    escEverBreached: [["threshold_breached", "=", 1]],
+    escAppetite: [["risk_appetite_breach", "=", 1]]
+  };
+
+  function resolve(filters) { return typeof filters === "function" ? filters() : filters; }
+
+  function setMetric(key, value) {
+    var node = document.querySelector('[data-metric="' + key + '"]');
+    if (node) node.textContent = String(value);
+  }
+
+  function count(doctype, filters, metric) {
+    return api.count(doctype, { filters: resolve(filters), trackLoading: false })
+      .then(function (n) { if (metric) setMetric(metric, n); return n; })
+      .catch(function () { if (metric) setMetric(metric, "—"); return null; });
+  }
+
+  /** Counts per value of one field, over the records the viewer may read. */
+  function groupCount(doctype, filters, field) {
+    return api.call("frappe.desk.listview.get_group_by_count", {
+      doctype: doctype,
+      current_filters: JSON.stringify(resolve(filters) || []),
+      field: field
+    }, { trackLoading: false });
+  }
+
+  /**
+   * Render counts as labelled bars. Each entry: {label, count, href?, tone?}.
+   * The list is a list for assistive technology; the bar itself is decoration,
+   * so it is hidden and the number carries the meaning. Where the records
+   * behind a number can be listed, the number is the link to them.
+   */
+  function renderBars(target, entries, noun) {
+    var node = document.getElementById(target);
+    if (!node) return;
+    if (!entries.length) {
+      node.innerHTML = '<p class="cns-text-muted cns-text-sm">Nothing recorded yet.</p>';
+      return;
+    }
+    var max = entries.reduce(function (m, e) { return Math.max(m, e.count); }, 0) || 1;
+    node.innerHTML = entries.map(function (entry) {
+      var pct = Math.round((entry.count / max) * 100);
+      var number = entry.href
+        ? '<a href="' + escapeAttr(entry.href) + '" aria-label="' +
+          escapeAttr(entry.label + ": " + entry.count + " " + (noun || "records") + ", open the list") +
+          '">' + entry.count + "</a>"
+        : String(entry.count);
+      return '<div class="cns-bar-row" role="listitem">' +
+        '<span class="cns-bar-label">' + escapeHtml(entry.label) + "</span>" +
+        '<span class="cns-bar-track" aria-hidden="true"><span class="cns-bar-fill cns-status-' +
+        escapeAttr(entry.tone || "primary") + '" style="width:' + pct + '%"></span></span>' +
+        '<span class="cns-bar-value">' + number + "</span></div>";
+    }).join("");
+  }
+
+  function unavailable(target) {
+    var node = document.getElementById(target);
+    if (node) node.innerHTML = '<p class="cns-text-muted cns-text-sm">Not available to you.</p>';
+  }
+
+  /** A grouped count as bar entries; `link(value)` gives the list address. */
+  function barsFrom(rows, options) {
+    return rows.map(function (row) {
+      var value = row.name;
+      var has = value !== null && value !== undefined && value !== "";
+      return {
+        label: has ? (options.label ? options.label(value) : String(value)) : "Not recorded",
+        count: row.count,
+        href: has && options.link ? options.link(value) : null,
+        tone: has && options.tones ? options.tones[value] : null
+      };
+    });
+  }
+
+  function grouped(target, doctype, filters, field, options) {
+    return groupCount(doctype, filters, field)
+      .then(function (rows) { renderBars(target, barsFrom(rows || [], options), options.noun); })
+      .catch(function () { unavailable(target); });
+  }
+
+  function q(base, params) {
+    return base + "?" + Object.keys(params).map(function (k) {
+      return encodeURIComponent(k) + "=" + encodeURIComponent(params[k]);
+    }).join("&");
+  }
+
+  /* ------------------------------ forums ------------------------------ */
+
+  function loadForums() {
+    return Promise.all([
+      count("Governance Forum", FILTERS.forumsActive, "forums-active"),
+      count("Governance Forum", FILTERS.forumsReview, "forums-review"),
+      count("Governance Forum", FILTERS.forumsOverdue, "forums-overdue"),
+      count("Governance Forum", FILTERS.forumsRegulatory, "forums-regulatory"),
+      count("Governance Forum", FILTERS.forumsDisbanded, "forums-disbanded"),
+      /* The status bar counts every forum, disbanded ones included, so its
+         link widens the inventory's standing to match; the type bar counts
+         active forums, which is the inventory's default. */
+      grouped("bars-forum-status", "Governance Forum", [], "compliance_status", {
+        tones: FORUM_STATUS_TONES, noun: "forums",
+        link: function (v) { return q("/forums", { standing: "all", compliance_status: v }); }
+      }),
+      grouped("bars-forum-type", "Governance Forum", FILTERS.forumsActive, "forum_type", {
+        label: function (v) { return Consilium.reference.label("Governance Forum Type", v); },
+        noun: "forums",
+        link: function (v) { return q("/forums", { forum_type: v }); }
+      })
+    ]);
+  }
+
+  /* ---------------------------- documents ----------------------------- */
+
+  function loadDocuments() {
+    return Promise.all([
+      count("Governing Document", [], "docs-total"),
+      count("Governing Document", FILTERS.docsInforce, "docs-inforce"),
+      count("Governing Document", FILTERS.docsOverdue, "docs-overdue"),
+      count("Governing Document", FILTERS.docsReview, "docs-review"),
+      count("Governing Document", FILTERS.docsDue90, "docs-due90"),
+      count("Governing Document", FILTERS.docsNoReview, "docs-noreview"),
+      grouped("bars-doc-phase", "Governing Document", [], "lifecycle_phase", {
+        tones: PHASE_TONES, noun: "documents",
+        link: function (v) { return q("/policies", { lifecycle_phase: v }); }
+      }),
+      grouped("bars-doc-type", "Governing Document", [], "document_type", {
+        noun: "documents",
+        label: function (v) { return Consilium.reference.label("Governing Document Type", v); },
+        link: function (v) { return q("/policies", { document_type: v }); }
+      }),
+      grouped("bars-doc-group", "Governing Document", [], "owning_operating_group", {
+        noun: "documents",
+        label: function (v) { return Consilium.reference.label("Organization Unit", v); },
+        link: function (v) { return q("/policies", { owning_operating_group: v }); }
+      }),
+      grouped("bars-doc-handling", "Governing Document", [], "handling_classification", {
+        tones: HANDLING_TONES, noun: "documents",
+        link: function (v) { return q("/policies", { handling_classification: v }); }
+      }),
+      loadMissingMetadata(),
+      loadPolicySections()
+    ]);
+  }
+
+  var missingTable = null;
+
+  function loadMissingMetadata() {
+    return api.call("consilium.policy.metadata.incomplete_records", { doctype: "Governing Document" },
+                    { trackLoading: false })
+      .then(function (rows) {
+        rows = rows || [];
+        setMetric("docs-incomplete", rows.length);
+        var names = rows.map(function (r) { return r.name; });
+        var titles = names.length
+          ? api.list("Governing Document", {
+              fields: ["name", "document_name", "document_owner"],
+              filters: [["name", "in", names]],
+              limit_page_length: 500,
+              trackLoading: false
+            }).catch(function () { return []; })
+          : Promise.resolve([]);
+        return titles.then(function (docs) {
+          var byName = {};
+          docs.forEach(function (d) { byName[d.name] = d; });
+          var data = rows.map(function (r) {
+            var doc = byName[r.name] || {};
+            return {
+              name: r.name,
+              document_name: doc.document_name || r.name,
+              document_owner: doc.document_owner || "",
+              missing: (r.missing || []).map(function (field) {
+                return DOC_FIELD_LABELS[field] || field;
+              }).join(", "),
+              missing_count: (r.missing || []).length,
+              correct: r.name
+            };
+          });
+          var options = {
+            target: "#missing-table",
+            data: data,
+            caption: "Governing documents with required metadata missing",
+            storageKey: "report-missing-metadata",
+            rowKey: "name",
+            pageSize: 10,
+            compact: true,
+            searchFields: ["document_name", "name", "missing", "document_owner"],
+            searchPlaceholder: "Search by document, owner or field",
+            defaultSort: { field: "missing_count", order: "desc" },
+            emptyTitle: "Nothing missing",
+            emptyMessage: "Every document checked carries the metadata its type requires.",
+            columns: [
+              { field: "name", label: "Reference", sortable: true, className: "cns-mono",
+                formatter: f.link("/policy?name=") },
+              { field: "document_name", label: "Document", sortable: true, formatter: f.truncate(60) },
+              { field: "document_owner", label: "Owner", sortable: true, formatter: Consilium.Table.formatters.person },
+              { field: "missing_count", label: "Fields missing", sortable: true, align: "end",
+                formatter: f.number },
+              { field: "missing", label: "Which fields", formatter: f.truncate(120) },
+              /* E15-S5: correction in place, on the document's own page, with a reason. */
+              { field: "correct", label: "Correct", formatter: function (v) {
+                  return '<a href="/policy?name=' + escapeAttr(encodeURIComponent(v)) + '#details">Correct in place</a>';
+                } }
+            ]
+          };
+          if (missingTable) missingTable.setData(data);
+          else missingTable = Consilium.Table.create(options);
+        });
+      })
+      .catch(function (error) {
+        setMetric("docs-incomplete", "—");
+        document.getElementById("missing-table").innerHTML =
+          '<p class="cns-text-muted cns-text-sm">' +
+          escapeHtml(error && error.status === 403
+            ? "The metadata check is not available to you."
+            : (error && error.message) || "The metadata check could not be run.") + "</p>";
+      });
+  }
+
+  /* ------------- families, monitoring, exceptions, violations ------------ */
+
+  /* P-4, P-12, P-22. One server call, counted over the documents this viewer
+     may read (handling rules included), and one download per section that is
+     the same rows through a CSV writer. */
+  var policyTables = {};
+  var VIOLATION_SEVERITY_TONES = { Low: "neutral", Medium: "info", High: "warning", Critical: "danger" };
+
+  function policyTable(key, options) {
+    if (policyTables[key]) { policyTables[key].setData(options.data); return; }
+    policyTables[key] = Consilium.Table.create(Object.assign({
+      storageKey: "report-" + key, rowKey: "name", pageSize: 10, compact: true
+    }, options));
+  }
+
+  function docCell(v, row) {
+    return '<a href="/policy?name=' + escapeAttr(encodeURIComponent(v)) + '">' +
+      escapeHtml(row.document_name || v) + "</a>";
+  }
+
+  function facts(target, rows) {
+    var node = document.getElementById(target);
+    if (!node) return;
+    node.innerHTML = rows.map(function (r) {
+      return "<div><dt>" + escapeHtml(r[0]) + "</dt><dd>" + escapeHtml(String(r[1])) + "</dd></div>";
+    }).join("");
+  }
+
+  function renderPolicySections(data) {
+    policyTable("families", {
+      target: "#families-table", data: (data.families || []).map(function (r) { return Object.assign({ name: r.document }, r); }),
+      caption: "Document families", searchFields: ["document_name", "document"],
+      searchPlaceholder: "Search families", defaultSort: { field: "members", order: "desc" },
+      emptyTitle: "No families", emptyMessage: "No document you may read has a child or an addendum.",
+      columns: [
+        { field: "document", label: "Heads the family", sortable: true, formatter: docCell },
+        { field: "lifecycle_phase", label: "Phase", sortable: true, formatter: f.status(PHASE_TONES) },
+        { field: "children", label: "Children", sortable: true, align: "end", formatter: f.number },
+        { field: "members", label: "All below", sortable: true, align: "end", formatter: f.number },
+        { field: "in_force", label: "In force", sortable: true, align: "end", formatter: f.number },
+        { field: "review_overdue", label: "Review overdue", sortable: true, align: "end", formatter: f.number },
+        { field: "orphaned_in_force", label: "In force under a parent that is not", sortable: true, align: "end",
+          formatter: f.number }
+      ]
+    });
+
+    var m = data.monitoring || {};
+    if (!m.available) {
+      unavailable("bars-monitoring");
+    } else {
+      renderBars("bars-monitoring", (m.by_outcome || []).map(function (r) {
+        return { label: r.outcome || "Not recorded", count: r.count };
+      }), "results");
+      facts("monitoring-facts", [
+        ["Active monitoring activities", m.active_activities],
+        ["Overdue now", (m.overdue_activities || []).length],
+        ["Results that raised a violation", (m.results_raising_violations || []).length]
+      ]);
+    }
+
+    var v = data.violations || {};
+    if (!v.available) {
+      unavailable("bars-violations");
+    } else {
+      renderBars("bars-violations", (v.open_by_severity || []).map(function (r) {
+        return { label: r.value || "Not recorded", count: r.count, tone: VIOLATION_SEVERITY_TONES[r.value] };
+      }), "violations");
+      facts("violation-facts", [
+        ["Open", v.open], ["Logged in all", v.total], ["Escalated", v.escalated],
+        ["Closed in the last 90 days", v.closed_last_90_days]
+      ]);
+      policyTable("open-violations", {
+        target: "#violations-table", data: v.open_violations || [], caption: "Open violations",
+        searchFields: ["document_name", "violation_type", "name"], searchPlaceholder: "Search violations",
+        defaultSort: { field: "identified_on", order: "asc" },
+        emptyTitle: "No open violations", emptyMessage: "Nothing open on any document you may read.",
+        columns: [
+          { field: "name", label: "Reference", sortable: true, className: "cns-mono",
+            formatter: function (val, row) {
+              return '<a href="/policy?name=' + escapeAttr(encodeURIComponent(row.document)) + '#monitoring">' +
+                escapeHtml(val) + "</a>";
+            } },
+          { field: "document", label: "Document", sortable: true, formatter: docCell },
+          { field: "severity", label: "Severity", sortable: true, formatter: f.status(VIOLATION_SEVERITY_TONES) },
+          { field: "violation_status", label: "Status", sortable: true,
+            formatter: function (val) { return escapeHtml(val || ""); } },
+          { field: "identified_on", label: "Identified", sortable: true, formatter: f.date },
+          { field: "responsible_party", label: "Responsible", formatter: Consilium.Table.formatters.person }
+        ]
+      });
+    }
+
+    var x = data.exceptions || {};
+    facts("exception-facts", [
+      ["Exemptions in force", (x.exemptions_in_force || []).length],
+      ["Expiring within 30 days", x.exemptions_expiring || 0],
+      ["Exception authorisations awaiting approval", x.authorisations_pending || 0]
+    ]);
+    var exceptionRows = (x.exemptions_in_force || []).map(function (r) {
+      return { name: r.name, kind: "Exemption", document: r.document, document_name: r.document_name,
+               type: r.exemption_type, standing: r.expiring ? "In force, expiring soon" : "In force",
+               approved_by: r.approved_by, valid_to: r.valid_to };
+    }).concat((x.authorisations || []).map(function (r) {
+      return { name: r.name, kind: "Exception authorisation", document: r.document, document_name: r.document_name,
+               type: r.exception_type, standing: r.standing, approved_by: r.approved_by, valid_to: r.valid_to };
+    }));
+    policyTable("exceptions", {
+      target: "#exceptions-table", data: exceptionRows, caption: "Exemptions and exception authorisations",
+      searchFields: ["document_name", "type", "standing", "name"], searchPlaceholder: "Search exceptions",
+      defaultSort: { field: "valid_to", order: "asc" },
+      emptyTitle: "No exceptions", emptyMessage: "No exemption or exception is recorded on a document you may read.",
+      columns: [
+        { field: "kind", label: "Kind", sortable: true, formatter: function (val) { return escapeHtml(val); } },
+        { field: "document", label: "Document", sortable: true, formatter: docCell },
+        { field: "type", label: "Type", sortable: true, formatter: function (val) { return escapeHtml(val || ""); } },
+        { field: "standing", label: "Standing", sortable: true, formatter: function (val) { return escapeHtml(val || ""); } },
+        { field: "approved_by", label: "Approved by", formatter: Consilium.Table.formatters.person },
+        { field: "valid_to", label: "Valid to", sortable: true, formatter: f.date }
+      ]
+    });
+
+    var d = data.dispositions || {};
+    policyTable("dispositions", {
+      target: "#dispositions-table", data: d.rows || [], caption: "Dispositions over the last year",
+      searchFields: ["document_name", "disposition_kind", "reason"], searchPlaceholder: "Search dispositions",
+      defaultSort: { field: "decided_on", order: "desc" },
+      emptyTitle: "No dispositions", emptyMessage: "No review ended and no document was retired in the last year.",
+      columns: [
+        { field: "document", label: "Document", sortable: true, formatter: docCell },
+        { field: "disposition_kind", label: "Disposition", sortable: true,
+          formatter: function (val) { return escapeHtml(val || ""); } },
+        { field: "decided_by", label: "By", sortable: true, formatter: Consilium.Table.formatters.person },
+        { field: "decided_on", label: "When", sortable: true, formatter: f.datetime },
+        { field: "reason", label: "Comments or reason", formatter: f.truncate(90) },
+        { field: "disposition_due_on", label: "Retention ends", sortable: true, formatter: f.date }
+      ]
+    });
+  }
+
+  function loadPolicySections() {
+    return api.call("consilium.policy.reporting.policy_sections", {}, { trackLoading: false })
+      .then(renderPolicySections)
+      .catch(function () {
+        ["families-table", "bars-monitoring", "bars-violations", "exceptions-table", "dispositions-table"]
+          .forEach(unavailable);
+      });
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-policy-export]"), function (button) {
+    button.addEventListener("click", function () {
+      var section = button.getAttribute("data-policy-export");
+      button.disabled = true;
+      api.call("consilium.policy.reporting.export", { section: section }, { trackLoading: false })
+        .then(function (csv) {
+          if (!csv) { Consilium.toast.info("There is nothing to download for this section yet."); return; }
+          var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+          var link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "policy-" + section + "-" + todayISO() + ".csv";
+          document.body.appendChild(link);
+          link.click();
+          window.setTimeout(function () { URL.revokeObjectURL(link.href); link.parentNode.removeChild(link); }, 0);
+        })
+        .catch(function (error) {
+          Consilium.toast.error((error && error.message) || "The file could not be produced.");
+        })
+        .then(function () { button.disabled = false; });
+    });
+  });
+
+  /* ---------------------------- escalations --------------------------- */
+
+  var levelLabels = {};
+
+  var AGE_BANDS = [
+    { key: "0-7", label: "Up to 7 days", lo: 0, hi: 7, tone: "success" },
+    { key: "8-30", label: "8 to 30 days", lo: 8, hi: 30, tone: "info" },
+    { key: "31-90", label: "31 to 90 days", lo: 31, hi: 90, tone: "warning" },
+    { key: "91+", label: "More than 90 days", lo: 91, hi: null, tone: "danger" }
+  ];
+
+  function ageFilters(lo, hi) {
+    var out = [["opened_on", ">", "1900-01-01"], ["opened_on", "<=", daysAgo(lo)]];
+    if (hi !== null) out.push(["opened_on", ">", daysAgo(hi + 1)]);
+    return out;
+  }
+
+  function loadEscalations() {
+    var open = FILTERS.escOpen;
+    return Promise.all([
+      count("Escalation Matter", open, "esc-open"),
+      count("Escalation Matter", open.concat([["severity", "=", "High"]]), "esc-high"),
+      count("Escalation Matter", FILTERS.escBreached, "esc-breached"),
+      count("Escalation Matter", open.concat(ageFilters(31, null)), "esc-aged"),
+      count("Escalation Matter", FILTERS.escReview, "esc-review"),
+      count("Escalation Matter", FILTERS.escEverBreached, "esc-everbreached"),
+      count("Escalation Matter", FILTERS.escAppetite, "esc-appetite"),
+      count("Escalation Matter", FILTERS.escClosed, "esc-closed"),
+      grouped("bars-esc-severity", "Escalation Matter", open, "severity", {
+        tones: SEVERITY_TONES, noun: "open matters",
+        link: function (v) { return q("/escalations", { severity: v }); }
+      }),
+      grouped("bars-esc-type", "Escalation Matter", open, "escalation_type", {
+        noun: "open matters",
+        label: function (v) { return Consilium.reference.label("Escalation Type", v); },
+        link: function (v) { return q("/escalations", { escalation_type: v }); }
+      }),
+      grouped("bars-esc-level", "Escalation Matter", open, "organizational_level", {
+        noun: "open matters",
+        label: function (v) { return levelLabels[v] || v; },
+        link: function (v) { return q("/escalations", { organizational_level: v }); }
+      }),
+      Promise.all(AGE_BANDS.map(function (band) {
+        return count("Escalation Matter", open.concat(ageFilters(band.lo, band.hi)));
+      })).then(function (counts) {
+        if (counts.every(function (n) { return n === null; })) {
+          unavailable("bars-esc-age");
+          return;
+        }
+        renderBars("bars-esc-age", AGE_BANDS.map(function (band, i) {
+          return { label: band.label, count: counts[i] || 0, tone: band.tone,
+                   href: q("/escalations", { age: band.key }) };
+        }), "open matters");
+      }),
+      loadClocks(),
+      loadAnalysis()
+    ]);
+  }
+
+  /* Core's clocks are readable only by some roles. Where they can be read,
+     they show the time-limit position across every module, not only escalation. */
+  function loadClocks() {
+    var body = document.getElementById("sla-body");
+    return Promise.all([
+      groupCount("SLA Clock", [["is_open", "=", 1]], "subject_doctype"),
+      groupCount("SLA Clock", [["is_open", "=", 1], ["breached_on", ">", "1900-01-01"]], "subject_doctype"),
+      groupCount("SLA Clock", [["breached_on", ">", "1900-01-01"]], "subject_doctype")
+    ])
+      .then(function (results) {
+        var kinds = {};
+        function add(rows, key) {
+          (rows || []).forEach(function (row) {
+            var kind = row.name || "Not recorded";
+            kinds[kind] = kinds[kind] || { kind: kind, running: 0, breached_running: 0, breached_ever: 0 };
+            kinds[kind][key] = row.count;
+          });
+        }
+        add(results[0], "running");
+        add(results[1], "breached_running");
+        add(results[2], "breached_ever");
+        var rows = Object.keys(kinds).sort().map(function (k) { return kinds[k]; });
+        if (!rows.length) {
+          body.innerHTML = '<p class="cns-text-muted">No time-limit clock has been started yet.</p>';
+          return;
+        }
+        body.innerHTML = '<div class="cns-table-wrap"><table class="cns-table cns-table--compact">' +
+          '<caption class="cns-visually-hidden">Time-limit clocks by the kind of record they time</caption>' +
+          '<thead><tr><th scope="col">Record kind</th><th scope="col" class="cns-num">Running</th>' +
+          '<th scope="col" class="cns-num">Running and breached</th>' +
+          '<th scope="col" class="cns-num">Breached, ever</th></tr></thead><tbody>' +
+          rows.map(function (r) {
+            return "<tr><th scope=\"row\">" + escapeHtml(r.kind) + "</th>" +
+              '<td class="cns-num">' + r.running + "</td>" +
+              '<td class="cns-num">' + (r.breached_running
+                ? '<span class="cns-pill cns-status-danger">' + r.breached_running + "</span>" : "0") + "</td>" +
+              '<td class="cns-num">' + r.breached_ever + "</td></tr>";
+          }).join("") + "</tbody></table></div>" +
+          '<p class="cns-text-muted cns-text-xs" style="margin-top: var(--cns-space-2);">' +
+          "For escalations, the same position is on each matter as its time-threshold flag, " +
+          'which the <a href="/escalations?standing=breached">register</a> filters on.</p>';
+      })
+      .catch(function () {
+        body.innerHTML = '<p class="cns-text-muted">The clocks are not available to your role. ' +
+          'The escalation position is above: <a href="/escalations?standing=breached">open matters past ' +
+          "their time limit</a>.</p>";
+      });
+  }
+
+  /* ----------------------------- analysis ----------------------------- */
+
+  var periodSelect = document.getElementById("analysis-period");
+  var analysisTables = {};
+
+  function analysisTable(key, options) {
+    if (analysisTables[key]) {
+      analysisTables[key].setData(options.data);
+    } else {
+      analysisTables[key] = Consilium.Table.create(options);
+    }
+  }
+
+  function loadAnalysis() {
+    var period = periodSelect.value;
+    return api.call("consilium.escalation.analysis.summary", { period: period }, { trackLoading: false })
+      .then(function (result) {
+        result = result || {};
+        (result.volumes || []).forEach(function (row, i) { row.name = "v" + i; });
+        (result.durations || []).forEach(function (row, i) { row.name = "d" + i; });
+        (result.destinations || []).forEach(function (row, i) { row.row_key = "f" + i; });
+        (result.outcomes || []).forEach(function (row, i) { row.name = "o" + i; });
+
+        analysisTable("volumes", {
+          target: "#volumes-table",
+          data: result.volumes || [],
+          caption: "Escalations raised, closed and breached by period, type and severity",
+          storageKey: "report-esc-volumes",
+          rowKey: "name",
+          pageSize: 10,
+          compact: true,
+          searchFields: ["period", "escalation_type", "severity"],
+          searchPlaceholder: "Search by period, type or severity",
+          defaultSort: { field: "period", order: "desc" },
+          emptyTitle: "No matters raised",
+          emptyMessage: "No escalation you may read has been raised yet.",
+          columns: [
+            { field: "period", label: "Period", sortable: true },
+            { field: "escalation_type", label: "Type", sortable: true,
+              formatter: function (v) {
+                return v ? '<a href="' + escapeAttr(q("/escalations", { standing: "all", escalation_type: v })) +
+                  '">' + escapeHtml(Consilium.reference.label("Escalation Type", v)) + "</a>" : "";
+              } },
+            { field: "severity", label: "Severity", sortable: true, formatter: f.status(SEVERITY_TONES) },
+            { field: "raised", label: "Raised", sortable: true, align: "end", formatter: f.number },
+            { field: "closed", label: "Closed", sortable: true, align: "end", formatter: f.number },
+            { field: "breached", label: "Breached", sortable: true, align: "end", formatter: f.number }
+          ]
+        });
+
+        analysisTable("durations", {
+          target: "#durations-table",
+          data: result.durations || [],
+          caption: "Time open for closed escalations, by period of closure",
+          storageKey: "report-esc-durations",
+          rowKey: "name",
+          pageSize: 10,
+          compact: true,
+          searchable: false,
+          defaultSort: { field: "period", order: "desc" },
+          emptyTitle: "Nothing closed yet",
+          emptyMessage: "No escalation you may read has been closed.",
+          columns: [
+            { field: "period", label: "Closed in", sortable: true },
+            { field: "closed", label: "Closed", sortable: true, align: "end", formatter: f.number },
+            { field: "mean_hours_open", label: "Mean hours open", sortable: true, align: "end", formatter: f.number },
+            { field: "min_hours_open", label: "Shortest", sortable: true, align: "end", formatter: f.number },
+            { field: "max_hours_open", label: "Longest", sortable: true, align: "end", formatter: f.number }
+          ]
+        });
+
+        analysisTable("destinations", {
+          target: "#destinations-table",
+          data: result.destinations || [],
+          caption: "Forums escalations were routed to, by role",
+          storageKey: "report-esc-destinations",
+          rowKey: "row_key",
+          pageSize: 10,
+          compact: true,
+          searchable: false,
+          defaultSort: { field: "matters", order: "desc" },
+          emptyTitle: "No forum named",
+          emptyMessage: "No escalation you may read names a forum on its pathway.",
+          columns: [
+            { field: "governance_forum", label: "Forum", sortable: true,
+              formatter: function (v) {
+                return v ? '<a href="/forum?name=' + escapeAttr(encodeURIComponent(v)) + '">' +
+                  escapeHtml(Consilium.reference.label("Governance Forum", v)) + "</a>" : "";
+              } },
+            { field: "role_in_escalation", label: "Role", sortable: true },
+            { field: "matters", label: "Matters", sortable: true, align: "end", formatter: f.number }
+          ]
+        });
+
+        analysisTable("outcomes", {
+          target: "#outcomes-table",
+          data: result.outcomes || [],
+          caption: "How escalations were closed",
+          storageKey: "report-esc-outcomes",
+          rowKey: "name",
+          pageSize: 10,
+          compact: true,
+          searchable: false,
+          defaultSort: { field: "matters", order: "desc" },
+          emptyTitle: "Nothing closed yet",
+          emptyMessage: "No closure has been recorded on a matter you may read.",
+          columns: [
+            { field: "closure_type", label: "Closed as", sortable: true },
+            { field: "matters", label: "Matters", sortable: true, align: "end", formatter: f.number }
+          ]
+        });
+      })
+      .catch(function (error) {
+        ["volumes-table", "durations-table", "destinations-table", "outcomes-table"].forEach(function (id) {
+          document.getElementById(id).innerHTML = '<p class="cns-text-muted cns-text-sm">' +
+            escapeHtml((error && error.message) || "The analysis could not be read.") + "</p>";
+        });
+      });
+  }
+
+  periodSelect.addEventListener("change", function () {
+    loadAnalysis().then(function () {
+      Consilium.announce("Analysis grouped by " + periodSelect.value.toLowerCase() + ".");
+    });
+  });
+
+  /* The export is the same rows through a CSV writer on the server, so a
+     downloaded file cannot hold anything the screen would not show. */
+  Array.prototype.forEach.call(document.querySelectorAll("[data-export]"), function (button) {
+    button.addEventListener("click", function () {
+      var view = button.getAttribute("data-export");
+      button.disabled = true;
+      api.call("consilium.escalation.analysis.export", { view: view, period: periodSelect.value })
+        .then(function (csv) {
+          if (!csv) {
+            Consilium.toast.info("There is nothing to download for this view yet.");
+            return;
+          }
+          var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+          var link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "escalation-" + view + "-" + todayISO() + ".csv";
+          document.body.appendChild(link);
+          link.click();
+          window.setTimeout(function () {
+            URL.revokeObjectURL(link.href);
+            link.parentNode.removeChild(link);
+          }, 0);
+        })
+        .catch(function (error) {
+          Consilium.toast.error((error && error.message) || "The file could not be produced.");
+        })
+        .then(function () { button.disabled = false; });
+    });
+  });
+
+  /* --------------------------- coverage gaps -------------------------- */
+
+  /* The matrix is counted here, over the records the viewer may read, like
+     every other figure on the page, so a cell's number is exactly what the
+     inventory it links to will list. The groups are the organisation units a
+     record may name as its owning group; the categories come in tree order so
+     a sub-category sits under its parent. */
+  var COVERAGE = {
+    forums: {
+      doctype: "Governance Forum", filters: [["is_active", "=", 1]], list: "/forums",
+      noun: "forum", nouns: "forums"
+    },
+    documents: {
+      doctype: "Governing Document", filters: [["is_active", "=", 1]], list: "/policies",
+      noun: "document", nouns: "documents"
+    }
+  };
+  var coverageAxes = null;
+
+  function coverageAxesLoad() {
+    if (coverageAxes) return Promise.resolve(coverageAxes);
+    return Promise.all([
+      api.list("Risk Category", {
+        fields: ["name", "risk_category_name", "parent_risk_category"],
+        filters: [["is_active", "=", 1]], order_by: "lft asc", limit_page_length: 500, trackLoading: false
+      }),
+      api.list("Organization Unit", {
+        fields: ["name", "org_unit_name", "unit_level"],
+        filters: [["is_active", "=", 1], ["unit_level", "in", ["Operating Group", "Corporate Support"]]],
+        order_by: "lft asc", limit_page_length: 200, trackLoading: false
+      })
+    ]).then(function (lists) {
+      coverageAxes = { categories: lists[0], groups: lists[1] };
+      return coverageAxes;
+    });
+  }
+
+  function cellKey(category, group) { return category + "|" + group; }
+
+  function loadCoverage() {
+    var subject = COVERAGE[document.getElementById("coverage-subject").value] || COVERAGE.forums;
+    var node = document.getElementById("coverage-matrix");
+    var summary = document.getElementById("coverage-summary");
+    return coverageAxesLoad().then(function (axes) {
+      return api.list(subject.doctype, {
+        fields: ["name", "primary_risk_category", "owning_operating_group"],
+        filters: subject.filters, limit_page_length: 10000, trackLoading: false
+      }).then(function (records) {
+        var counts = {};
+        var unplaced = 0;
+        records.forEach(function (r) {
+          if (!r.primary_risk_category || !r.owning_operating_group) { unplaced += 1; return; }
+          var key = cellKey(r.primary_risk_category, r.owning_operating_group);
+          counts[key] = (counts[key] || 0) + 1;
+        });
+
+        /* Depth and descendants, from the parent links, so a parent whose
+           sub-categories cover a cell is not reported as a gap. */
+        var byName = {};
+        axes.categories.forEach(function (c) { byName[c.name] = c; });
+        function ancestors(c) {
+          var out = [], p = c.parent_risk_category, guard = 0;
+          while (p && byName[p] && guard < 10) { out.push(p); p = byName[p].parent_risk_category; guard += 1; }
+          return out;
+        }
+        function descendants(name) {
+          return axes.categories.filter(function (c) { return ancestors(c).indexOf(name) !== -1; });
+        }
+        /* Each sub-category directly under its parent. The tree's own ordering
+           columns are not relied on: they are only right after a rebuild, and a
+           category added by import or script can sit out of place until then. */
+        var ordered = [];
+        function walk(parent) {
+          axes.categories.forEach(function (c) {
+            var p = c.parent_risk_category && byName[c.parent_risk_category] ? c.parent_risk_category : null;
+            if (p === parent) { ordered.push(c); walk(c.name); }
+          });
+        }
+        walk(null);
+
+        var gaps = 0, cells = 0;
+        var head = '<thead><tr><th scope="col">Risk category</th>' + axes.groups.map(function (g) {
+          return '<th scope="col" class="cns-num">' + escapeHtml(g.org_unit_name || g.name) + "</th>";
+        }).join("") + "</tr></thead>";
+        var body = ordered.map(function (c) {
+          var subs = descendants(c.name);
+          var indent = ancestors(c).length * 1.25;
+          var row = '<tr><th scope="row" style="padding-left: calc(var(--cns-space-3) + ' + indent + 'rem);">' +
+            escapeHtml(c.risk_category_name || c.name) + "</th>";
+          row += axes.groups.map(function (g) {
+            cells += 1;
+            var n = counts[cellKey(c.name, g.name)] || 0;
+            var viaSubs = subs.reduce(function (sum, s) { return sum + (counts[cellKey(s.name, g.name)] || 0); }, 0);
+            var href = q(subject.list, { primary_risk_category: c.name, owning_operating_group: g.name });
+            var label = (c.risk_category_name || c.name) + " by " + (g.org_unit_name || g.name) + ": ";
+            if (n) {
+              return '<td class="cns-num cns-coverage-cell"><a href="' + escapeAttr(href) + '" aria-label="' +
+                escapeAttr(label + n + " " + (n === 1 ? subject.noun : subject.nouns) + ", open the list") + '">' + n + "</a></td>";
+            }
+            if (viaSubs) {
+              return '<td class="cns-num cns-coverage-cell cns-coverage-sub"><a href="' + escapeAttr(href) + '" aria-label="' +
+                escapeAttr(label + "none filed here, " + viaSubs + " in its sub-categories") + '">0</a>' +
+                ' <span class="cns-text-xs cns-text-muted" aria-hidden="true">+' + viaSubs + " below</span></td>";
+            }
+            gaps += 1;
+            return '<td class="cns-num cns-coverage-cell cns-coverage-gap"><a href="' + escapeAttr(href) + '" aria-label="' +
+              escapeAttr(label + "no " + subject.nouns + ", a gap in coverage") + '">0</a></td>';
+          }).join("");
+          return row + "</tr>";
+        }).join("");
+
+        node.innerHTML = '<table class="cns-table cns-table--compact cns-coverage"><caption class="cns-visually-hidden">' +
+          escapeHtml("Active " + subject.nouns + " by primary risk category and owning group") + "</caption>" +
+          head + "<tbody>" + body + "</tbody></table>";
+        summary.textContent = gaps + " of " + cells + " combinations have no " + subject.noun + " covering them" +
+          (unplaced ? "; " + unplaced + " " + (unplaced === 1 ? subject.noun + " names" : subject.nouns + " name") +
+            " no risk category or owning group and " + (unplaced === 1 ? "is" : "are") + " not placed." : ".");
+      });
+    }).catch(function () {
+      summary.textContent = "";
+      node.innerHTML = '<p class="cns-text-muted cns-text-sm">Not available to you.</p>';
+    });
+  }
+
+  document.getElementById("coverage-subject").addEventListener("change", function () {
+    loadCoverage().then(function () { Consilium.announce("Coverage recounted."); });
+  });
+
+  /* ------------------------------ assemble ---------------------------- */
+
+  function loadAll() {
+    var stamp = document.getElementById("report-stamp");
+    stamp.textContent = "Counting…";
+    return Promise.all([
+      Consilium.reference.load(["Governance Forum Type", "Governing Document Type", "Organization Unit",
+                                "Escalation Type", "Governance Forum"]),
+      api.list("Organizational Level", {
+        fields: ["name", "organizational_level_name"], limit_page_length: 100, trackLoading: false
+      }).then(function (rows) {
+        rows.forEach(function (r) { levelLabels[r.name] = r.organizational_level_name || r.name; });
+      }).catch(function () { /* codes still display */ })
+    ])
+      .then(function () {
+        return Promise.all([loadForums(), loadCoverage(), loadDocuments(), loadEscalations()]);
+      })
+      .then(function () {
+        stamp.textContent = "Figures as at " + Consilium.util.formatDate(new Date(), true) +
+          ", counted over the records you may read.";
+      })
+      .catch(function () {
+        stamp.textContent = "Some figures could not be counted.";
+      });
+  }
+
+  document.getElementById("refresh-report").addEventListener("click", function () {
+    loadAll().then(function () { Consilium.announce("Figures refreshed."); });
+  });
+  document.getElementById("print-report").addEventListener("click", function () { window.print(); });
+
+  loadAll();
+})();
+</script>
+{% endblock %}

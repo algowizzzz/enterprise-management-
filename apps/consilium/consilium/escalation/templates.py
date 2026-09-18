@@ -15,6 +15,8 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
+from consilium.consilium_core import audit
+
 SCOPE_ESCALATION = "Escalation"
 SCOPE_ACTION_PLAN = "Action Plan"
 SCOPE_RISK_ACCEPTANCE = "Risk Acceptance"
@@ -179,3 +181,168 @@ def validate_template(template) -> None:
             )
         if not row.label:
             row.label = meta.get_label(row.fieldname)
+
+
+# ====================================================== the guided intake form
+
+
+def requirements_for(escalation_type: str | None, scope: str, severity: str | None) -> list[dict]:
+    """What the template for a type and scope requires at a severity, with its guidance.
+
+    ``[{"fieldname", "label", "guidance"}]`` — the same list `apply_template`
+    enforces on save, so the form marks exactly what the server will refuse.
+    """
+    template = resolve_template(escalation_type, scope)
+    if not template:
+        return []
+    guidance = {
+        row.fieldname: row.guidance
+        for row in frappe.get_all(
+            "Escalation Template Field",
+            filters={"parent": template, "parenttype": "Escalation Template"},
+            fields=["fieldname", "guidance"],
+        )
+    }
+    return [
+        {"fieldname": fieldname, "label": label, "guidance": guidance.get(fieldname), "template": template}
+        for fieldname, label in required_fields(template, severity)
+    ]
+
+
+def _may_raise() -> None:
+    if not frappe.has_permission("Escalation Matter", "create"):
+        frappe.throw(_("You cannot raise an escalation."), frappe.PermissionError)
+
+
+@frappe.whitelist(methods=["GET"])
+def template_requirements(escalation_type: str | None = None, severity: str | None = None,
+                          scope: str = SCOPE_ESCALATION) -> dict:
+    """The required fields for a type at a severity, for a person raising a matter."""
+    _may_raise()
+    if scope not in SCOPE_DOCTYPES:
+        frappe.throw(_("{0} is not a template scope.").format(scope), title=_("Unknown Scope"))
+    return {"template": resolve_template(escalation_type, scope),
+            "required": requirements_for(escalation_type, scope, severity)}
+
+
+def _named(doctype: str, label_field: str, filters=None, extra=()) -> list[dict]:
+    """A reference list read with the caller's permissions, as ``{value, label}``."""
+    rows = frappe.get_list(doctype, filters=filters or {}, fields=["name", label_field, *extra],
+                           order_by=f"{label_field} asc", limit_page_length=0)
+    return [{"value": row.name, "label": row.get(label_field) or row.name,
+             **{field: row.get(field) for field in extra}} for row in rows]
+
+
+@frappe.whitelist(methods=["GET"])
+def intake_options() -> dict:
+    """Everything the guided form offers, read from the configuration itself so
+    the form cannot offer a value the record would refuse."""
+    from consilium.escalation import routing, sensitivity
+    from consilium.escalation.doctype.escalation_impacted_entity.escalation_impacted_entity import (
+        ENTITY_DOCTYPES,
+    )
+
+    _may_raise()
+    meta = frappe.get_meta("Escalation Matter")
+    active = {"is_active": 1}
+    risk_types = _named("Risk Type", "risk_type_name", active, extra=("tier", "parent_risk_type"))
+    units = _named("Organization Unit", "org_unit_name", active, extra=("unit_level",))
+    entities = {
+        "Legal Entity": _named("Legal Entity", "legal_entity_name", active),
+        "Material Entity": _named("Material Entity", "material_entity_name", active),
+        # Two kinds share the organisation tree; each offers only its own level.
+        "Business Unit": [u for u in units if u["unit_level"] == "Business Unit"],
+        "Line of Business": [u for u in units if u["unit_level"] == "Line of Business"],
+    }
+    forums = [{"value": row.name, "label": row.forum_name or row.name} for row in routing.selectable_forums()]
+    return {
+        "escalation_types": _named("Escalation Type", "escalation_type_name", active),
+        "risk_types": risk_types,
+        "organizational_levels": _named("Organizational Level", "organizational_level_name", active),
+        "entity_kinds": [kind for kind in ENTITY_DOCTYPES],
+        "entities": entities,
+        "severities": [o for o in (meta.get_field("severity").options or "").split("\n") if o],
+        "forums": forums,
+        "forum_roles": [o for o in (frappe.get_meta("Escalation Forum Link").get_field("role_in_escalation").options or "").split("\n") if o],
+        "people": frappe.get_all(
+            "User",
+            filters={"enabled": 1, "user_type": "System User", "name": ["not in", list(frappe.STANDARD_USERS)]},
+            fields=["name", "full_name"],
+            order_by="full_name asc",
+        ),
+        "may_restrict": sensitivity.may_see_sensitive(),
+        "me": frappe.session.user,
+    }
+
+
+#: What the guided form may set. Everything else on a matter is the platform's.
+INTAKE_FIELDS = (
+    "escalation_title", "escalation_type", "escalation_identification_date", "escalation_date",
+    "description", "tier_1_risk_type", "tier_2_risk_type", "identified_by", "organizational_level",
+    "accountable_executive", "response_owner", "escalation_trigger", "severity",
+    "material_entity_impact", "risk_appetite_breach", "systemic", "sensitive",
+)
+
+
+@frappe.whitelist(methods=["POST"])
+def raise_escalation(values) -> dict:
+    """Raise an escalation matter from the guided form (E-1, E-5). Anyone who may
+    create a matter — Escalation Owner by default.
+
+    The matter is inserted with the caller's own permissions, so its controller
+    applies the matrix, the pathway and the template for the type and severity
+    exactly as the desk does. Two things are settled here first:
+
+    * **Severity.** Left blank, the matrix decides and the source is recorded as
+      the matrix; chosen by the person raising it, it is recorded as a manual
+      override, so a later reader knows it was a judgement and whose.
+    * **Restricted handling.** Only someone cleared to see sensitive matters may
+      raise one as sensitive. Anyone else would lose sight of their own matter
+      the moment it was saved, so the request is refused instead.
+    """
+    from consilium.escalation import routing, sensitivity
+
+    _may_raise()
+    data = frappe.parse_json(values) if isinstance(values, str) else (values or {})
+    fields = {key: data.get(key) for key in INTAKE_FIELDS if data.get(key) not in (None, "")}
+
+    if int(fields.get("sensitive") or 0) and not sensitivity.may_see_sensitive():
+        audit.refuse(
+            _("{0} is not cleared for restricted handling and so cannot raise a matter as sensitive; "
+              "ask someone who is to raise it.").format(frappe.session.user),
+            subject_doctype="Escalation Matter",
+            subject_name=fields.get("escalation_title") or "new matter",
+            attempted_action="Create",
+            control="sensitive escalation access",
+        )
+
+    rows = []
+    for row in data.get("impacted_entities") or []:
+        if row.get("entity_type") and row.get("entity_value"):
+            rows.append({"entity_type": row["entity_type"], "entity_value": row["entity_value"],
+                         "impact_note": row.get("impact_note")})
+    pathway = [
+        {"governance_forum": row["governance_forum"], "role_in_escalation": row.get("role_in_escalation") or None}
+        for row in data.get("governance_forums") or [] if row.get("governance_forum")
+    ]
+
+    doc = frappe.get_doc({
+        "doctype": "Escalation Matter",
+        **fields,
+        "identified_by": fields.get("identified_by") or frappe.session.user,
+        "impacted_entities": rows,
+        "governance_forums": [{k: v for k, v in row.items() if v} for row in pathway],
+    })
+    if fields.get("severity"):
+        doc.severity_source = "Manual Override"
+    else:
+        doc.severity_source = "Matrix"
+        proposed = routing.match_rule(doc)
+        if not (proposed and proposed.get("severity")):
+            frappe.throw(
+                _("No escalation matrix rule sets a severity for this matter. Choose the severity yourself."),
+                title=_("Severity Required"),
+            )
+        doc.severity = proposed["severity"]
+    doc.insert()
+    return {"name": doc.name, "url": f"/escalation?name={doc.name}"}

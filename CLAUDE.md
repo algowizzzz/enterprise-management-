@@ -81,14 +81,14 @@ scripts/
   check_availability.py     what the network allows
   smoke_test.py             end-to-end check against a running site
   audit_windows_compat.py   static AST audit for POSIX-only code
-tests/test_compat.py        20 tests, run anywhere, need no services
+tests/                     51 tests (compat patches, deployment kit), run anywhere, need no services
 assets/                     prebuilt Frappe asset bundle (so node is never needed)
 ```
 
 ## Verify before you claim anything works
 
 ```bash
-python -m pytest tests/ -q                                   # expect 20 passed
+python -m pytest tests/ -q                                   # expect 51 passed
 python scripts/smoke_test.py --site <site> --port 8000       # expect 8 passed
 python scripts/audit_windows_compat.py <bench>/apps/frappe/frappe --severity BLOCKER
 python scripts/check_availability.py --target-windows        # ~25s

@@ -101,6 +101,7 @@
   "autoname": "field:class_code",
   "naming_rule": "By fieldname",
   "title_field": "title",
+  "show_title_field_in_link": 1,
   "search_fields": "title,class_code",
   "provenance": "02-data-model.md \u00a75.5"
 }

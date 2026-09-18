@@ -1,0 +1,267 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Attestation campaign administration.
+  Opens the two annual forum campaigns and generates any open campaign's tasks,
+  showing what each run created and — the part that needs chasing — the records
+  it could not ask about because a field it needs is empty. The server decides
+  who may do what; the page offers only what the context says it may.
+-#}
+
+{% block page_actions %}
+<a class="cns-btn cns-btn-secondary" href="/tasks">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Inbox
+</a>
+{% endblock %}
+
+{% block page_content %}
+{%- if not scope %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
+    <p class="cns-state-title">Attestation campaigns are not open to you</p>
+    <p class="cns-state-message">Campaigns are run by the governance office and by administrators.
+      Anything you are asked to attest appears in your inbox.</p>
+    <a class="cns-btn cns-btn-secondary" href="/tasks">Go to your inbox</a>
+  </div>
+</div>
+{%- else %}
+
+{%- if may_open_forum %}
+<section class="cns-card" aria-labelledby="open-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="open-heading">Open a forum campaign</h2>
+      <p class="cns-card-subtitle">The campaign covers every active forum. Its tasks are generated as it
+        opens, so everyone it asks sees the task in their inbox straight away.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <form id="open-form" novalidate>
+      <div class="cns-form-grid">
+        <div class="cns-field">
+          <label class="cns-label" for="open-kind">Campaign</label>
+          <select class="cns-select" id="open-kind" aria-describedby="open-kind-help">
+            <option value="inventory">Forum inventory attestation</option>
+            <option value="annual_review">Forum owner and compliance review (dual signature)</option>
+          </select>
+          <span class="cns-help" id="open-kind-help">The inventory asks every seat whose role attests; the
+            review asks each forum owner and is counter-signed by its compliance contact.</span>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="open-period">Period<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" id="open-period" value="{{ default_period }}" required aria-describedby="open-period-help">
+          <span class="cns-help" id="open-period-help">One campaign of each kind per period.</span>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="open-opens">Opens on</label>
+          <input class="cns-input" id="open-opens" type="date" value="{{ today }}">
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="open-due">Due on<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" id="open-due" type="date" value="{{ default_due }}" required>
+        </div>
+      </div>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-primary">
+          <i class="bi bi-play-circle" aria-hidden="true"></i> Open and generate tasks
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{%- endif %}
+
+<section class="cns-card" id="result-card" aria-labelledby="result-heading" hidden style="margin-top: var(--cns-space-5);">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="result-heading" tabindex="-1">Last run</h2>
+      <p class="cns-card-subtitle" id="result-subtitle"></p>
+    </div>
+  </div>
+  <div class="cns-card-body" id="result-body"></div>
+</section>
+
+<section aria-labelledby="campaigns-heading" style="margin-top: var(--cns-space-5);">
+  <h2 id="campaigns-heading" class="cns-visually-hidden">Campaigns</h2>
+  <div id="campaign-table"></div>
+</section>
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if scope %}
+<script>
+(function () {
+  "use strict";
+
+  var SCOPE = {{ scope | tojson }};
+  var MAY_GENERATE_ALL = {{ (may_generate_all and true or false) | tojson }};
+  var MAY_OPEN_FORUM = {{ (may_open_forum and true or false) | tojson }};
+  var OVERVIEW = SCOPE === "all"
+    ? "consilium.consilium_core.attestation.campaign_overview"
+    : "consilium.governance.reviews.forum_campaign_overview";
+
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var f = Consilium.Table.formatters;
+  var table = null;
+  var campaignRows = [];
+
+  /* Display tones only; nothing is decided by them. */
+  var STATUS_TONES = { Draft: "neutral", Open: "info", Closed: "success", Cancelled: "neutral" };
+
+  var SCREENS = { "Governance Forum": "/forum?name=", "Governing Document": "/policy?name=" };
+
+  /** Which endpoint may generate this campaign's tasks for the viewer, if any. */
+  function generator(row) {
+    if (!row.is_open) return null;
+    if (MAY_GENERATE_ALL) return "consilium.consilium_core.attestation.generate_campaign_tasks";
+    if (MAY_OPEN_FORUM && row.target_doctype === "Governance Forum") {
+      return "consilium.governance.reviews.generate_forum_campaign_tasks";
+    }
+    return null;
+  }
+
+  function progress(value, row) {
+    if (!row.tasks) return '<span class="cns-text-muted">No tasks yet</span>';
+    var pct = Math.round((row.answered / row.tasks) * 100);
+    return escapeHtml(row.answered + " of " + row.tasks + " answered (" + pct + "%)");
+  }
+
+  function load() {
+    return Consilium.api.call(OVERVIEW, {}).then(function (data) {
+      var rows = data.campaigns || [];
+      campaignRows = rows;
+      if (table) {
+        table.setData(rows);
+        return;
+      }
+      table = Consilium.Table.create({
+        target: "#campaign-table",
+        data: rows,
+        title: "Campaigns",
+        description: "Every campaign you may see, newest first.",
+        caption: "Attestation campaigns",
+        storageKey: "attestation-campaigns",
+        rowKey: "name",
+        pageSize: 10,
+        searchFields: ["campaign_title", "name", "period_label", "campaign_type"],
+        searchPlaceholder: "Search campaigns",
+        defaultSort: { field: "opens_on", order: "desc" },
+        emptyTitle: "No campaign yet",
+        emptyMessage: MAY_OPEN_FORUM ? "Open one above." : "None has been opened.",
+        columns: [
+          { field: "campaign_title", label: "Campaign", sortable: true,
+            formatter: function (v, row) {
+              return escapeHtml(v) + '<br><span class="cns-text-muted cns-text-sm cns-mono">' +
+                escapeHtml(row.name) + "</span>";
+            } },
+          { field: "campaign_type", label: "Kind", sortable: true },
+          { field: "period_label", label: "Period", sortable: true },
+          { field: "status", label: "Status", sortable: true, formatter: f.status(STATUS_TONES) },
+          { field: "opens_on", label: "Opens", sortable: true, formatter: f.date },
+          { field: "due_on", label: "Due", sortable: true, formatter: f.date },
+          { field: "answered", label: "Progress", sortable: true, formatter: progress },
+          { field: "overdue", label: "Overdue", sortable: true, align: "end",
+            formatter: function (v) {
+              return v ? '<span class="cns-pill cns-status-danger">' + escapeHtml(v) + "</span>" : "0";
+            } },
+          { field: "awaiting_second_signature", label: "Awaiting 2nd signature", sortable: true, align: "end",
+            formatter: f.number },
+          { field: "generated_on", label: "Last generated", sortable: true, formatter: f.datetime },
+          { field: "name", label: "Action",
+            formatter: function (v, row) {
+              if (!generator(row)) return '<span class="cns-text-muted cns-text-sm">—</span>';
+              return '<button type="button" class="cns-btn cns-btn-secondary cns-btn-sm" data-generate="' +
+                escapeAttr(v) + '">Generate tasks</button>';
+            } }
+        ]
+      });
+    }).catch(function (error) {
+      document.getElementById("campaign-table").innerHTML = '<div class="cns-card"><div class="cns-state cns-state--error">' +
+        '<p class="cns-state-title">The campaigns could not be read</p><p class="cns-state-message">' +
+        escapeHtml((error && error.message) || "") + "</p></div></div>";
+    });
+  }
+
+  function showResult(result, heading) {
+    var card = document.getElementById("result-card");
+    card.hidden = false;
+    document.getElementById("result-subtitle").textContent = heading;
+    var gaps = result.unconfigured || [];
+    var screen = SCREENS[result.target_doctype] || SCREENS["Governance Forum"];
+    var html = '<dl class="cns-dl">' +
+      "<dt>Records in scope</dt><dd>" + escapeHtml(result.population) + "</dd>" +
+      "<dt>Tasks created</dt><dd>" + escapeHtml(result.created) + "</dd>" +
+      "<dt>Already asked</dt><dd>" + escapeHtml(result.skipped) + " (already have a task in this campaign, so none was duplicated)</dd>" +
+      "<dt>Could not be asked</dt><dd>" + escapeHtml(gaps.length) + "</dd></dl>";
+    if (gaps.length) {
+      html += '<div class="cns-alert cns-status-warning" style="margin-top: var(--cns-space-4);">' +
+        '<i class="bi bi-exclamation-triangle" aria-hidden="true"></i><div>' +
+        "<p><strong>These records have no second signatory, so no task could be created for them.</strong> " +
+        "Name one on each record, then generate again — the run picks them up and asks nobody twice.</p>" +
+        '<ul class="cns-inbox-gaps">' + gaps.map(function (gap) {
+          return '<li><a href="' + escapeAttr(screen + encodeURIComponent(gap.name)) + '">' +
+            escapeHtml(gap.label) + '</a> <span class="cns-mono cns-text-sm">' + escapeHtml(gap.name) + "</span></li>";
+        }).join("") + "</ul></div></div>";
+    }
+    document.getElementById("result-body").innerHTML = html;
+    document.getElementById("result-heading").focus();
+  }
+
+  document.getElementById("campaign-table").addEventListener("click", function (event) {
+    var button = event.target.closest("button[data-generate]");
+    if (!button) return;
+    var name = button.getAttribute("data-generate");
+    var row = campaignRows.filter(function (r) { return r.name === name; })[0];
+    var method = row && generator(row);
+    if (!method) return;
+    button.disabled = true;
+    Consilium.api.call(method, { campaign: name }, { method: "POST" })
+      .then(function (result) {
+        result.target_doctype = row && row.target_doctype;
+        showResult(result, "Tasks generated for " + name + ".");
+        Consilium.toast.success(result.created + " task(s) created.", { title: "Generated" });
+        return load();
+      })
+      .catch(function (error) {
+        button.disabled = false;
+        Consilium.toast.error((error && error.message) || "The server refused.", { title: "Not generated" });
+      });
+  });
+
+  var openForm = document.getElementById("open-form");
+  if (openForm) {
+    openForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var period = document.getElementById("open-period");
+      var due = document.getElementById("open-due");
+      if (!period.value.trim()) { Consilium.toast.error("Name the period the campaign covers."); period.focus(); return; }
+      if (!due.value) { Consilium.toast.error("Choose when the campaign is due."); due.focus(); return; }
+      var button = openForm.querySelector('button[type="submit"]');
+      button.disabled = true;
+      Consilium.api.call("consilium.governance.reviews.open_forum_campaign", {
+        kind: document.getElementById("open-kind").value,
+        period_label: period.value.trim(),
+        opens_on: document.getElementById("open-opens").value,
+        due_on: due.value
+      }, { method: "POST" })
+        .then(function (result) {
+          result.target_doctype = "Governance Forum";
+          showResult(result, "Campaign " + result.campaign + " opened.");
+          Consilium.toast.success("Campaign " + result.campaign + " opened.", { title: "Opened" });
+          return load();
+        })
+        .catch(function (error) {
+          Consilium.toast.error((error && error.message) || "The server refused.", { title: "Not opened" });
+        })
+        .then(function () { button.disabled = false; });
+    });
+  }
+
+  load();
+})();
+</script>
+{%- endif %}
+{% endblock %}

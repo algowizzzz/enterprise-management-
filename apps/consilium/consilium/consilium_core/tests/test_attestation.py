@@ -9,9 +9,12 @@ from consilium.consilium_core.tests.utils import CoreTestCase, make_guide_articl
 
 class TestAttestation(CoreTestCase):
     def setUp(self):
+        # The population is scoped to this test's own records, so whatever else
+        # the site holds (a demonstration organisation, an earlier run) stays out.
+        self.marker = unique("Attested article")
         self.owner = make_user()
         self.second = make_user()
-        self.in_scope = make_guide_article(category="Policy Lifecycle")
+        self.in_scope = make_guide_article(category="Policy Lifecycle", title=self.marker)
         frappe.db.set_value("Guide Article", self.in_scope.name, "owner", self.owner)
         self.out_of_scope = make_guide_article(category="Getting Started")
 
@@ -22,7 +25,7 @@ class TestAttestation(CoreTestCase):
                 "campaign_type": "Governing Document",
                 "period_label": unique("period"),
                 "target_doctype": "Guide Article",
-                "population_filter": '{"category": "Policy Lifecycle"}',
+                "population_filter": frappe.as_json({"category": "Policy Lifecycle", "title": self.marker}),
                 "participant_source": "Record Field",
                 "participant_field": "owner",
                 "opens_on": nowdate(),
@@ -40,7 +43,7 @@ class TestAttestation(CoreTestCase):
     def test_the_population_is_derived_from_live_data(self):
         self.assertEqual(attestation.population(self.campaign), [self.in_scope.name])
 
-        late = make_guide_article(category="Policy Lifecycle")
+        late = make_guide_article(category="Policy Lifecycle", title=self.marker)
         frappe.db.set_value("Guide Article", late.name, "owner", self.owner)
         self.assertEqual(
             sorted(attestation.population(self.campaign)), sorted([self.in_scope.name, late.name])
@@ -66,7 +69,7 @@ class TestAttestation(CoreTestCase):
 
     def test_regeneration_picks_up_a_record_added_after_the_campaign_opened(self):
         attestation.generate_tasks(self.campaign)
-        late = make_guide_article(category="Policy Lifecycle")
+        late = make_guide_article(category="Policy Lifecycle", title=self.marker)
         frappe.db.set_value("Guide Article", late.name, "owner", self.owner)
         result = attestation.generate_tasks(self.campaign)
         self.assertEqual(len(result["created"]), 1)
@@ -199,10 +202,11 @@ class TestUnconfiguredRecordsDoNotStopACampaign(CoreTestCase):
     """
 
     def setUp(self):
+        self.marker = unique("Attested article")
         self.owner = make_user()
         self.second = make_user()
-        self.configured = make_guide_article(category="Policy Lifecycle")
-        self.unconfigured = make_guide_article(category="Policy Lifecycle")
+        self.configured = make_guide_article(category="Policy Lifecycle", title=self.marker)
+        self.unconfigured = make_guide_article(category="Policy Lifecycle", title=self.marker)
         for article in (self.configured, self.unconfigured):
             frappe.db.set_value("Guide Article", article.name, "owner", self.owner)
         # Only one of the two names a second signatory.
@@ -218,7 +222,7 @@ class TestUnconfiguredRecordsDoNotStopACampaign(CoreTestCase):
                 "campaign_type": "Governing Document",
                 "period_label": unique("period"),
                 "target_doctype": "Guide Article",
-                "population_filter": '{"category": "Policy Lifecycle"}',
+                "population_filter": frappe.as_json({"category": "Policy Lifecycle", "title": self.marker}),
                 "participant_source": "Record Field",
                 "participant_field": "owner",
                 "requires_dual_signature": 1,
@@ -255,3 +259,16 @@ class TestUnconfiguredRecordsDoNotStopACampaign(CoreTestCase):
         self.assertEqual(result["unconfigured"], [])
         # And the record that was already asked is not asked twice.
         self.assertNotIn(self.configured.name, subjects)
+
+    def test_a_record_whose_second_signatory_is_its_participant_is_reported_not_raised(self):
+        """The task would refuse to save (a dual signature needs two people), and
+        that refusal, raised from generation, stopped every other record."""
+        frappe.db.set_value("Guide Article", self.unconfigured.name, "modified_by",
+                            self.owner, update_modified=False)
+        result = attestation.generate_tasks(self.campaign)
+        subjects = [
+            frappe.db.get_value("Attestation Task", name, "subject_name")
+            for name in result["created"]
+        ]
+        self.assertIn(self.configured.name, subjects)
+        self.assertIn(self.unconfigured.name, result["unconfigured"])

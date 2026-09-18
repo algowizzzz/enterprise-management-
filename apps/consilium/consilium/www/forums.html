@@ -5,6 +5,11 @@
   One table, the shared component, reading Governance Forum over the REST API.
   Sorting, search and pagination all happen on the server; the filter bar below
   hands the component a filter set and lets it reload.
+
+  The multi-valued dimensions (business unit, risk type, legal entity,
+  jurisdiction, governance responsibility) live in child tables. The server
+  resolves them to the forums carrying every value asked for
+  (`inventory.tagged_forum_names`) and the table is narrowed to those names.
 -#}
 
 {% block page_actions %}
@@ -41,7 +46,7 @@
         <select class="cns-select" id="f-status" data-filter-field="compliance_status">
           <option value="">Any status</option>
           {%- for option in status_options %}
-          <option value="{{ option }}">{{ option }}</option>
+          <option value="{{ option | e }}">{{ option | e }}</option>
           {%- endfor %}
         </select>
       </div>
@@ -50,7 +55,7 @@
         <select class="cns-select" id="f-cadence" data-filter-field="cadence">
           <option value="">Any cadence</option>
           {%- for option in cadence_options %}
-          <option value="{{ option }}">{{ option }}</option>
+          <option value="{{ option | e }}">{{ option | e }}</option>
           {%- endfor %}
         </select>
       </div>
@@ -78,6 +83,14 @@
         </select>
       </div>
     </div>
+    <fieldset class="cns-fieldset" id="tag-filters" aria-describedby="tag-filters-help">
+      <legend>Scope the forum covers</legend>
+      <span class="cns-help" id="tag-filters-help">A forum matches when it carries every value chosen. Retired
+        values are listed separately, so forums that still carry one can be found.</span>
+      <div class="cns-form-grid" id="tag-filter-fields">
+        <p class="cns-text-muted cns-text-sm">Loading the scope filters&hellip;</p>
+      </div>
+    </fieldset>
   </div>
 </section>
 
@@ -86,19 +99,19 @@
 <p class="cns-text-muted cns-text-sm" style="margin-top: var(--cns-space-3);">
   The table scrolls sideways to reach the later columns. A forum's multi-value
   attributes — business units, risk types, legal entities and jurisdictions — are
-  held against the forum itself and are shown on its own page.
+  filtered above and listed in full on the forum's own page.
 </p>
 
 {% endblock %}
 
 {% block scripts %}
-<script src="/assets/consilium/js/consilium-reference.js"></script>
 <script>
 (function () {
   "use strict";
 
   var f = Consilium.Table.formatters;
   var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
 
   var STATUS_TONES = {
     Draft: "neutral",
@@ -178,11 +191,11 @@
       { field: "requires_review", label: "Review due", sortable: true,
         formatter: flag("Awaiting review", "No", "warning") },
       { field: "next_review_on", label: "Next review", sortable: true, formatter: dueDate },
-      { field: "committee_chair", label: "Chair", sortable: true, formatter: plain },
-      { field: "secretary", label: "Secretary", sortable: true, formatter: plain },
-      { field: "forum_owner", label: "Owner", sortable: true, formatter: plain },
-      { field: "sponsor", label: "Sponsor", sortable: true, formatter: plain },
-      { field: "compliance_contact", label: "Compliance contact", sortable: true, formatter: plain },
+      { field: "committee_chair", label: "Chair", sortable: true, formatter: Consilium.Table.formatters.person },
+      { field: "secretary", label: "Secretary", sortable: true, formatter: Consilium.Table.formatters.person },
+      { field: "forum_owner", label: "Owner", sortable: true, formatter: Consilium.Table.formatters.person },
+      { field: "sponsor", label: "Sponsor", sortable: true, formatter: Consilium.Table.formatters.person },
+      { field: "compliance_contact", label: "Compliance contact", sortable: true, formatter: Consilium.Table.formatters.person },
       { field: "primary_risk_category", label: "Primary risk", sortable: true, formatter: named("Risk Category") },
       { field: "owning_operating_group", label: "Operating group", sortable: true, formatter: named("Organization Unit") },
       { field: "owning_line_of_business", label: "Line of business", sortable: true, formatter: named("Organization Unit") },
@@ -214,16 +227,43 @@
     });
   }
 
-  /* A standing can be named in the address, so the home page can link
-     straight to "awaiting review" or "overdue". */
+  /* Every filter lives in the address as well as on the page, so a reload,
+     the back button or a link someone was sent all come back to the same list.
+     The home page relies on this to link straight to "awaiting review". */
+  var ADDRESS = (function () {
+    try { return new URLSearchParams(window.location.search); }
+    catch (e) { return { get: function () { return null; } }; }
+  })();
+
+  function fromAddress(select, param) {
+    var asked = ADDRESS.get(param);
+    if (asked && Array.prototype.some.call(select.options, function (o) { return o.value === asked; })) {
+      select.value = asked;
+      return true;
+    }
+    return false;
+  }
+
   function standingFromAddress() {
+    fromAddress(document.getElementById("f-standing"), "standing");
+    document.querySelectorAll("select[data-filter-field]").forEach(function (select) {
+      fromAddress(select, select.getAttribute("data-filter-field"));
+    });
+  }
+
+  function writeAddress() {
+    var params = new URLSearchParams();
+    selects.forEach(function (select) {
+      if (select.value) params.set(select.getAttribute("data-filter-field"), select.value);
+    });
+    tagSelects().forEach(function (select) {
+      if (select.value) params.set(select.getAttribute("data-tag-dimension"), select.value);
+    });
+    if (standing.value !== "active") params.set("standing", standing.value);
+    var query = params.toString();
     try {
-      var asked = new URLSearchParams(window.location.search).get("standing");
-      var select = document.getElementById("f-standing");
-      if (asked && Array.prototype.some.call(select.options, function (o) { return o.value === asked; })) {
-        select.value = asked;
-      }
-    } catch (e) { /* the default standing already applies */ }
+      window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : ""));
+    } catch (e) { /* the list still filters; only the address is not updated */ }
   }
 
   /* The reference lists are read once, so the table can show a forum type by
@@ -235,7 +275,7 @@
     .catch(buildTable)
     .then(function () {
       standingFromAddress();
-      if (document.getElementById("f-standing").value !== "active") applyFilters();
+      if (window.location.search) applyFilters();
     });
 
   /* --- filter bar ------------------------------------------------------ */
@@ -261,10 +301,31 @@
     overdue: null // built at apply time, it needs today's date
   };
 
+  /* --- tagged dimensions ---------------------------------------------- */
+
+  function tagSelects() {
+    return Array.prototype.slice.call(document.querySelectorAll("select[data-tag-dimension]"));
+  }
+
+  function taggedAsked() {
+    var tagged = {};
+    tagSelects().forEach(function (select) {
+      if (select.value) tagged[select.getAttribute("data-tag-dimension")] = select.value;
+    });
+    return tagged;
+  }
+
+  /* Each change supersedes the one before it; a slow answer to an older
+     question must not overwrite the newer one. */
+  var tagRequest = 0;
+
   function applyFilters() {
     var filters = [];
     if (standing.value === "overdue") {
+      // The framework compares an empty date as the earliest possible day, so a
+      // forum with no review date would count as overdue without the lower bound.
       filters.push(["next_review_on", "<", today()]);
+      filters.push(["next_review_on", ">", "1900-01-01"]);
       filters.push(["is_active", "=", 1]);
     } else {
       filters = (STANDING_FILTERS[standing.value] || []).slice();
@@ -272,9 +333,28 @@
     selects.forEach(function (select) {
       if (select.value) filters.push([select.getAttribute("data-filter-field"), "=", select.value]);
     });
+    writeAddress();
     if (!table) return;
-    table.setFilters(filters);
-    Consilium.announce("Filters applied.");
+
+    var tagged = taggedAsked();
+    var seq = ++tagRequest;
+    if (!Object.keys(tagged).length) {
+      table.setFilters(filters);
+      Consilium.announce("Filters applied.");
+      return;
+    }
+    Consilium.api.call("consilium.governance.inventory.tagged_forum_names", { tagged: tagged })
+      .then(function (names) {
+        if (seq !== tagRequest) return;
+        /* No forum carries them all: a name nothing has, so the table says so. */
+        filters.push(["name", "in", names.length ? names : ["\u2014"]]);
+        table.setFilters(filters);
+        Consilium.announce("Filters applied. " + names.length + " forum(s) carry the scope chosen.");
+      })
+      .catch(function (error) {
+        if (seq !== tagRequest) return;
+        Consilium.toast.error(error.message || "The scope filter could not be applied.", { title: "Filter not applied" });
+      });
   }
 
   selects.concat([standing]).forEach(function (node) {
@@ -283,6 +363,7 @@
 
   document.getElementById("filter-clear").addEventListener("click", function () {
     selects.forEach(function (select) { select.value = ""; });
+    tagSelects().forEach(function (select) { select.value = ""; });
     standing.value = "active";
     applyFilters();
   });
@@ -305,12 +386,51 @@
           option.textContent = row[labelField] || row[valueField];
           select.appendChild(option);
         });
+        // The options arrive after the address was first read.
+        if (fromAddress(select, select.getAttribute("data-filter-field"))) applyFilters();
       })
       .catch(function () {
         select.disabled = true;
         select.setAttribute("title", "This filter is unavailable because the reference list could not be read.");
       });
   }
+
+  /* The scope filters: the dimensions and their values are the server's, so a
+     dimension added there appears here. Active values first; retired ones in a
+     group of their own. */
+  Consilium.api.call("consilium.governance.inventory.inventory_filters", {})
+    .then(function (dimensions) {
+      var holder = document.getElementById("tag-filter-fields");
+      function options(values) {
+        return values.map(function (v) {
+          return '<option value="' + escapeAttr(v.value) + '">' + escapeHtml(v.label) + "</option>";
+        }).join("");
+      }
+      holder.innerHTML = dimensions.map(function (d) {
+        var active = d.values.filter(function (v) { return !v.retired; });
+        var retired = d.values.filter(function (v) { return v.retired; });
+        var id = "f-tag-" + d.key;
+        return '<div class="cns-field"><label class="cns-label" for="' + id + '">' + escapeHtml(d.label) + "</label>" +
+          '<select class="cns-select" id="' + id + '" data-tag-dimension="' + escapeAttr(d.key) + '"' +
+          (d.values.length ? "" : ' disabled title="No values you may read."') + ">" +
+          '<option value="">Any ' + escapeHtml(d.label.toLowerCase()) + "</option>" +
+          (retired.length
+            ? '<optgroup label="In use">' + options(active) + '</optgroup><optgroup label="Retired values">' +
+              options(retired) + "</optgroup>"
+            : options(active)) +
+          "</select></div>";
+      }).join("");
+      var fromUrl = false;
+      tagSelects().forEach(function (select) {
+        select.addEventListener("change", applyFilters);
+        if (fromAddress(select, select.getAttribute("data-tag-dimension"))) fromUrl = true;
+      });
+      if (fromUrl) applyFilters();
+    })
+    .catch(function () {
+      document.getElementById("tag-filter-fields").innerHTML =
+        '<p class="cns-text-muted cns-text-sm">The scope filters are unavailable: their reference lists could not be read.</p>';
+    });
 
   fillSelect("f-type", "Governance Forum Type", "name", "forum_type_name");
   fillSelect("f-risk", "Risk Category", "name", "risk_category_name");

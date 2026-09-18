@@ -154,10 +154,31 @@ def main() -> int:
             f"dangling asset links: {[p.name for p in dangling]}. "
             f"These serve a blank interface while returning HTTP 200."
         )
-        js = list(assets.rglob("*.js"))
-        css = list(assets.rglob("*.css"))
+        # os.walk rather than Path.rglob: before Python 3.13, rglob does not
+        # descend into symlinked directories, and a development bench serves
+        # assets through exactly those links — so rglob counts nothing and a
+        # working install reports as broken.
+        files = [f for _, _, names in os.walk(assets, followlinks=True) for f in names]
+        js = [f for f in files if f.endswith(".js")]
+        css = [f for f in files if f.endswith(".css")]
         assert js and css, f"found {len(js)} scripts and {len(css)} stylesheets; expected many of each"
         return f"{len(js)} scripts, {len(css)} stylesheets"
+
+    @check("Libraries loaded on demand are present")
+    def _():
+        # The Desk fetches these by URL the first time a screen needs them, so a
+        # bundle without them passes every other check and then breaks the first
+        # JSON field anyone opens.
+        base = sites_path / "assets" / "frappe" / "node_modules"
+        wanted = ["ace-builds/src-noconflict/ace.js", "ace-builds/src-min-noconflict/ace.js",
+                  "frappe-gantt/dist/frappe-gantt.min.js", "html5-qrcode/html5-qrcode.min.js",
+                  "qz-tray/qz-tray.js", "js-sha256/build/sha256.min.js"]
+        missing = [w for w in wanted if not (base / w).is_file()]
+        assert not missing, (
+            f"missing under {base}: {missing}. Re-import the asset bundle; without these "
+            f"every JSON and Code field fails to load its editor."
+        )
+        return f"{len(wanted)} files, including the code editor"
 
     @check("Served assets match the application source")
     def _():
@@ -237,6 +258,40 @@ def main() -> int:
             f"access, so these will simply fail there."
         )
         return "no CDN or external font references"
+
+    # --------------------------------------------------------------------- PDF
+    @check("PDF engine present")
+    def _():
+        # Every PDF — print, download, email attachment — goes through the
+        # wkhtmltopdf binary. Without it the interface works until someone asks
+        # for a PDF, and then shows a server error. The build with patched Qt
+        # is the one the framework needs: the unpatched build a distribution
+        # ships renders without headers, footers or page numbers.
+        import shutil
+        import subprocess
+
+        exe = shutil.which("wkhtmltopdf") or next(
+            (p for p in ("/usr/local/bin/wkhtmltopdf", "/usr/bin/wkhtmltopdf") if os.path.exists(p)), None)
+        assert exe, (
+            "wkhtmltopdf is not installed, so PDF downloads fail with a server error. The offline "
+            "bundle carries the 0.12.6 packages under vendor/wkhtmltopdf/; re-run install.sh, which "
+            "installs the one for this system."
+        )
+        version = subprocess.run([exe, "--version"], capture_output=True, text=True, timeout=30).stdout.strip()
+        assert "0.12.6" in version, f"{exe} reports {version!r}; 0.12.6 is required"
+        assert "patched qt" in version.lower(), (
+            f"{exe} reports {version!r}: the unpatched build renders PDFs without headers, footers "
+            f"or page breaks. Install the bundled 0.12.6 (with patched qt) package instead."
+        )
+        # The framework's PDF library does not search PATH itself: it runs
+        # `which wkhtmltopdf`, so both have to work for the service account.
+        found = subprocess.run(["which", "wkhtmltopdf"], capture_output=True, text=True) \
+            if shutil.which("which") else None
+        assert found and found.returncode == 0, (
+            "the `which` command is missing or cannot find wkhtmltopdf on PATH; the PDF library the "
+            "framework uses looks the engine up that way, so every PDF fails. Install `which`."
+        )
+        return f"{version} at {exe}"
 
     # ----------------------------------------------------------------- workers
     @check("Background queues are reachable")

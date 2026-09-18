@@ -202,20 +202,32 @@ def preview(document: str) -> dict:
     }
 
 
+def _cycle_decisions(doc, fields: list[str]) -> list[dict]:
+    """The approval decisions that belong to the version now in the chain.
+
+    Every decision records the version it was taken on. Counting decisions from
+    an earlier version meant a document reopened after publication still found
+    last cycle's approvals, so it could be published again without anyone
+    approving what had changed. An approval is of a version, not of a title.
+    """
+    current = frappe.db.get_value(
+        "Document Version", {"subject_doctype": doc.doctype, "subject_name": doc.name, "is_current": 1}, "name"
+    )
+    rows = frappe.get_all(
+        "Approval Decision",
+        filters={"subject_doctype": doc.doctype, "subject_name": doc.name, "docstatus": ["<", 2]},
+        fields=list(dict.fromkeys([*fields, "based_on_version"])),
+    )
+    return [row for row in rows if (row["based_on_version"] or None) == (current or None)]
+
+
 def instantiate(doc) -> list[str]:
     """Write the resolved path as Core Approval Decision rows.
 
     Idempotent: a step that already has a decision row for this document is left
     alone, so re-routing after a change of owner does not duplicate history.
     """
-    existing = {
-        row["approval_step"]
-        for row in frappe.get_all(
-            "Approval Decision",
-            filters={"subject_doctype": doc.doctype, "subject_name": doc.name, "docstatus": ["<", 2]},
-            fields=["approval_step"],
-        )
-    }
+    existing = {row["approval_step"] for row in _cycle_decisions(doc, ["approval_step"])}
     classification_label = change_classification_of(doc)
     written = []
     for step in resolved_steps(doc):
@@ -255,12 +267,8 @@ def chain_status(doc) -> dict:
     Authorisation``, which is what P-25 demands.
     """
     steps = resolved_steps(doc)
-    rows = frappe.get_all(
-        "Approval Decision",
-        filters={"subject_doctype": doc.doctype, "subject_name": doc.name, "docstatus": ["<", 2]},
-        fields=["name", "approval_step", "decision", "is_open", "exception_authorisation",
-                "assigned_to", "step_sequence"],
-    )
+    rows = _cycle_decisions(doc, ["name", "approval_step", "decision", "is_open", "exception_authorisation",
+                                  "assigned_to", "step_sequence"])
     by_step = {row["approval_step"]: row for row in rows}
 
     missing, outstanding, objections = [], [], []
@@ -285,3 +293,316 @@ def chain_status(doc) -> dict:
         "outstanding": outstanding,
         "objections": objections,
     }
+
+
+# --------------------------------------------------------------------------
+# Portal entry points: raising the chain and deciding its steps (P-8, P-25, P-26)
+#
+# ``instantiate`` had no caller, so no screen could ever ask anyone to approve a
+# document, and the "Complete Approval Chain" gate could only be satisfied from
+# a console. These are the thin, checked doors onto it. Who may do what is
+# settled in ``lifecycle`` (roles and stage, shared with every other portal
+# action) and in Core (who may decide a step: its assignee or a live delegate).
+# --------------------------------------------------------------------------
+
+#: The decisions a step's assignee may record from the portal. ``Pending`` is
+#: where a step starts and ``Bypassed`` is reachable only through an exception
+#: authorisation. ``Abstained`` is withheld: Core counts it as no objection, so
+#: offering it would let a step complete the chain without anyone approving.
+#: These are values handed to Core, never compared.
+STEP_DECISIONS = ("Approved", "Rejected", "Changes Requested")
+
+DECISION_FIELDS = [
+    "name", "approval_step", "step_sequence", "mode", "required_role", "assigned_to", "acted_by",
+    "acting_delegation", "decision", "is_open", "requires_review", "decided_on", "comments",
+    "exception_authorisation", "based_on_version", "creation",
+]
+
+
+def _current_version_name(doc) -> str | None:
+    return frappe.db.get_value(
+        "Document Version", {"subject_doctype": doc.doctype, "subject_name": doc.name, "is_current": 1}, "name"
+    )
+
+
+def _may_decide(row, user: str, doc) -> bool:
+    from consilium.consilium_core import delegation
+
+    return delegation.resolve_actor(
+        row["assigned_to"], delegation.ACTION_APPROVE, acting_user=user, doctype=doc.doctype, name=doc.name
+    )["permitted"]
+
+
+def is_participant(doc, user: str | None = None) -> bool:
+    """Whether the user is assigned a step on this document, or acts for someone who is."""
+    user = user or frappe.session.user
+    for row in frappe.get_all(
+        "Approval Decision",
+        filters={"subject_doctype": doc.doctype, "subject_name": doc.name},
+        fields=["name", "assigned_to"],
+    ):
+        if _may_decide(row, user, doc):
+            return True
+    return False
+
+
+def decidable_steps(doc, user: str | None = None) -> list[str]:
+    """Open steps of the version now in the chain that this user may decide."""
+    user = user or frappe.session.user
+    return [
+        row["name"]
+        for row in _cycle_decisions(doc, ["name", "assigned_to", "is_open", "step_sequence"])
+        if int(row["is_open"] or 0) and _may_decide(row, user, doc)
+    ]
+
+
+def decision_choice(decision: str) -> dict:
+    """A decision the screen may offer, and whether it must carry a reason — read
+    from the configured flag, so a new objection-type decision needs no code."""
+    flags = state_flags.flags_for("Approval Decision", "decision", decision) or {}
+    return {"decision": decision, "needs_reason": bool(flags.get("requires_review"))}
+
+
+def approval_context(doc, user: str | None = None) -> dict:
+    """The approval panel: the chain, its steps (raised or not yet), and who may act."""
+    user = user or frappe.session.user
+    current = _current_version_name(doc)
+    rows = frappe.get_all(
+        "Approval Decision",
+        filters={"subject_doctype": doc.doctype, "subject_name": doc.name, "docstatus": ["<", 2]},
+        fields=DECISION_FIELDS,
+        order_by="creation desc, step_sequence asc",
+    )
+    decidable = set(decidable_steps(doc, user))
+    for row in rows:
+        row["current_cycle"] = (row["based_on_version"] or None) == (current or None)
+        # A sequential step behind an open one is not offered: Core refuses it
+        # until the steps ahead are decided (E7-S4). Said, not hidden.
+        row["waiting_on"] = (
+            [ahead.approval_step for ahead in approvals.waiting_on(row["name"])]
+            if row["name"] in decidable else []
+        )
+        row["can_decide"] = row["name"] in decidable and not row["waiting_on"]
+    decidable = {row["name"] for row in rows if row["can_decide"]}
+    raised = {row["approval_step"] for row in rows if row["current_cycle"]}
+    steps = resolved_steps(doc)
+    route = select_route(doc)
+    return {
+        "route": route["name"] if route else None,
+        "change_classification": change_classification_of(doc),
+        "current_version": current,
+        "chain": chain_status(doc),
+        "planned_steps": steps,
+        "unraised": [step["approval_step"] for step in steps if step["approval_step"] not in raised],
+        "decisions": rows,
+        "open_steps": [row["name"] for row in rows if row["current_cycle"] and int(row["is_open"] or 0)],
+        # Nobody waives their own step (``bypass_step``), so the steps this
+        # viewer could be offered to bypass exclude those assigned to them.
+        "bypassable": [row["name"] for row in rows
+                       if row["current_cycle"] and int(row["is_open"] or 0) and row["assigned_to"] != user],
+        "decidable": sorted(decidable),
+        "step_decisions": [decision_choice(d) for d in STEP_DECISIONS],
+    }
+
+
+def _open_step_of(doc, approval_decision: str) -> dict:
+    """The decision row, if it is an open step of this document's current version."""
+    row = frappe.db.get_value(
+        "Approval Decision", approval_decision,
+        ["name", "subject_doctype", "subject_name", "is_open", "approval_step", "assigned_to",
+         "based_on_version"],
+        as_dict=True,
+    )
+    if not row or (row.subject_doctype, row.subject_name) != (doc.doctype, doc.name):
+        frappe.throw(
+            _("Approval step {0} does not belong to {1}.").format(approval_decision, doc.name),
+            title=_("Wrong Step"),
+        )
+    if not int(row.is_open or 0):
+        frappe.throw(
+            _("Approval step {0} has already been decided.").format(row.approval_step),
+            title=_("Step Already Decided"),
+        )
+    if (row.based_on_version or None) != (_current_version_name(doc) or None):
+        frappe.throw(
+            _("Approval step {0} was raised on an earlier version of {1}. Raise the steps again for the "
+              "version now in the chain.").format(row.approval_step, doc.name),
+            title=_("Step Belongs To An Earlier Version"),
+        )
+    return row
+
+
+def _tell(event_code: str, recipients, context: dict, doc) -> None:
+    """A Core dispatch, so "was the approver told" has an answer (P-14).
+
+    Through a template, so the wording and the channel are the administrator's
+    to change, like every other notice the platform sends.
+    """
+    from consilium.consilium_core import notification
+
+    recipients = sorted({r for r in recipients if r})
+    if recipients:
+        notification.notify(event_code, recipients, context, subject_doctype=doc.doctype, subject_name=doc.name)
+
+
+@frappe.whitelist(methods=["POST"])
+def raise_steps(document: str) -> dict:
+    """Raise the resolved approval path as decisions, and tell each approver.
+
+    Refused without a version: an approval is of a version (``_cycle_decisions``),
+    and a decision raised against none would silently vanish from the chain the
+    moment the first version is uploaded.
+    """
+    from consilium.policy import lifecycle
+
+    doc = frappe.get_doc(DOCTYPE, document)
+    frappe.has_permission(DOCTYPE, "read", doc=doc, throw=True)
+    lifecycle.authorise(doc, "raise_approval_steps")
+    if not _current_version_name(doc):
+        frappe.throw(
+            _("{0} has no version in its chain. Approvals are given against a version, so upload one first.")
+            .format(doc.name),
+            title=_("No Version To Approve"),
+        )
+    written = instantiate(doc)
+    if not written:
+        frappe.throw(
+            _("Every approval step for the current version of {0} has already been raised.").format(doc.name),
+            title=_("Already Raised"),
+        )
+    for name in written:
+        row = frappe.db.get_value("Approval Decision", name, ["approval_step", "assigned_to"], as_dict=True)
+        _tell(
+            "policy.approval.requested", [row.assigned_to],
+            {"approval_step": row.approval_step, "version_label": doc.version_label or ""}, doc,
+        )
+    return lifecycle.portal_context(frappe.get_doc(DOCTYPE, doc.name))
+
+
+@frappe.whitelist(methods=["POST"])
+def decide_step(document: str, approval_decision: str, decision: str, comments: str | None = None) -> dict:
+    """A step's assignee (or their live delegate) decides it.
+
+    No policy role and no document permission is asked for: the right to decide
+    comes from being assigned the step, and Core refuses — and audits — anyone
+    who is neither the assignee nor holding a live delegation.
+    """
+    from consilium.consilium_core import approvals
+    from consilium.policy import lifecycle
+
+    doc = frappe.get_doc(DOCTYPE, document)
+    row = _open_step_of(doc, approval_decision)
+    if decision not in STEP_DECISIONS:
+        frappe.throw(_("{0} is not a decision a step can record.").format(decision), title=_("Unknown Decision"))
+    if decision_choice(decision)["needs_reason"] and not (comments or "").strip():
+        frappe.throw(
+            _("A decision of \"{0}\" is recorded with its reason.").format(decision), title=_("Reason Required")
+        )
+    approvals.record_decision(row.name, decision, comments=comments, acting_user=frappe.session.user)
+    _tell(
+        "policy.approval.decided", [doc.document_owner],
+        {"approval_step": row.approval_step, "decision": decision, "decided_by": frappe.session.user,
+         "comments": comments or ""},
+        doc,
+    )
+    return lifecycle.portal_context(frappe.get_doc(DOCTYPE, doc.name))
+
+
+@frappe.whitelist(methods=["POST"])
+def bypass_step(document: str, approval_decision: str, justification: str) -> dict:
+    """Skip a step — only with a Core Exception Authorisation recording why (P-25).
+
+    Refused without a justification (and audited, because an attempted
+    unexplained bypass is exactly what an auditor asks about), and refused to
+    the step's own assignee: waiving your own approval is not an exception, it
+    is a missing one.
+    """
+    from consilium.consilium_core import approvals, audit
+    from consilium.policy import lifecycle
+
+    doc = frappe.get_doc(DOCTYPE, document)
+    frappe.has_permission(DOCTYPE, "read", doc=doc, throw=True)
+    lifecycle.authorise(doc, "authorise_bypass")
+    row = _open_step_of(doc, approval_decision)
+    if not (justification or "").strip():
+        audit.refuse(
+            _("A step cannot be bypassed without a documented exception authorisation."),
+            subject_doctype=doc.doctype,
+            subject_name=doc.name,
+            attempted_action="Other",
+            control="approval bypass authorisation",
+            exc=frappe.ValidationError,
+        )
+    if row.assigned_to == frappe.session.user:
+        audit.refuse(
+            _("{0} is assigned the step \"{1}\" and so may not authorise bypassing it.").format(
+                frappe.session.user, row.approval_step
+            ),
+            subject_doctype=doc.doctype,
+            subject_name=doc.name,
+            attempted_action="Other",
+            control="approval bypass segregation",
+        )
+    authorisation = frappe.get_doc(
+        {
+            "doctype": "Exception Authorisation",
+            "subject_doctype": doc.doctype,
+            "subject_name": doc.name,
+            "exception_type": "Approval Bypass",
+            "justification": justification,
+            "requested_by": frappe.session.user,
+            "approved_by": frappe.session.user,
+            "approved_on": frappe.utils.now(),
+        }
+    ).insert(ignore_permissions=True)
+    # Marked bypassed against its own assignee: the step is being skipped, not
+    # decided by someone else. Who authorised the skip is on the authorisation.
+    approvals.record_decision(
+        row.name, "Bypassed", comments=justification, acting_user=row.assigned_to,
+        exception_authorisation=authorisation.name,
+    )
+    _tell(
+        "policy.approval.bypassed", [row.assigned_to, doc.document_owner],
+        {"approval_step": row.approval_step, "authorisation": authorisation.name, "justification": justification},
+        doc,
+    )
+    return lifecycle.portal_context(frappe.get_doc(DOCTYPE, doc.name))
+
+
+@frappe.whitelist(methods=["GET"])
+def my_open_steps() -> list[dict]:
+    """Open approval steps on governing documents that the caller may decide now.
+
+    ``Approval Decision`` is readable only by administrators and audit, so an
+    approver cannot find their own queue over the REST interface; this reads it
+    for them, and returns only the rows they may act on.
+    """
+    user = frappe.session.user
+    out = []
+    documents: dict[str, object] = {}
+    for row in frappe.get_all(
+        "Approval Decision",
+        filters={"subject_doctype": DOCTYPE, "is_open": 1, "docstatus": ["<", 2]},
+        fields=["name", "subject_name", "approval_step", "assigned_to", "based_on_version", "creation"],
+        order_by="creation asc",
+    ):
+        doc = documents.get(row["subject_name"])
+        if doc is None:
+            doc = documents[row["subject_name"]] = frappe.get_doc(DOCTYPE, row["subject_name"])
+        if (row["based_on_version"] or None) != (_current_version_name(doc) or None):
+            continue
+        if not _may_decide(row, user, doc):
+            continue
+        out.append(
+            {
+                "approval_decision": row["name"],
+                "document": doc.name,
+                "document_name": doc.document_name,
+                "lifecycle_phase": doc.lifecycle_phase,
+                "approval_step": row["approval_step"],
+                "assigned_to": row["assigned_to"],
+                "on_behalf": row["assigned_to"] != user,
+                "raised_on": row["creation"],
+            }
+        )
+    return out

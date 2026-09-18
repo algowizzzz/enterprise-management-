@@ -121,7 +121,50 @@ Full list and rationale: [`docs/KNOWLEDGE-BASE.md`](docs/KNOWLEDGE-BASE.md).
 
 ## 4. Status: what is proven, and what is not
 
-### Verified working
+### The application, at release 1.0.0 (2026-09-18)
+
+The build is finished. Everything below was measured on a clean site, not
+asserted.
+
+- **Tests:** 1372 application tests, OK (0 failures, 0 errors, 1248 s).
+  `pytest tests/` 51 passed. Interface sweep (`scripts/ui_regression.py`) 274
+  passed, 0 failed. Browser journeys (`scripts/browser_journeys.py`) 8/8.
+  Platform rules (`scripts/check_platform_rules.py`) 6/6.
+- **Size:** 142 entities (Core 62, Governance 24, Policy 38, Escalation 18),
+  378 PostgreSQL tables on the demonstration site, 11 scheduled jobs. A
+  scratch DocType, `ABC`, is untracked in
+  `apps/consilium/consilium/consilium_core/doctype/abc/` and installed on the
+  demonstration site. It is not product code and is not counted here. Remove
+  it before the final commit and the bundle build.
+- **Demonstration data:** `deploy/demo_data.py` rebuilds the demonstration site
+  from scratch in about 27 s, idempotently, with no failed section. It holds 14
+  forums, 15 governing documents, 157 versions, 15 escalations, 67 meetings, 24
+  motions, 137 votes, 92 attestation tasks and 23 personas. Passwords are never
+  committed: `deploy/demo_logins.py` issues random ones per run into a file
+  outside the repository (see
+  [`docs/delivery/DEMO-LOGINS.md`](docs/delivery/DEMO-LOGINS.md)).
+- **Deployment kit:** rehearsed air-gapped on Rocky Linux 9, with `verify.sh`
+  14/14 after install and after upgrade. See
+  [`docs/delivery/DEPLOYMENT-READINESS.md`](docs/delivery/DEPLOYMENT-READINESS.md).
+- **Requirement coverage and backlog:**
+  [`docs/delivery/REQUIREMENTS-COVERAGE.md`](docs/delivery/REQUIREMENTS-COVERAGE.md)
+  and [`docs/delivery/EPICS.md`](docs/delivery/EPICS.md). The index of every
+  delivery document is [`docs/delivery/README.md`](docs/delivery/README.md).
+
+**Known gaps still open:**
+
+- On the desk, a reviewer cannot return a document to drafting. The portal can.
+- Voting has no attendance entry.
+- Time To First Action is not shown.
+- No real Windows run.
+- No RHEL 8 or Ubuntu 22.04 rehearsal.
+- Python 3.11 on x86_64 is required: the framework's `hiredis` pin blocks 3.12,
+  and `psutil` blocks ARM.
+- Real certificates, the identity provider, SMTP and load testing need the
+  target environment.
+- The offline bundle must be rebuilt from the final commit.
+
+### The toolchain: verified working
 
 Everything below was executed end to end, not reasoned about:
 
@@ -142,7 +185,7 @@ Everything below was executed end to end, not reasoned about:
 
 > **Nothing has ever run on an actual Windows machine.**
 
-All of the above ran on Linux. Windows-specific code paths are covered by 20
+All of the above ran on Linux. Windows-specific code paths are covered by 22
 tests that *simulate* Windows (forcing the platform flag and removing the POSIX
 APIs), plus an integration check that all 8 patches apply to real Frappe. That
 is good evidence, not proof.
@@ -152,9 +195,11 @@ is good evidence, not proof.
 breaks.**
 
 Also unverified:
-- **PDF generation** — needs the `wkhtmltopdf` binary, which could not be
-  installed in the test environment. It has official Windows builds, so this is
-  a prerequisite rather than a blocker, but it is unproven.
+- **PDF generation on Windows.** On Linux it is now proven: the bundle carries
+  `wkhtmltopdf`, and `verify.sh` renders a governing document to PDF on the
+  Rocky Linux 9 rehearsal host. On Windows it needs the official Windows build
+  of the binary, so it is a prerequisite rather than a blocker, but it is
+  unproven there.
 - The realtime/socket.io server (Node-based; should be fine, not exercised).
 
 ---
@@ -198,9 +243,9 @@ Work through these in order. Each is objectively testable — no judgement calls
 ```bash
 python scripts/check_availability.py --target-windows
 ```
-- ✅ **Success:** all 150 PyPI packages resolve, and you know exactly which
+- ✅ **Success:** all 145 PyPI packages resolve, and you know exactly which
   GitHub URLs (if any) are blocked.
-- Expected outcome: the 150 pass; the two GitHub URLs may be blocked. That is
+- Expected outcome: the 145 pass; the two GitHub URLs may be blocked. That is
   the *expected* result, not a failure — it is the ask for the network team, and
   the offline path in §5 avoids it entirely.
 
@@ -290,4 +335,4 @@ a no-op on POSIX. The moment we fork, we own Frappe's security patching forever.
 | `scripts/` | bootstrap, availability check, smoke test, compat auditor |
 | `winbench/` | The CLI and the compatibility layer |
 | `assets/` | Prebuilt Frappe asset bundle, so no machine needs node |
-| `tests/` | 20 tests for the compat layer |
+| `tests/` | 51 toolchain tests: 22 for the compat layer, the deployment kit, the install layout |

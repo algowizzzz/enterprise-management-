@@ -1,0 +1,171 @@
+{
+ "actions": [],
+ "allow_copy": 0,
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-09-18 05:36:14.982309",
+ "description": "One question put to the help assistant and the answer given: who asked, on which page, how it was answered and how long it took. Append-only. The per-person rate limit is counted from these rows.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "asked_on",
+  "route",
+  "subject_doctype",
+  "subject_name",
+  "intent",
+  "qa_section",
+  "question",
+  "answer",
+  "sources",
+  "how_section",
+  "mode",
+  "ai_used",
+  "provider",
+  "fallback_reason",
+  "ai_service_request",
+  "latency_ms"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Asked By",
+   "options": "User",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "asked_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Asked On",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "The portal path the question was asked from, without its query string.",
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Page"
+  },
+  {
+   "fieldname": "subject_doctype",
+   "fieldtype": "Link",
+   "label": "Record Type",
+   "options": "DocType"
+  },
+  {
+   "description": "Only for a record the person could read that is not sensitive, confidential or restricted. Otherwise left blank, so this log cannot confirm that a restricted reference exists.",
+   "fieldname": "subject_name",
+   "fieldtype": "Data",
+   "label": "Record"
+  },
+  {
+   "fieldname": "intent",
+   "fieldtype": "Data",
+   "label": "Question Kind"
+  },
+  {
+   "fieldname": "qa_section",
+   "fieldtype": "Section Break",
+   "label": "Question and answer"
+  },
+  {
+   "fieldname": "question",
+   "fieldtype": "Small Text",
+   "label": "Question",
+   "reqd": 1
+  },
+  {
+   "fieldname": "answer",
+   "fieldtype": "Long Text",
+   "label": "Answer"
+  },
+  {
+   "fieldname": "sources",
+   "fieldtype": "Small Text",
+   "label": "Sources Used"
+  },
+  {
+   "fieldname": "how_section",
+   "fieldtype": "Section Break",
+   "label": "How it was answered"
+  },
+  {
+   "default": "Built-in",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Mode",
+   "options": "Built-in\nAI-assisted",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "ai_used",
+   "fieldtype": "Check",
+   "label": "AI Answer Shown"
+  },
+  {
+   "fieldname": "provider",
+   "fieldtype": "Data",
+   "label": "Request Format"
+  },
+  {
+   "description": "Set when an AI answer was attempted but the built-in one was shown.",
+   "fieldname": "fallback_reason",
+   "fieldtype": "Small Text",
+   "label": "Why the Built-in Answer Was Used"
+  },
+  {
+   "description": "What left the platform for this question, if anything did.",
+   "fieldname": "ai_service_request",
+   "fieldtype": "Link",
+   "label": "AI Service Request",
+   "options": "AI Service Request"
+  },
+  {
+   "fieldname": "latency_ms",
+   "fieldtype": "Int",
+   "label": "Time Taken (ms)"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-18 05:36:14.982485",
+ "modified_by": "Administrator",
+ "module": "Consilium Core",
+ "name": "Assistant Interaction",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

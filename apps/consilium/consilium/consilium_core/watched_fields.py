@@ -124,12 +124,16 @@ def on_update(doc, method=None) -> list[dict]:
                 "allocated_to": doc.modified_by,
             }
         ).insert(ignore_permissions=True)
-    elif field_set.on_change_action == "Notify Only" and field_set.notify_channel:
-        notification.dispatch(
-            field_set.notify_channel,
-            doc.modified_by,
-            subject=f"Watched field changed on {doc.doctype} {doc.name}",
-            body=f"Changed: {summary}.",
+    elif field_set.on_change_action == "Notify Only":
+        # Raised as an event, so the wording and the channel are the
+        # ``core.watched_field.changed`` template's, editable without a release.
+        # ``notify_channel`` on the set predates templates; it is no longer what
+        # decides the channel, and requiring it meant a set configured without
+        # one told nobody at all.
+        notification.notify(
+            "core.watched_field.changed",
+            [doc.modified_by],
+            {"summary": summary},
             subject_doctype=doc.doctype,
             subject_name=doc.name,
         )

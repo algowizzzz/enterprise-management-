@@ -1,0 +1,236 @@
+/* ==========================================================================
+   Brand surfaces
+   --------------------------------------------------------------------------
+   The parts of the portal a deploying organisation's brand shows through:
+   the header's logo, the optional white header, and the home page banner.
+   Colours and the typeface are not set here — they are token overrides
+   written into each page from the Portal Branding record (branding.py), so
+   everything below reads tokens only.
+   ========================================================================== */
+
+/* ---- Header logo ------------------------------------------------------- */
+
+.cns-brand-mark-img {
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: var(--cns-radius-sm);
+  flex: none;
+}
+.cns-brand-logo {
+  height: 2rem;
+  max-width: 11rem;
+  width: auto;
+  object-fit: contain;
+  flex: none;
+}
+.cns-brand-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.55rem 0.15rem;
+  background: currentColor;
+  opacity: 0.35;
+}
+
+/* ---- White header ------------------------------------------------------ */
+/* For a brand whose logo is drawn for a light background. The primary colour
+   moves to the text, the active tab's underline and a rule under the header. */
+
+.cns-header-light .cns-header {
+  background: var(--cns-surface);
+  color: var(--cns-primary);
+  border-bottom: 3px solid var(--cns-primary);
+}
+.cns-header-light .cns-nav-link:hover { background: var(--cns-primary-subtle); }
+.cns-header-light .cns-header .cns-control-btn,
+.cns-header-light .cns-header .cns-fontsize button,
+.cns-header-light .cns-header .cns-fontsize-label {
+  color: var(--cns-primary);
+  border-color: var(--cns-primary-subtle-border);
+}
+[data-theme="dark"] .cns-header-light .cns-header { border-bottom-color: var(--cns-primary); }
+
+/* ---- Sign-in prompt ---------------------------------------------------- */
+
+.cns-signin-card {
+  max-width: 34rem;
+  margin: var(--cns-space-8, 3rem) auto;
+  text-align: center;
+}
+.cns-signin-card .cns-card-body { padding: var(--cns-space-8, 2.5rem) var(--cns-space-6, 2rem); }
+.cns-signin-card p { color: var(--cns-text-muted); margin: var(--cns-space-3) 0 var(--cns-space-5); }
+
+/* ---- Home banner ------------------------------------------------------- */
+
+.cns-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--cns-radius-lg);
+  margin-bottom: var(--cns-space-6, 2rem);
+  color: var(--cns-on-primary);
+  background:
+    radial-gradient(circle at 85% 20%, color-mix(in srgb, var(--cns-accent) 55%, transparent) 0, transparent 45%),
+    radial-gradient(circle at 70% 110%, color-mix(in srgb, var(--cns-primary-400) 60%, transparent) 0, transparent 50%),
+    linear-gradient(120deg, var(--cns-primary-700), var(--cns-primary-600) 55%, var(--cns-primary-500));
+  min-height: 19rem;
+  display: flex;
+  align-items: center;
+}
+.cns-hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+}
+/* Keeps the heading readable over any photograph. */
+.cns-hero-has-image::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(90deg,
+    var(--cns-primary-700) 0%,
+    color-mix(in srgb, var(--cns-primary-700) 85%, transparent) 38%,
+    transparent 72%);
+}
+.cns-hero-body {
+  position: relative;
+  z-index: 2;
+  padding: var(--cns-space-8, 3rem) var(--cns-space-8, 3rem);
+  max-width: 40rem;
+}
+.cns-hero-title {
+  font-size: clamp(1.75rem, 1.2rem + 2vw, 2.6rem);
+  line-height: 1.15;
+  font-weight: var(--cns-weight-bold, 700);
+  margin: 0 0 var(--cns-space-3);
+}
+/* The portal's heading colour is set on `.cns-portal h1`; the banner needs its
+   own foreground to win over it. */
+.cns-portal .cns-hero .cns-hero-title,
+.cns-portal .cns-hero .cns-hero-text { color: var(--cns-on-primary); }
+.cns-hero-text {
+  font-size: var(--cns-text-lg, 1.125rem);
+  line-height: 1.55;
+  margin: 0 0 var(--cns-space-6, 1.75rem);
+  opacity: 0.92;
+}
+.cns-hero-actions { display: flex; flex-wrap: wrap; gap: var(--cns-space-3); }
+.cns-portal a.cns-hero-btn,
+.cns-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cns-space-2);
+  padding: 0.7rem 1.25rem;
+  border-radius: var(--cns-radius-pill);
+  font-weight: var(--cns-weight-semibold, 600);
+  text-decoration: none;
+  border: 2px solid transparent;
+  transition: transform var(--cns-transition-fast), background-color var(--cns-transition-fast);
+}
+.cns-portal a.cns-hero-btn-primary { background: var(--cns-accent); color: var(--cns-on-accent, #fff); }
+.cns-portal a.cns-hero-btn-secondary { border-color: currentColor; color: inherit; }
+.cns-portal a.cns-hero-btn:hover { transform: translateY(-1px); text-decoration: none; }
+.cns-portal a.cns-hero-btn-secondary:hover { background: rgba(255, 255, 255, 0.12); color: inherit; }
+.cns-hero-btn:focus-visible { outline: 3px solid var(--cns-on-primary); outline-offset: 2px; }
+
+/* ---- Quick tasks ------------------------------------------------------- */
+
+.cns-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--cns-space-4);
+  margin-bottom: var(--cns-space-8, 2.5rem);
+}
+.cns-portal a.cns-quick-tile {
+  display: flex;
+  gap: var(--cns-space-3);
+  align-items: flex-start;
+  padding: var(--cns-space-5);
+  border-radius: var(--cns-radius-lg);
+  background: var(--cns-surface);
+  border: 1px solid var(--cns-border);
+  color: var(--cns-text);
+  text-decoration: none;
+  transition: border-color var(--cns-transition-fast), box-shadow var(--cns-transition-fast),
+    transform var(--cns-transition-fast);
+}
+.cns-portal a.cns-quick-tile:hover {
+  border-color: var(--cns-primary);
+  box-shadow: var(--cns-shadow-md, 0 4px 14px rgba(0, 0, 0, 0.08));
+  transform: translateY(-2px);
+  color: var(--cns-text);
+}
+.cns-quick-icon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  background: var(--cns-primary-subtle);
+  color: var(--cns-primary);
+  font-size: 1.2rem;
+}
+.cns-quick-title { display: block; font-weight: var(--cns-weight-semibold, 600); margin-bottom: 0.15rem; }
+.cns-quick-note { display: block; font-size: var(--cns-text-sm); color: var(--cns-text-muted); }
+
+@media (max-width: 640px) {
+  .cns-hero-body { padding: var(--cns-space-6, 1.75rem) var(--cns-space-5, 1.25rem); }
+  .cns-hero-has-image::before {
+    background: color-mix(in srgb, var(--cns-primary-700) 82%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cns-portal a.cns-hero-btn:hover,
+  .cns-portal a.cns-quick-tile:hover { transform: none; }
+}
+
+/* ---- Header fit -------------------------------------------------------- */
+/* With the brand, seven tabs and the controls, the header outgrows a laptop
+   screen and wraps the controls onto a second row. Above the phone layout the
+   row stays single: tabs tighten, the text-size label (the buttons say the
+   same) gives way first, and anything still left over scrolls inside the tab
+   strip rather than pushing the controls down. */
+@media (min-width: 768px) {
+  .cns-header-inner { flex-wrap: nowrap; gap: var(--cns-space-3); }
+  .cns-nav-link { padding-left: var(--cns-space-2); padding-right: var(--cns-space-2); }
+  /* The tab strip gives way (and scrolls) before the controls do, and a long
+     name in the user menu is shortened rather than pushing tabs off screen. */
+  .cns-header-nav { min-width: 0; overflow-x: auto; scrollbar-width: thin; }
+  .cns-controls { flex-shrink: 0; }
+  .cns-user-name { display: inline-block; max-width: 9rem; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+}
+/* The header is capped at the page container's width (about 1290px), so a
+   wider screen buys it nothing: these hold at every desktop width. */
+@media (min-width: 768px) {
+  .cns-fontsize-label { display: none; }
+}
+@media (min-width: 768px) {
+  /* Eight tabs with icons do not fit beside the controls; the words carry it. */
+  .cns-nav-link i { display: none; }
+}
+@media (min-width: 768px) and (max-width: 1279.98px) {
+  .cns-brand-name { display: none; }
+}
+
+/* ---- Inbox badge ------------------------------------------------------- */
+.cns-nav-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: var(--cns-radius-pill);
+  background: var(--cns-accent);
+  color: var(--cns-on-accent, #fff);
+  font-size: 0.7rem;
+  font-weight: var(--cns-weight-semibold, 600);
+  line-height: 1;
+}
+.cns-nav-badge[data-overdue] { background: var(--cns-danger, #b42318); color: #fff; }
+
+/* Analysis pages share the Reports tab; this row moves between them. */
+.cns-analysis-nav { display: flex; flex-wrap: wrap; gap: var(--cns-space-2); margin-bottom: var(--cns-space-4); }

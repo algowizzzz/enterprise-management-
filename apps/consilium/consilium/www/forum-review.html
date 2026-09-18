@@ -1,0 +1,543 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  A forum's compliance review.
+  The forum's standing as it is now, the form a compliance reviewer uses to
+  record a decision — which is the only thing that moves the standing — and the
+  history of every decision before it.
+-#}
+
+{% block page_actions %}
+{%- if allowed %}
+<a class="cns-btn cns-btn-secondary" href="/forum?name={{ forum | urlencode }}">
+  <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to the forum
+</a>
+{%- endif %}
+{%- if can_read_queue %}
+<a class="cns-btn cns-btn-ghost" href="/formation-requests">
+  <i class="bi bi-list-check" aria-hidden="true"></i> Formation requests
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+
+{%- if not forum %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-signpost" aria-hidden="true"></i></span>
+    <p class="cns-state-title">No forum was named</p>
+    <p class="cns-state-message">Open the review from a forum's page, or from the list of forums
+      awaiting review.</p>
+    <a class="cns-btn cns-btn-primary" href="/forums?standing=review">Forums awaiting review</a>
+  </div>
+</div>
+{%- elif not found %}
+<div class="cns-card">
+  <div class="cns-state cns-state--error">
+    <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+    <p class="cns-state-title">That forum is not on the inventory</p>
+    <p class="cns-state-message">Reference <span class="cns-mono">{{ forum | e }}</span> does not exist.</p>
+    <a class="cns-btn cns-btn-secondary" href="/forums">Back to the inventory</a>
+  </div>
+</div>
+{%- elif not allowed %}
+<div class="cns-card">
+  <div class="cns-state">
+    <span class="cns-state-icon"><i class="bi bi-lock" aria-hidden="true"></i></span>
+    <p class="cns-state-title">This forum is not open to you</p>
+    <p class="cns-state-message">Ask the governance office for access.</p>
+    <a class="cns-btn cns-btn-secondary" href="/forums">Back to the inventory</a>
+  </div>
+</div>
+{%- else %}
+
+<div id="forum-summary" class="cns-card">
+  <div class="cns-card-body">
+    <p class="cns-text-muted cns-text-sm">Loading the forum&hellip;</p>
+  </div>
+</div>
+
+{%- if can_record %}
+<section class="cns-card" aria-labelledby="record-heading" id="record-card">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="record-heading">Record a compliance decision</h2>
+      <p class="cns-card-subtitle">The decision moves the forum's standing as shown against each
+        choice. It is kept as its own record, in your name, and cannot be edited afterwards.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div id="record-closed" hidden></div>
+    <form id="review-form" novalidate>
+      <div class="cns-alert cns-status-danger" id="review-errors" role="alert" hidden>
+        <i class="bi bi-x-octagon" aria-hidden="true"></i>
+        <div>
+          <strong>This decision is not ready to record.</strong>
+          <ul id="review-errors-list" class="cns-prose" style="margin-top: var(--cns-space-2);"></ul>
+        </div>
+      </div>
+
+      <fieldset class="cns-fieldset" id="decision-group" aria-describedby="decision-help">
+        <legend>Decision<span class="cns-required" aria-hidden="true">*</span></legend>
+        <span class="cns-help" id="decision-help">What the review found. Each choice says where it
+          leaves the forum.</span>
+        {%- for choice in decisions %}
+        <div class="cns-check">
+          <input type="radio" name="decision" id="decision-{{ loop.index }}" value="{{ choice.decision }}"
+                 data-needs-statement="{{ 1 if choice.requires_statement else 0 }}">
+          <label for="decision-{{ loop.index }}">{{ choice.decision }}
+            {%- if choice.resulting_status %}
+            <span class="cns-text-muted cns-text-sm">&mdash; the forum becomes {{ choice.resulting_status }}</span>
+            {%- endif %}
+            {%- if choice.requires_statement %}
+            <span class="cns-text-muted cns-text-sm">(needs questions or comments)</span>
+            {%- endif %}
+          </label>
+        </div>
+        {%- endfor %}
+      </fieldset>
+
+      <div class="cns-form-grid">
+        <div class="cns-field">
+          <label class="cns-label" for="review_type">Kind of review<span class="cns-required" aria-hidden="true">*</span></label>
+          <select class="cns-select" id="review_type" aria-describedby="review-type-help">
+            {%- for option in review_types %}
+            <option value="{{ option }}">{{ option }}</option>
+            {%- endfor %}
+          </select>
+          <span class="cns-help" id="review-type-help">An annual review is recorded from its
+            dually-signed attestation, so it is not offered here.</span>
+        </div>
+      </div>
+
+      <div class="cns-field">
+        <label class="cns-label" for="comments">Comments</label>
+        <textarea class="cns-textarea" id="comments" rows="4" aria-describedby="comments-help"></textarea>
+        <span class="cns-help" id="comments-help">The reason for the decision, as the forum's owner
+          and an auditor will read it.</span>
+      </div>
+      <div class="cns-field">
+        <label class="cns-label" for="returned_questions">Questions to the forum's creator</label>
+        <textarea class="cns-textarea" id="returned_questions" rows="4" aria-describedby="questions-help"></textarea>
+        <span class="cns-help" id="questions-help">What must be answered or fixed before the forum
+          can be found compliant.</span>
+      </div>
+
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-primary" id="record-review">
+          <i class="bi bi-shield-check" aria-hidden="true"></i> Record the decision
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{%- else %}
+<div class="cns-alert cns-status-info" style="margin-bottom: var(--cns-space-4);">
+  <i class="bi bi-info-circle" aria-hidden="true"></i>
+  <div>Compliance decisions are recorded by the compliance reviewers. You can read this forum's
+    review history below.</div>
+</div>
+{%- endif %}
+
+{#- E8-S4. The annual review: dually signed (owner, then compliance contact),
+    then recorded by a compliance reviewer. What the viewer may do is the
+    server's answer (reviews.forum_annual_review); each action is checked again
+    on the way in. #}
+<section class="cns-card" aria-labelledby="annual-heading" id="annual-review">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="annual-heading">Annual review</h2>
+      <p class="cns-card-subtitle">Once a year the forum's owner confirms the forum still meets its
+        mandate, its compliance contact counter-signs, and a compliance reviewer records the result.
+        The owner and the contact answer from their task list.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div id="annual-body"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div>
+    <div id="annual-forms"></div>
+  </div>
+</section>
+
+<section class="cns-card" aria-labelledby="history-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="history-heading">Compliance decisions</h2>
+      <p class="cns-card-subtitle">Every move of this forum's standing, with its author and reason.</p>
+    </div>
+  </div>
+  <div class="cns-card-body"><div id="reviews-table"></div></div>
+</section>
+
+{%- endif %}
+{% endblock %}
+
+{% block scripts %}
+{%- if allowed %}
+<script>
+(function () {
+  "use strict";
+
+  var FORUM = {{ forum | tojson }};
+  var escapeHtml = Consilium.util.escapeHtml;
+  var escapeAttr = Consilium.util.escapeAttr;
+  var f = Consilium.Table.formatters;
+
+  /* Display only: the colour a standing or decision is shown in. */
+  var STATUS_TONES = {
+    Draft: "neutral", Pending: "warning", Compliant: "success",
+    "Non-Compliant": "danger", "Not Applicable": "info", Disbanded: "neutral"
+  };
+  var DECISION_TONES = {
+    Compliant: "success", "Non-Compliant": "danger",
+    "Not Applicable": "info", "Returned To Creator": "warning"
+  };
+
+  function dash() { return '<span class="cns-text-muted">&mdash;</span>'; }
+  function value(v) { return (v === null || v === undefined || v === "") ? dash() : escapeHtml(v); }
+  function dateValue(v) { return v ? escapeHtml(Consilium.util.formatDate(v, false)) : dash(); }
+  function pill(text, tone) {
+    return '<span class="cns-pill cns-status-' + escapeAttr(tone || "neutral") + '">' + escapeHtml(text) + "</span>";
+  }
+
+  /** A review date that says plainly when it has passed. */
+  function reviewDue(v) {
+    if (!v) return dash();
+    var text = dateValue(v);
+    var due = new Date(String(v) + "T00:00:00");
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return due < today ? text + " " + pill("Overdue", "danger") : text;
+  }
+
+  /* ------------------------------ the forum ---------------------------- */
+
+  function loadForum() {
+    return Consilium.api.get("Governance Forum", FORUM).then(function (doc) {
+      /* As on the forum page: the status pill names the state; flags add only
+         what it does not say, and a closed forum needs nothing more. */
+      var flags = [];
+      if (doc.is_active && doc.requires_review) {
+        flags.push(pill(doc.is_editable ? "Awaiting review" : "Awaiting review · locked", "warning"));
+      } else if (doc.is_active && !doc.is_editable) {
+        flags.push(pill("Locked", "info"));
+      }
+      document.getElementById("forum-summary").innerHTML =
+        '<div class="cns-card-body">' +
+        '<p class="cns-eyebrow">' + escapeHtml(Consilium.reference.label("Governance Forum Type", doc.forum_type)) + "</p>" +
+        '<p style="margin-bottom: var(--cns-space-3);"><strong>' + escapeHtml(doc.forum_name) + "</strong> " +
+        pill(doc.compliance_status || "", STATUS_TONES[doc.compliance_status]) + " " + flags.join(" ") + "</p>" +
+        '<dl class="cns-dl">' +
+        '<div><dt>Reference</dt><dd class="cns-mono">' + escapeHtml(doc.name) + "</dd></div>" +
+        "<div><dt>Owner</dt><dd>" + value(doc.forum_owner) + "</dd></div>" +
+        "<div><dt>Compliance contact</dt><dd>" + value(doc.compliance_contact) + "</dd></div>" +
+        "<div><dt>Sponsor</dt><dd>" + value(doc.sponsor) + "</dd></div>" +
+        "<div><dt>Next review</dt><dd>" + reviewDue(doc.next_review_on) + "</dd></div>" +
+        "<div><dt>Formation request</dt><dd>" + (doc.formation_request
+          ? '<a href="/formation-request?name=' + escapeAttr(encodeURIComponent(doc.formation_request)) + '">' +
+            escapeHtml(doc.formation_request) + "</a>"
+          : dash()) + "</dd></div>" +
+        "</dl>" +
+        '<p class="cns-text-secondary" style="margin-top: var(--cns-space-3);">Mandate: ' + value(doc.description) + "</p>" +
+        "</div>";
+
+      var form = document.getElementById("review-form");
+      if (form && !doc.is_active) {
+        form.hidden = true;
+        var closed = document.getElementById("record-closed");
+        closed.hidden = false;
+        closed.innerHTML = '<div class="cns-alert cns-status-info"><i class="bi bi-info-circle" aria-hidden="true"></i>' +
+          "<div>This forum is disbanded. Its standing is final and is not reviewed again.</div></div>";
+      }
+      return doc;
+    });
+  }
+
+  /* ------------------------------ history ------------------------------ */
+
+  var history = null;
+
+  function buildHistory() {
+    history = Consilium.Table.create({
+      target: "#reviews-table",
+      doctype: "Forum Compliance Review",
+      caption: "Compliance reviews of this forum",
+      storageKey: "forum-review-history",
+      pageSize: 10,
+      compact: true,
+      filters: [["forum", "=", FORUM]],
+      searchFields: ["name", "comments"],
+      searchPlaceholder: "Search reviews",
+      defaultSort: { field: "decided_on", order: "desc" },
+      emptyTitle: "No compliance decision recorded",
+      emptyMessage: "This forum has not yet been reviewed.",
+      columns: [
+        { field: "name", label: "Reference", sortable: true, className: "cns-mono" },
+        { field: "review_type", label: "Kind", sortable: true },
+        { field: "decision", label: "Decision", sortable: true, formatter: f.status(DECISION_TONES) },
+        { field: "resulting_status", label: "Left the forum", sortable: true, formatter: f.status(STATUS_TONES) },
+        { field: "reviewer", label: "Reviewer", sortable: true, formatter: Consilium.Table.formatters.person },
+        { field: "comments", label: "Reason", formatter: f.truncate(90) },
+        { field: "returned_questions", label: "Questions", formatter: f.truncate(90) },
+        { field: "decided_on", label: "Decided", sortable: true, formatter: f.datetime }
+      ]
+    });
+  }
+
+  /* A forum reviewed before is being reviewed again because something about
+     it changed; its first review is its initial one. The default follows. */
+  function defaultReviewType() {
+    var select = document.getElementById("review_type");
+    if (!select) return;
+    Consilium.api.count("Forum Compliance Review", { filters: [["forum", "=", FORUM]] })
+      .then(function (count) {
+        var wanted = count ? "Triggered By Change" : "Initial";
+        if (Array.prototype.some.call(select.options, function (o) { return o.value === wanted; })) {
+          select.value = wanted;
+        }
+      })
+      .catch(function () { /* the first option stands */ });
+  }
+
+  /* ------------------------------ recording ---------------------------- */
+
+  var form = document.getElementById("review-form");
+
+  function setError(node, message) {
+    var wrapper = node.closest(".cns-field") || node.closest(".cns-fieldset");
+    var existing = wrapper.querySelector(":scope > .cns-error-text");
+    if (message) {
+      node.setAttribute("aria-invalid", "true");
+      if (!existing) {
+        existing = document.createElement("span");
+        existing.className = "cns-error-text";
+        existing.id = node.id + "-error";
+        wrapper.appendChild(existing);
+      }
+      existing.textContent = message;
+      var described = (node.getAttribute("aria-describedby") || "").split(" ")
+        .filter(function (v) { return v && v !== existing.id; });
+      described.push(existing.id);
+      node.setAttribute("aria-describedby", described.join(" "));
+    } else {
+      node.removeAttribute("aria-invalid");
+      if (existing) existing.remove();
+    }
+  }
+
+  if (form) {
+    form.addEventListener("change", function () {
+      document.getElementById("review-errors").hidden = true;
+    });
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var chosen = form.querySelector('input[name="decision"]:checked');
+      var comments = document.getElementById("comments");
+      var questions = document.getElementById("returned_questions");
+      var group = document.getElementById("decision-group");
+      var problems = [];
+
+      setError(group, null);
+      setError(questions, null);
+      if (!chosen) {
+        setError(group, "Choose a decision.");
+        problems.push({ id: form.querySelector('input[name="decision"]').id, text: "Decision: choose a decision." });
+      } else if (chosen.getAttribute("data-needs-statement") === "1" &&
+                 !comments.value.trim() && !questions.value.trim()) {
+        var message = "“" + chosen.value + "” is recorded with questions to the creator or comments. Enter at least one.";
+        setError(questions, message);
+        problems.push({ id: "returned_questions", text: "Questions to the forum's creator: " + message });
+      }
+
+      var box = document.getElementById("review-errors");
+      if (problems.length) {
+        document.getElementById("review-errors-list").innerHTML = problems.map(function (p) {
+          return '<li><a href="#' + p.id + '">' + escapeHtml(p.text) + "</a></li>";
+        }).join("");
+        box.hidden = false;
+        document.getElementById(problems[0].id).focus();
+        Consilium.announce(problems.length + " field(s) need attention before this can be recorded.");
+        return;
+      }
+      box.hidden = true;
+
+      var button = document.getElementById("record-review");
+      button.disabled = true;
+      Consilium.api.call("consilium.governance.lifecycle.record_compliance_review", {
+        forum: FORUM,
+        decision: chosen.value,
+        review_type: document.getElementById("review_type").value,
+        comments: comments.value.trim(),
+        returned_questions: questions.value.trim()
+      }, { method: "POST" })
+        .then(function (result) {
+          button.disabled = false;
+          form.reset();
+          Consilium.toast.success(
+            "Review " + result.review + " recorded. The forum is now " + result.compliance_status + ".",
+            { title: "Decision recorded", timeout: 8000 }
+          );
+          Consilium.announce("Decision recorded. The forum is now " + result.compliance_status + ".");
+          loadForum();
+          defaultReviewType();
+          if (history) history.refresh();
+        })
+        .catch(function (error) {
+          button.disabled = false;
+          Consilium.toast.error(error.message || "The decision could not be recorded.", { title: "Not recorded" });
+        });
+    });
+  }
+
+  /* ---------------------------- annual review -------------------------- */
+
+  var annualState = null;
+
+  function signedCell(who, when) {
+    return when ? Consilium.Table.formatters.person(who) + " " + pill("Signed " + Consilium.util.formatDate(when, false), "success")
+      : (who ? Consilium.Table.formatters.person(who) + " " + pill("Awaiting", "warning") : dash());
+  }
+
+  function annualRows(tasks) {
+    if (!tasks.length) {
+      return '<p class="cns-text-muted">No annual review has been started for this forum.</p>';
+    }
+    return '<div class="cns-table-wrap"><table class="cns-table cns-table--compact">' +
+      "<caption class=\"cns-visually-hidden\">Annual reviews of this forum</caption>" +
+      "<thead><tr><th scope=\"col\">Task</th><th scope=\"col\">Due</th><th scope=\"col\">Owner's response</th>" +
+      "<th scope=\"col\">Compliance counter-signature</th><th scope=\"col\">Recorded review</th></tr></thead><tbody>" +
+      tasks.map(function (t) {
+        var recorded = t.review
+          ? pill(t.review_decision || "", DECISION_TONES[t.review_decision]) + ' <span class="cns-mono cns-text-sm">' + escapeHtml(t.review) + "</span>"
+          : (t.lapsed ? pill("Lapsed unanswered", "danger") : (t.signed ? pill("Ready to record", "info") : dash()));
+        return "<tr><td class=\"cns-mono\">" + escapeHtml(t.name) + "</td><td>" + reviewDue(t.due_on) + "</td>" +
+          "<td>" + signedCell(t.assigned_to, t.responded_on) + "</td>" +
+          "<td>" + signedCell(t.second_signatory, t.second_signed_on) + "</td>" +
+          "<td>" + recorded + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+
+  function renderAnnual(state) {
+    annualState = state;
+    var parts = [];
+    if (state.missing.length) {
+      parts.push('<div class="cns-alert cns-status-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>' +
+        "<div>The annual review cannot be started until the forum has " +
+        escapeHtml(state.missing.join(" and ")) + ".</div></div>");
+    }
+    parts.push(annualRows(state.tasks));
+    document.getElementById("annual-body").innerHTML = parts.join("");
+
+    var forms = [];
+    if (state.may_start) {
+      var defaultDue = new Date();
+      defaultDue.setDate(defaultDue.getDate() + 30);
+      forms.push('<form class="cns-fieldset" id="annual-start-form" novalidate style="margin-top: var(--cns-space-4);">' +
+        "<legend>Start the annual review</legend>" +
+        '<p class="cns-help">Asks ' + escapeHtml(state.forum_owner || "") + " to respond and " +
+        escapeHtml(state.compliance_contact || "") + " to counter-sign. Both see the task in their task list.</p>" +
+        '<div class="cns-form-grid">' +
+        '<div class="cns-field"><label class="cns-label" for="annual-due">Due on<span class="cns-required" aria-hidden="true">*</span></label>' +
+        '<input class="cns-input" type="date" id="annual-due" required value="' + escapeAttr(defaultDue.toISOString().slice(0, 10)) + '"></div>' +
+        '<div class="cns-field"><label class="cns-label" for="annual-period">Period</label>' +
+        '<input class="cns-input" type="text" id="annual-period" placeholder="' + escapeAttr(String(new Date().getFullYear())) + '">' +
+        '<span class="cns-help">How the campaign is named, such as the year. Left blank, the forum and the year.</span></div>' +
+        "</div>" +
+        '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">' +
+        '<i class="bi bi-send" aria-hidden="true"></i> Start the review</button></div></form>');
+    }
+    if (state.may_record) {
+      forms.push('<form class="cns-fieldset" id="annual-record-form" novalidate style="margin-top: var(--cns-space-4);">' +
+        "<legend>Record the annual review</legend>" +
+        '<div class="cns-form-grid"><div class="cns-field"><label class="cns-label" for="annual-task">Signed task</label>' +
+        '<select class="cns-select" id="annual-task">' + state.recordable_tasks.map(function (name) {
+          return '<option value="' + escapeAttr(name) + '">' + escapeHtml(name) + "</option>";
+        }).join("") + "</select></div>" +
+        '<div class="cns-field"><label class="cns-label" for="annual-decision">Decision<span class="cns-required" aria-hidden="true">*</span></label>' +
+        '<select class="cns-select" id="annual-decision">' + state.decisions.map(function (d) {
+          return '<option value="' + escapeAttr(d.decision) + '" data-needs-statement="' + (d.requires_statement ? 1 : 0) + '">' +
+            escapeHtml(d.decision) + (d.resulting_status ? " — the forum becomes " + escapeHtml(d.resulting_status) : "") + "</option>";
+        }).join("") + "</select></div></div>" +
+        '<div class="cns-field"><label class="cns-label" for="annual-comments">Comments</label>' +
+        '<textarea class="cns-textarea" id="annual-comments" rows="3"></textarea>' +
+        '<span class="cns-help">Needed for a decision that sends the forum back.</span></div>' +
+        '<div class="cns-form-actions"><button type="submit" class="cns-btn cns-btn-primary">' +
+        '<i class="bi bi-shield-check" aria-hidden="true"></i> Record the annual review</button></div></form>');
+    }
+    document.getElementById("annual-forms").innerHTML = forms.join("");
+  }
+
+  function loadAnnual() {
+    return Consilium.api.call("consilium.governance.reviews.forum_annual_review", { forum: FORUM })
+      .then(renderAnnual)
+      .catch(function (error) {
+        document.getElementById("annual-body").innerHTML =
+          '<p class="cns-text-muted">' + escapeHtml(error.message || "The annual review could not be read.") + "</p>";
+      });
+  }
+
+  document.getElementById("annual-forms").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var target = event.target;
+    var button = target.querySelector("button[type=submit]");
+    if (target.id === "annual-start-form") {
+      var due = document.getElementById("annual-due");
+      setError(due, due.value ? null : "Give the date the review is due.");
+      if (!due.value) { due.focus(); return; }
+      button.disabled = true;
+      Consilium.api.call("consilium.governance.reviews.start_forum_annual_review", {
+        forum: FORUM, due_on: due.value, period_label: document.getElementById("annual-period").value.trim()
+      }, { method: "POST" })
+        .then(function (state) {
+          renderAnnual(state);
+          Consilium.toast.success("The owner and the compliance contact have been asked.", { title: "Annual review started" });
+          Consilium.announce("Annual review started.");
+        })
+        .catch(function (error) {
+          button.disabled = false;
+          Consilium.toast.error(error.message || "The review could not be started.", { title: "Not started" });
+        });
+    } else if (target.id === "annual-record-form") {
+      var decision = document.getElementById("annual-decision");
+      var comments = document.getElementById("annual-comments");
+      var needs = decision.options[decision.selectedIndex].getAttribute("data-needs-statement") === "1";
+      setError(comments, needs && !comments.value.trim() ? "This decision is recorded with its reasons." : null);
+      if (needs && !comments.value.trim()) { comments.focus(); return; }
+      button.disabled = true;
+      Consilium.api.call("consilium.governance.reviews.record_forum_annual_review", {
+        forum: FORUM, task: document.getElementById("annual-task").value, decision: decision.value,
+        comments: comments.value.trim()
+      }, { method: "POST" })
+        .then(function (state) {
+          renderAnnual(state);
+          Consilium.toast.success("Review " + state.review + " recorded.", { title: "Annual review recorded" });
+          Consilium.announce("Annual review recorded.");
+          loadForum();
+          if (history) history.refresh();
+        })
+        .catch(function (error) {
+          button.disabled = false;
+          Consilium.toast.error(error.message || "The review could not be recorded.", { title: "Not recorded" });
+        });
+    }
+  });
+
+  loadAnnual();
+
+  Consilium.reference
+    .load(["Governance Forum Type"])
+    .then(loadForum)
+    .catch(function (error) {
+      document.getElementById("forum-summary").innerHTML =
+        '<div class="cns-state cns-state--error"><span class="cns-state-icon">' +
+        '<i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>' +
+        '<p class="cns-state-title">The forum could not be read</p>' +
+        '<p class="cns-state-message">' + escapeHtml(error.message || "") + "</p></div>";
+    });
+  buildHistory();
+  defaultReviewType();
+})();
+</script>
+{%- endif %}
+{% endblock %}

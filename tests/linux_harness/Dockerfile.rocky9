@@ -1,0 +1,44 @@
+# A stock RHEL-family 9 server with the host prerequisites the deployment kit
+# expects an administrator to have installed from the distribution's own
+# repositories: Python 3.11, the PostgreSQL 16 client tools, nginx, systemd,
+# `which` and `file`, and the libraries the PDF engine links against. Nothing of Consilium's is
+# installed here; the kit installs everything else from the offline bundle,
+# with the container on a network that has no route out.
+#
+# TEST HARNESS ONLY. The product does not use or need containers: this image
+# stands in for a clean, network-less Linux server on the build machine.
+#
+# How the rehearsal ran (docs/delivery/DEPLOYMENT-READINESS.md has the results):
+#   1. build a bundle:   deploy/make_bundle.py --target-platform linux_x86_64 --target-python 3.11
+#   2. build this image with the bundle's almalinux9 x86_64 wkhtmltox .rpm beside
+#      it as wkhtmltox.rpm (only to read its dependency list):
+#        docker build --platform linux/amd64 -t consilium-harness-rocky9 .
+#   3. a network with no route out, and the services the server would reach:
+#        docker network create --internal consilium-airgap
+#        docker run -d --name cons-pg --network consilium-airgap -e POSTGRES_PASSWORD=... postgres:16-alpine
+#        docker run -d --name cons-redis --network consilium-airgap redis:7-alpine
+#   4. the host, running systemd, on that network only:
+#        docker run -d --name cons-rocky --platform linux/amd64 --network consilium-airgap \
+#          --hostname governance.example.internal --privileged --cgroupns=host \
+#          -v /sys/fs/cgroup:/sys/fs/cgroup:rw --tmpfs /run --tmpfs /run/lock \
+#          -v <dir with the bundle>:/media/bundles:ro -v <this dir>:/media/harness:ro consilium-harness-rocky9
+#   5. inside it: prepare_host.sh (configuration, secrets, certificate), then
+#      install.sh, verify.sh, upgrade.sh, backup.sh, restore.sh as in RUNBOOK Phase 3.
+#   6. remove the containers, the network and the images by name afterwards.
+FROM rockylinux:9
+
+# The PDF engine package, to read its dependency list; the package itself is
+# installed by the kit, from the bundle, during the offline install.
+COPY wkhtmltox.rpm /tmp/wkhtmltox.rpm
+
+RUN dnf -y module enable postgresql:16 nginx:1.24 \
+ && dnf -y install python3.11 postgresql nginx systemd procps-ng util-linux \
+        openssl iproute findutils tar gzip which file \
+ && dnf -y install $(rpm -qpR /tmp/wkhtmltox.rpm | grep -v '^rpmlib' | awk '{print $1}' | sort -u) \
+ && dnf clean all && rm -rf /var/cache/dnf /tmp/wkhtmltox.rpm \
+ && systemctl mask systemd-logind.service getty.target console-getty.service \
+        systemd-udevd.service systemd-udev-trigger.service dnf-makecache.timer \
+ && systemctl disable nginx
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/usr/sbin/init"]

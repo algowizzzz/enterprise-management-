@@ -287,6 +287,88 @@ def execute_disposition(disposition_event: str, evidence: dict | None = None) ->
     event.save(ignore_permissions=True)
 
 
+def _disposition_pending(archive_record: str, events: list[dict]) -> bool:
+    """Whether an archive already has a disposition in hand or behind it.
+
+    Read from facts, not the status label: an event still open (scheduled, held
+    or approved) is in hand, and one with ``executed_on`` set has been carried
+    out. Only a cancelled event — closed and never executed — leaves the archive
+    to be flagged again, because cancelling a disposal is not the same as
+    deciding the record is kept for ever.
+    """
+    return any(int(row.is_open or 0) or row.executed_on for row in events)
+
+
+def flag_due_for_disposal(as_of=None) -> dict[str, list[str]]:
+    """Daily: put every record past its retention period in front of a reviewer (E5-S5).
+
+    **Nothing is deleted here, or anywhere on a schedule.** Disposal is never
+    automatic (rule 3 above): what the schedule does is make sure a record whose
+    retention has run out is not forgotten. For each ``Archive Record`` whose
+    ``disposition_due_on`` has passed and that has no disposition in hand, a
+    ``Disposition Event`` is scheduled — which is the flag: it sits open, waiting
+    for a named approver, and only ``execute_disposition`` after that approval
+    acts on it. A record under legal hold is flagged too, but as held, so the
+    hold is visible on the disposal list rather than the record silently skipped.
+
+    It also re-checks the disposals already scheduled: a hold placed since an
+    event was scheduled holds that event now, rather than at the moment someone
+    tries to execute it.
+
+    Returns ``{"scheduled": [...], "held": [...]}`` — event names, for the log.
+    """
+    as_of = getdate(as_of or nowdate())
+    out = {"scheduled": [], "held": []}
+    if not (frappe.db.table_exists("Archive Record") and frappe.db.table_exists("Disposition Event")):
+        return out
+
+    events_by_archive: dict[str, list[dict]] = {}
+    for row in frappe.get_all(
+        "Disposition Event", fields=["name", "archive_record", "is_open", "executed_on", "held_by_legal_hold"]
+    ):
+        events_by_archive.setdefault(row.archive_record, []).append(row)
+
+    for archive in frappe.get_all(
+        "Archive Record",
+        filters={"disposition_due_on": ["<=", as_of]},
+        fields=["name", "subject_doctype", "subject_name"],
+        order_by="disposition_due_on asc",
+    ):
+        if _disposition_pending(archive.name, events_by_archive.get(archive.name, [])):
+            continue
+        # One archive at a time: a class deleted from under an archive, say, is
+        # that archive's problem and must not stop the rest being flagged.
+        frappe.db.savepoint("disposal_flag")
+        try:
+            event = schedule_disposition(archive.name)
+        except Exception:
+            frappe.db.rollback(save_point="disposal_flag")
+            frappe.log_error(
+                title=f"Consilium: disposal of {archive.subject_doctype} {archive.subject_name} could not be scheduled",
+                message=frappe.get_traceback(),
+            )
+            continue
+        held = frappe.db.get_value("Disposition Event", event, "held_by_legal_hold")
+        out["held" if held else "scheduled"].append(event)
+
+    for rows in events_by_archive.values():
+        for row in rows:
+            if not int(row.is_open or 0) or row.held_by_legal_hold:
+                continue
+            subject = frappe.db.get_value(
+                "Archive Record", row.archive_record, ["subject_doctype", "subject_name"], as_dict=True
+            )
+            hold = subject and active_legal_hold(subject.subject_doctype, subject.subject_name)
+            if not hold:
+                continue
+            event = frappe.get_doc("Disposition Event", row.name)
+            event.status = "Held"
+            event.held_by_legal_hold = hold
+            event.save(ignore_permissions=True)
+            out["held"].append(event.name)
+    return out
+
+
 def release_hold(legal_hold: str) -> None:
     """Release a hold and return everything it held to Scheduled."""
     hold = frappe.get_doc("Legal Hold", legal_hold)

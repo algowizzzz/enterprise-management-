@@ -5,6 +5,7 @@
   "autoname": "GDOC-.#####",
   "naming_rule": "Expression (old style)",
   "title_field": "document_name",
+  "show_title_field_in_link": 1,
   "search_fields": "document_name,document_type,document_owner",
   "sort_field": "modified",
   "sort_order": "DESC",
@@ -244,7 +245,7 @@
       "fieldtype": "Link",
       "label": "Parent Document",
       "options": "Governing Document",
-      "description": "P-4 lineage. A circular chain is refused."
+      "description": "The document this one sits beneath. A circular chain is refused."
     },
     {
       "fieldname": "relationships",

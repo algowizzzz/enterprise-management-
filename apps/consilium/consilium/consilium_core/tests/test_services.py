@@ -149,6 +149,9 @@ class TestProvenance(CoreTestCase):
         with self.assertRaises(frappe.PermissionError):
             acceptance.save(ignore_permissions=True)
         self.purge_on_teardown("Guide Article", self.article.name)
+        # The refusal names the acceptance itself, whose reference restarts from
+        # the same number once this test rolls back.
+        self.purge_on_teardown(acceptance.doctype, acceptance.name)
 
 
 class TestApprovals(CoreTestCase):

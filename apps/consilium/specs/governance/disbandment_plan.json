@@ -1,7 +1,7 @@
 {
   "name": "Disbandment Plan",
   "module": "Governance",
-  "description": "The controlled dissolution of a forum (G-11): a plan, the named approvals, a successor and a records disposition decision. Disbandment makes the forum inactive; nothing is deleted and retention continues to apply.",
+  "description": "The controlled dissolution of a forum: a plan, the named approvals, a successor and a records disposition decision. Disbandment makes the forum inactive; nothing is deleted and retention continues to apply.",
   "autoname": "FDIS-.YYYY.-.#####",
   "naming_rule": "Expression (old style)",
   "allow_rename": 0,
@@ -15,7 +15,7 @@
     {"fieldname": "plan_file", "fieldtype": "Attach", "label": "Plan"},
     {"fieldname": "successor_forum", "fieldtype": "Link", "label": "Successor Forum", "options": "Governance Forum", "description": "Where the mandate continues elsewhere."},
     {"fieldname": "records_disposition_note", "fieldtype": "Text", "label": "Records Disposition Note", "reqd": 1, "description": "What becomes of the forum's records. Retention still applies; this is the decision, not the disposal."},
-    {"fieldname": "approvals", "fieldtype": "Table", "label": "Approvals", "options": "Disbandment Approval", "description": "The four approvers G-11 names. Each decision is a Core Approval Decision."},
+    {"fieldname": "approvals", "fieldtype": "Table", "label": "Approvals", "options": "Disbandment Approval", "description": "The four approvals a disbandment needs."},
     {"fieldname": "effective_on", "fieldtype": "Date", "label": "Effective On"},
     {"fieldname": "executed_on", "fieldtype": "Datetime", "label": "Executed On", "read_only": 1, "description": "When the disbandment was actually applied to the forum."}
   ],

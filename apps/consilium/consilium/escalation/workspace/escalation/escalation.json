@@ -1,0 +1,184 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"481b32dc7b\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Escalation</b></span>\", \"col\": 12}}, {\"id\": \"b0bfcbd7d5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Escalations\", \"col\": 3}}, {\"id\": \"48283ce226\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Action Plans\", \"col\": 3}}, {\"id\": \"1f0a89ec5d\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Risk Acceptances\", \"col\": 3}}, {\"id\": \"ba425bddcd\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Escalation Register (portal)\", \"col\": 3}}, {\"id\": \"77052f8868\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"d3f63e32ca\", \"type\": \"card\", \"data\": {\"card_name\": \"Matters\", \"col\": 4}}, {\"id\": \"3489519a4f\", \"type\": \"card\", \"data\": {\"card_name\": \"Returns\", \"col\": 4}}, {\"id\": \"d0cd9dae5b\", \"type\": \"card\", \"data\": {\"card_name\": \"Configuration\", \"col\": 4}}]",
+ "creation": "2026-09-18 03:45:10.429790",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "solid-warning",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Escalation",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Matters",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Escalation Matter",
+   "link_count": 0,
+   "link_to": "Escalation Matter",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Action Plan",
+   "link_count": 0,
+   "link_to": "Action Plan",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Risk Acceptance",
+   "link_count": 0,
+   "link_to": "Risk Acceptance",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Escalation Closure",
+   "link_count": 0,
+   "link_to": "Escalation Closure",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Returns",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Periodic Submission",
+   "link_count": 0,
+   "link_to": "Periodic Submission",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Configuration",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Escalation Type",
+   "link_count": 0,
+   "link_to": "Escalation Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Escalation Template",
+   "link_count": 0,
+   "link_to": "Escalation Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Escalation Matrix",
+   "link_count": 0,
+   "link_to": "Escalation Matrix",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "SLA Definition",
+   "link_count": 0,
+   "link_to": "SLA Definition",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Business Calendar",
+   "link_count": 0,
+   "link_to": "Business Calendar",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-09-18 03:45:35.526867",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Escalation",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 3.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Escalations",
+   "link_to": "Escalation Matter",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Action Plans",
+   "link_to": "Action Plan",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Risk Acceptances",
+   "link_to": "Risk Acceptance",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "",
+   "label": "Escalation Register (portal)",
+   "type": "URL",
+   "url": "/escalations"
+  }
+ ],
+ "title": "Escalation"
+}

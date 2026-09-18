@@ -25,6 +25,10 @@ FLAG_FIELDS = (
     "is_open",
     "is_committable",
     "requires_statement",
+    # Seeded for every state and declared by Approval Decision, but missing
+    # here it was never applied, so an approval and an abstention looked alike
+    # to any rule that read it.
+    "is_affirmative",
 )
 
 CACHE_PREFIX = "consilium_core:state_flags"
@@ -69,6 +73,21 @@ def flags_for(doctype: str, state_field: str, state_value: str) -> dict[str, int
     return get_flag_map(doctype).get(state_field, {}).get(state_value)
 
 
+def _in_application_order(doctype: str, mapping: dict) -> list:
+    """The mapping's state fields, with the field the record's workflow runs on
+    last, so that where two fields both carry flags — a governing document whose
+    phase follows its workflow state — the workflow's own state decides. With
+    one state field, or no workflow, the order is the mapping's."""
+    items = list(mapping.items())
+    if len(items) < 2:
+        return items
+    from frappe.model.workflow import get_workflow_name
+
+    name = get_workflow_name(doctype)
+    field = frappe.get_cached_value("Workflow", name, "workflow_state_field") if name else None
+    return sorted(items, key=lambda item: item[0] == field)
+
+
 def apply_state_flags(doc) -> None:
     """Set the semantic flags a record declares, from its configured state labels.
 
@@ -81,7 +100,7 @@ def apply_state_flags(doc) -> None:
         return
 
     meta = doc.meta
-    for state_field, by_value in mapping.items():
+    for state_field, by_value in _in_application_order(doc.doctype, mapping):
         if not (meta.has_field(state_field) or state_field == "workflow_state"):
             continue
         value = doc.get(state_field)
