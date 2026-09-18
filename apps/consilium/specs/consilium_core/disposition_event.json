@@ -37,8 +37,8 @@
       "reqd": 1,
       "default": "Scheduled",
       "in_list_view": 1,
-      "options": "Scheduled\nHeld\nApproved\nExecuted\nCancelled",
-      "description": "A label. Logic reads the semantic flags below."
+      "options": "Scheduled\nHeld\nApproved\nExecuted\nCancelled\nRetained",
+      "description": "Where the record stands."
     },
     {
       "fieldname": "is_open",
@@ -62,15 +62,64 @@
       "read_only": 1
     },
     {
+      "fieldname": "decision",
+      "fieldtype": "Select",
+      "label": "Decision",
+      "options": "\nDispose\nRetain",
+      "description": "What the records manager proposes. It takes effect only once a second person approves it."
+    },
+    {
+      "fieldname": "decision_reason",
+      "fieldtype": "Small Text",
+      "label": "Reason For The Decision"
+    },
+    {
+      "fieldname": "retained_until",
+      "fieldtype": "Date",
+      "label": "Retained Until",
+      "description": "For a decision to retain: when the record comes up for review again. Empty keeps it permanently, which only a class that archives permanently allows."
+    },
+    {
+      "fieldname": "proposed_by",
+      "fieldtype": "Link",
+      "label": "Proposed By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "proposed_on",
+      "fieldtype": "Datetime",
+      "label": "Proposed On",
+      "read_only": 1
+    },
+    {
       "fieldname": "approved_by",
       "fieldtype": "Link",
       "label": "Approved By",
       "options": "User"
     },
     {
+      "fieldname": "approved_on",
+      "fieldtype": "Datetime",
+      "label": "Approved On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "approval_note",
+      "fieldtype": "Small Text",
+      "label": "Approval Note"
+    },
+    {
       "fieldname": "executed_on",
       "fieldtype": "Datetime",
       "label": "Executed On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "executed_by",
+      "fieldtype": "Link",
+      "label": "Executed By",
+      "options": "User",
       "read_only": 1
     },
     {

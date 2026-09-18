@@ -443,10 +443,20 @@ def build(directory: Path | None) -> Index:
 			# add noise words to the index.
 			text = "\n".join(line for line in (directory / name).read_text(encoding="utf-8").splitlines()
 			                 if not line.lstrip().startswith("!["))
-			chunks.extend(chunk_markdown(
+			chapter_chunks = chunk_markdown(
 				text, source=f"guide-{Path(name).stem}", label="Illustrated guide",
 				audience="admin" if admin else "all", default_route="/admin" if admin else None,
-			))
+			)
+			# Each section's place in the in-platform reader (/guide?chapter=…#…):
+			# the assistant cites it there rather than as a file nobody can open.
+			# ``href`` stays the portal page the section is about, which ranks it.
+			try:
+				from consilium.consilium_core import guide  # noqa: PLC0415
+
+				guide.annotate_chunks(Path(name).stem, chapter_chunks)
+			except Exception:
+				frappe.log_error(title="Guide anchors could not be worked out")
+			chunks.extend(chapter_chunks)
 	record_chunks, record_entries = _record_sources()
 	chunks.extend(record_chunks)
 	chunks.extend(_page_chunks())

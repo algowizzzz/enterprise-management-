@@ -1,0 +1,129 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  Exports (G-19, P-20, E-19).
+  The export profiles the viewer may run — forums, governing documents or
+  escalations, with the fields, filter and format an administrator set — and
+  the files already exported. "Export now" runs a profile as the viewer, logs
+  it as an Export Batch and hands the file to the browser. Nothing is sent
+  anywhere by the platform. All of it through consilium.consilium_core.exporting,
+  which checks the profile's roles and the viewer's read access on every call.
+-#}
+
+{% block page_actions %}
+{%- if may_configure and cns_advanced_view() %}
+<a class="cns-btn cns-btn-ghost" href="/app/export-profile" title="Set up export profiles in the configuration workspace">
+  <i class="bi bi-gear" aria-hidden="true"></i> Set up profiles
+</a>
+{%- endif %}
+{% endblock %}
+
+{% block page_content %}
+<section class="cns-card" aria-labelledby="profiles-heading">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="profiles-heading">What you can export</h2>
+      <p class="cns-card-subtitle">Each profile says which records, which fields and in what format. The file holds
+        only records you may read. Every export is logged with who ran it, what it held and its fingerprint.</p>
+    </div>
+  </div>
+  <div class="cns-card-body"><div id="profile-list"><p class="cns-text-muted cns-text-sm">Reading&hellip;</p></div></div>
+</section>
+
+<section class="cns-card" aria-labelledby="batches-heading" style="margin-top: var(--cns-space-5);">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="batches-heading">Export log</h2>
+      <p class="cns-card-subtitle" id="batches-subtitle">Files exported, newest first.</p>
+    </div>
+  </div>
+  <div class="cns-card-body"><div id="batch-list"></div></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{%- if signed_in %}
+<script>
+(function () {
+  "use strict";
+
+  var M = "consilium.consilium_core.exporting.";
+  var esc = Consilium.util.escapeHtml, escAttr = Consilium.util.escapeAttr;
+
+  function when(v) { return v ? esc(Consilium.util.formatDate(v, true)) : "&mdash;"; }
+  function person(id) { return id ? (Consilium.person ? Consilium.person(id) : esc(id)) : "&mdash;"; }
+
+  function filterText(filter) {
+    var keys = Object.keys(filter || {});
+    if (!keys.length) return "Every record you may read";
+    return keys.map(function (k) { return k + " = " + JSON.stringify(filter[k]); }).join("; ");
+  }
+
+  function draw(data) {
+    var list = document.getElementById("profile-list");
+    list.innerHTML = data.profiles.length ? data.profiles.map(function (p) {
+      return '<article class="cns-card" style="margin-bottom: var(--cns-space-4);"><div class="cns-card-header"><div>' +
+        '<h3 class="cns-card-title">' + esc(p.profile_title) + "</h3>" +
+        (p.description ? '<p class="cns-card-subtitle">' + esc(p.description) + "</p>" : "") +
+        '</div><button type="button" class="cns-btn cns-btn-primary cns-btn-sm" data-export="' + escAttr(p.name) + '" aria-label="Export now: ' + escAttr(p.profile_title) + '">' +
+        '<i class="bi bi-download" aria-hidden="true"></i> Export now</button></div><div class="cns-card-body"><dl class="cns-dl">' +
+        "<dt>Records</dt><dd>" + esc(p.source_doctype) + "</dd>" +
+        "<dt>Prepared for</dt><dd>" + esc(p.target_title || p.target_system) + "</dd>" +
+        "<dt>Format</dt><dd>" + esc(p.file_format) + ", at most " + esc(String(p.row_limit)) + " rows</dd>" +
+        "<dt>Which records</dt><dd>" + esc(filterText(p.filter)) + "</dd>" +
+        "<dt>Restricted records</dt><dd>" + (p.include_restricted ? "Included, where you may read them" : "Left out") + "</dd>" +
+        "<dt>Columns</dt><dd>" + esc(p.columns.join(", ")) + "</dd>" +
+        "<dt>Scheduled drop</dt><dd>" + esc(p.schedule || "Manual Only") + "</dd>" +
+        "<dt>Last run</dt><dd>" + when(p.last_run_on) + (p.last_run_note ? ' <span class="cns-text-sm cns-text-muted">' + esc(p.last_run_note) + "</span>" : "") + "</dd>" +
+        "</dl></div></article>";
+    }).join("") : '<p class="cns-text-sm">No export is set up for you. Exports are set up by an administrator, who says which roles may run each one.</p>';
+
+    document.getElementById("batches-subtitle").textContent = data.sees_all
+      ? "Every file exported, newest first." : "Files you exported, newest first.";
+    document.getElementById("batch-list").innerHTML = data.batches.length
+      ? '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><caption class="cns-visually-hidden">Export log</caption>' +
+        '<thead><tr><th scope="col">Batch</th><th scope="col">Profile</th><th scope="col">When</th><th scope="col">By</th><th scope="col">Records</th><th scope="col">Left out</th><th scope="col">Delivered</th><th scope="col">Fingerprint (SHA-256)</th></tr></thead><tbody>' +
+        data.batches.map(function (b) {
+          return '<tr><td class="cns-mono">' + esc(b.name) + "</td><td>" + esc(b.profile_title) + '<br><span class="cns-text-sm cns-text-muted">' + esc(b.source_doctype) + ", " + esc(b.file_format || "") + "</span></td><td>" +
+            when(b.generated_on) + "</td><td>" + person(b.generated_by) + "</td><td>" + esc(String(b.record_count || 0)) +
+            (b.capped ? ' <span class="cns-pill cns-status-warning">row limit reached</span>' : "") + "</td><td>" + esc(String(b.excluded_count || 0)) + "</td><td>" +
+            esc(b.delivered_to || "") + '</td><td class="cns-mono cns-text-sm" style="word-break: break-all;">' + esc(b.output_sha256 || "") + "</td></tr>";
+        }).join("") + "</tbody></table></div>"
+      : '<p class="cns-text-muted cns-text-sm">Nothing has been exported yet.</p>';
+  }
+
+  function load() {
+    return Consilium.api.call(M + "my_profiles", {}).then(draw).catch(function (error) {
+      document.getElementById("profile-list").innerHTML = '<p class="cns-text-muted cns-text-sm">' + esc((error && error.message) || "Could not be read.") + "</p>";
+    });
+  }
+
+  document.getElementById("profile-list").addEventListener("click", function (event) {
+    var button = event.target.closest("button[data-export]");
+    if (!button) return;
+    button.disabled = true;
+    Consilium.api.call(M + "export_now", { profile: button.getAttribute("data-export") }, { method: "POST" })
+      .then(function (out) {
+        var body = out.mime === "text/csv" ? "﻿" + out.content : out.content;
+        var blob = new Blob([body], { type: out.mime + ";charset=utf-8" });
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = out.file_name;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(function () { URL.revokeObjectURL(link.href); link.remove(); }, 0);
+        var text = out.record_count + " record" + (out.record_count === 1 ? "" : "s") + " exported as " + out.batch +
+          (out.excluded ? "; " + out.excluded + " restricted left out" : "") + (out.capped ? "; the row limit was reached" : "") + ".";
+        Consilium.toast.success(text, { title: "Exported" });
+        Consilium.announce && Consilium.announce(text);
+        return load();
+      })
+      .catch(function (error) { Consilium.toast.error((error && error.message) || "The export was refused.", { title: "Not exported" }); })
+      .then(function () { button.disabled = false; });
+  });
+
+  load();
+})();
+</script>
+{%- endif %}
+{% endblock %}

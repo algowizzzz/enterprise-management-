@@ -41,6 +41,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="same-origin">
 <meta name="cns-time-zone" content="{{ system_time_zone() | e }}">
+{%- if not is_guest %}
+{#- Keys this person's recently viewed and pinned records in the browser
+    (consilium.js, Consilium.records), so people sharing one do not mix. #}
+<meta name="cns-user" content="{{ frappe.session.user | e }}">
+{%- endif %}
 {#- The zone this person reads times in (their own setting, else the site's).
     Guarded like the menus, so a server still running without the hook renders. #}
 <meta name="cns-viewer-zone" content="{{ (viewer_time_zone() if viewer_time_zone is defined else system_time_zone()) | e }}">
@@ -74,6 +79,15 @@
     if (!sizes[size]) size = "md";
     document.documentElement.setAttribute("data-font-size", size);
     document.documentElement.style.setProperty("--cns-font-root", sizes[size] + "px");
+
+    /* Frosted surfaces turn solid for a browser that asks for less
+       transparency: the operating-system setting is read by the stylesheet
+       itself; this per-browser preference is for the browsers that do not
+       report it and for virtual desktops, where every blur is paid for on the
+       processor. */
+    if (read("transparency", "") === "reduce") {
+      document.documentElement.setAttribute("data-transparency", "reduce");
+    }
   } catch (e) { /* defaults in tokens.css already apply */ }
 })();
 window.frappe = window.frappe || {};
@@ -86,13 +100,17 @@ window.frappe = window.frappe || {};
 <link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/consilium.css') }}">
 <link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/brand.css') }}">
 <link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/assistant.css') }}">
+{#- The portal's look (theme-hybrid.css). Last of the stylesheets and before the
+    brand below: the theme sets its own defaults, and a saved brand overrides
+    them. -#}
+<link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/theme-hybrid.css') }}">
 {#- The saved brand, as token overrides. Generated from validated values only;
     see consilium/consilium_core/branding.py. #}
 <style id="cns-brand">{{ brand_style() }}</style>
 {% block head_extra %}{% endblock %}
 </head>
 
-<body class="cns-portal{% if brand.header_style == 'White' %} cns-header-light{% endif %}{% if is_guest %} cns-guest{% endif %}">
+<body class="cns-portal{% if brand.header_style == 'White' %} cns-header-light{% elif brand.header_style == 'Glass' %} cns-header-glass{% endif %}{% if is_guest %} cns-guest{% endif %}">
 <a class="cns-skip-link" href="#cns-main">Skip to main content</a>
 
 {% block header %}

@@ -35,4 +35,8 @@ def get_context(context):
 		{"label": "Administration"},
 	]
 	context.is_system_manager = "System Manager" in roles
+	# The guide's administrators' chapter, read in the platform (/guide).
+	from consilium.consilium_core import guide
+
+	context.admin_guide_url = guide.admin_guide_url()
 	return context

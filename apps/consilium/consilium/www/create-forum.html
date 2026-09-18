@@ -161,6 +161,19 @@
         </select>
         <span class="cns-help">Required for a change or a retirement.</span>
       </div>
+      <div class="cns-field" id="materiality-field" hidden>
+        <label class="cns-label" for="change_materiality">How material is the change?<span class="cns-required" aria-hidden="true" id="materiality-required">*</span></label>
+        <select class="cns-select" id="change_materiality" name="change_materiality"
+                data-required-message="Choose how material the change is." aria-describedby="materiality-help">
+          <option value="">Choose one</option>
+          {%- for option in materiality_options %}
+          <option value="{{ option | e }}">{{ option | e }}</option>
+          {%- endfor %}
+        </select>
+        <span class="cns-help" id="materiality-help">Minor: wording or membership detail. Significant: a change to
+          scope or responsibilities. Material: a change to the forum's authority, reporting line or type. It decides
+          who has to approve the change.</span>
+      </div>
     </div>
     <div class="cns-field">
       <label class="cns-label" for="rationale">Why it is needed<span class="cns-required" aria-hidden="true">*</span></label>
@@ -375,7 +388,7 @@
   var responding = !!(STATUS && STATUS.can_respond);
   var dirty = false;
 
-  var FIELDS = ["request_type", "subject_forum", "rationale", "purpose_scope",
+  var FIELDS = ["request_type", "subject_forum", "change_materiality", "rationale", "purpose_scope",
                 "proposed_responsibilities", "forum_name", "forum_type", "primary_risk_category",
                 "cadence", "parent_forum", "forum_id_proposed", "owning_operating_group",
                 "owning_line_of_business", "delegating_authority", "forum_sponsor",
@@ -476,6 +489,13 @@
     wrapper.hidden = isCreate;
     field("subject_forum").required = !isCreate;
     if (isCreate) setError(field("subject_forum"), null);
+    /* A change to an existing forum says how material it is: the materiality
+       chooses the approval path (G-8), so the server refuses to send a change
+       without one. */
+    var isChange = field("request_type").value === "Modify";
+    document.getElementById("materiality-field").hidden = !isChange;
+    field("change_materiality").required = isChange;
+    if (!isChange) setError(field("change_materiality"), null);
   }
 
   field("request_type").addEventListener("change", function () {
@@ -544,6 +564,8 @@
       if (data[name] === "") delete data[name];
     });
     if (data.request_type === "Create") delete data.subject_forum;
+    /* Only a change carries a materiality; clear one left over from switching kind. */
+    if (data.request_type !== "Modify") data.change_materiality = null;
     return data;
   }
 

@@ -1,0 +1,263 @@
+{#-
+  ===== Dashboard layout: choose, order and save what an Insights page shows (O-3) =====
+  Included once, from analysis_nav.html, so every Insights page that the
+  registry in consilium_core/dashboard_layout.py names gets the same control.
+  It needs only `analysis_page`. A page the registry does not name (the
+  regulatory updates page, say) shows nothing.
+
+  What may be arranged comes from the server (get_layout): the page's sections
+  the viewer may read, and the dimensions inside them. A section or dimension
+  is found in the page by the id of its heading; one the server does not
+  offer, or the page did not draw, is never listed. Saving writes only the
+  viewer's own layout; "Reset to default" returns the page to what it ships as.
+  Hiding is a class, not the `hidden` attribute, so it never fights a page
+  script that hides and shows its own parts.
+  Plain script, native buttons and check boxes: every control is reachable
+  and operable from the keyboard, and a move keeps focus on the moved row.
+-#}
+{%- if analysis_page in ("reports", "governance-gaps", "emerging-risks") and frappe.session.user != "Guest" %}
+<style>
+  .cns-layout-hidden { display: none !important; }
+  .cns-layout-panel { margin-top: var(--cns-space-3); }
+  .cns-layout-list { list-style: none; margin: 0; padding: 0; }
+  .cns-layout-list > li { border-bottom: 1px solid var(--cns-border, rgba(128,128,128,.25)); padding: var(--cns-space-2) 0; }
+  .cns-layout-row { display: flex; align-items: center; gap: var(--cns-space-2); flex-wrap: wrap; }
+  .cns-layout-row label { flex: 1 1 12rem; display: flex; align-items: center; gap: var(--cns-space-2); margin: 0; }
+  .cns-layout-dims { list-style: none; margin: var(--cns-space-2) 0 0 var(--cns-space-6); padding: 0; }
+  .cns-layout-dims > li { padding: var(--cns-space-1) 0; }
+</style>
+<div class="cns-layout" id="cns-layout" data-page="{{ analysis_page | e }}">
+  <div class="cns-form-actions" style="justify-content: flex-end; margin: var(--cns-space-2) 0 0;">
+    <span class="cns-text-muted cns-text-sm" id="cns-layout-state" role="status"></span>
+    <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" id="cns-layout-toggle"
+            aria-expanded="false" aria-controls="cns-layout-panel">
+      <i class="bi bi-layout-text-window-reverse" aria-hidden="true"></i> Customise this page
+    </button>
+  </div>
+  <section class="cns-card cns-layout-panel" id="cns-layout-panel" aria-labelledby="cns-layout-heading" hidden>
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="cns-layout-heading">Customise this page</h2>
+        <p class="cns-card-subtitle">Choose the sections and figures you want, and put them in your order.
+          Your layout is saved for you only; everyone else keeps their own. Only what you may read is listed.</p>
+      </div>
+    </div>
+    <div class="cns-card-body">
+      <ol class="cns-layout-list" id="cns-layout-list" aria-label="Sections on this page"></ol>
+      <div class="cns-form-actions" style="margin-top: var(--cns-space-4);">
+        <button type="button" class="cns-btn cns-btn-primary" id="cns-layout-save">Save my layout</button>
+        <button type="button" class="cns-btn cns-btn-secondary" id="cns-layout-reset">Reset to default</button>
+        <button type="button" class="cns-btn cns-btn-ghost" id="cns-layout-cancel">Cancel</button>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  function start() {
+    var root = document.getElementById("cns-layout");
+    if (!root || !window.Consilium || !Consilium.api) return;
+    var PAGE = root.getAttribute("data-page");
+    var M = "consilium.consilium_core.dashboard_layout.";
+    var esc = Consilium.util.escapeHtml;
+    var escAttr = Consilium.util.escapeAttr;
+    var panel = document.getElementById("cns-layout-panel");
+    var toggle = document.getElementById("cns-layout-toggle");
+    var list = document.getElementById("cns-layout-list");
+    var state = document.getElementById("cns-layout-state");
+    var payload = null;   // what the server offers and holds
+    var draft = null;     // the layout being edited
+
+    function sectionNode(key) {
+      var heading = document.getElementById(key);
+      return heading ? heading.closest("section") : null;
+    }
+    function dimensionNode(key) {
+      var heading = document.getElementById(key);
+      return heading ? heading.closest("section.cns-card, .cns-card") : null;
+    }
+    function labels() {
+      var out = {};
+      (payload.sections || []).forEach(function (s) {
+        out[s.key] = s.label;
+        s.dimensions.forEach(function (d) { out[d.key] = d.label; });
+      });
+      return out;
+    }
+    /* Only what the server offers and the page drew. */
+    function present(layout) {
+      return layout.filter(function (s) { return sectionNode(s.key); }).map(function (s) {
+        return { key: s.key, shown: s.shown, dimensions: s.dimensions.filter(function (d) { return dimensionNode(d.key); }) };
+      });
+    }
+    function clone(layout) { return JSON.parse(JSON.stringify(layout)); }
+
+    function reorder(nodes) {
+      /* Put nodes in the given order among their own siblings, group by parent. */
+      var groups = [];
+      nodes.forEach(function (node) {
+        if (!node || !node.parentNode) return;
+        var group = groups.filter(function (g) { return g.parent === node.parentNode; })[0];
+        if (!group) { group = { parent: node.parentNode, nodes: [] }; groups.push(group); }
+        group.nodes.push(node);
+      });
+      groups.forEach(function (group) {
+        var first = group.nodes.slice().sort(function (a, b) {
+          return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+        })[0];
+        var anchor = document.createComment("layout");
+        group.parent.insertBefore(anchor, first);
+        group.nodes.forEach(function (node) { group.parent.insertBefore(node, anchor); });
+        group.parent.removeChild(anchor);
+      });
+    }
+
+    function apply(layout) {
+      reorder(layout.map(function (s) { return sectionNode(s.key); }));
+      layout.forEach(function (s) {
+        var node = sectionNode(s.key);
+        if (node) node.classList.toggle("cns-layout-hidden", !s.shown);
+        reorder(s.dimensions.map(function (d) { return dimensionNode(d.key); }));
+        s.dimensions.forEach(function (d) {
+          var dim = dimensionNode(d.key);
+          if (dim) dim.classList.toggle("cns-layout-hidden", !d.shown);
+        });
+      });
+    }
+
+    function describe() {
+      state.textContent = payload && payload.customised ? "Showing your saved layout." : "";
+    }
+
+    function move(arr, index, step) {
+      var target = index + step;
+      if (target < 0 || target >= arr.length) return false;
+      var item = arr.splice(index, 1)[0];
+      arr.splice(target, 0, item);
+      return true;
+    }
+
+    function row(kind, key, shown, index, count, label, parent) {
+      var id = "cns-layout-" + kind + "-" + key;
+      var data = ' data-kind="' + kind + '" data-key="' + escAttr(key) + '"' + (parent ? ' data-parent="' + escAttr(parent) + '"' : "");
+      return '<div class="cns-layout-row">' +
+        '<label for="' + escAttr(id) + '"><input type="checkbox" id="' + escAttr(id) + '"' + data +
+        ' data-act="show"' + (shown ? " checked" : "") + "> " + esc(label) + "</label>" +
+        '<button type="button" class="cns-btn cns-btn-ghost cns-btn-sm"' + data + ' data-act="up"' +
+        (index === 0 ? " disabled" : "") + ' aria-label="Move ' + escAttr(label) + ' up"><i class="bi bi-arrow-up" aria-hidden="true"></i></button>' +
+        '<button type="button" class="cns-btn cns-btn-ghost cns-btn-sm"' + data + ' data-act="down"' +
+        (index === count - 1 ? " disabled" : "") + ' aria-label="Move ' + escAttr(label) + ' down"><i class="bi bi-arrow-down" aria-hidden="true"></i></button>' +
+        "</div>";
+    }
+
+    function draw(focusSelector) {
+      var names = labels();
+      list.innerHTML = draft.map(function (s, i) {
+        var dims = s.dimensions.length
+          ? '<ul class="cns-layout-dims" aria-label="' + escAttr("Figures in " + names[s.key]) + '">' + s.dimensions.map(function (d, j) {
+              return "<li>" + row("dim", d.key, d.shown, j, s.dimensions.length, names[d.key] || d.key, s.key) + "</li>";
+            }).join("") + "</ul>"
+          : "";
+        return "<li>" + row("section", s.key, s.shown, i, draft.length, names[s.key] || s.key) + dims + "</li>";
+      }).join("");
+      if (focusSelector) {
+        var target = list.querySelector(focusSelector);
+        if (target && target.disabled) target = target.parentNode.querySelector('[data-act="show"]');
+        if (target) target.focus();
+      }
+    }
+
+    function find(kind, key, parent) {
+      if (kind === "section") {
+        for (var i = 0; i < draft.length; i++) if (draft[i].key === key) return { arr: draft, index: i };
+      } else {
+        for (var s = 0; s < draft.length; s++) {
+          if (draft[s].key !== parent) continue;
+          for (var j = 0; j < draft[s].dimensions.length; j++) {
+            if (draft[s].dimensions[j].key === key) return { arr: draft[s].dimensions, index: j };
+          }
+        }
+      }
+      return null;
+    }
+
+    list.addEventListener("click", function (event) {
+      var button = event.target.closest("button[data-act]");
+      if (!button) return;
+      var kind = button.getAttribute("data-kind"), key = button.getAttribute("data-key");
+      var at = find(kind, key, button.getAttribute("data-parent"));
+      if (!at) return;
+      var act = button.getAttribute("data-act");
+      if (move(at.arr, at.index, act === "up" ? -1 : 1)) {
+        draw('button[data-kind="' + kind + '"][data-key="' + key + '"][data-act="' + act + '"]');
+        apply(draft);
+        Consilium.announce && Consilium.announce("Moved " + (labels()[key] || key) + (act === "up" ? " up." : " down."));
+      }
+    });
+    list.addEventListener("change", function (event) {
+      var box = event.target.closest('input[data-act="show"]');
+      if (!box) return;
+      var at = find(box.getAttribute("data-kind"), box.getAttribute("data-key"), box.getAttribute("data-parent"));
+      if (at) { at.arr[at.index].shown = box.checked; apply(draft); }
+    });
+
+    function open(show) {
+      panel.hidden = !show;
+      toggle.setAttribute("aria-expanded", show ? "true" : "false");
+      if (show) {
+        draft = clone(present(payload.layout));
+        draw();
+        document.getElementById("cns-layout-heading").setAttribute("tabindex", "-1");
+        document.getElementById("cns-layout-heading").focus();
+      } else {
+        apply(present(payload.layout));
+        toggle.focus();
+      }
+    }
+    toggle.addEventListener("click", function () { if (payload) open(panel.hidden); });
+    document.getElementById("cns-layout-cancel").addEventListener("click", function () { open(false); });
+
+    function done(next, message) {
+      payload = next;
+      apply(present(payload.layout));
+      describe();
+      open(false);
+      Consilium.toast.success(message, { title: "Layout" });
+    }
+    function failed(error) {
+      Consilium.toast.error((error && error.message) || "The layout could not be saved.", { title: "Not saved" });
+    }
+    document.getElementById("cns-layout-save").addEventListener("click", function () {
+      if (!draft.some(function (s) { return s.shown; })) {
+        Consilium.toast.error("Keep at least one section on the page.");
+        return;
+      }
+      Consilium.api.call(M + "save_layout", { page: PAGE, layout: JSON.stringify(draft) }, { method: "POST" })
+        .then(function (next) { done(next, "Your layout is saved. It is used whenever you open this page."); })
+        .catch(failed);
+    });
+    document.getElementById("cns-layout-reset").addEventListener("click", function () {
+      Consilium.api.call(M + "reset_layout", { page: PAGE }, { method: "POST" })
+        .then(function (next) {
+          /* The page's own order: put everything back as it was drawn. */
+          done(next, "The page is back to its default layout.");
+        })
+        .catch(failed);
+    });
+
+    Consilium.api.call(M + "get_layout", { page: PAGE }, { trackLoading: false })
+      .then(function (next) {
+        payload = next;
+        if (payload.customised) apply(present(payload.layout));
+        describe();
+      })
+      .catch(function () { toggle.disabled = true; });
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>
+{%- endif %}

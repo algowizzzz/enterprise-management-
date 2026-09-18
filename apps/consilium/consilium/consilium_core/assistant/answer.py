@@ -355,7 +355,9 @@ def sources_for(question: str, ctx: dict, index: corpus.Index, *, limit: int = 3
 			"label": chunk["label"],
 			"title": chunk["title"],
 			"excerpt": corpus.excerpt(chunk["text"], query_tokens),
-			"href": _page_href(chunk.get("href"), ctx),
+			# A guide chapter's section is cited where it can be read: its place
+			# in the in-platform reader. Other sources link to the page they are about.
+			"href": chunk.get("guide_href") or _page_href(chunk.get("href"), ctx),
 			"text": corpus.plain(chunk["text"])[:1800],
 		})
 	return out

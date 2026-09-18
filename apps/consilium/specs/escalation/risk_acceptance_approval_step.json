@@ -1,0 +1,56 @@
+{
+  "name": "Risk Acceptance Approval Step",
+  "module": "Escalation",
+  "description": "One step of a risk acceptance's approval chain. Steps with the same sequence are peers; a sequential step waits for every lower sequence, a parallel step waits for nothing.",
+  "istable": 1,
+  "permissions": [],
+  "fields": [
+    {
+      "fieldname": "step_sequence",
+      "fieldtype": "Int",
+      "label": "Sequence",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "approval_step",
+      "fieldtype": "Data",
+      "label": "Step",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "mode",
+      "fieldtype": "Select",
+      "label": "Mode",
+      "options": "Sequential\nParallel",
+      "default": "Sequential",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "required_role",
+      "fieldtype": "Link",
+      "label": "Required Role",
+      "options": "Role",
+      "in_list_view": 1,
+      "description": "The role the approver holds. Leave empty for the risk-acceptance approver role."
+    },
+    {
+      "fieldname": "assignee_source",
+      "fieldtype": "Select",
+      "label": "Assignee Source",
+      "options": "Chosen At Request\nNamed User",
+      "default": "Chosen At Request",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Chosen At Request: whoever asks for approval picks a holder of the role. Named User: always the person named below."
+    },
+    {
+      "fieldname": "assignee",
+      "fieldtype": "Link",
+      "label": "Named Assignee",
+      "options": "User",
+      "in_list_view": 1
+    }
+  ]
+}

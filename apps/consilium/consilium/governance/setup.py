@@ -54,6 +54,57 @@ DEFAULT_ROUTE_STEPS = [
     ("Sponsor Endorsement", 2, "Parallel", None, "forum_sponsor"),
 ]
 
+#: G-8: the approval path may differ by materiality of change and by forum
+#: type. These are the shipped examples of each; like the default they are
+#: data, and an administrator edits, deactivates or adds to them on the desk.
+#: ``formation.resolve_route`` picks the most specific active route that fits,
+#: so a request these do not fit still follows the standard route.
+#:
+#: (title, request type, forum type code or None, materiality, description, steps)
+#: where steps are as ``DEFAULT_ROUTE_STEPS``.
+ROUTED_PATHS = [
+    (
+        "Minor Change Approval", "Modify", None, "Minor",
+        "Shipped default. A minor change to an existing forum: the governance office evaluates and the "
+        "sponsor endorses; the delegating authority is not asked again.",
+        [
+            ("Risk Governance Office Evaluation", 1, "Sequential", "Risk Governance Office", None),
+            ("Sponsor Endorsement", 2, "Sequential", None, "forum_sponsor"),
+        ],
+    ),
+    (
+        "Material Change Approval", "Modify", None, "Material",
+        "Shipped default. A material change to an existing forum goes through the full path and is then "
+        "signed off by the head of risk governance.",
+        [
+            ("Risk Governance Office Evaluation", 1, "Sequential", "Risk Governance Office", None),
+            ("Delegating Authority Approval", 2, "Sequential", None, "delegating_authority"),
+            ("Sponsor Endorsement", 2, "Parallel", None, "forum_sponsor"),
+            ("Head of Risk Governance Sign-off", 3, "Sequential", "Head of Risk Governance", None),
+        ],
+    ),
+    (
+        "Board Committee Formation Approval", "Any", "BOARD_CTTE", "Any",
+        "Shipped default. A board committee holds authority delegated by the board, so the head of risk "
+        "governance signs off after the delegating authority and the sponsor.",
+        [
+            ("Risk Governance Office Evaluation", 1, "Sequential", "Risk Governance Office", None),
+            ("Delegating Authority Approval", 2, "Sequential", None, "delegating_authority"),
+            ("Sponsor Endorsement", 2, "Parallel", None, "forum_sponsor"),
+            ("Head of Risk Governance Sign-off", 3, "Sequential", "Head of Risk Governance", None),
+        ],
+    ),
+    (
+        "Working Group Formation Approval", "Any", "WORKING_GRP", "Any",
+        "Shipped default. A working group is time-limited and holds no delegated authority, so the "
+        "governance office evaluates and the sponsor endorses.",
+        [
+            ("Risk Governance Office Evaluation", 1, "Sequential", "Risk Governance Office", None),
+            ("Sponsor Endorsement", 2, "Sequential", None, "forum_sponsor"),
+        ],
+    ),
+]
+
 CACHE_KEY = "consilium_governance:configured"
 
 
@@ -141,6 +192,55 @@ def ensure_approval_route() -> bool:
     return True
 
 
+def ensure_routed_paths() -> list[str]:
+    """The G-8 example routes (``ROUTED_PATHS``), each only if missing.
+
+    A route for a forum type is seeded only where that type exists, found by
+    its code, so a site with its own forum-type vocabulary gets the materiality
+    routes and nothing that names a type it does not have. A role step whose
+    role does not exist is left without one rather than failing the seed.
+    """
+    if not frappe.db.table_exists("Formation Approval Route") or not frappe.get_meta(
+        "Formation Approval Route"
+    ).has_field("change_materiality"):
+        return []
+    created = []
+    for title, request_type, type_code, materiality, description, steps in ROUTED_PATHS:
+        if frappe.db.exists("Formation Approval Route", title):
+            continue
+        forum_type = None
+        if type_code:
+            forum_type = frappe.db.get_value("Governance Forum Type", {"forum_type_code": type_code}, "name")
+            if not forum_type:
+                continue
+        route = frappe.get_doc(
+            {
+                "doctype": "Formation Approval Route",
+                "route_title": title,
+                "request_type": request_type,
+                "forum_type": forum_type,
+                "change_materiality": materiality,
+                "is_active": 1,
+                "description": description,
+            }
+        )
+        for step_title, sequence, mode, role, field in steps:
+            route.append(
+                "steps",
+                {
+                    "step_title": step_title,
+                    "step_sequence": sequence,
+                    "mode": mode,
+                    "required_role": role if role and frappe.db.exists("Role", role) else None,
+                    "assign_to_field": field,
+                    "is_active": 1,
+                },
+            )
+        route.insert(ignore_permissions=True)
+        created.append(route.name)
+    return created
+
+
 def ensure_configuration(force: bool = False) -> dict:
     """Idempotent. Cheap after the first call, and self-repairing if rows go."""
     if not force and frappe.cache().get_value(CACHE_KEY):
@@ -149,6 +249,7 @@ def ensure_configuration(force: bool = False) -> dict:
         "state_flags": ensure_state_flags(),
         "watched_fields": ensure_watched_fields(),
         "approval_route": ensure_approval_route(),
+        "routed_paths": ensure_routed_paths(),
     }
     frappe.cache().set_value(CACHE_KEY, 1)
     return result

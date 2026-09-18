@@ -32,13 +32,24 @@
       "reqd": 1,
       "default": "Document Owner",
       "in_list_view": 1,
-      "options": "Document Owner\nDocument Approver\nDocument Sponsor\nDocument Liaison\nParent Document Owner\nNamed User"
+      "options": "Document Owner\nDocument Approver\nDocument Sponsor\nDocument Liaison\nParent Document Owner\nNamed User\nRole Queue\nUser Group",
+      "description": "Who decides the step. Role Queue and User Group send it to everyone holding the required role, or in the group: any of them may decide it."
     },
     {
       "fieldname": "assignee",
       "fieldtype": "Link",
       "label": "Named Assignee",
       "options": "User"
+    },
+    {
+      "fieldname": "user_group",
+      "fieldtype": "Link",
+      "label": "User Group",
+      "options": "User Group",
+      "depends_on": "eval:doc.assignee_source=='User Group'",
+      "mandatory_depends_on": "eval:doc.assignee_source=='User Group'",
+      "description": "The group whose members may decide this step, when the assignee source is User Group.",
+      "provenance": "P-8: routing of approvals to user groups"
     },
     {
       "fieldname": "mode",

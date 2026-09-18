@@ -36,6 +36,8 @@ def get_context(context):
 	context.can_request = frappe.has_permission("Committee Formation Request", "create")
 	context.request_types = _options("Committee Formation Request", "request_type")
 	context.cadence_options = _options("Committee Formation Request", "cadence")
+	# G-8: a change states how material it is, which chooses its approval path.
+	context.materiality_options = _options("Committee Formation Request", "change_materiality")
 	context.existing = (frappe.form_dict.get("request") or "").strip()
 	context.request_status = _request_status(context.existing)
 	# The originator of a returned request answers it whatever roles they hold

@@ -3269,8 +3269,12 @@ def section_attestation(ctx: Ctx) -> None:
     if campaign_exists(reviews.INVENTORY_CAMPAIGN, label):
         ctx.had("Attestation Campaign")
     else:
+        # Dated relative to the anchor, so it falls in a first quarter only when
+        # the demonstration is loaded in the autumn; the reason is kept if not (G-10).
         campaign = reviews.open_inventory_attestation(label, opens_on=ctx.d(-260), due_on=ctx.d(-200),
-                                                      population_filter={"name": ["in", forums]})
+                                                      population_filter={"name": ["in", forums]},
+                                                      off_cycle_reason="Demonstration history, dated from the "
+                                                                       "day the demonstration was loaded.")
         ctx.made("Attestation Campaign")
         result = reviews.generate(campaign)
         for index, task in enumerate(result["created"]):
@@ -3289,8 +3293,11 @@ def section_attestation(ctx: Ctx) -> None:
     if campaign_exists(reviews.INVENTORY_CAMPAIGN, label):
         ctx.had("Attestation Campaign")
     else:
+        # Opened late in the year, so off-cycle (G-10): the reason is recorded.
         campaign = reviews.open_inventory_attestation(label, opens_on=ctx.d(-45), due_on=ctx.d(15),
-                                                      population_filter={"name": ["in", forums]})
+                                                      population_filter={"name": ["in", forums]},
+                                                      off_cycle_reason="Catch-up for forums added after the "
+                                                                       "first-quarter attestation.")
         campaign.append("reminder_schedule", {"offset_days": -14, "channel": "IN_APP",
                                               "note": "Two weeks before the due date."})
         campaign.append("reminder_schedule", {"offset_days": -3, "channel": "IN_APP", "note": "Final reminder."})

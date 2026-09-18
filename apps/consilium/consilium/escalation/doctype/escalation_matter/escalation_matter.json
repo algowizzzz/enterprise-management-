@@ -434,7 +434,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 21:00:00.000000",
+ "modified": "2026-09-18 23:40:00.000000",
  "modified_by": "Administrator",
  "module": "Escalation",
  "name": "Escalation Matter",
@@ -485,6 +485,11 @@
    "read": 1,
    "report": 1,
    "role": "Consilium Audit"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Records Manager"
   }
  ],
  "search_fields": "escalation_title,escalation_id",

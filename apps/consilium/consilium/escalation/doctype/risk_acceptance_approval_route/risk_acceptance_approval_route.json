@@ -1,0 +1,140 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:route_code",
+ "creation": "2026-09-18 19:57:28.513816",
+ "description": "The approval chain a risk acceptance goes through, for a matter type and severity. Blank type or severity means any. Lower priority is tried first and the more specific route breaks a tie. With no matching route an acceptance takes one independent approver, or a forum motion.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "route_code",
+  "route_title",
+  "escalation_type",
+  "severity",
+  "priority",
+  "is_active",
+  "steps",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "route_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Route Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "route_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Route",
+   "reqd": 1
+  },
+  {
+   "description": "Leave empty to match every type.",
+   "fieldname": "escalation_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Escalation Type",
+   "options": "Escalation Type"
+  },
+  {
+   "description": "The matter's severity. Leave empty to match every severity.",
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Severity",
+   "options": "\nHigh\nMedium\nLow"
+  },
+  {
+   "default": "100",
+   "description": "Lower is tried first; the first matching route wins, and specificity breaks ties.",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Priority",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "steps",
+   "fieldtype": "Table",
+   "label": "Steps",
+   "options": "Risk Acceptance Approval Step",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-18 19:57:28.513822",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Risk Acceptance Approval Route",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Owner"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Reviewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "route_title,route_code",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "route_title",
+ "track_changes": 1
+}

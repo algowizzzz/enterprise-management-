@@ -1,0 +1,161 @@
+{
+  "name": "Export Profile",
+  "module": "Consilium Core",
+  "description": "What one governed outbound file contains: the record type, the fields and their column names, the filter, the format and who may run it. Every run is an Export Batch. A scheduled run writes only to a folder under the drop root the server administrator has configured; without one nothing is written anywhere.",
+  "autoname": "EXPP-.#####",
+  "allow_rename": 0,
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "title_field": "profile_title",
+  "search_fields": "profile_title",
+  "fields": [
+    {
+      "fieldname": "profile_title",
+      "fieldtype": "Data",
+      "label": "Title",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description",
+      "description": "What the file is for and who receives it, in a sentence."
+    },
+    {
+      "fieldname": "source_doctype",
+      "fieldtype": "Select",
+      "label": "Records",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "options": "Governance Forum\nGoverning Document\nEscalation Matter"
+    },
+    {
+      "fieldname": "target_system",
+      "fieldtype": "Link",
+      "label": "Target System",
+      "options": "External System",
+      "reqd": 1,
+      "description": "The system the file is prepared for. Recorded on every batch; nothing is sent to it by the platform."
+    },
+    {
+      "fieldname": "file_format",
+      "fieldtype": "Select",
+      "label": "Format",
+      "reqd": 1,
+      "default": "CSV",
+      "options": "CSV\nJSON"
+    },
+    {
+      "fieldname": "export_fields",
+      "fieldtype": "Small Text",
+      "label": "Fields",
+      "description": "One field per line, as fieldname or fieldname = Column heading. Empty uses the standard fields for the record type. The record's identifier is always the first column, so the receiving system can link back."
+    },
+    {
+      "fieldname": "record_filter",
+      "fieldtype": "JSON",
+      "label": "Filter",
+      "description": "Which records, as field and value pairs, for example {\"is_active\": 1}. Empty exports every record the person running it may read."
+    },
+    {
+      "fieldname": "include_restricted",
+      "fieldtype": "Check",
+      "label": "Include restricted records",
+      "default": "0",
+      "description": "Off: sensitive escalations, confidential forums and confidential or restricted documents are left out even for someone who may read them. On: they are included only for someone who may read them, and never in a scheduled drop."
+    },
+    {
+      "fieldname": "max_rows",
+      "fieldtype": "Int",
+      "label": "Row Limit",
+      "default": "5000",
+      "description": "At most this many rows per file, and never more than 5,000. A file that reaches the limit says so on its batch."
+    },
+    {
+      "fieldname": "allowed_roles",
+      "fieldtype": "Small Text",
+      "label": "Roles That May Run It",
+      "description": "One role per line. Administrators may always run it. A person also needs read access to the records."
+    },
+    {
+      "fieldname": "schedule",
+      "fieldtype": "Select",
+      "label": "Scheduled Drop",
+      "reqd": 1,
+      "default": "Manual Only",
+      "options": "Manual Only\nDaily\nWeekly"
+    },
+    {
+      "fieldname": "drop_folder",
+      "fieldtype": "Data",
+      "label": "Drop Folder",
+      "description": "A folder name under the server's export drop root (consilium_export_drop_root in the site configuration). Not a full path: the root is the server administrator's decision."
+    },
+    {
+      "fieldname": "run_as",
+      "fieldtype": "Link",
+      "label": "Scheduled Runs Read As",
+      "options": "User",
+      "description": "The person whose read access a scheduled run uses. Required for a scheduled drop."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "last_run_on",
+      "fieldtype": "Datetime",
+      "label": "Last Run",
+      "read_only": 1
+    },
+    {
+      "fieldname": "last_export_batch",
+      "fieldtype": "Link",
+      "label": "Last Batch",
+      "options": "Export Batch",
+      "read_only": 1
+    },
+    {
+      "fieldname": "last_run_note",
+      "fieldtype": "Small Text",
+      "label": "Last Run Note",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "provenance": "REQUIREMENTS-COVERAGE §4.2 G-19, P-20, E-19: the governed outbound export"
+}

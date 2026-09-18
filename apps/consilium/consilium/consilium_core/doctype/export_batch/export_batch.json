@@ -17,6 +17,11 @@
   "output_file",
   "output_sha256",
   "export_filter",
+  "file_format",
+  "record_names",
+  "excluded_count",
+  "capped",
+  "delivered_to",
   "status"
  ],
  "fields": [
@@ -75,6 +80,40 @@
    "label": "Filter"
   },
   {
+   "fieldname": "file_format",
+   "fieldtype": "Data",
+   "label": "Format",
+   "read_only": 1
+  },
+  {
+   "description": "The identifier of every record in the file, in file order: the linkage register that lets a reply from the receiving system be traced back.",
+   "fieldname": "record_names",
+   "fieldtype": "JSON",
+   "label": "Records Exported",
+   "read_only": 1
+  },
+  {
+   "fieldname": "excluded_count",
+   "fieldtype": "Int",
+   "label": "Left Out As Restricted",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "capped",
+   "fieldtype": "Check",
+   "label": "Reached The Row Limit",
+   "read_only": 1
+  },
+  {
+   "description": "Downloaded by the person who ran it, or the drop folder a scheduled run wrote to.",
+   "fieldname": "delivered_to",
+   "fieldtype": "Data",
+   "label": "Delivered To",
+   "length": 500,
+   "read_only": 1
+  },
+  {
    "default": "Generated",
    "fieldname": "status",
    "fieldtype": "Select",
@@ -85,7 +124,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.708435",
+ "modified": "2026-09-18 23:30:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Export Batch",

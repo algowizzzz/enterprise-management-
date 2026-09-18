@@ -68,7 +68,7 @@
 </div>
 {%- else %}
 
-<div id="doc-summary" class="cns-card">
+<div id="doc-summary" class="cns-card cns-record-summary">
   <div class="cns-card-body">
     <p class="cns-text-muted cns-text-sm">Loading the record&hellip;</p>
   </div>
@@ -197,6 +197,9 @@
     </div>
     <div class="cns-card-body" id="correct-body"><p class="cns-text-muted cns-text-sm">Loading&hellip;</p></div>
   </section>
+
+  {#- P-5: risks, controls, processes, training and issues held elsewhere. -#}
+  {% include "consilium/templates/includes/external_links_panel.html" %}
 
   {% include "consilium/templates/includes/ai_impact_panel.html" %}
 </div>
@@ -1386,7 +1389,11 @@
       { field: "approval_step", label: "Step", sortable: true },
       { field: "step_sequence", label: "Order", sortable: true, align: "end", formatter: f.number },
       { field: "assigned_to", label: "Assigned to", sortable: true,
-        formatter: function (v, row) { return person(v) + (row.can_decide ? " " + pill("Yours to decide", "primary") : ""); } },
+        formatter: function (v, row) {
+          return person(v) +
+            (row.queue && row.is_open ? ' <span class="cns-text-muted cns-text-xs">for the queue: ' + escapeHtml(row.queue) + "</span>" : "") +
+            (row.can_decide ? " " + pill("Yours to decide", "primary") : "");
+        } },
       { field: "decision", label: "Decision", sortable: true, formatter: f.status(DECISION_TONES) },
       { field: "acted_by", label: "Decided by", sortable: true,
         formatter: function (v, row) {
@@ -1405,7 +1412,8 @@
     document.getElementById("route-note").textContent =
       (a.route ? "Route “" + a.route + "”" : "No configured route matches; only lineage steps apply") +
       (a.change_classification ? ", for a " + a.change_classification + " change" : "") +
-      ". Each step is decided by the person it is assigned to, or someone holding their live delegation.";
+      ". Each step is decided by the person it is assigned to, or someone holding their live delegation; " +
+      "a step sent to a role or group queue by any member of the queue.";
 
     var planned = document.getElementById("planned-steps");
     if (a.unraised.length) {
@@ -1413,7 +1421,8 @@
         "<strong>Not yet raised for this version:</strong>" +
         '<ul class="cns-prose" style="margin-top: var(--cns-space-2);">' +
         a.planned_steps.filter(function (s) { return a.unraised.indexOf(s.approval_step) !== -1; }).map(function (s) {
-          return "<li>" + escapeHtml(s.approval_step) + " — " + person(s.assigned_to) +
+          return "<li>" + escapeHtml(s.approval_step) + " — " +
+            (s.queue && !s.assignee_fallback ? "anyone in the " + escapeHtml(s.queue) + " queue" : person(s.assigned_to)) +
             (s.assignee_fallback ? " (the document approver, because the route's assignee could not be resolved)" : "") +
             "</li>";
         }).join("") + "</ul>" +

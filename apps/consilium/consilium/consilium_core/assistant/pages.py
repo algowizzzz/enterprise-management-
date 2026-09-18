@@ -73,9 +73,11 @@ PAGES: dict[str, dict] = {
 	"/": {
 		"title": "Home",
 		"purpose": (
-			"The starting point. It shows where the forum inventory stands (active forums, reviews "
-			"awaiting or overdue, open formation requests), counts by category and compliance "
-			"standing, recent changes, and the governance office's guidance on using the system."
+			"The starting point, as cards: My work (what is waiting on you, by kind, with the most "
+			"urgent items and their due dates), Start something (raise an escalation, request a "
+			"policy or change, request a forum), a card for each area you may open with its live "
+			"figures and main pages, the records you viewed or pinned on this computer, notices "
+			"from the governance office, the guide's chapters, and the forum map."
 		),
 		"module": "Core",
 		"starters": [
@@ -88,14 +90,14 @@ PAGES: dict[str, dict] = {
 			_task(
 				"home-figures", "Open the list behind a figure",
 				"figure count tile number inventory stands click filtered list overdue awaiting",
-				["Each figure under 'Where the inventory stands' is a link.",
-				 "Choose it to open the matching list, already filtered."],
+				["Each figure on an area card (Governance, Policies, Escalations, Insights) is a link.",
+				 "Choose it to open the matching list, already filtered: the list shows the same count."],
 			),
 			_task(
 				"home-request-forum", "Request a new forum",
 				"request new forum committee create formation start ask",
 				["Search the forum inventory first: a forum may already cover the ground.",
-				 "Choose 'Request a new forum' on Home or Forums.",
+				 "Choose 'Request a new forum' under Start something on Home, or on Forums.",
 				 "Fill in the four sections, save a draft if you need to, then submit it for evaluation."],
 				href="/create-forum",
 				requires={"doctype": "Committee Formation Request", "ptype": "create"},

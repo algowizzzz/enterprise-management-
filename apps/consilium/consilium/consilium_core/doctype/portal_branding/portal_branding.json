@@ -96,12 +96,12 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "Primary colour",
-   "description": "A white header with a coloured logo suits a brand whose logo is designed for a light background.",
+   "default": "Glass",
+   "description": "Glass: a frosted light header the page scrolls under. Primary colour: the header in the brand colour. White: a solid white header with a coloured rule, for a logo designed for a light background.",
    "fieldname": "header_style",
    "fieldtype": "Select",
    "label": "Header Style",
-   "options": "Primary colour\nWhite"
+   "options": "Glass\nPrimary colour\nWhite"
   },
   {
    "fieldname": "type_section",
@@ -198,7 +198,7 @@
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-18 15:23:13.276071",
+ "modified": "2026-09-18 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Portal Branding",

@@ -58,7 +58,7 @@
 </div>
 {%- else %}
 
-<div id="request-summary" class="cns-card">
+<div id="request-summary" class="cns-card cns-record-summary">
   <div class="cns-card-body">
     <p class="cns-text-muted cns-text-sm">Loading the request&hellip;</p>
   </div>
@@ -448,6 +448,19 @@
       });
   });
 
+  /* The approval route and what chose it (G-8): the forum type, the
+     materiality of the change and the kind of request, as configured. */
+  function routeText() {
+    var route = ctx.route;
+    if (!route) return dash();
+    var text = escapeHtml(route.name);
+    if (route.chosen_by && route.chosen_by.length) {
+      text += ' <span class="cns-text-muted cns-text-sm">(for ' + escapeHtml(route.chosen_by.join(", ")) + ")</span>";
+    }
+    if (!route.raised) text += ' <span class="cns-text-muted cns-text-sm">&middot; applies when approval is sought</span>';
+    return text;
+  }
+
   function renderSummary(doc) {
     var stage = STAGES[ctx.stage] || { step: 0, text: "" };
     var flags = [];
@@ -480,6 +493,9 @@
       "<div><dt>Raised on</dt><dd>" + dateValue(doc.creation) + "</dd></div>" +
       "<div><dt>Needed in place by</dt><dd>" + dateValue(doc.proposed_timeline) + "</dd></div>" +
       "<div><dt>Forum type</dt><dd>" + named("Governance Forum Type", doc.forum_type) + "</dd></div>" +
+      (doc.change_materiality
+        ? "<div><dt>Materiality of change</dt><dd>" + value(doc.change_materiality) + "</dd></div>" : "") +
+      "<div><dt>Approval route</dt><dd>" + routeText() + "</dd></div>" +
       "<div><dt>Decided on</dt><dd>" + dateValue(doc.decided_on) + "</dd></div>" +
       "</dl></div>";
   }
@@ -718,6 +734,7 @@
     fillList("request-forum", [
       ["Kind of request", value(doc.request_type)],
       ["Forum this concerns", doc.subject_forum ? forumLink(doc.subject_forum) : dash()],
+      ["Materiality of change", value(doc.change_materiality)],
       ["Proposed name", value(doc.forum_name)],
       ["Proposed reference", value(doc.forum_id_proposed)],
       ["Forum type", named("Governance Forum Type", doc.forum_type)],

@@ -304,8 +304,32 @@ def home_loads(site: Site, b: Browser, j: Journey):
 	assert title.startswith("Home"), f"unexpected page title {title!r}"
 	assert "/admin" in nav_links(page), "the administrator has no Admin menu"
 	assert page.locator("#cns-gsearch-input").is_visible(), "the header has no search box"
+	# The home cards: My work, and an area card for each area, each figure a link.
+	assert page.locator("#work-heading").is_visible(), "the My work card is missing"
+	areas = page.eval_on_selector_all(".cns-home-module-title", "els => els.map(e => e.textContent.trim())")
+	assert {"Governance", "Policies", "Escalations"} <= set(areas), f"an administrator's area cards: {areas}"
 	b.snap(page, j.name)
-	j.detail = f"title {title!r}, menus {menu_names(page)}, {len(nav_links(page))} menu items"
+	# A figure and the list it opens show the same number. One figure per list
+	# page, the filtered one: the list's own count badge is the other side.
+	figures = page.eval_on_selector_all(
+		".cns-home-figure", "els => els.map(e => [e.getAttribute('href'), e.getAttribute('data-home-figure')])")
+	checked = []
+	for href, value in figures:
+		if "?" not in href or href.startswith("/governance-gaps"):
+			continue
+		if any(href.split("?")[0] == done.split("?")[0] for done in checked):
+			continue
+		b.open(page, href)
+		page.wait_for_function(
+			"() => { const c = document.querySelector('.cns-dt-count'); return c && !c.hidden && c.textContent.trim() !== ''; }",
+			timeout=20000,
+		)
+		listed = visible_text(page, ".cns-dt-count").strip()
+		assert listed == value, f"{href}: the home figure says {value}, the list shows {listed}"
+		checked.append(href)
+	assert checked, "no filtered figure to follow"
+	j.detail = (f"title {title!r}, menus {menu_names(page)}, areas {areas}; "
+		f"figures match their lists for {', '.join(checked)}")
 
 
 def policy_owner_views_a_version(site: Site, b: Browser, j: Journey):
@@ -568,7 +592,7 @@ def phone_menu_opens(site: Site, b: Browser, j: Journey):
 
 
 JOURNEYS = [
-	Journey("home-loads", "The home page loads for an administrator with its navigation", home_loads),
+	Journey("home-loads", "The home page loads for an administrator with its cards, and its figures match their lists", home_loads),
 	Journey("policy-owner-version-history", "A policy owner opens their document, its versions and history, and views a version", policy_owner_views_a_version),
 	Journey("secretary-forum-review", "A forum secretary opens their forum and its compliance review page", secretary_opens_forum_and_review),
 	Journey("escalation-filters", "The escalation register narrows by severity and widens again", escalation_list_filters),

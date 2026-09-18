@@ -22,3 +22,9 @@ class ApprovalRoute(Document):
         for row in self.steps:
             if row.assignee_source == "Named User" and not row.assignee:
                 frappe.throw(_("Step {0} names a user as its source but names no user.").format(row.idx))
+            # P-8: a queue step is decided by whoever of the queue takes it, so
+            # the queue itself must be named.
+            if row.assignee_source == "Role Queue" and not row.required_role:
+                frappe.throw(_("Step {0} is sent to a role queue but names no required role.").format(row.idx))
+            if row.assignee_source == "User Group" and not row.get("user_group"):
+                frappe.throw(_("Step {0} is sent to a user group but names no group.").format(row.idx))

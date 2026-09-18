@@ -51,4 +51,16 @@ def get_context(context):
 	context.default_period = frappe.utils.getdate().year
 	context.today = frappe.utils.nowdate()
 	context.default_due = frappe.utils.add_days(frappe.utils.nowdate(), 45)
+	# G-10: the inventory attestation is due in a first quarter. The form
+	# offers the next quarter's deadline for it, and the page says which years
+	# had no first-quarter attestation and which campaigns ran off-cycle.
+	next_due = reviews.next_first_quarter_due()
+	context.inventory_default_due = str(next_due)
+	context.inventory_default_period = next_due.year
+	context.inventory_q1 = reviews.inventory_q1_standing() if context.scope else None
+	if context.inventory_q1:
+		standing = context.inventory_q1
+		standing["next_due_label"] = frappe.utils.formatdate(standing["next_due_on"])
+		for row in standing["off_cycle"]:
+			row["due_label"] = frappe.utils.formatdate(row["due_on"])
 	return context

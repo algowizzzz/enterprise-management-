@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 
 import frappe
 from frappe import _
@@ -355,8 +356,53 @@ def _cell(value) -> str:
     return "'" + text if text[:1] in ("=", "+", "-", "@") else text
 
 
-@frappe.whitelist(methods=["GET"])
+#: The system a file downloaded from the reporting page is recorded against:
+#: it goes to the person who asked, not to another system (P-20).
+DOWNLOAD_SYSTEM = "PORTAL_DOWNLOAD"
+
+
+def _download_system() -> str:
+    if not frappe.db.exists("External System", DOWNLOAD_SYSTEM):
+        frappe.get_doc({"doctype": "External System", "system_code": DOWNLOAD_SYSTEM,
+                        "title": "Downloaded from the portal",
+                        "description": "A file a person downloaded from a reporting page for their own use.",
+                        "is_active": 1}).insert(ignore_permissions=True)
+    return DOWNLOAD_SYSTEM
+
+
+def _log_export(section: str, rows: list[dict], columns: list[str], content: str) -> str:
+    """Record the download as an Export Batch: who, when, which section, which records, the hash."""
+    from consilium.consilium_core import importing
+
+    batch, _content = importing.export_records(
+        export_profile=f"Management reporting: {section}",
+        target_system=_download_system(),
+        source_doctype=DOCTYPE,
+        fields=columns,
+        filters={"section": section},
+        rows=rows,
+        content=content,
+        extra={
+            "file_format": "CSV",
+            "record_names": json.dumps([row.get("name") or row.get("document") for row in rows]),
+            "delivered_to": _("Downloaded by {0}").format(frappe.session.user),
+        },
+    )
+    return batch.name
+
+
+@frappe.whitelist(methods=["GET", "POST"])
 def export(section: str) -> str:
-    """A CSV of one section, over the records the caller may read."""
+    """A CSV of one section, over the records the caller may read.
+
+    Each download is logged as an Export Batch (P-20). The reporting page asks
+    with POST, so the log is committed; a GET still answers, but a GET does not
+    commit, so it leaves no log — which is why the page does not use one.
+    """
     _require_reader()
-    return to_csv(section_rows(section), _EXPORT_COLUMNS.get(section, []))
+    rows = section_rows(section)
+    columns = _EXPORT_COLUMNS.get(section, [])
+    content = to_csv(rows, columns)
+    if rows:
+        _log_export(section, rows, columns, content)
+    return content

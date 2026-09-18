@@ -301,15 +301,27 @@ def export_records(
     source_doctype: str,
     fields: list[str],
     filters: dict | None = None,
+    rows: list[dict] | None = None,
+    content: str | None = None,
+    extra: dict | None = None,
 ):
-    """Generate an outbound file and record the batch that produced it."""
-    rows = frappe.get_all(source_doctype, filters=filters or {}, fields=fields, order_by="name asc")
-    buffer = io.StringIO()
-    writer = csv.DictWriter(buffer, fieldnames=fields)
-    writer.writeheader()
-    for row in rows:
-        writer.writerow({field: row.get(field) for field in fields})
-    content = buffer.getvalue()
+    """Generate an outbound file and record the batch that produced it.
+
+    With ``rows`` and ``content`` given, they are recorded as given: that is the
+    governed export (``consilium_core.exporting``), which reads through the
+    caller's permissions, writes its own format and passes the linkage register
+    and delivery in ``extra``. Without them, every row is read and written as a
+    plain CSV, as before.
+    """
+    if rows is None:
+        rows = frappe.get_all(source_doctype, filters=filters or {}, fields=fields, order_by="name asc")
+    if content is None:
+        buffer = io.StringIO()
+        writer = csv.DictWriter(buffer, fieldnames=fields)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({field: row.get(field) for field in fields})
+        content = buffer.getvalue()
 
     return frappe.get_doc(
         {
@@ -323,6 +335,7 @@ def export_records(
             "output_sha256": sha256_of(content),
             "export_filter": json.dumps(filters or {}),
             "status": "Generated",
+            **(extra or {}),
         }
     ).insert(ignore_permissions=True), content
 
@@ -626,3 +639,59 @@ def discard_batch(batch: str, reason: str) -> dict:
     doc.status = DISCARDED_BATCH_STATUS
     doc.save()
     return review_context(doc.name)
+
+
+# ---------------------------------------------------------------------------
+# Import profiles for links to risk-programme records (P-5, G-19).
+#
+# A governing document's or a forum's links to risks, controls, processes,
+# training and issues held elsewhere are External Reference rows. Entered one
+# at a time they come from the policy page; in bulk they come from a file, and
+# a file needs a profile. These profiles are configuration like any other —
+# an administrator may change the columns — and are made on request, idempotent
+# by title, never on install: a site that exchanges no such file has no use
+# for them.
+# ---------------------------------------------------------------------------
+
+#: The source system a reference file is recorded against.
+REFERENCE_FILE_SYSTEM = "RISK_PROGRAMME_FILE"
+
+#: (source column, target field, transform, lookup doctype, lookup field, required)
+REFERENCE_COLUMNS = (
+    ("Record", "subject_name", "Lookup", None, "name", 1),
+    ("System", "external_system", "Lookup", "External System", "system_code", 1),
+    ("Identifier", "external_key", "Trim", None, None, 1),
+    ("Kind", "external_type", "Trim", None, None, 0),
+    ("Label", "label", "Trim", None, None, 1),
+    ("Link", "url", "Trim", None, None, 0),
+)
+
+
+def ensure_reference_profile(subject_doctype: str, title: str) -> str:
+    """An import profile bringing External References for ``subject_doctype`` in from a file."""
+    existing = frappe.db.get_value("Import Profile", {"profile_title": title}, "name")
+    if existing:
+        return existing
+    if not frappe.db.exists("External System", REFERENCE_FILE_SYSTEM):
+        frappe.get_doc({
+            "doctype": "External System", "system_code": REFERENCE_FILE_SYSTEM,
+            "title": "Risk-programme reference file",
+            "description": "Delimited files of links from records to risks, controls, processes, training and "
+                           "issues held in other systems, imported by hand.",
+            "is_active": 1,
+        }).insert(ignore_permissions=True)
+    mappings = [
+        {"source_column": column, "target_fieldname": field, "transform": transform,
+         "lookup_doctype": subject_doctype if field == "subject_name" else lookup_doctype,
+         "lookup_field": lookup_field, "is_required": required}
+        for column, field, transform, lookup_doctype, lookup_field, required in REFERENCE_COLUMNS
+    ]
+    # The record type is not a column: every row of this file is about one kind.
+    mappings.append({"source_column": "Record type", "target_fieldname": "subject_doctype", "transform": "None",
+                     "default_value": subject_doctype, "is_required": 1})
+    return frappe.get_doc({
+        "doctype": "Import Profile", "profile_title": title, "source_system": REFERENCE_FILE_SYSTEM,
+        "target_doctype": "External Reference", "key_strategy": "Always Insert",
+        "on_missing_required": "Reject Row", "on_unknown_taxonomy": "Reject Row", "on_duplicate_key": "Skip",
+        "is_active": 1, "mappings": mappings,
+    }).insert(ignore_permissions=True).name

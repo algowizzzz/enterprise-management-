@@ -2,22 +2,30 @@
 
 {#-
   Home.
-  Two jobs: tell someone who has never used the system how it works, and show
-  where the inventory stands today. The guidance sections carry built-in copy
-  and are replaced, section by section, with whatever the Guide Article records
-  say — so the words are maintained by the governance office, not by a release.
+  Cards, each answering one question a person arrives with: what is waiting on
+  me (My work), what can I start (quick actions), how does each area I work in
+  stand (a card per area, with live figures and its main pages), what did I
+  look at last (recently viewed, pinned), what has the governance office said
+  (announcements) and where do I learn more (the guide). The figures and the
+  list of areas are worked out on the server (consilium_core/home.py) with the
+  viewer's own permissions; recently viewed and pinned records are drawn by the
+  page's script from this browser's own history (consilium.js).
+
+  The banner's heading, text, buttons and image still come from Portal
+  Branding, so a deployment makes the page its own without a release.
 -#}
 
-{#- The home page opens on a banner rather than the standard title row: the
-    heading, text, buttons and image all come from Portal Branding, so a
-    deployment makes it its own without a release. #}
 {% block page_header %}
 {%- set hero_image = brand.hero_image_url %}
-<section class="cns-hero{% if hero_image %} cns-hero-has-image{% endif %}" aria-labelledby="hero-heading">
+<section class="cns-hero cns-hero--home{% if hero_image %} cns-hero-has-image{% endif %}" aria-labelledby="hero-heading">
   {%- if hero_image %}
   <img class="cns-hero-image" src="{{ hero_image | e }}" alt="">
   {%- endif %}
   <div class="cns-hero-body">
+    {%- if home %}
+    <p class="cns-hero-greeting">{{ home.greeting.salutation | e }}, {{ home.greeting.name | e }}
+      <span class="cns-hero-date">· {{ home.greeting.date | e }}</span></p>
+    {%- endif %}
     <h1 class="cns-hero-title" id="hero-heading">{{ brand.hero_title | e }}</h1>
     <p class="cns-hero-text">{{ brand.hero_text | e }}</p>
     <div class="cns-hero-actions">
@@ -36,307 +44,264 @@
     </div>
   </div>
 </section>
-
-<nav class="cns-quick-grid" aria-label="Where to go next">
-  {%- if cns_can_read("Governance Forum") %}
-  <a class="cns-quick-tile" href="/forums">
-    <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-people"></i></span>
-    <span><span class="cns-quick-title">Governance</span>
-      <span class="cns-quick-note">Committees, their members, meetings and decisions</span></span>
-  </a>
-  {%- endif %}
-  {%- if cns_can_read("Governing Document") %}
-  <a class="cns-quick-tile" href="/policies">
-    <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
-    <span><span class="cns-quick-title">Policies</span>
-      <span class="cns-quick-note">Governing documents and where each stands</span></span>
-  </a>
-  {%- endif %}
-  {%- if cns_can_read("Escalation Matter") %}
-  <a class="cns-quick-tile" href="/escalations">
-    <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-exclamation-diamond"></i></span>
-    <span><span class="cns-quick-title">Escalations</span>
-      <span class="cns-quick-note">Matters raised, who owns them and how late they are</span></span>
-  </a>
-  {%- endif %}
-  <a class="cns-quick-tile" href="/reports">
-    <span class="cns-quick-icon" aria-hidden="true"><i class="bi bi-bar-chart"></i></span>
-    <span><span class="cns-quick-title">Insights</span>
-      <span class="cns-quick-note">The picture across all three, for management</span></span>
-  </a>
-</nav>
 {% endblock %}
 
 {% block page_content %}
+{%- if home %}
+<div class="cns-home">
 
-<!-- =============== Where the inventory stands =============== -->
-{#- The dashboard and the map count forums. Someone whose roles do not read
-    forums (the policy office, for one) was shown a page of "unavailable"
-    boxes here; the section is left out for them instead. #}
-{%- if cns_can_read("Governance Forum") %}
-<section aria-labelledby="dash-heading">
-  <h2 id="dash-heading" class="cns-eyebrow">Where the inventory stands</h2>
-
-  <div class="cns-metric-grid" id="metric-strip">
-    <div class="cns-card">
-      <div class="cns-card-body cns-stat">
-        <span class="cns-stat-value" data-metric="active"><span class="cns-skeleton" style="width:3rem;display:inline-block;">&nbsp;</span></span>
-        <span class="cns-stat-label">Active forums</span>
-        <span class="cns-metric-note">Recorded and not disbanded</span>
-      </div>
-    </div>
-    <div class="cns-card">
-      <a class="cns-metric-link" href="/forums?standing=review">
-        <div class="cns-card-body cns-stat">
-          <span class="cns-stat-value" data-metric="review">&nbsp;</span>
-          <span class="cns-stat-label">Awaiting compliance review</span>
-          <span class="cns-metric-note">Open the inventory, filtered to these</span>
-        </div>
-      </a>
-    </div>
-    <div class="cns-card">
-      <a class="cns-metric-link" href="/forums?standing=overdue">
-        <div class="cns-card-body cns-stat">
-          <span class="cns-stat-value" data-metric="overdue">&nbsp;</span>
-          <span class="cns-stat-label">Reviews overdue</span>
-          <span class="cns-metric-note">Past the date recorded on the forum</span>
-        </div>
-      </a>
-    </div>
-    <div class="cns-card">
-      <div class="cns-card-body cns-stat">
-        <span class="cns-stat-value" data-metric="requests">&nbsp;</span>
-        <span class="cns-stat-label">Formation requests open</span>
-        <span class="cns-metric-note">Raised but not yet decided</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="cns-form-grid">
-    <section class="cns-card" aria-labelledby="by-type-heading">
+  <!-- =============== My work and quick actions =============== -->
+  {#- Without an action card, My work takes the whole row. #}
+  <div class="cns-home-row{% if home.actions %} cns-home-row--work{% endif %}">
+    <section class="cns-card cns-home-work" aria-labelledby="work-heading">
       <div class="cns-card-header">
         <div>
-          <h3 class="cns-card-title" id="by-type-heading">Forums by category</h3>
-          <p class="cns-card-subtitle">By forum type, then by the primary risk category each forum carries.</p>
+          <h2 class="cns-card-title" id="work-heading"><i class="bi bi-inbox" aria-hidden="true"></i> My work</h2>
+          <p class="cns-card-subtitle" id="work-summary">
+            {%- if home.work.unavailable %}
+            What is waiting on you could not be read just now.
+            {%- elif home.work.count %}
+            {{ home.work.count }} {{ "item is" if home.work.count == 1 else "items are" }} waiting on you
+            {%- if home.work.overdue %}, {{ home.work.overdue }} overdue{% endif %}
+            {%- if home.work.due_soon %}, {{ home.work.due_soon }} due within a week{% endif %}.
+            {%- else %}
+            Nothing is waiting on you.
+            {%- endif %}
+          </p>
         </div>
+        <a class="cns-btn cns-btn-secondary cns-btn-sm" href="/tasks">Open My work <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
       </div>
       <div class="cns-card-body">
-        <p class="cns-eyebrow">Forum type</p>
-        <div id="bars-type" class="cns-bars" role="img" aria-label="Forum counts by forum type">
-          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        {%- if home.work.count %}
+        <ul class="cns-home-chips" aria-label="What is waiting, by kind">
+          {%- for group in home.work.groups %}
+          <li>
+            <a class="cns-home-chip" href="{{ group.url | e }}">
+              {{ group.label | e }}
+              <span class="cns-badge cns-badge--count">{{ group.count }}</span>
+              {%- if group.overdue %}
+              <span class="cns-badge cns-status-danger">{{ group.overdue }} overdue</span>
+              {%- endif %}
+            </a>
+          </li>
+          {%- endfor %}
+        </ul>
+        <h3 class="cns-home-subhead">Most urgent</h3>
+        <ul class="cns-home-tasks">
+          {%- for item in home.work.top %}
+          <li class="cns-home-task{% if item.overdue %} cns-home-task--overdue{% endif %}">
+            <div class="cns-home-task-main">
+              <a class="cns-home-task-title" href="{{ item.url | e }}">{{ item.title | e }}</a>
+              <span class="cns-home-task-meta">{{ item.kind | e }}{% if item.context %} · {{ item.context | e }}{% endif %}</span>
+            </div>
+            {%- if item.due_on %}
+            {%- if item.overdue %}
+            <span class="cns-pill cns-status-danger">Overdue since {{ item.due_label | e }}</span>
+            {%- elif item.due_soon %}
+            <span class="cns-pill cns-status-warning">Due {{ item.due_label | e }}</span>
+            {%- else %}
+            <span class="cns-pill cns-status-neutral">Due {{ item.due_label | e }}</span>
+            {%- endif %}
+            {%- endif %}
+          </li>
+          {%- endfor %}
+        </ul>
+        {%- elif home.work.unavailable %}
+        <div class="cns-state cns-state--error">
+          <span class="cns-state-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+          <p class="cns-state-title">My work is unavailable</p>
+          <p class="cns-state-message">Open My work to try again; the fault has been logged for your administrator.</p>
         </div>
-        <p class="cns-eyebrow" style="margin-top: var(--cns-space-5);">Primary risk category</p>
-        <div id="bars-risk" class="cns-bars" role="img" aria-label="Forum counts by primary risk category"></div>
+        {%- else %}
+        <div class="cns-state">
+          <span class="cns-state-icon"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
+          <p class="cns-state-title">You are all caught up</p>
+          <p class="cns-state-message">Approvals, reviews and attestations assigned to you will appear here.</p>
+        </div>
+        {%- endif %}
       </div>
     </section>
 
-    <section class="cns-card" aria-labelledby="by-status-heading">
+    {%- if home.actions %}
+    <section class="cns-card cns-home-start" aria-labelledby="start-heading">
       <div class="cns-card-header">
         <div>
-          <h3 class="cns-card-title" id="by-status-heading">Compliance standing</h3>
-          <p class="cns-card-subtitle">Every forum sits in one of these states. The state is moved by a
-            compliance review, never by editing the record.</p>
+          <h2 class="cns-card-title" id="start-heading"><i class="bi bi-plus-circle" aria-hidden="true"></i> Start something</h2>
+          <p class="cns-card-subtitle">Each opens a guided form; nothing is created until you submit it.</p>
         </div>
       </div>
       <div class="cns-card-body">
-        <div id="bars-status" class="cns-bars" role="img" aria-label="Forum counts by compliance status">
-          <p class="cns-text-muted cns-text-sm">Counting&hellip;</p>
+        <ul class="cns-home-actions">
+          {%- for action in home.actions %}
+          <li>
+            <a class="cns-home-action" href="{{ action.url | e }}">
+              <span class="cns-home-action-icon" aria-hidden="true"><i class="bi {{ action.icon | e }}"></i></span>
+              <span class="cns-home-action-text">
+                <span class="cns-home-action-label">{{ action.label | e }}</span>
+                <span class="cns-home-action-desc">{{ action.description | e }}</span>
+              </span>
+              <i class="bi bi-chevron-right cns-home-action-go" aria-hidden="true"></i>
+            </a>
+          </li>
+          {%- endfor %}
+        </ul>
+      </div>
+    </section>
+    {%- endif %}
+  </div>
+
+  <!-- =============== The areas, with their live figures =============== -->
+  {%- if home.modules %}
+  <section aria-labelledby="modules-heading">
+    <h2 class="cns-eyebrow" id="modules-heading">Your areas</h2>
+    <div class="cns-home-modules">
+      {%- for module in home.modules %}
+      <section class="cns-card cns-home-module" id="module-{{ module.id }}" aria-labelledby="module-{{ module.id }}-title">
+        <div class="cns-home-module-head">
+          <span class="cns-quick-icon" aria-hidden="true"><i class="bi {{ module.icon | e }}"></i></span>
+          <div>
+            <h3 class="cns-home-module-title" id="module-{{ module.id }}-title"><a href="{{ module.url | e }}">{{ module.title | e }}</a></h3>
+            <p class="cns-home-module-desc">{{ module.description | e }}</p>
+          </div>
         </div>
-        <p class="cns-eyebrow" style="margin-top: var(--cns-space-5);">How decisions carry</p>
-        <div id="bars-quorum" class="cns-bars" role="img" aria-label="Forum counts by quorum rule"></div>
+        {%- if module.figures %}
+        <ul class="cns-home-figures">
+          {%- for figure in module.figures %}
+          <li>
+            <a class="cns-home-figure{% if figure.tone %} cns-home-figure--{{ figure.tone }}{% endif %}" href="{{ figure.url | e }}"
+               data-home-figure="{{ figure.value }}">
+              <span class="cns-home-figure-value">{{ figure.value }}</span>
+              <span class="cns-home-figure-label">{{ figure.label | e }}</span>
+            </a>
+          </li>
+          {%- endfor %}
+        </ul>
+        {%- endif %}
+        {%- if module.links %}
+        <ul class="cns-home-links" aria-label="{{ module.title | e }} pages">
+          {%- for link in module.links %}
+          <li><a href="{{ link.url | e }}"><i class="bi {{ (link.icon or 'bi-dot') | e }}" aria-hidden="true"></i> {{ link.label | e }}</a></li>
+          {%- endfor %}
+        </ul>
+        {%- endif %}
+      </section>
+      {%- endfor %}
+    </div>
+  </section>
+  {%- endif %}
+
+  <!-- =============== Recently viewed, pinned, announcements =============== -->
+  <div class="cns-home-row cns-home-row--three">
+    <section class="cns-card" aria-labelledby="recent-heading">
+      <div class="cns-card-header">
+        <div>
+          <h2 class="cns-card-title" id="recent-heading"><i class="bi bi-clock-history" aria-hidden="true"></i> Recently viewed</h2>
+          <p class="cns-card-subtitle">Forums, policies and escalations you opened on this computer.</p>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <ul class="cns-home-list" id="recent-list" data-home-list="recent">
+          <li class="cns-home-empty">Records you open will appear here.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="cns-card" aria-labelledby="pinned-heading">
+      <div class="cns-card-header">
+        <div>
+          <h2 class="cns-card-title" id="pinned-heading"><i class="bi bi-pin-angle" aria-hidden="true"></i> Pinned</h2>
+          <p class="cns-card-subtitle">Keep a record at hand: use <strong>Pin</strong> at the top of its page.</p>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        <ul class="cns-home-list" id="pinned-list" data-home-list="pins">
+          <li class="cns-home-empty">Nothing pinned yet.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="cns-card" aria-labelledby="news-heading">
+      <div class="cns-card-header">
+        <div>
+          <h2 class="cns-card-title" id="news-heading"><i class="bi bi-megaphone" aria-hidden="true"></i> From the governance office</h2>
+          <p class="cns-card-subtitle">Guidance and notices, maintained by the governance office.</p>
+        </div>
+      </div>
+      <div class="cns-card-body">
+        {#- Filled from the published Guide Article records. Each keeps the
+            anchor the Help assistant links to (#guide-<name>). #}
+        <div class="cns-home-notes" id="guide-more">
+          <p class="cns-home-empty">Loading&hellip;</p>
+        </div>
       </div>
     </section>
   </div>
 
-  <!-- O-2: the organisation-wide interconnectivity map. Drawn from
-       `inventory.forum_map` as plain SVG; the same map is listed underneath
-       for anyone reading without the drawing. -->
-  <section class="cns-card" aria-labelledby="map-heading">
-    <div class="cns-card-header">
-      <div>
-        <h3 class="cns-card-title" id="map-heading">How the forums connect</h3>
-        <p class="cns-card-subtitle">Every active forum you may see, in its place in the hierarchy. Solid lines
-          are the parent a forum reports into; dashed arrows are the other recorded links &mdash; a forum
-          that escalates to, informs or reports to one outside its own line.</p>
+  <!-- =============== Guides and the forum map =============== -->
+  <div class="cns-home-row{% if home.can_map %} cns-home-row--guides{% endif %}">
+    <section class="cns-card" aria-labelledby="guide-heading">
+      <div class="cns-card-header">
+        <div>
+          <h2 class="cns-card-title" id="guide-heading"><i class="bi bi-book" aria-hidden="true"></i> Guides</h2>
+          <p class="cns-card-subtitle">The illustrated guide, a chapter at a time. Or ask <strong>Help</strong>, bottom right.</p>
+        </div>
+        {%- if home.guides.url %}
+        <a class="cns-btn cns-btn-secondary cns-btn-sm" href="{{ home.guides.url | e }}">Open the guide <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        {%- endif %}
       </div>
-    </div>
-    <div class="cns-card-body">
-      <div class="cns-diagram cns-map" id="forum-map" role="group" aria-labelledby="map-heading">
-        <p class="cns-text-muted cns-text-sm">Drawing the map&hellip;</p>
+      <div class="cns-card-body">
+        <ul class="cns-home-guides">
+          {%- for chapter in home.guides.chapters %}
+          <li>
+            {%- if chapter.url %}
+            <a class="cns-home-guide" href="{{ chapter.url | e }}">
+              <span class="cns-home-guide-title">{%- if chapter.icon %}<i class="bi {{ chapter.icon | e }}" aria-hidden="true"></i> {% endif %}{{ chapter.title | e }}</span>
+              <span class="cns-home-guide-summary">{{ chapter.summary | e }}</span>
+            </a>
+            {%- else %}
+            <div class="cns-home-guide">
+              <span class="cns-home-guide-title">{{ chapter.title | e }}</span>
+              <span class="cns-home-guide-summary">{{ chapter.summary | e }}</span>
+            </div>
+            {%- endif %}
+          </li>
+          {%- endfor %}
+        </ul>
+        {%- if not home.guides.available %}
+        <p class="cns-text-muted cns-text-xs cns-home-guide-note">The guide reader is not installed on this site yet;
+          your administrator has the guide as a document, and Help answers from it.</p>
+        {%- endif %}
       </div>
-      <p class="cns-text-muted cns-text-xs" style="margin-top: var(--cns-space-3);">Each box opens that forum.
-        The map scrolls sideways when the hierarchy is wider than the page.</p>
-      <details class="cns-map-list" id="forum-map-list-wrap">
-        <summary>The same map as a list</summary>
-        <div id="forum-map-list"></div>
-      </details>
-    </div>
-  </section>
+    </section>
 
-  <section class="cns-card" aria-labelledby="recent-heading">
-    <div class="cns-card-header">
-      <div>
-        <h3 class="cns-card-title" id="recent-heading">Recent changes</h3>
-        <p class="cns-card-subtitle">The forums whose records moved most recently.</p>
+    {%- if home.can_map %}
+    <section class="cns-card" aria-labelledby="map-heading">
+      <div class="cns-card-header">
+        <div>
+          <h2 class="cns-card-title" id="map-heading"><i class="bi bi-diagram-3" aria-hidden="true"></i> Forum map</h2>
+          <p class="cns-card-subtitle">Every active forum you may see, in its place in the hierarchy. Solid lines lead to
+            the forum each reports into; dashed arrows are other recorded links.</p>
+        </div>
       </div>
-      <a class="cns-btn cns-btn-ghost cns-btn-sm" href="/forums">See all</a>
-    </div>
-    <div class="cns-card-body">
-      <ul class="cns-timeline" id="recent-changes">
-        <li><span class="cns-skeleton" style="width:60%;display:inline-block;">&nbsp;</span></li>
-      </ul>
-    </div>
-  </section>
-</section>
+      <div class="cns-card-body">
+        <div class="cns-diagram cns-map cns-home-map" id="forum-map" role="group" aria-labelledby="map-heading" tabindex="0">
+          <p class="cns-text-muted cns-text-sm">Drawing the map&hellip;</p>
+        </div>
+        <details class="cns-map-list" id="forum-map-list-wrap">
+          <summary>The same map as a list</summary>
+          <div id="forum-map-list"></div>
+        </details>
+      </div>
+    </section>
+    {%- endif %}
+  </div>
+
+</div>
 {%- endif %}
-
-<!-- =============== Using the system =============== -->
-<section aria-labelledby="guide-heading" style="margin-top: var(--cns-space-6);">
-  <h2 id="guide-heading" class="cns-eyebrow">Using the system</h2>
-
-  <!-- Setting up a forum -->
-  <section class="cns-card" aria-labelledby="g1">
-    <div class="cns-card-header">
-      <h3 class="cns-card-title" id="g1" data-guide-title="Getting Started">Setting up a governance forum</h3>
-    </div>
-    <div class="cns-card-body">
-      <div class="cns-prose" data-guide-category="Getting Started">
-        <p>A forum is never created directly. You raise a <strong>formation request</strong>; it is
-          evaluated against the governance criteria; and an approved request is what brings the forum
-          into existence. That order exists so every forum on the inventory has a recorded reason for
-          being there and a named sponsor.</p>
-        <ol>
-          <li><strong>Search the inventory first.</strong> Most refused requests duplicate a forum that
-            already covers the ground.</li>
-          <li><strong>Choose the type.</strong> The type settles how much authority the forum may hold
-            and who it answers to.</li>
-          <li><strong>Name the accountable line.</strong> One operating group owns the forum; a line of
-            business may sit beneath it.</li>
-          <li><strong>Write the mandate and the escalation route.</strong> A forum with no route out of
-            it quietly absorbs risk.</li>
-          <li><strong>Expect a compliance review.</strong> Nothing is approved without one.</li>
-        </ol>
-      </div>
-      <p class="cns-text-muted cns-text-xs" data-guide-note="Getting Started" hidden></p>
-    </div>
-    <div class="cns-card-footer">
-      <a class="cns-btn cns-btn-secondary cns-btn-sm" href="/create-forum">Start a formation request</a>
-    </div>
-  </section>
-
-  <!-- Forum types -->
-  <section class="cns-card" aria-labelledby="g2">
-    <div class="cns-card-header">
-      <h3 class="cns-card-title" id="g2" data-guide-title="Forum Types">Forum types, and choosing between them</h3>
-    </div>
-    <div class="cns-card-body">
-      <div class="cns-prose" data-guide-category="Forum Types">
-        <p>Work down from authority. Ask what the forum may decide on its own, and the type follows.
-          Where two types would fit, take the one with less authority: authority is easier to add at the
-          next review than to withdraw.</p>
-      </div>
-      <p class="cns-text-muted cns-text-xs" data-guide-note="Forum Types" hidden></p>
-
-      <p class="cns-eyebrow" style="margin-top: var(--cns-space-5);">The types on this site</p>
-      <div class="cns-table-wrap">
-        <table class="cns-table cns-table--compact">
-          <caption class="cns-visually-hidden">Forum types, their definitions and how many forums use each</caption>
-          <thead>
-            <tr>
-              <th scope="col">Type</th>
-              <th scope="col">What it is</th>
-              <th scope="col">Forums</th>
-            </tr>
-          </thead>
-          <tbody id="type-rows">
-            <tr><td colspan="3" class="cns-text-muted">Loading the type list&hellip;</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- Templates -->
-  <section class="cns-card" aria-labelledby="g3">
-    <div class="cns-card-header">
-      <h3 class="cns-card-title" id="g3" data-guide-title="Templates">Templates you can start from</h3>
-    </div>
-    <div class="cns-card-body">
-      <div class="cns-prose" data-guide-category="Templates">
-        <p>Templates fix the shape of a document or an escalation so that reviewers are not reading a
-          different structure every time. A template names the fields a submission must carry and, where
-          one is held, the file to start from. Use the template that matches the action you are taking —
-          issuing a new document, revising one, reviewing one or retiring one — rather than the nearest
-          document you happen to have.</p>
-      </div>
-      <p class="cns-text-muted cns-text-xs" data-guide-note="Templates" hidden></p>
-
-      <div class="cns-form-grid" style="margin-top: var(--cns-space-4);">
-        <div>
-          <p class="cns-eyebrow">Document templates</p>
-          <ul id="doc-templates" class="cns-prose"><li class="cns-text-muted">Loading&hellip;</li></ul>
-        </div>
-        <div>
-          <p class="cns-eyebrow">Escalation templates</p>
-          <ul id="esc-templates" class="cns-prose"><li class="cns-text-muted">Loading&hellip;</li></ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Decision authority -->
-  <section class="cns-card" aria-labelledby="g4">
-    <div class="cns-card-header">
-      <h3 class="cns-card-title" id="g4" data-guide-title="Decision Authority">Where decision authority sits</h3>
-    </div>
-    <div class="cns-card-body">
-      <div class="cns-prose" data-guide-category="Decision Authority">
-        <p>Authority travels downward and is always narrower than the authority above it. The board holds
-          what it has reserved to itself and delegates the rest; a board committee acts within that
-          delegation; an executive committee acts within the delegation it has been given by the board or
-          the chief executive; a management committee acts within its business. Councils, advisory forums
-          and working groups recommend — they do not decide.</p>
-        <p>Three things settle whether a decision stands: the forum holds the authority for it, the
-          sitting was quorate under the forum's own quorum rule, and the decision is recorded as a motion
-          with its outcome. Where any of the three is missing, the decision has not been taken, however
-          firmly it was agreed in the room.</p>
-        <p>A forum's own page shows its quorum rule, its voting seats and the motions it has carried.</p>
-      </div>
-      <p class="cns-text-muted cns-text-xs" data-guide-note="Decision Authority" hidden></p>
-    </div>
-  </section>
-
-  <!-- Escalation -->
-  <section class="cns-card" aria-labelledby="g5">
-    <div class="cns-card-header">
-      <h3 class="cns-card-title" id="g5" data-guide-title="Escalation Protocol">Escalation protocols</h3>
-    </div>
-    <div class="cns-card-body">
-      <div class="cns-prose" data-guide-category="Escalation Protocol">
-        <p>Every forum records two things about escalation: the <strong>threshold</strong> that triggers
-          it, and the <strong>protocol</strong> that says where the matter goes and how quickly.</p>
-        <p>A threshold is a measurable condition rather than a judgement — a limit breached, a severity
-          rating reached, a regulatory deadline missed. A protocol names the receiving forum, the
-          timescale, and what must travel with the matter: the decision being sought, the accountable
-          owner, and the treatment already attempted.</p>
-        <p>Matters normally travel up the parent chain. They move sideways only where an escalation link
-          between the two forums has been recorded, which is what the interconnectivity view on each
-          forum shows.</p>
-      </div>
-      <p class="cns-text-muted cns-text-xs" data-guide-note="Escalation Protocol" hidden></p>
-    </div>
-  </section>
-
-  {#- Published guide articles with no slot above — a category the page has no
-      card for (such as Policy Lifecycle), or a second article in a category —
-      are added here, so every published article is on the page the assistant
-      links it to. #}
-  <div id="guide-more"></div>
-</section>
-
 {% endblock %}
 
 {% block scripts %}
+{%- if home %}
 <script>
 (function () {
   "use strict";
@@ -349,164 +314,185 @@
     "Non-Compliant": "danger", "Not Applicable": "info", Disbanded: "neutral"
   };
 
-  function todayISO() {
-    var d = new Date();
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") +
-      "-" + String(d.getDate()).padStart(2, "0");
+  /* --- recently viewed and pinned ----------------------------------------
+     Kept in this browser by consilium.js as record references only (type and
+     name, never a title). The titles are read now, through the same API the
+     pages use, so a record the viewer may no longer open simply drops out. */
+
+  function ago(ms) {
+    var minutes = Math.round((Date.now() - ms) / 60000);
+    if (minutes < 1) return "just now";
+    if (minutes < 60) return minutes + " min ago";
+    var hours = Math.round(minutes / 60);
+    if (hours < 24) return hours + " h ago";
+    var days = Math.round(hours / 24);
+    return days === 1 ? "yesterday" : days + " days ago";
   }
 
-  function setMetric(key, value) {
-    var node = document.querySelector('[data-metric="' + key + '"]');
-    if (node) node.textContent = String(value);
+  function resolve(entries) {
+    var kinds = Consilium.records.KINDS;
+    var byType = {};
+    entries.forEach(function (e) {
+      if (kinds[e.d]) (byType[e.d] = byType[e.d] || []).push(e.n);
+    });
+    var lookups = Object.keys(byType).map(function (doctype) {
+      var kind = kinds[doctype];
+      return Consilium.api.list(doctype, {
+        fields: ["name", kind.title],
+        filters: [["name", "in", byType[doctype]]],
+        limit_page_length: byType[doctype].length
+      }).then(function (rows) {
+        var titles = {};
+        rows.forEach(function (row) { titles[row.name] = row[kind.title] || row.name; });
+        return { doctype: doctype, titles: titles };
+      }).catch(function () { return { doctype: doctype, titles: {} }; });
+    });
+    return Promise.all(lookups).then(function (results) {
+      var found = {};
+      results.forEach(function (r) { found[r.doctype] = r.titles; });
+      return entries.filter(function (e) { return found[e.d] && found[e.d][e.n] !== undefined; })
+        .map(function (e) { return { entry: e, title: found[e.d][e.n], kind: kinds[e.d] }; });
+    });
   }
 
-  /** Render a set of counts as labelled bars. Tones are optional. */
-  function renderBars(target, entries, tones) {
-    var node = document.getElementById(target);
+  function drawList(listId, entries, options) {
+    var node = document.getElementById(listId);
     if (!node) return;
     if (!entries.length) {
-      node.innerHTML = '<p class="cns-text-muted cns-text-sm">Nothing recorded yet.</p>';
+      node.innerHTML = '<li class="cns-home-empty">' + escapeHtml(options.empty) + "</li>";
       return;
     }
-    var max = entries.reduce(function (m, e) { return Math.max(m, e.count); }, 0) || 1;
-    node.innerHTML = entries.map(function (entry) {
-      var pct = Math.round((entry.count / max) * 100);
-      var tone = (tones && tones[entry.label]) || "primary";
-      return '<div class="cns-bar-row">' +
-        '<span class="cns-bar-label">' + escapeHtml(entry.label) + "</span>" +
-        '<span class="cns-bar-track"><span class="cns-bar-fill cns-status-' + escapeAttr(tone) +
-        '" style="width:' + pct + '%"></span></span>' +
-        '<span class="cns-bar-value">' + entry.count + "</span></div>";
-    }).join("");
-    node.setAttribute(
-      "aria-label",
-      node.getAttribute("aria-label") + ": " +
-        entries.map(function (e) { return e.label + ", " + e.count; }).join("; ")
-    );
-  }
-
-  function tally(rows, field, labels) {
-    var counts = {};
-    rows.forEach(function (row) {
-      var key = row[field] || "Not recorded";
-      counts[key] = (counts[key] || 0) + 1;
+    resolve(entries).then(function (rows) {
+      if (!rows.length) {
+        node.innerHTML = '<li class="cns-home-empty">' + escapeHtml(options.empty) + "</li>";
+        return;
+      }
+      node.innerHTML = rows.map(function (row) {
+        var href = row.kind.path + "?name=" + encodeURIComponent(row.entry.n);
+        var meta = row.kind.label + " · " + row.entry.n + (row.entry.t ? " · " + ago(row.entry.t) : "");
+        var remove = options.removable
+          ? '<button type="button" class="cns-home-unpin" data-unpin="' + escapeAttr(row.entry.d + "|" + row.entry.n) +
+            '" aria-label="' + escapeAttr("Unpin " + row.title) + '" title="Unpin"><i class="bi bi-x-lg" aria-hidden="true"></i></button>'
+          : "";
+        return '<li><div class="cns-home-list-main"><a href="' + escapeAttr(href) + '">' + escapeHtml(row.title) + "</a>" +
+          '<span class="cns-home-list-meta">' + escapeHtml(meta) + "</span></div>" + remove + "</li>";
+      }).join("");
     });
-    return Object.keys(counts)
-      .map(function (key) { return { key: key, label: (labels && labels[key]) || key, count: counts[key] }; })
-      .sort(function (a, b) { return b.count - a.count || a.label.localeCompare(b.label); });
   }
 
-  /* --- the dashboard strip --------------------------------------------- */
+  function drawRecent() {
+    drawList("recent-list", Consilium.records.recent().slice(0, 6), { empty: "Records you open will appear here." });
+  }
+  function drawPins() {
+    drawList("pinned-list", Consilium.records.pins(), { empty: "Nothing pinned yet.", removable: true });
+  }
+  drawRecent();
+  drawPins();
 
-  var typeLabels = {};
-
-  /* Present only for a viewer who may read forums (see the template). */
-  var FORUMS = !!document.getElementById("metric-strip");
-
-  var forumsPromise = !FORUMS ? Promise.resolve([]) : Consilium.api.list("Governance Forum", {
-    fields: ["name", "forum_name", "forum_type", "primary_risk_category", "compliance_status",
-             "quorum_rule_type", "requires_review", "is_active", "next_review_on", "modified"],
-    order_by: "modified desc",
-    limit_page_length: 500
+  document.getElementById("pinned-list").addEventListener("click", function (event) {
+    var button = event.target.closest("[data-unpin]");
+    if (!button) return;
+    var parts = button.getAttribute("data-unpin").split("|");
+    Consilium.records.unpin(parts[0], parts.slice(1).join("|"));
+    Consilium.announce("Unpinned.");
+    drawPins();
+    var heading = document.getElementById("pinned-heading");
+    if (heading) { heading.setAttribute("tabindex", "-1"); heading.focus(); }
   });
 
-  var typesPromise = Consilium.api.list("Governance Forum Type", {
-    fields: ["name", "forum_type_name", "definition", "sort_order"],
-    filters: [["is_active", "=", 1]],
-    order_by: "sort_order asc",
-    limit_page_length: 100
-  });
+  /* --- announcements, from the Guide Article records ------------------- */
 
-  typesPromise.then(function (types) {
-    types.forEach(function (t) { typeLabels[t.name] = t.forum_type_name || t.name; });
-  });
+  /* The body is authored HTML held in a record. It is rendered, but only after
+     everything that could execute has been taken out of it. */
+  var ALLOWED = {
+    P: 1, BR: 1, STRONG: 1, B: 1, EM: 1, I: 1, U: 1, UL: 1, OL: 1, LI: 1,
+    H3: 1, H4: 1, H5: 1, BLOCKQUOTE: 1, CODE: 1, PRE: 1, SPAN: 1, DIV: 1,
+    TABLE: 1, THEAD: 1, TBODY: 1, TR: 1, TH: 1, TD: 1, A: 1, HR: 1, SMALL: 1
+  };
 
-  // Risk categories are keyed by their code, so a record holds "CYBER" and the
-  // readable name lives on the taxonomy. Nobody reads a dashboard in codes.
-  var riskLabels = {};
-  var risksPromise = Consilium.api.list("Risk Category", {
-    fields: ["name", "risk_category_name"],
-    limit_page_length: 500
-  }).then(function (rows) {
-    rows.forEach(function (r) { riskLabels[r.name] = r.risk_category_name || r.name; });
-    return rows;
-  }).catch(function () { return []; });
+  function sanitize(html) {
+    var doc = document.implementation.createHTMLDocument("guide");
+    doc.body.innerHTML = String(html || "");
+    (function walk(node) {
+      var child = node.firstChild;
+      while (child) {
+        var next = child.nextSibling;
+        if (child.nodeType === 1) {
+          if (!ALLOWED[child.tagName]) {
+            node.removeChild(child);
+          } else {
+            Array.prototype.slice.call(child.attributes).forEach(function (attr) {
+              var name = attr.name.toLowerCase();
+              var keep = name === "href" && child.tagName === "A" &&
+                /^(https?:|mailto:|\/|#)/i.test(attr.value.trim());
+              if (!keep) child.removeAttribute(attr.name);
+            });
+            if (child.tagName === "A") child.setAttribute("rel", "noopener noreferrer");
+            walk(child);
+          }
+        } else if (child.nodeType !== 3) {
+          node.removeChild(child);
+        }
+        child = next;
+      }
+    })(doc.body);
+    return doc.body.innerHTML;
+  }
 
-  Promise.all([forumsPromise, typesPromise, risksPromise])
-    .then(function (results) {
-      var rows = results[0];
-      var types = results[1];
-      var active = rows.filter(function (r) { return r.is_active; });
-      var today = todayISO();
+  /* The id the Help assistant links an article to (assistant/corpus.py, guide_anchor). */
+  function anchor(name) {
+    return "guide-" + String(name || "").toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+  }
 
-      setMetric("active", active.length);
-      setMetric("review", active.filter(function (r) { return r.requires_review; }).length);
-      setMetric("overdue", active.filter(function (r) {
-        return r.next_review_on && r.next_review_on < today;
-      }).length);
-
-      renderBars("bars-type", tally(active, "forum_type", typeLabels));
-      renderBars("bars-risk", tally(active, "primary_risk_category", riskLabels).slice(0, 8));
-      renderBars("bars-status", tally(rows, "compliance_status"), STATUS_TONES);
-      renderBars("bars-quorum", tally(active, "quorum_rule_type"));
-
-      /* Type reference table, with a live count against each type. */
-      var perType = {};
-      active.forEach(function (r) { perType[r.forum_type] = (perType[r.forum_type] || 0) + 1; });
-      var body = document.getElementById("type-rows");
-      body.innerHTML = types.map(function (t) {
-        return "<tr><th scope=\"row\">" + escapeHtml(t.forum_type_name || t.name) + "</th>" +
-          "<td>" + escapeHtml(t.definition || "No definition recorded.") + "</td>" +
-          '<td class="cns-num">' + (FORUMS ? (perType[t.name] || 0) : "—") + "</td></tr>";
-      }).join("") ||
-        '<tr><td colspan="3" class="cns-text-muted">No forum types are configured.</td></tr>';
-
-      /* Recent changes. */
-      var recent = rows.slice(0, 6);
-      var list = document.getElementById("recent-changes");
-      if (!list) return;
-      list.innerHTML = recent.map(function (r) {
-        var tone = STATUS_TONES[r.compliance_status] || "neutral";
-        return "<li><a href=\"/forum?name=" + escapeAttr(encodeURIComponent(r.name)) + "\">" +
-          escapeHtml(r.forum_name || r.name) + "</a> " +
-          '<span class="cns-pill cns-status-' + escapeAttr(tone) + '">' +
-          escapeHtml(r.compliance_status || "") + "</span>" +
-          '<span class="cns-timeline-meta">Updated ' +
-          escapeHtml(Consilium.util.formatDate(r.modified, true)) + "</span></li>";
-      }).join("") || '<li class="cns-text-muted">No forums are recorded yet.</li>';
+  var notes = document.getElementById("guide-more");
+  Consilium.api
+    .list("Guide Article", {
+      fields: ["name", "title", "category", "body", "display_order", "modified"],
+      filters: [["is_published", "=", 1]],
+      order_by: "display_order asc",
+      limit_page_length: 50
     })
-    .catch(function (error) {
-      var strip = document.getElementById("metric-strip");
-      if (!strip) return;
-      strip.innerHTML = '<div class="cns-alert cns-status-danger" role="alert">' +
-        '<i class="bi bi-x-octagon" aria-hidden="true"></i><div>' +
-        escapeHtml(error.message || "The inventory could not be read.") + "</div></div>";
-      ["bars-type", "bars-risk", "bars-status", "bars-quorum"].forEach(function (id) {
-        var node = document.getElementById(id);
-        if (node) node.innerHTML = '<p class="cns-text-muted cns-text-sm">Unavailable.</p>';
-      });
-      document.getElementById("recent-changes").innerHTML =
-        '<li class="cns-text-muted">Unavailable.</li>';
-      document.getElementById("type-rows").innerHTML =
-        '<tr><td colspan="3" class="cns-text-muted">Unavailable.</td></tr>';
+    .then(function (articles) {
+      articles = articles.filter(function (a) { return a.body; });
+      if (!articles.length) {
+        notes.innerHTML = '<p class="cns-home-empty">No notices at the moment.</p>';
+        return;
+      }
+      notes.innerHTML = articles.map(function (article) {
+        var id = anchor(article.name);
+        return '<details class="cns-home-note" id="' + escapeAttr(id) + '">' +
+          "<summary><span class=\"cns-home-note-title\">" + escapeHtml(article.title || article.category || "") + "</span>" +
+          '<span class="cns-home-note-meta">' + escapeHtml((article.category ? article.category + " · " : "") +
+            Consilium.util.formatDate(article.modified, false)) + "</span></summary>" +
+          '<div class="cns-prose">' + sanitize(article.body) + "</div></details>";
+      }).join("");
+      /* The notices got their anchors after the page loaded, so a link to one
+         (from the assistant) is followed now: opened, and brought into view. */
+      var wanted = (window.location.hash || "").replace("#", "");
+      var landing = wanted && document.getElementById(wanted);
+      if (landing && wanted.indexOf("guide-") === 0) {
+        landing.open = true;
+        landing.scrollIntoView();
+      }
+    })
+    .catch(function () {
+      notes.innerHTML = '<p class="cns-home-empty">Notices are not available to you.</p>';
     });
 
-  if (FORUMS) Consilium.api
-    .count("Committee Formation Request", { filters: [["is_open", "=", 1]] })
-    .then(function (n) { setMetric("requests", n); })
-    .catch(function () { setMetric("requests", "—"); });
-
-  /* --- the forum map (O-2) -------------------------------------------- */
+  /* --- the forum map (O-2) ---------------------------------------------- */
   /* A tidy tree: leaves take consecutive columns in hierarchy order, and a
      parent sits centred over its children. Links that only repeat a parent
      relationship are left to the solid line; the rest are drawn dashed with an
      arrow, from the forum holding the link to the one it points at. */
 
+  var map = document.getElementById("forum-map");
+  if (!map) return;
+  var typeLabels = {};
+
   function drawForumMap(data) {
-    var target = document.getElementById("forum-map");
     var nodes = data.nodes || [];
     if (!nodes.length) {
-      target.innerHTML = '<p class="cns-text-muted cns-text-sm">No forums are recorded yet.</p>';
+      map.innerHTML = '<p class="cns-text-muted cns-text-sm">No forums are recorded yet.</p>';
       document.getElementById("forum-map-list-wrap").hidden = true;
       return;
     }
@@ -573,7 +559,7 @@
       var label = n.forum_name || n.name;
       var text = label.length > 26 ? label.slice(0, 25) + "…" : label;
       var tone = STATUS_TONES[n.compliance_status] || "neutral";
-      var kind = (typeLabels[n.forum_type] || n.forum_type || "") ;
+      var kind = (typeLabels[n.forum_type] || n.forum_type || "");
       kind = kind.length > 30 ? kind.slice(0, 29) + "…" : kind;
       parts.push('<a href="/forum?name=' + escapeAttr(encodeURIComponent(n.name)) + '" aria-label="' +
         escapeAttr(label + ", " + (typeLabels[n.forum_type] || n.forum_type || "forum") + ", " + (n.compliance_status || "")) + '">' +
@@ -584,8 +570,8 @@
         '<text class="cns-node-kind" x="' + (x(n) + 10) + '" y="' + (y(n) + 38) + '">' + escapeHtml(kind) + "</text></a>");
     });
 
-    target.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" style="min-width:' + Math.min(W, Math.max(320, W * 0.62)) +
-      'px" aria-hidden="false" focusable="false">' + parts.join("") + "</svg>";
+    map.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" style="width:' + W + "px;min-width:" + W +
+      'px" focusable="false">' + parts.join("") + "</svg>";
 
     /* The list: the hierarchy as nested lists, then every other link. */
     function item(n) {
@@ -606,169 +592,35 @@
     document.getElementById("forum-map-list").innerHTML = list;
   }
 
-  if (FORUMS) Promise.all([Consilium.api.call("consilium.governance.inventory.forum_map", {}), typesPromise.catch(function () { return []; })])
+  var typesPromise = Consilium.api.list("Governance Forum Type", {
+    fields: ["name", "forum_type_name"],
+    limit_page_length: 100
+  }).then(function (types) {
+    types.forEach(function (t) { typeLabels[t.name] = t.forum_type_name || t.name; });
+  }).catch(function () {});
+
+  Promise.all([Consilium.api.call("consilium.governance.inventory.forum_map", {}), typesPromise])
     .then(function (results) { drawForumMap(results[0]); })
     .catch(function (error) {
-      document.getElementById("forum-map").innerHTML =
-        '<p class="cns-text-muted cns-text-sm">The map could not be drawn. ' + escapeHtml(error.message || "") + "</p>";
+      map.innerHTML = '<p class="cns-text-muted cns-text-sm">The map could not be drawn. ' + escapeHtml(error.message || "") + "</p>";
       document.getElementById("forum-map-list-wrap").hidden = true;
     });
 
-  /* --- templates -------------------------------------------------------- */
-
-  function renderTemplates(id, promise, format) {
-    var node = document.getElementById(id);
-    promise
-      .then(function (rows) {
-        node.innerHTML = rows.length
-          ? rows.map(format).join("")
-          : '<li class="cns-text-muted">None are configured on this site yet.</li>';
-      })
-      .catch(function () {
-        node.innerHTML = '<li class="cns-text-muted">You do not have access to this list.</li>';
-      });
+  /* Open on the top of the hierarchy, not its left edge: the root is centred
+     over its children, so a wide tree would otherwise open on empty space. */
+  function centre() {
+    var root = map.querySelector("svg");
+    if (root && map.scrollWidth > map.clientWidth) map.scrollLeft = (map.scrollWidth - map.clientWidth) / 2;
   }
+  new MutationObserver(function (changes, observer) {
+    if (map.querySelector("svg")) { centre(); observer.disconnect(); }
+  }).observe(map, { childList: true });
 
-  /* Templates name their type by code ("FRAMEWORK"); show the type's name. */
-  var refs = Consilium.reference.load(["Governing Document Type", "Escalation Type"]).catch(function () {});
-
-  renderTemplates(
-    "doc-templates",
-    refs.then(function () { return Consilium.api.list("Document Template", {
-      fields: ["name", "template_title", "document_type", "action"],
-      filters: [["is_active", "=", 1]],
-      order_by: "template_title asc",
-      limit_page_length: 20
-    }); }),
-    function (row) {
-      return "<li>" + escapeHtml(row.template_title || row.name) +
-        ' <span class="cns-badge cns-status-neutral">' + escapeHtml(row.action || "") + "</span>" +
-        '<br><span class="cns-text-muted cns-text-xs">For ' +
-        escapeHtml(row.document_type ? Consilium.reference.label("Governing Document Type", row.document_type)
-          : "any document type") + "</span></li>";
-    }
-  );
-
-  renderTemplates(
-    "esc-templates",
-    refs.then(function () { return Consilium.api.list("Escalation Template", {
-      fields: ["name", "title", "escalation_type", "template_scope"],
-      filters: [["is_active", "=", 1]],
-      order_by: "title asc",
-      limit_page_length: 20
-    }); }),
-    function (row) {
-      return "<li>" + escapeHtml(row.title || row.name) +
-        ' <span class="cns-badge cns-status-neutral">' + escapeHtml(row.template_scope || "") + "</span>" +
-        '<br><span class="cns-text-muted cns-text-xs">Escalation type ' +
-        escapeHtml(row.escalation_type ? Consilium.reference.label("Escalation Type", row.escalation_type) : "any") +
-        "</span></li>";
-    }
-  );
-
-  /* --- guidance, from the Guide Article records ------------------------- */
-
-  /* The body is authored HTML held in a record. It is rendered, but only after
-     everything that could execute has been taken out of it. */
-  var ALLOWED = {
-    P: 1, BR: 1, STRONG: 1, B: 1, EM: 1, I: 1, U: 1, UL: 1, OL: 1, LI: 1,
-    H3: 1, H4: 1, H5: 1, BLOCKQUOTE: 1, CODE: 1, PRE: 1, SPAN: 1, DIV: 1,
-    TABLE: 1, THEAD: 1, TBODY: 1, TR: 1, TH: 1, TD: 1, A: 1, HR: 1, SMALL: 1
-  };
-
-  function sanitize(html) {
-    var doc = document.implementation.createHTMLDocument("guide");
-    doc.body.innerHTML = String(html || "");
-    (function walk(node) {
-      var child = node.firstChild;
-      while (child) {
-        var next = child.nextSibling;
-        if (child.nodeType === 1) {
-          if (!ALLOWED[child.tagName]) {
-            node.removeChild(child);
-          } else {
-            Array.prototype.slice.call(child.attributes).forEach(function (attr) {
-              var name = attr.name.toLowerCase();
-              var keep = name === "href" && child.tagName === "A" &&
-                /^(https?:|mailto:|\/|#)/i.test(attr.value.trim());
-              if (!keep) child.removeAttribute(attr.name);
-            });
-            if (child.tagName === "A") {
-              child.setAttribute("rel", "noopener noreferrer");
-            }
-            walk(child);
-          }
-        } else if (child.nodeType !== 3) {
-          node.removeChild(child);
-        }
-        child = next;
-      }
-    })(doc.body);
-    return doc.body.innerHTML;
+  /* A link to the map (Governance → Forum map) lands on this card. */
+  if (window.location.hash === "#forum-map") {
+    map.scrollIntoView();
   }
-
-  Consilium.api
-    .list("Guide Article", {
-      fields: ["name", "title", "category", "body", "display_order", "modified"],
-      filters: [["is_published", "=", 1]],
-      order_by: "display_order asc",
-      limit_page_length: 50
-    })
-    .then(function (articles) {
-      /* An article fills the card for its category when the page has one and
-         no earlier article has taken it; otherwise it gets a card of its own
-         below. Matching by category alone used to drop the rest: an article in
-         a category with no card (Policy Lifecycle) never appeared, and a
-         second article in a category silently replaced the first. Each
-         article is reachable at #guide-<name>, the anchor the assistant links
-         to (assistant/corpus.py, guide_anchor). */
-      var filled = {};
-      var more = document.getElementById("guide-more");
-      function anchor(name) {
-        return "guide-" + String(name || "").toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
-      }
-      function edited(article) {
-        return "Maintained in the guide, last edited " + Consilium.util.formatDate(article.modified, false) + ".";
-      }
-      articles.forEach(function (article) {
-        if (!article.body) return;
-        var target = document.querySelector('[data-guide-category="' + article.category + '"]');
-        if (target && !filled[article.category]) {
-          filled[article.category] = true;
-          target.innerHTML = sanitize(article.body);
-          var card = target.closest(".cns-card");
-          if (card) card.id = anchor(article.name);
-          var heading = document.querySelector('[data-guide-title="' + article.category + '"]');
-          if (heading && article.title) heading.textContent = article.title;
-          var note = document.querySelector('[data-guide-note="' + article.category + '"]');
-          if (note) {
-            note.textContent = edited(article);
-            note.hidden = false;
-          }
-          return;
-        }
-        if (!more) return;
-        var id = anchor(article.name);
-        var section = document.createElement("section");
-        section.className = "cns-card";
-        section.id = id;
-        section.setAttribute("aria-labelledby", id + "-title");
-        section.innerHTML =
-          '<div class="cns-card-header"><h3 class="cns-card-title" id="' + escapeAttr(id) + '-title">' +
-          escapeHtml(article.title || article.category || "") + "</h3></div>" +
-          '<div class="cns-card-body"><div class="cns-prose">' + sanitize(article.body) + "</div>" +
-          '<p class="cns-text-muted cns-text-xs">' + escapeHtml(edited(article)) + "</p></div>";
-        more.appendChild(section);
-      });
-      /* The cards were given their anchors after the page loaded, so a link to
-         one (from the assistant) has to be followed now. */
-      var wanted = (window.location.hash || "").replace("#", "");
-      var landing = wanted && document.getElementById(wanted);
-      if (landing && wanted.indexOf("guide-") === 0) landing.scrollIntoView();
-    })
-    .catch(function () {
-      /* The built-in copy is already on the page; nothing to do. */
-    });
 })();
 </script>
+{%- endif %}
 {% endblock %}

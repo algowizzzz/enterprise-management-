@@ -1,0 +1,120 @@
+{#-
+  ===== Forum time limits: the reporting page's forum service-level section (G-12) =====
+  Included from reports.html, after the forums section. Everything is counted
+  on the server over the forums and formation requests the viewer may read
+  (consilium.governance.service_levels.forum_service_levels), so a person
+  restricted to some forums sees totals over those only. Targets are the
+  administrator's SLA Definitions; with none configured, the dated
+  obligations (review and attestation) still show. Brings its own script.
+-#}
+{%- if cns_can_read("Governance Forum") %}
+<section id="forum-service" aria-labelledby="forum-service-heading" style="margin-top: var(--cns-space-6);">
+  <h2 id="forum-service-heading" class="cns-eyebrow">Forum time limits</h2>
+  <div class="cns-form-grid">
+    <section class="cns-card" aria-labelledby="forum-service-reviews-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="forum-service-reviews-heading">Reviews and attestation</h3>
+          <p class="cns-card-subtitle">Active forums against their periodic review date and the yearly
+            attestation, and forums waiting on a compliance review.</p>
+        </div>
+      </div>
+      <div class="cns-card-body"><div id="fsl-reviews"><p class="cns-text-muted cns-text-sm">Counting&hellip;</p></div></div>
+    </section>
+    <section class="cns-card" aria-labelledby="forum-service-formation-heading">
+      <div class="cns-card-header">
+        <div>
+          <h3 class="cns-card-title" id="forum-service-formation-heading">Formation requests</h3>
+          <p class="cns-card-subtitle">How long requests to form a forum are open, and how long a decision
+            took over the last year.</p>
+        </div>
+      </div>
+      <div class="cns-card-body"><div id="fsl-formation"><p class="cns-text-muted cns-text-sm">Counting&hellip;</p></div></div>
+    </section>
+  </div>
+  <section class="cns-card" aria-labelledby="forum-service-late-heading">
+    <div class="cns-card-header">
+      <div>
+        <h3 class="cns-card-title" id="forum-service-late-heading">Forums past a time limit</h3>
+        <p class="cns-card-subtitle">Each forum late on a review, an attestation or a compliance decision,
+          longest first. Open a forum's Time limits tab for its full history.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="fsl-late"><p class="cns-text-muted cns-text-sm">Counting&hellip;</p></div></div>
+  </section>
+</section>
+<script>
+(function () {
+  "use strict";
+
+  function start() {
+    if (!window.Consilium || !Consilium.api || !document.getElementById("fsl-reviews")) return;
+    var esc = Consilium.util.escapeHtml;
+
+    function facts(rows) {
+      return '<dl class="cns-dl">' + rows.map(function (r) {
+        var value = r[1] === null || r[1] === undefined ? '<span class="cns-text-muted">&mdash;</span>' : r[1];
+        return "<dt>" + esc(r[0]) + "</dt><dd>" + value + "</dd>";
+      }).join("") + "</dl>";
+    }
+    function link(href, text) { return '<a href="' + Consilium.util.escapeAttr(href) + '">' + esc(text) + "</a>"; }
+    function n(value) { return esc(value === null || value === undefined ? "" : String(value)); }
+    function hours(h) {
+      if (h === null || h === undefined) return null;
+      return h >= 24 && h % 24 === 0 ? (h / 24) + " days" : h + " hours";
+    }
+
+    function draw(data) {
+      var over = data.awaiting_review.filter(function (w) { return w.over_target; }).length;
+      document.getElementById("fsl-reviews").innerHTML = facts([
+        ["Active forums", n(data.active)],
+        ["Periodic review overdue", link("/forums?standing=overdue", String(data.review.overdue))],
+        ["Review due within 90 days", n(data.review.due_soon)],
+        ["No review date set", n(data.review.not_set)],
+        ["Attested more than a year ago", n(data.attestation.overdue)],
+        ["Never attested", n(data.attestation.never)],
+        ["Waiting on a compliance review", link("/forums?standing=review", String(data.awaiting_review.length)) +
+          (over ? ' <span class="cns-pill cns-status-danger">' + over + " past target</span>" : "")],
+        ["Clocks on forums", n(data.forum_clocks.running) + " running, " + n(data.forum_clocks.breached_ever) + " ever breached"]
+      ]);
+      var f = data.formation;
+      document.getElementById("fsl-formation").innerHTML = f ? facts([
+        ["Open requests", link("/formation-requests", String(f.open))],
+        ["Oldest open request", f.oldest_open_days === null ? null : n(f.oldest_open_days) + " days"],
+        ["Decided in the last year", n(f.decided_last_year)],
+        ["Median days to a decision", f.median_days_to_decision === null ? null : n(f.median_days_to_decision)],
+        ["Time-limit clocks", n(f.clocks.running) + " running, " + n(f.clocks.breached_running) +
+          " of them breached; " + n(f.clocks.breached_ever) + " ever breached"]
+      ]) + (data.definitions.length ? '<p class="cns-text-sm cns-text-muted" style="margin-top: var(--cns-space-3);">Targets: ' +
+          data.definitions.map(function (d) { return esc(d.title) + " (" + esc(hours(d.target_hours)) + ")"; }).join("; ") + "</p>"
+        : '<p class="cns-text-sm cns-text-muted" style="margin-top: var(--cns-space-3);">No time targets are configured for forums or formation yet; an administrator sets them as service-level definitions.</p>')
+        : '<p class="cns-text-muted cns-text-sm">Formation requests are not open to you.</p>';
+      var late = document.getElementById("fsl-late");
+      if (!data.late.length) {
+        late.innerHTML = '<p class="cns-text-sm">No forum you can see is past a time limit.</p>';
+        return;
+      }
+      late.innerHTML = '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><caption class="cns-visually-hidden">Forums past a time limit</caption>' +
+        "<thead><tr><th scope=\"col\">Forum</th><th scope=\"col\">What is late</th><th scope=\"col\" style=\"text-align:end\">Days late</th></tr></thead><tbody>" +
+        data.late.map(function (r) {
+          return "<tr><td>" + link("/forum?name=" + encodeURIComponent(r.forum) + "#timing", r.forum_name || r.forum) + "</td><td>" +
+            esc(r.what) + '</td><td style="text-align:end">' + n(r.days_late) + "</td></tr>";
+        }).join("") + "</tbody></table></div>" +
+        (data.late_total > data.late.length ? '<p class="cns-text-sm cns-text-muted">Showing ' + data.late.length + " of " + data.late_total + ".</p>" : "");
+    }
+
+    Consilium.api.call("consilium.governance.service_levels.forum_service_levels", {}, { trackLoading: false })
+      .then(draw)
+      .catch(function (error) {
+        ["fsl-reviews", "fsl-formation", "fsl-late"].forEach(function (id) {
+          document.getElementById(id).innerHTML = '<p class="cns-text-muted cns-text-sm">' +
+            esc((error && error.message) || "Not available to you.") + "</p>";
+        });
+      });
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>
+{%- endif %}

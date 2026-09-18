@@ -1,0 +1,79 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-18 19:57:28.514240",
+ "description": "One step of a risk acceptance's approval chain. Steps with the same sequence are peers; a sequential step waits for every lower sequence, a parallel step waits for nothing.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "step_sequence",
+  "approval_step",
+  "mode",
+  "required_role",
+  "assignee_source",
+  "assignee"
+ ],
+ "fields": [
+  {
+   "fieldname": "step_sequence",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sequence",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approval_step",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Step",
+   "reqd": 1
+  },
+  {
+   "default": "Sequential",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode",
+   "options": "Sequential\nParallel"
+  },
+  {
+   "description": "The role the approver holds. Leave empty for the risk-acceptance approver role.",
+   "fieldname": "required_role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Required Role",
+   "options": "Role"
+  },
+  {
+   "default": "Chosen At Request",
+   "description": "Chosen At Request: whoever asks for approval picks a holder of the role. Named User: always the person named below.",
+   "fieldname": "assignee_source",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Assignee Source",
+   "options": "Chosen At Request\nNamed User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assignee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Named Assignee",
+   "options": "User"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-18 19:57:28.514245",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Risk Acceptance Approval Step",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

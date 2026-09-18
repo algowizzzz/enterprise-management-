@@ -111,9 +111,11 @@ class TestGuideArticlesAreFoundWhereTheAssistantPoints(CoreTestCase):
         self.assertIn("Policy Lifecycle", chunk["extra"])
 
     def test_the_home_page_renders_articles_whose_category_has_no_card(self):
-        """The page has cards for five categories; the sixth never showed."""
+        """Every published article is listed, whatever its category, at the anchor
+        the assistant links to. (The page once had cards for five categories only,
+        and a sixth never showed.)"""
         page = (Path(frappe.get_app_path("consilium")) / "www" / "index.html").read_text()
         self.assertIn('id="guide-more"', page)
-        self.assertIn("filled[article.category]", page)
-        self.assertNotIn('data-guide-category="Policy Lifecycle"', page,
-                         "not a sixth hard-coded card: any category without one is rendered")
+        self.assertIn("anchor(article.name)", page)
+        self.assertNotIn("data-guide-category", page,
+                         "no hard-coded category cards: every published article is listed")

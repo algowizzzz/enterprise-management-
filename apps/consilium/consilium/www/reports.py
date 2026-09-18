@@ -40,6 +40,13 @@ def get_context(context):
 	]
 	context.user_display = frappe.session.user
 	context.document_field_labels = _field_labels("Governing Document")
+	# G-10: whether each year had its first-quarter inventory attestation. Campaign
+	# dates only, nothing about any forum, so it is read on the server.
+	context.inventory_q1 = None
+	if frappe.session.user != "Guest" and frappe.has_permission("Governance Forum", "read"):
+		from consilium.governance import reviews
+
+		context.inventory_q1 = reviews.inventory_q1_standing()
 	context.desk_access = frappe.session.user != "Guest" and (
 		frappe.get_cached_value("User", frappe.session.user, "user_type") == "System User"
 	)

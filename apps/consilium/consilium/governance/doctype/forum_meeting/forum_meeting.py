@@ -10,6 +10,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import getdate
 
+from consilium.governance import meetings
 from consilium.governance import membership as membership_api
 from consilium.governance import setup
 
@@ -19,6 +20,11 @@ class ForumMeeting(Document):
         setup.apply_governance_flags(self)
         self._snapshot_attendance()
         self._evaluate_quorum()
+
+    def on_update(self):
+        # G-14: the forum's members are told when a meeting is scheduled, moved
+        # or cancelled. Read from the meeting's flags; see meetings.announce.
+        meetings.announce(self)
 
     def _snapshot_attendance(self):
         for row in self.get("attendance") or []:

@@ -121,10 +121,113 @@ def select_route(doc) -> dict | None:
     return candidates[0]
 
 
+# --------------------------------------------------------------------------
+# Queues (P-8): "routing of approvals and notifications to user groups" and
+# "role-based assignment of approval steps".
+#
+# A step whose assignee source is ``Role Queue`` goes to everyone holding its
+# required role; one whose source is ``User Group`` to everyone in its group.
+# It is the formation module's role queue and the escalation module's group
+# queue, read the same way: the queue sees the step, and whoever of them
+# decides it takes it. Core's decision row must still name one accountable
+# person, so it names the head of the queue; a member deciding first re-points
+# the row to themselves (``_claim_queued_step``) and Core then records the
+# decision as theirs — Core stays the one place that decides who may act, and
+# its sequential order applies to a queue step exactly as to any other.
+#
+# Which queue a raised step belongs to is read back from the route that raised
+# it (the step's name within the route selected for the document), not stored
+# on the decision, as formation reads its role-based steps from its route.
+# --------------------------------------------------------------------------
+
+#: The assignee sources that make a step a queue. Configuration option labels.
+ROLE_QUEUE = "Role Queue"
+USER_GROUP = "User Group"
+QUEUE_SOURCES = (ROLE_QUEUE, USER_GROUP)
+
+
+def _people(users) -> list[str]:
+    """Enabled people among ``users``, most suitable first.
+
+    As formation's role queue orders them: people who have ever signed in
+    before those who never have (a leftover or not-yet-started account is not
+    staffing anything), then by name so the head of the queue is the same on
+    every run. The framework's built-in accounts are never in a queue. Unlike
+    formation's queue, an account without desk access is kept: a step is
+    decided on the portal's document page, which such an account can open —
+    the same reading the escalation module's group queue gives its members.
+    """
+    users = sorted({u for u in users if u and u not in frappe.STANDARD_USERS})
+    if not users:
+        return []
+    rows = frappe.get_all(
+        "User", filters={"name": ["in", users], "enabled": 1},
+        fields=["name", "last_login"],
+    )
+    rows.sort(key=lambda row: (not row.last_login, row.name))
+    return [row.name for row in rows]
+
+
+def queue_members(queue: dict | None) -> list[str]:
+    """Everyone in a step's queue: the role's holders or the group's members."""
+    if not queue:
+        return []
+    if queue.get("role"):
+        return _people(frappe.get_all("Has Role", filters={"role": queue["role"], "parenttype": "User"},
+                                      pluck="parent"))
+    if queue.get("group"):
+        return _people(frappe.get_all("User Group Member",
+                                      filters={"parent": queue["group"], "parenttype": "User Group"},
+                                      pluck="user"))
+    return []
+
+
+def in_queue(queue: dict | None, user: str) -> bool:
+    return bool(queue) and user in queue_members(queue)
+
+
+def _step_queue(step) -> dict | None:
+    """The queue a configured route step sends to, or None for a named person."""
+    source = step.get("assignee_source")
+    if source == ROLE_QUEUE and step.get("required_role"):
+        return {"role": step["required_role"], "group": None, "label": _("role {0}").format(step["required_role"])}
+    if source == USER_GROUP and step.get("user_group"):
+        return {"role": None, "group": step["user_group"], "label": _("group {0}").format(step["user_group"])}
+    return None
+
+
+def step_queue(doc, approval_step: str | None) -> dict | None:
+    """The queue a raised step on ``doc`` belongs to, read from its route.
+
+    Memoised on the document object for the length of one request, because the
+    inbox and the approval panel ask it once per open step.
+    """
+    if not approval_step:
+        return None
+    cache = doc.flags.setdefault("consilium_step_queues", {})
+    if approval_step not in cache:
+        queue = None
+        route = select_route(doc)
+        if route:
+            row = frappe.db.get_value(
+                "Approval Route Step",
+                {"parent": route["name"], "parenttype": "Approval Route", "approval_step": approval_step},
+                ["assignee_source", "required_role", "user_group"],
+                as_dict=True,
+            )
+            queue = _step_queue(row) if row else None
+        cache[approval_step] = queue
+    return cache[approval_step]
+
+
 def _resolve_assignee(step, doc) -> str | None:
     source = step.get("assignee_source")
     if source == "Named User":
         return step.get("assignee")
+    queue = _step_queue(step)
+    if queue:
+        members = queue_members(queue)
+        return members[0] if members else None
     if source == "Parent Document Owner":
         entries = lineage.parent_owner_approvals(doc)
         return entries[0]["owner"] if entries else None
@@ -147,7 +250,7 @@ def resolved_steps(doc) -> list[dict]:
             "Approval Route Step",
             filters={"parent": route["name"], "parenttype": "Approval Route"},
             fields=["step_sequence", "approval_step", "required_role", "assignee_source",
-                    "assignee", "mode", "is_mandatory", "condition"],
+                    "assignee", "user_group", "mode", "is_mandatory", "condition"],
             order_by="step_sequence asc",
         )
         for row in rows:
@@ -166,6 +269,8 @@ def resolved_steps(doc) -> list[dict]:
                     "is_mandatory": int(row["is_mandatory"] or 0),
                     "source": f"route:{route['name']}",
                     "assignee_fallback": fallback,
+                    # P-8: a queue step is decided by any member of the queue.
+                    "queue": (_step_queue(row) or {}).get("label"),
                 }
             )
 
@@ -326,11 +431,64 @@ def _current_version_name(doc) -> str | None:
 
 
 def _may_decide(row, user: str, doc) -> bool:
+    """The step's assignee, a live delegate of theirs (Core's answer), or — for
+    a queue step — any member of the queue (P-8)."""
     from consilium.consilium_core import delegation
 
-    return delegation.resolve_actor(
+    if delegation.resolve_actor(
         row["assigned_to"], delegation.ACTION_APPROVE, acting_user=user, doctype=doc.doctype, name=doc.name
-    )["permitted"]
+    )["permitted"]:
+        return True
+    return in_queue(step_queue(doc, row.get("approval_step")), user)
+
+
+def _claim_queued_step(doc, approval_decision: str, user: str) -> None:
+    """A queue member deciding a queue step takes it first (see the note on queues).
+
+    Re-pointed through the document, so the change is in the decision's tracked
+    history. Nothing happens when the caller is the assignee or acts under a
+    delegation from them; anyone outside the queue is left for Core to refuse.
+    """
+    from consilium.consilium_core import delegation
+
+    row = frappe.get_doc("Approval Decision", approval_decision)
+    if row.assigned_to == user:
+        return
+    # A step that is not yet its turn is left as it is: Core refuses it, and
+    # the refusal should name the queue's head, not someone who only tried.
+    if not approvals.is_turn(row):
+        return
+    if delegation.resolve_actor(row.assigned_to, delegation.ACTION_APPROVE, acting_user=user,
+                                doctype=doc.doctype, name=doc.name)["permitted"]:
+        return
+    if in_queue(step_queue(doc, row.approval_step), user):
+        row.assigned_to = user
+        row.save(ignore_permissions=True)
+
+
+def queued_steps_for(user: str) -> list[dict]:
+    """Open queue steps on governing documents waiting in a queue ``user`` is in,
+    and assigned to somebody else. The inbox lists them beside the steps
+    assigned to the user, so the whole queue sees the work, not only its head."""
+    out = []
+    documents: dict[str, object] = {}
+    for row in frappe.get_all(
+        "Approval Decision",
+        filters={"subject_doctype": DOCTYPE, "is_open": 1, "docstatus": ["<", 2], "assigned_to": ["!=", user]},
+        fields=["name", "subject_doctype", "subject_name", "approval_step", "assigned_to", "based_on_version",
+                "creation", "owner"],
+        order_by="creation asc",
+    ):
+        doc = documents.get(row.subject_name)
+        if doc is None:
+            if not frappe.db.exists(DOCTYPE, row.subject_name):
+                continue
+            doc = documents[row.subject_name] = frappe.get_doc(DOCTYPE, row.subject_name)
+        if (row.based_on_version or None) != (_current_version_name(doc) or None):
+            continue
+        if in_queue(step_queue(doc, row.approval_step), user):
+            out.append(row)
+    return out
 
 
 def is_participant(doc, user: str | None = None) -> bool:
@@ -339,7 +497,7 @@ def is_participant(doc, user: str | None = None) -> bool:
     for row in frappe.get_all(
         "Approval Decision",
         filters={"subject_doctype": doc.doctype, "subject_name": doc.name},
-        fields=["name", "assigned_to"],
+        fields=["name", "assigned_to", "approval_step"],
     ):
         if _may_decide(row, user, doc):
             return True
@@ -351,7 +509,7 @@ def decidable_steps(doc, user: str | None = None) -> list[str]:
     user = user or frappe.session.user
     return [
         row["name"]
-        for row in _cycle_decisions(doc, ["name", "assigned_to", "is_open", "step_sequence"])
+        for row in _cycle_decisions(doc, ["name", "assigned_to", "approval_step", "is_open", "step_sequence"])
         if int(row["is_open"] or 0) and _may_decide(row, user, doc)
     ]
 
@@ -383,6 +541,7 @@ def approval_context(doc, user: str | None = None) -> dict:
             if row["name"] in decidable else []
         )
         row["can_decide"] = row["name"] in decidable and not row["waiting_on"]
+        row["queue"] = (step_queue(doc, row["approval_step"]) or {}).get("label") if row["current_cycle"] else None
     decidable = {row["name"] for row in rows if row["can_decide"]}
     raised = {row["approval_step"] for row in rows if row["current_cycle"]}
     steps = resolved_steps(doc)
@@ -472,9 +631,13 @@ def raise_steps(document: str) -> dict:
         )
     for name in written:
         row = frappe.db.get_value("Approval Decision", name, ["approval_step", "assigned_to"], as_dict=True)
+        # A queue step is announced to the whole queue (P-8): whoever of them
+        # is free takes it, as a formation step routed to a role is.
+        queue = step_queue(doc, row.approval_step)
         _tell(
-            "policy.approval.requested", [row.assigned_to],
-            {"approval_step": row.approval_step, "version_label": doc.version_label or ""}, doc,
+            "policy.approval.requested", queue_members(queue) if queue else [row.assigned_to],
+            {"approval_step": row.approval_step, "version_label": doc.version_label or "",
+             "queue": queue["label"] if queue else ""}, doc,
         )
     return lifecycle.portal_context(frappe.get_doc(DOCTYPE, doc.name))
 
@@ -498,6 +661,7 @@ def decide_step(document: str, approval_decision: str, decision: str, comments: 
         frappe.throw(
             _("A decision of \"{0}\" is recorded with its reason.").format(decision), title=_("Reason Required")
         )
+    _claim_queued_step(doc, row.name, frappe.session.user)
     approvals.record_decision(row.name, decision, comments=comments, acting_user=frappe.session.user)
     _tell(
         "policy.approval.decided", [doc.document_owner],
@@ -601,7 +765,8 @@ def my_open_steps() -> list[dict]:
                 "lifecycle_phase": doc.lifecycle_phase,
                 "approval_step": row["approval_step"],
                 "assigned_to": row["assigned_to"],
-                "on_behalf": row["assigned_to"] != user,
+                "queue": (step_queue(doc, row["approval_step"]) or {}).get("label"),
+                "on_behalf": row["assigned_to"] != user and not in_queue(step_queue(doc, row["approval_step"]), user),
                 "raised_on": row["creation"],
             }
         )

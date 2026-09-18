@@ -1085,7 +1085,7 @@ body.cns-portal {
   font-size: var(--cns-text-sm);
   color: var(--cns-text);
   background-color: var(--cns-surface);
-  border: var(--cns-border-width) solid var(--cns-border-strong);
+  border: var(--cns-border-width) solid var(--cns-border-field);
   border-radius: var(--cns-radius-sm);
   transition: border-color var(--cns-transition-fast);
 }
@@ -1857,4 +1857,152 @@ a.cns-metric-link:hover { background: var(--cns-surface-hover); }
 @media print {
   .cns-ai-ask, #ai-impact-form { display: none !important; }
   .cns-ai-box { background: none; border-color: #000; }
+}
+
+/* --- pages: home --- */
+/* The home page's cards (www/index.html): My work, Start something, one card
+   per area with its live figures, recently viewed, pinned, notices from the
+   governance office, the guide and the forum map. Rows of cards that stack on
+   a phone; tokens only, so both themes and every text size follow. */
+
+.cns-home { display: grid; gap: var(--cns-space-5); }
+.cns-home .cns-card { margin-bottom: 0; }
+.cns-home-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--cns-space-4); align-items: start; }
+@media (min-width: 992px) {
+  .cns-home-row--work { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+  .cns-home-row--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cns-home-row--guides { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+}
+.cns-home .cns-card-title .bi { color: var(--cns-text-muted); margin-right: var(--cns-space-1); }
+.cns-home-empty { margin: 0; color: var(--cns-text-muted); font-size: var(--cns-text-sm); list-style: none; }
+.cns-portal .cns-home-subhead { margin: var(--cns-space-4) 0 var(--cns-space-1); font-size: var(--cns-text-sm); font-weight: var(--cns-weight-semibold); color: var(--cns-text-secondary); }
+
+.cns-hero-greeting { margin: 0 0 var(--cns-space-2); font-size: var(--cns-text-md); font-weight: var(--cns-weight-semibold); opacity: 0.95; }
+.cns-hero-date { font-weight: var(--cns-weight-normal); opacity: 0.85; }
+.cns-portal .cns-hero .cns-hero-greeting { color: var(--cns-on-primary); }
+
+/* My work */
+.cns-home-chips { display: flex; flex-wrap: wrap; gap: var(--cns-space-2); margin: 0; padding: 0; list-style: none; }
+.cns-portal a.cns-home-chip {
+  display: inline-flex; align-items: center; gap: var(--cns-space-2);
+  min-height: 2.25rem; padding: var(--cns-space-1) var(--cns-space-3);
+  border: var(--cns-border-width) solid var(--cns-border); border-radius: var(--cns-radius-pill);
+  background: var(--cns-surface); color: var(--cns-text); text-decoration: none;
+  font-size: var(--cns-text-sm); font-weight: var(--cns-weight-medium);
+}
+.cns-portal a.cns-home-chip:hover { background: var(--cns-surface-hover); border-color: var(--cns-border-strong); }
+.cns-home-tasks { margin: 0; padding: 0; list-style: none; }
+.cns-home-task {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cns-space-2) var(--cns-space-4);
+  padding: var(--cns-space-2) 0 var(--cns-space-2) var(--cns-space-3);
+  border-bottom: var(--cns-border-width) solid var(--cns-border-subtle);
+  border-left: var(--cns-border-width-thick) solid transparent;
+}
+.cns-home-task:last-child { border-bottom: 0; }
+.cns-home-task--overdue { border-left-color: var(--cns-danger); }
+.cns-home-task-main { display: flex; flex-direction: column; min-width: 0; flex: 1 1 18rem; }
+.cns-portal a.cns-home-task-title { font-weight: var(--cns-weight-semibold); text-decoration: none; overflow-wrap: anywhere; }
+.cns-portal a.cns-home-task-title:hover { text-decoration: underline; }
+.cns-home-task-meta { font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
+
+/* Start something */
+.cns-home-actions { display: grid; gap: var(--cns-space-2); margin: 0; padding: 0; list-style: none; }
+.cns-portal a.cns-home-action {
+  display: flex; align-items: center; gap: var(--cns-space-3);
+  padding: var(--cns-space-3); border-radius: var(--cns-radius-md);
+  border: var(--cns-border-width) solid var(--cns-border-subtle);
+  background: var(--cns-surface); color: var(--cns-text); text-decoration: none;
+}
+.cns-portal a.cns-home-action:hover { background: var(--cns-surface-hover); border-color: var(--cns-border); }
+.cns-home-action-icon {
+  flex: none; display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem;
+  border-radius: var(--cns-radius-md); background: var(--cns-primary-subtle); color: var(--cns-primary); font-size: 1.05rem;
+}
+.cns-home-action-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.cns-home-action-label { font-weight: var(--cns-weight-semibold); }
+.cns-home-action-desc { font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
+.cns-home-action-go { color: var(--cns-text-muted); }
+
+/* The areas */
+.cns-home-modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--cns-space-4); }
+.cns-home-module { display: flex; flex-direction: column; padding: var(--cns-space-4); }
+.cns-home-module-head { display: flex; align-items: flex-start; gap: var(--cns-space-3); margin-bottom: var(--cns-space-3); }
+.cns-portal .cns-home-module-title { margin: 0; font-size: var(--cns-text-lg); }
+.cns-portal .cns-home-module-title a { color: var(--cns-text); text-decoration: none; }
+.cns-portal .cns-home-module-title a:hover { text-decoration: underline; }
+.cns-home-module-desc { margin: var(--cns-space-1) 0 0; font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
+.cns-home-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr)); gap: var(--cns-space-2); margin: 0 0 var(--cns-space-3); padding: 0; list-style: none; }
+.cns-portal a.cns-home-figure {
+  display: flex; flex-direction: column; height: 100%; padding: var(--cns-space-2) var(--cns-space-3);
+  border-radius: var(--cns-radius-md); background: var(--cns-surface-muted); color: var(--cns-text); text-decoration: none;
+}
+.cns-portal a.cns-home-figure:hover { background: var(--cns-surface-hover); }
+.cns-home-figure-value { font-size: var(--cns-text-2xl); font-weight: var(--cns-weight-bold); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.cns-home-figure-label { font-size: var(--cns-text-xs); color: var(--cns-text-secondary); line-height: 1.3; }
+.cns-home-figure--warning .cns-home-figure-value { color: var(--cns-warning-fg); }
+.cns-home-figure--danger .cns-home-figure-value { color: var(--cns-danger-fg); }
+.cns-home-links { margin: auto 0 0; padding: var(--cns-space-2) 0 0; list-style: none; border-top: var(--cns-border-width) solid var(--cns-border-subtle); }
+.cns-home-links li { padding: 2px 0; }
+.cns-portal .cns-home-links a { display: inline-flex; align-items: center; gap: var(--cns-space-2); min-height: 1.75rem; font-size: var(--cns-text-sm); text-decoration: none; }
+.cns-portal .cns-home-links a:hover { text-decoration: underline; }
+
+/* Recently viewed and pinned */
+.cns-home-list { margin: 0; padding: 0; list-style: none; }
+.cns-home-list > li:not(.cns-home-empty) {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--cns-space-2);
+  padding: var(--cns-space-2) 0; border-bottom: var(--cns-border-width) solid var(--cns-border-subtle);
+}
+.cns-home-list > li:last-child { border-bottom: 0; }
+.cns-home-list-main { display: flex; flex-direction: column; min-width: 0; }
+.cns-portal .cns-home-list-main a { font-weight: var(--cns-weight-semibold); text-decoration: none; overflow-wrap: anywhere; }
+.cns-portal .cns-home-list-main a:hover { text-decoration: underline; }
+.cns-home-list-meta { font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
+.cns-home-unpin {
+  flex: none; display: inline-grid; place-items: center; width: 2rem; height: 2rem;
+  border: 0; border-radius: var(--cns-radius-pill); background: transparent; color: var(--cns-text-muted); cursor: pointer;
+}
+.cns-home-unpin:hover { background: var(--cns-surface-hover); color: var(--cns-text); }
+
+/* Notices */
+.cns-home-notes { display: grid; gap: var(--cns-space-2); }
+.cns-home-note { border: var(--cns-border-width) solid var(--cns-border-subtle); border-radius: var(--cns-radius-md); background: var(--cns-surface); }
+.cns-home-note > summary {
+  position: relative; display: flex; flex-direction: column; gap: 2px;
+  padding: var(--cns-space-2) 2rem var(--cns-space-2) var(--cns-space-3);
+  cursor: pointer; list-style: none;
+}
+.cns-home-note > summary::-webkit-details-marker { display: none; }
+.cns-home-note > summary::after { content: "\203A"; position: absolute; right: var(--cns-space-3); top: var(--cns-space-2); color: var(--cns-text-muted); transition: transform var(--cns-transition-fast); }
+.cns-home-note[open] > summary::after { transform: rotate(90deg); }
+.cns-home-note-title { font-weight: var(--cns-weight-semibold); }
+.cns-home-note-meta { font-size: var(--cns-text-xs); color: var(--cns-text-muted); }
+.cns-home-note > .cns-prose { padding: 0 var(--cns-space-3) var(--cns-space-3); font-size: var(--cns-text-sm); }
+.cns-home-note[open] > summary { border-bottom: var(--cns-border-width) solid var(--cns-border-subtle); margin-bottom: var(--cns-space-2); }
+
+/* Guides */
+.cns-home-guides { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: var(--cns-space-2); margin: 0; padding: 0; list-style: none; }
+.cns-home-guide {
+  display: flex; flex-direction: column; gap: 2px; height: 100%; padding: var(--cns-space-3);
+  border: var(--cns-border-width) solid var(--cns-border-subtle); border-radius: var(--cns-radius-md);
+  background: var(--cns-surface); color: var(--cns-text);
+}
+.cns-portal a.cns-home-guide { text-decoration: none; }
+.cns-portal a.cns-home-guide:hover { background: var(--cns-surface-hover); border-color: var(--cns-border); }
+.cns-home-guide-title { font-weight: var(--cns-weight-semibold); font-size: var(--cns-text-sm); }
+.cns-home-guide-title .bi { color: var(--cns-primary); margin-right: 2px; }
+[data-theme="dark"] .cns-home-guide-title .bi { color: var(--cns-text-link); }
+.cns-home-guide-summary { font-size: var(--cns-text-xs); color: var(--cns-text-muted); line-height: 1.4; }
+.cns-home-guide-note { margin: var(--cns-space-3) 0 0; }
+
+/* The forum map, as a card: the drawing scrolls inside it. */
+/* The boxes are links; the portal's underline would run through their labels. */
+.cns-portal .cns-map a { text-decoration: none; }
+.cns-home-map { max-height: 24rem; overflow: auto; border: var(--cns-border-width) solid var(--cns-border-subtle); border-radius: var(--cns-radius-md); background: var(--cns-surface-muted); }
+
+@media (max-width: 575.98px) {
+  /* On a phone the chapters are a compact two-column index. */
+  .cns-home-guides { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cns-home-guide-summary { display: none; }
+  .cns-home-figures { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cns-home-figure-value { font-size: var(--cns-text-xl); }
 }

@@ -194,6 +194,72 @@ class TestBrandStyle(BrandingCase):
 		self.assertNotIn("--cns-font-sans", css)
 
 
+class TestTheme(BrandingCase):
+	"""The portal's look (theme-hybrid.css) and the workspace theme.
+
+	The contract with Portal Branding is an order: the theme's defaults first,
+	the saved brand after, so the brand wins. These tests hold the page to that
+	order and each header style to its class.
+	"""
+
+	def test_the_theme_loads_after_the_portal_styles_and_before_the_brand(self):
+		status, body = render("", "Administrator")
+		self.assertEqual(status, 200)
+		positions = [body.find(marker) for marker in
+			("/css/brand.css", "/css/assistant.css", "/css/theme-hybrid.css", 'id="cns-brand"')]
+		self.assertNotIn(-1, positions, "a stylesheet or the brand block is missing from the page")
+		self.assertEqual(positions, sorted(positions), "the theme must come after the portal CSS and before the brand")
+
+	def test_each_header_style_sets_its_class(self):
+		for style, wanted in (("Glass", "cns-header-glass"), ("White", "cns-header-light"), ("Primary colour", None)):
+			with self.subTest(style=style):
+				self.set_brand(header_style=style)
+				self._drop_caches()
+				status, body = render("", "Administrator")
+				self.assertEqual(status, 200)
+				classes = re.search(r'<body class="([^"]*)"', body).group(1).split()
+				for name in ("cns-header-glass", "cns-header-light"):
+					if name == wanted:
+						self.assertIn(name, classes)
+					else:
+						self.assertNotIn(name, classes)
+
+	def test_the_default_header_is_glass_in_the_code_and_the_form(self):
+		self.assertEqual(branding.DEFAULTS["header_style"], "Glass")
+		field = frappe.get_meta("Portal Branding").get_field("header_style")
+		self.assertEqual(field.default, "Glass")
+		self.assertEqual(field.options.split("\n"), ["Glass", "Primary colour", "White"])
+
+	def test_the_patch_moves_only_the_old_default(self):
+		from consilium.patches.v0_1 import default_header_to_glass
+
+		frappe.db.set_single_value("Portal Branding", "header_style", "Primary colour")
+		default_header_to_glass.execute()
+		self.assertEqual(frappe.db.get_single_value("Portal Branding", "header_style"), "Glass")
+		frappe.db.set_single_value("Portal Branding", "header_style", "White")
+		default_header_to_glass.execute()
+		self.assertEqual(frappe.db.get_single_value("Portal Branding", "header_style"), "White")
+
+	def test_the_workspace_is_given_the_brand_colour(self):
+		self.set_brand(primary_colour="#224466")
+		self._drop_caches()
+		bootinfo = frappe._dict()
+		branding.boot_session(bootinfo)
+		self.assertEqual(bootinfo.consilium_brand["primary"], "#224466")
+		self.assertEqual(bootinfo.consilium_brand["on_primary"], "#ffffff")
+		self.assertEqual(bootinfo.consilium_brand["primary_dark"], branding._mix("#224466", "#ffffff", 0.5))
+		self.set_brand(primary_colour="#f5f5f5")
+		self._drop_caches()
+		branding.boot_session(bootinfo)
+		self.assertEqual(bootinfo.consilium_brand["on_primary"], "#111111")
+
+	def test_the_workspace_theme_and_its_boot_hook_are_registered(self):
+		self.assertIn("/assets/consilium/css/desk-theme.css", frappe.get_hooks("app_include_css"))
+		self.assertIn("consilium.consilium_core.branding.boot_session", frappe.get_hooks("boot_session"))
+		for name in ("theme-hybrid.css", "desk-theme.css"):
+			self.assertTrue(os.path.exists(os.path.join(frappe.get_app_path("consilium"), "public", "css", name)))
+
+
 class TestFrameworkBranding(BrandingCase):
 	def test_saving_the_record_renames_the_framework_screens(self):
 		name = unique("Portal")

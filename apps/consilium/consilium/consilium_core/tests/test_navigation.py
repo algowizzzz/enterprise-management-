@@ -102,6 +102,7 @@ class TestNavigation(CoreTestCase):
 			"/attestation-campaigns": "Attestation campaigns", "/policy-intake": "Request a policy or change",
 			"/create-forum": "Request a new forum", "/formation-requests": "Formation requests",
 			"/raise-escalation": "Raise an escalation",
+			"/exports": "Exports", "/records": "Records and disposal",
 		}
 		labels = {item["url"]: item["label"] for menu in self._as("Administrator")
 			for group in menu["groups"] for item in group["items"]}

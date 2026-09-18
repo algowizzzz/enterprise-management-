@@ -1,0 +1,156 @@
+{#-
+  ===== Delegates on the forum page (G-13) =====
+  Included in the Membership tab of forum.html. It needs only `forum`.
+  Lists the delegations scoped to this forum, and — for the forum's chair,
+  sponsor or secretary only — a form to nominate their own delegate for
+  administrative tasks, with dates and a reason, and a way to end their own
+  delegation early. What is allowed is decided by
+  consilium.governance.delegates, which checks it again on every post.
+-#}
+<section class="cns-card" id="delegates" aria-labelledby="delegates-heading" data-forum="{{ forum | e }}">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="delegates-heading">Delegates</h2>
+      <p class="cns-card-subtitle">Who acts for the chair, sponsor or secretary on this forum's administrative
+        tasks, and when. A delegation is dated and scoped to this forum; ending one keeps it on record.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div id="delegates-list"><p class="cns-text-muted cns-text-sm">Reading&hellip;</p></div>
+    <form id="delegate-form" class="cns-fieldset" hidden novalidate style="margin-top: var(--cns-space-4);">
+      <legend id="delegate-legend">Nominate your delegate</legend>
+      <div class="cns-form-grid">
+        <div class="cns-field">
+          <label class="cns-label" for="delegate-person">Delegate<span class="cns-required" aria-hidden="true">*</span></label>
+          <select class="cns-select" id="delegate-person" required></select>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="delegate-from">First day<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" type="date" id="delegate-from" required>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="delegate-to">Last day<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" type="date" id="delegate-to" required aria-describedby="delegate-to-help">
+          <span class="cns-help" id="delegate-to-help">At most a year after the first day.</span>
+        </div>
+      </div>
+      <fieldset class="cns-field" style="border:0; padding:0; margin: var(--cns-space-3) 0;">
+        <legend class="cns-label">Tasks the delegate may do for you<span class="cns-required" aria-hidden="true">*</span></legend>
+        <div id="delegate-actions"></div>
+      </fieldset>
+      <div class="cns-field">
+        <label class="cns-label" for="delegate-reason">Reason<span class="cns-required" aria-hidden="true">*</span></label>
+        <textarea class="cns-textarea" id="delegate-reason" rows="2" maxlength="1000" required></textarea>
+      </div>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-primary">Nominate</button>
+      </div>
+    </form>
+  </div>
+</section>
+<script>
+(function () {
+  "use strict";
+
+  function start() {
+    var card = document.getElementById("delegates");
+    if (!card || !window.Consilium || !Consilium.api) return;
+    var FORUM = card.getAttribute("data-forum");
+    var M = "consilium.governance.delegates.";
+    var esc = Consilium.util.escapeHtml, escAttr = Consilium.util.escapeAttr;
+    var form = document.getElementById("delegate-form");
+    var formReady = false;
+
+    function person(id) { return Consilium.person ? Consilium.person(id) : esc(id); }
+    function day(v) { return v ? esc(Consilium.util.formatDate(v)) : "&mdash;"; }
+    function iso(offset) {
+      var d = new Date(); d.setDate(d.getDate() + (offset || 0));
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+
+    function draw(data) {
+      var list = document.getElementById("delegates-list");
+      var tones = { current: ["success", "In force"], upcoming: ["info", "Starts later"], ended: ["neutral", "Ended"] };
+      list.innerHTML = data.delegations.length
+        ? '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><caption class="cns-visually-hidden">Delegations on this forum</caption>' +
+          '<thead><tr><th scope="col">For</th><th scope="col">Delegate</th><th scope="col">Tasks</th><th scope="col">From</th><th scope="col">To</th><th scope="col">Standing</th><th scope="col"><span class="cns-visually-hidden">Actions</span></th></tr></thead><tbody>' +
+          data.delegations.map(function (r) {
+            var t = tones[r.standing] || tones.ended;
+            return "<tr><td>" + person(r.delegator) + "</td><td>" + person(r.delegate) + "</td><td>" + esc((r.actions || []).join(", ")) +
+              "</td><td>" + day(r.valid_from) + "</td><td>" + day(r.valid_to) + '</td><td><span class="cns-pill cns-status-' + t[0] + '">' + esc(t[1]) + "</span></td><td>" +
+              (r.may_end ? '<button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-end="' + escAttr(r.name) + '">End now</button>' : "") + "</td></tr>";
+          }).join("") + "</tbody></table></div>"
+        : '<p class="cns-text-muted cns-text-sm">No delegation has been recorded for this forum.</p>';
+
+      form.hidden = !data.may_nominate;
+      if (data.may_nominate && !formReady) {
+        formReady = true;
+        document.getElementById("delegate-legend").textContent = "Nominate your delegate (as " + data.capacities.join(" and ") + ")";
+        document.getElementById("delegate-person").innerHTML = '<option value="">Choose a person</option>' + data.people.map(function (p) {
+          return '<option value="' + escAttr(p.name) + '">' + esc(p.full_name || p.name) + " (" + esc(p.name) + ")</option>";
+        }).join("");
+        document.getElementById("delegate-actions").innerHTML = data.actions.map(function (a) {
+          var id = "delegate-action-" + a.name;
+          return '<label class="cns-check" for="' + escAttr(id) + '" style="display:block;"><input type="checkbox" id="' + escAttr(id) +
+            '" value="' + escAttr(a.name) + '"> ' + esc(a.label || a.name) + (a.description ? ' <span class="cns-text-muted cns-text-sm">— ' + esc(a.description) + "</span>" : "") + "</label>";
+        }).join("") || '<p class="cns-text-muted cns-text-sm">No administrative task is set up for delegation.</p>';
+        var from = document.getElementById("delegate-from"), to = document.getElementById("delegate-to");
+        from.min = iso(0); from.value = iso(0); to.min = iso(0); to.value = iso(14);
+      }
+    }
+
+    function fail(error) {
+      Consilium.toast.error((error && error.message) || "The server refused.", { title: "Not done" });
+    }
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var actions = Array.prototype.map.call(form.querySelectorAll('#delegate-actions input:checked'), function (b) { return b.value; });
+      var args = {
+        forum: FORUM,
+        delegate: document.getElementById("delegate-person").value,
+        actions: JSON.stringify(actions),
+        valid_from: document.getElementById("delegate-from").value,
+        valid_to: document.getElementById("delegate-to").value,
+        reason: document.getElementById("delegate-reason").value.trim()
+      };
+      if (!args.delegate) { Consilium.toast.error("Choose the person who will act for you."); document.getElementById("delegate-person").focus(); return; }
+      if (!actions.length) { Consilium.toast.error("Choose at least one task to delegate."); return; }
+      if (!args.reason) { Consilium.toast.error("Say why, for the record."); document.getElementById("delegate-reason").focus(); return; }
+      var button = form.querySelector('button[type="submit"]');
+      button.disabled = true;
+      Consilium.api.call(M + "nominate_delegate", args, { method: "POST" })
+        .then(function (data) {
+          draw(data);
+          form.reset();
+          formReady = false; draw(data);
+          Consilium.toast.success("Your delegate has been told.", { title: "Delegate nominated" });
+          Consilium.announce && Consilium.announce("Delegate nominated.");
+        })
+        .catch(fail)
+        .then(function () { button.disabled = false; });
+    });
+
+    document.getElementById("delegates-list").addEventListener("click", function (event) {
+      var button = event.target.closest("button[data-end]");
+      if (!button) return;
+      var reason = window.prompt("End this delegation today. Why? (optional)", "");
+      if (reason === null) return;
+      button.disabled = true;
+      Consilium.api.call(M + "end_delegation", { delegation: button.getAttribute("data-end"), reason: reason }, { method: "POST" })
+        .then(function (data) { draw(data); Consilium.toast.success("The delegation has ended.", { title: "Ended" }); })
+        .catch(function (error) { button.disabled = false; fail(error); });
+    });
+
+    Consilium.api.call(M + "forum_delegates", { forum: FORUM }, { trackLoading: false })
+      .then(draw)
+      .catch(function (error) {
+        document.getElementById("delegates-list").innerHTML = '<p class="cns-text-muted cns-text-sm">' +
+          esc((error && error.message) || "Delegations could not be read.") + "</p>";
+      });
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>

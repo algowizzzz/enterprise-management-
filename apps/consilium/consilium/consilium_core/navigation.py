@@ -122,6 +122,28 @@ def _horizon() -> dict:
 		return {}
 
 
+def _admin_guide_url() -> str:
+	"""The guide's administrators' chapter, wherever the guide numbers it."""
+	from consilium.consilium_core import guide
+
+	return guide.admin_guide_url()
+
+
+def _may_export(v: _Viewer) -> bool:
+	"""Whether any active export profile is open to the viewer (consilium_core.exporting)."""
+	try:
+		from consilium.consilium_core import exporting
+
+		if v.is_admin or v.can("Export Batch"):
+			return True
+		return any(
+			exporting.may_run(frappe.get_doc("Export Profile", name), v.user)
+			for name in frappe.get_all("Export Profile", filters={"is_active": 1}, pluck="name")
+		)
+	except Exception:
+		return False
+
+
 def _menus(v: _Viewer) -> list[dict]:
 	"""Every menu and item, each with the condition it is shown on.
 
@@ -139,11 +161,14 @@ def _menus(v: _Viewer) -> list[dict]:
 			"id": "home", "label": "Home", "icon": "bi-house",
 			"groups": [
 				{"label": "", "items": [
-					_item("Overview", "/", "Where the inventory stands today, at a glance.", "bi-speedometer2"),
+					_item("Overview", "/", "Your work, your areas and what to start, at a glance.", "bi-speedometer2"),
 					_item("Forum map", "/#forum-map", "How every forum connects, drawn as a hierarchy.",
 						"bi-diagram-3", forums),
 					_item("How it works", "/#guide-heading", "Guides to forums, policies and escalation.",
 						"bi-book"),
+					# The illustrated user guide, read chapter by chapter (/guide).
+					_item("User guide", "/guide", "Every screen explained, step by step, with pictures.",
+						"bi-journal-bookmark"),
 				]},
 			],
 		},
@@ -261,6 +286,17 @@ def _menus(v: _Viewer) -> list[dict]:
 					_item("Regulatory updates", "/regulatory-updates",
 						"Requirement changes and everything that cites them.", "bi-bank"),
 				]},
+				# G-16, P-18, E-18 and G-19, P-20, E-19: the governed ways records
+				# leave — disposal at the end of retention, and export to another
+				# system. Each only for those the page's endpoints serve.
+				{"label": "Records and exports", "items": [
+					_item("Exports", "/exports",
+						"Governed files of forums, documents and escalations for other systems.", "bi-box-arrow-up",
+						_may_export(v)),
+					_item("Records and disposal", "/records",
+						"Records past their retention period, waiting for a decision.", "bi-archive",
+						v.has_any("Records Manager", "System Manager")),
+				]},
 			],
 		},
 		{
@@ -279,6 +315,10 @@ def _menus(v: _Viewer) -> list[dict]:
 						"bi-palette", v.can("Portal Branding") and v.desk_user),
 					_item("Integrations", "/integrations", "AI, document AI, horizon scanning and email.",
 						"bi-plug"),
+					# The guide's administrators' chapter; the Admin menu is itself
+					# shown to administrators only, the same audience as the chapter.
+					_item("Admin guide", _admin_guide_url(),
+						"Branding, lists, users, routing and workflow, without code.", "bi-journal-bookmark"),
 					_item("Advanced configuration", "/app", "The full workspace, for everything else.",
 						"bi-gear", v.desk_user),
 				]},

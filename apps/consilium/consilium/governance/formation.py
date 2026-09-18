@@ -13,7 +13,9 @@ Four things here are worth reading closely:
 * **The approval steps are configuration.** A ``Formation Approval Route`` holds
   them: role-based, sequenced, sequential or parallel. Each step becomes a Core
   ``Approval Decision``, so delegation and exception authorisation are the same
-  machinery the rest of the platform uses.
+  machinery the rest of the platform uses. Which route applies is configuration
+  too (G-8): a route may name a request type, a forum type and a materiality of
+  change, and the most specific active route that fits wins (``resolve_route``).
 * **No step is skipped without a recorded exception.** The gate is "no open
   approval decisions, unless a Core ``Exception Authorisation`` says otherwise",
   which is a fact about records rather than a comparison against a label.
@@ -185,6 +187,7 @@ def respond_to_returned_request(request: str, response: str):
 def submit(request):
     if isinstance(request, str):
         request = frappe.get_doc("Committee Formation Request", request)
+    require_materiality(request, _("submitted"))
     request.duplicate_check_result = duplicate_check(request)
     return _set_state(request, STATE_SUBMITTED)
 
@@ -225,16 +228,87 @@ def respond_to_return(request, response: str):
 # --------------------------------------------------------------- approval
 
 
+#: A route's value for "this route does not narrow on that dimension". A
+#: configuration option label, never a state.
+ROUTE_ANY = "Any"
+
+
+def _route_fit(route: dict, request) -> tuple | None:
+    """How specifically ``route`` fits ``request``, or None when it does not.
+
+    G-8 lets the approval path differ by the kind of request, the forum type and
+    the materiality of the change. A route narrows on any of the three: each it
+    names must equal the request's, and each it leaves open (``Any``, or no
+    forum type) fits every request. The fit is ordered so that the route naming
+    the most dimensions wins; between routes naming as many, one written for a
+    forum type is preferred to one written for a materiality, and that to one
+    written for a request type — the forum type is the most deliberate choice an
+    administrator makes, because it settles how much authority the forum holds.
+    The final tie-break, most recently modified, is the caller's.
+    """
+    named_type = bool(route.get("request_type") and route["request_type"] != ROUTE_ANY)
+    named_forum = bool(route.get("forum_type"))
+    named_materiality = bool(route.get("change_materiality") and route["change_materiality"] != ROUTE_ANY)
+    if named_type and route["request_type"] != request.get("request_type"):
+        return None
+    if named_forum and route["forum_type"] != request.get("forum_type"):
+        return None
+    if named_materiality and route["change_materiality"] != request.get("change_materiality"):
+        return None
+    return (named_type + named_forum + named_materiality, named_forum, named_materiality, named_type)
+
+
+def matching_routes(request) -> list[dict]:
+    """Every active route that fits the request, the one that applies first."""
+    routes = frappe.get_all(
+        "Formation Approval Route",
+        filters={"is_active": 1},
+        fields=["name", "request_type", "forum_type", "change_materiality", "modified"],
+        order_by="modified desc",
+    )
+    fitting = [(fit, route) for route in routes if (fit := _route_fit(route, request)) is not None]
+    # Stable sort: among equal fits the most recently modified stays first.
+    fitting.sort(key=lambda pair: pair[0], reverse=True)
+    return [route for _fit, route in fitting]
+
+
 def resolve_route(request):
-    """The configured route for this request. Most specific active route wins."""
-    for filters in ({"request_type": request.request_type, "is_active": 1},
-                    {"request_type": "Any", "is_active": 1}):
-        names = frappe.get_all(
-            "Formation Approval Route", filters=filters, pluck="name", order_by="modified desc", limit=1
-        )
-        if names:
-            return frappe.get_doc("Formation Approval Route", names[0])
-    return None
+    """The configured route for this request: the most specific active match.
+
+    Selection reads configuration only (see ``_route_fit``). A request whose
+    route names neither its forum type nor its materiality still falls back to a
+    route for its request type, and then to one for any request, exactly as
+    before those two dimensions existed.
+    """
+    routes = matching_routes(request)
+    return frappe.get_doc("Formation Approval Route", routes[0]["name"]) if routes else None
+
+
+#: The request type whose intake must say how material the change is (G-8).
+#: A configuration option of ``request_type``, never a workflow state.
+REQUEST_MODIFY = "Modify"
+
+
+def require_materiality(request, attempted: str) -> None:
+    """A change to an existing forum states its materiality before it moves on.
+
+    The materiality chooses the approval path (``resolve_route``), so a change
+    request without one would be routed as if nobody had assessed it. Drafts
+    may be saved without it; submitting and seeking approval may not, and the
+    refusal is audited like every other control on the request.
+    """
+    if request.get("request_type") != REQUEST_MODIFY or request.get("change_materiality"):
+        return
+    audit.refuse(
+        _("Request {0} changes an existing forum, so it must say how material the change is (Minor, "
+          "Significant or Material) before it can be {1}. The materiality chooses the approval path.").format(
+            request.name, attempted),
+        subject_doctype=request.doctype,
+        subject_name=request.name,
+        attempted_action="Other",
+        control="formation change materiality",
+        exc=frappe.ValidationError,
+    )
 
 
 def _assignee(request, step) -> str | None:
@@ -274,6 +348,7 @@ def raise_approval_steps(request) -> list[str]:
             _("The G-7 completeness confirmation gates progression. Confirm it first."),
             title=_("Completeness Not Confirmed"),
         )
+    require_materiality(request, _("sent for approval"))
 
     route = resolve_route(request)
     if not route:
@@ -1142,7 +1217,37 @@ def review_context(request) -> dict:
         "is_originator": user == request.requester,
         "is_open": open_request,
         "charter_challenge": _charter_challenge_context(request, open_request),
+        "route": _route_summary(request),
     }
+
+
+def _route_summary(request) -> dict | None:
+    """The approval route this request follows, or would follow, and what chose it (G-8).
+
+    Once steps are raised the request records its route; before that the route
+    is the one ``resolve_route`` would pick now, so the path is visible before
+    anyone is asked to decide.
+    """
+    name = request.get("approval_route")
+    if not name:
+        routes = matching_routes(request)
+        name = routes[0]["name"] if routes else None
+    if not name:
+        return None
+    row = frappe.db.get_value(
+        "Formation Approval Route", name, ["name", "request_type", "forum_type", "change_materiality"], as_dict=True
+    )
+    if not row:
+        return None
+    chosen_by = []
+    if row.forum_type:
+        chosen_by.append(_("forum type {0}").format(
+            frappe.db.get_value("Governance Forum Type", row.forum_type, "forum_type_name") or row.forum_type))
+    if row.change_materiality and row.change_materiality != ROUTE_ANY:
+        chosen_by.append(_("{0} change").format(row.change_materiality.lower()))
+    if row.request_type and row.request_type != ROUTE_ANY:
+        chosen_by.append(_("{0} request").format(row.request_type.lower()))
+    return {"name": row.name, "raised": bool(request.get("approval_route")), "chosen_by": chosen_by}
 
 
 def _charter_challenge_context(request, open_request: bool) -> dict:

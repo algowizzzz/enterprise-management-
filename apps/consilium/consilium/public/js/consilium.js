@@ -812,12 +812,112 @@
   };
 
   /* ----------------------------------------------------------------------
+     Recently viewed and pinned records (the home page's two lists)
+
+     A convenience of one person on one browser, so it is kept in this
+     browser rather than written to the database on every page view. Only the
+     record's type and name are stored, never its title: the home page reads
+     titles when it draws the lists, through the same API as every page, so a
+     record the person may no longer open drops out rather than lingering on a
+     shared computer. Keyed by the signed-in account, so two people sharing a
+     browser do not see each other's.
+     ---------------------------------------------------------------------- */
+
+  var KINDS = {
+    "Governance Forum": { path: "/forum", title: "forum_name", label: "Forum" },
+    "Governing Document": { path: "/policy", title: "document_name", label: "Policy" },
+    "Escalation Matter": { path: "/escalation", title: "escalation_title", label: "Escalation" },
+    "Committee Formation Request": { path: "/formation-request", title: "forum_name", label: "Formation request" }
+  };
+  var RECENT_MAX = 12;
+  var PINS_MAX = 20;
+
+  var records = (NS.records = {
+    KINDS: KINDS,
+
+    account: function () {
+      return (document.querySelector('meta[name="cns-user"]') || {}).content || "";
+    },
+
+    read: function (list) {
+      var who = records.account();
+      if (!who) return [];
+      try {
+        var parsed = JSON.parse(store.get(list + ":" + who, "[]"));
+        return Array.isArray(parsed) ? parsed.filter(function (e) { return e && KINDS[e.d] && e.n; }) : [];
+      } catch (e) {
+        return [];
+      }
+    },
+
+    write: function (list, entries) {
+      var who = records.account();
+      if (who) store.set(list + ":" + who, JSON.stringify(entries));
+    },
+
+    recent: function () { return records.read("recent"); },
+    pins: function () { return records.read("pins"); },
+
+    isPinned: function (doctype, name) {
+      return records.pins().some(function (e) { return e.d === doctype && e.n === name; });
+    },
+
+    pin: function (doctype, name) {
+      var rest = records.pins().filter(function (e) { return !(e.d === doctype && e.n === name); });
+      records.write("pins", [{ d: doctype, n: name }].concat(rest).slice(0, PINS_MAX));
+    },
+
+    unpin: function (doctype, name) {
+      records.write("pins", records.pins().filter(function (e) { return !(e.d === doctype && e.n === name); }));
+    },
+
+    /** The record this page shows, when it is one of the kinds above and was found. */
+    current: function () {
+      if (!document.querySelector(".cns-record-summary")) return null;
+      var name = new URLSearchParams(window.location.search).get("name");
+      if (!name) return null;
+      for (var doctype in KINDS) {
+        if (KINDS[doctype].path === window.location.pathname) return { d: doctype, n: name };
+      }
+      return null;
+    },
+
+    /** Note the visit, and offer a Pin button in the page header. */
+    bind: function () {
+      var here = records.current();
+      if (!here || !records.account()) return;
+      var rest = records.recent().filter(function (e) { return !(e.d === here.d && e.n === here.n); });
+      records.write("recent", [{ d: here.d, n: here.n, t: Date.now() }].concat(rest).slice(0, RECENT_MAX));
+
+      var actions = document.querySelector(".cns-page-header .cns-page-actions");
+      if (!actions || actions.querySelector(".cns-pin-btn")) return;
+      var button = util.el("button", { type: "button", class: "cns-btn cns-btn-secondary cns-pin-btn" });
+      function draw() {
+        var pinned = records.isPinned(here.d, here.n);
+        button.setAttribute("aria-pressed", pinned ? "true" : "false");
+        button.innerHTML = '<i class="bi ' + (pinned ? "bi-pin-angle-fill" : "bi-pin-angle") + '" aria-hidden="true"></i> ' +
+          (pinned ? "Pinned" : "Pin");
+        button.title = pinned ? "Unpin from your home page" : "Pin to your home page";
+      }
+      button.addEventListener("click", function () {
+        var pinned = records.isPinned(here.d, here.n);
+        if (pinned) records.unpin(here.d, here.n); else records.pin(here.d, here.n);
+        draw();
+        NS.announce(pinned ? "Unpinned from your home page." : "Pinned to your home page.");
+      });
+      draw();
+      actions.insertBefore(button, actions.firstChild);
+    }
+  });
+
+  /* ----------------------------------------------------------------------
      Init
      ---------------------------------------------------------------------- */
 
   NS.init = function (root) {
     theme.bind(root);
     fontSize.bind(root);
+    if (!root) records.bind();
     // Auto-initialise any declaratively configured tables on the page.
     if (NS.Table && typeof NS.Table.autoInit === "function") NS.Table.autoInit(root);
   };

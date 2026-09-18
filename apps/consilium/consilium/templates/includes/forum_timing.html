@@ -1,0 +1,147 @@
+{#-
+  ===== The forum page's "Time limits" tab (G-12) =====
+  A tab panel, included from forum.html beside its other panels; the tab
+  button is the one line added to the tab list there. It needs only `forum`.
+  Everything comes from consilium.governance.service_levels.forum_time_limits,
+  which checks read access on the forum: time at each compliance status
+  against any configured target, the same for the formation request, the
+  review and attestation dates, compliance reviews and their durations, and
+  the clocks Core keeps. Loaded when the tab is first shown.
+-#}
+<div class="cns-tabpanel" role="tabpanel" id="panel-timing" aria-labelledby="tab-timing" tabindex="0" hidden
+     data-forum="{{ forum | e }}">
+  <section class="cns-card" aria-labelledby="timing-dates-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="timing-dates-heading">Obligations with a date</h2>
+        <p class="cns-card-subtitle">The periodic review and the yearly attestation, against today.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="timing-dates"><p class="cns-text-muted cns-text-sm">Reading&hellip;</p></div></div>
+  </section>
+  <section class="cns-card" aria-labelledby="timing-status-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="timing-status-heading">Time at each compliance status</h2>
+        <p class="cns-card-subtitle">Rebuilt from the forum's change log. Where an administrator has set a
+          time target for a status, each stretch is judged against it.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="timing-status"></div></div>
+  </section>
+  <section class="cns-card" aria-labelledby="timing-formation-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="timing-formation-heading">Formation</h2>
+        <p class="cns-card-subtitle">How long the request that created this forum spent at each step.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="timing-formation"></div></div>
+  </section>
+  <section class="cns-card" aria-labelledby="timing-reviews-heading">
+    <div class="cns-card-header">
+      <div>
+        <h2 class="cns-card-title" id="timing-reviews-heading">Compliance reviews</h2>
+        <p class="cns-card-subtitle">Each review, from when it was raised to its decision.</p>
+      </div>
+    </div>
+    <div class="cns-card-body"><div id="timing-reviews"></div></div>
+  </section>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  function start() {
+    var panel = document.getElementById("panel-timing");
+    if (!panel || !window.Consilium || !Consilium.api) return;
+    var FORUM = panel.getAttribute("data-forum");
+    var esc = Consilium.util.escapeHtml;
+    var loaded = false;
+    var OUTCOME = { breached: ["danger", "Past its target"], warning: ["warning", "Near its target"],
+                    running: ["info", "Within its target so far"], within: ["success", "Within its target"],
+                    no_target: ["neutral", "No target set"] };
+
+    function span(seconds) {
+      var days = Math.floor(seconds / 86400), hrs = Math.floor((seconds % 86400) / 3600);
+      if (days) return days + " day" + (days === 1 ? "" : "s") + (hrs ? " " + hrs + " h" : "");
+      var mins = Math.floor((seconds % 3600) / 60);
+      return hrs ? hrs + " h " + mins + " min" : mins + " min";
+    }
+    function when(value) { return value ? esc(Consilium.util.formatDate(value, true)) : "&mdash;"; }
+    function pill(tone, text) { return '<span class="cns-pill cns-status-' + tone + '">' + esc(text) + "</span>"; }
+    function target(h) { return h === null || h === undefined ? "&mdash;" : esc((h >= 24 && h % 24 === 0) ? (h / 24) + " days" : h + " hours"); }
+
+    function durations(summary, caption) {
+      if (!summary || !summary.stretches || !summary.stretches.length) {
+        return '<p class="cns-text-muted cns-text-sm">No history recorded.</p>';
+      }
+      return '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><caption class="cns-visually-hidden">' + esc(caption) + "</caption>" +
+        '<thead><tr><th scope="col">Status</th><th scope="col">From</th><th scope="col">To</th><th scope="col">Time</th><th scope="col">Target</th><th scope="col">Against target</th></tr></thead><tbody>' +
+        summary.stretches.slice().reverse().map(function (s) {
+          var o = OUTCOME[s.outcome] || OUTCOME.no_target;
+          return "<tr><td>" + esc(s.value || "") + (s.is_current ? " " + pill("primary", "Now") : "") + "</td><td>" + when(s.started_on) +
+            "</td><td>" + (s.ended_on ? when(s.ended_on) : "&mdash;") + "</td><td>" + esc(span(s.seconds)) + "</td><td>" +
+            target(s.target_hours) + "</td><td>" + pill(o[0], o[1]) + "</td></tr>";
+        }).join("") + "</tbody></table></div>";
+    }
+
+    function dateRow(label, item, dueText) {
+      var tone = { overdue: "danger", due_soon: "warning", on_track: "success", not_set: "neutral", never: "warning" }[item.standing] || "neutral";
+      var words = { overdue: "Overdue", due_soon: "Due soon", on_track: "On track", not_set: "No date set", never: "Never attested" }[item.standing] || item.standing;
+      var days = item.days === null || item.days === undefined ? "" :
+        (item.days < 0 ? " — " + (-item.days) + " days late" : " — in " + item.days + " days");
+      return "<dt>" + esc(label) + "</dt><dd>" + pill(tone, words) + " " + esc(dueText) + esc(days) + "</dd>";
+    }
+
+    function draw(d) {
+      document.getElementById("timing-dates").innerHTML = '<dl class="cns-dl">' +
+        dateRow("Periodic review", d.review, d.review.due_on ? "due " + Consilium.util.formatDate(d.review.due_on) : "") +
+        dateRow("Yearly attestation", d.attestation, d.attestation.last_on ? "last " + Consilium.util.formatDate(d.attestation.last_on) : "") +
+        "<dt>Compliance review</dt><dd>" + (d.awaiting_review ? pill("warning", "Waiting on a decision") : pill("neutral", "None waiting")) + "</dd>" +
+        "<dt>Clocks on this forum</dt><dd>" + (d.clocks.length ? d.clocks.map(function (c) {
+          return esc(c.definition_title) + " — " + (c.breached_on ? pill("danger", "breached") : (c.is_open ? pill("info", "running") : pill("success", "met")));
+        }).join("<br>") : '<span class="cns-text-muted">None</span>') + "</dd></dl>";
+      document.getElementById("timing-status").innerHTML = durations(d.status, "Time at each compliance status");
+      var f = d.formation;
+      document.getElementById("timing-formation").innerHTML = !f
+        ? '<p class="cns-text-muted cns-text-sm">This forum was not created through a formation request.</p>'
+        : !f.readable
+          ? '<p class="cns-text-muted cns-text-sm">Formation request ' + esc(f.request) + " is not open to you.</p>"
+          : '<p class="cns-text-sm"><a href="/formation-request?name=' + encodeURIComponent(f.request) + '">' + esc(f.request) + "</a>" +
+            (f.decided_on ? ", decided " + esc(Consilium.util.formatDate(f.decided_on)) : "") + "</p>" + durations(f.status, "Time at each formation step");
+      var reviews = document.getElementById("timing-reviews");
+      if (!d.reviews_readable) {
+        reviews.innerHTML = '<p class="cns-text-muted cns-text-sm">Compliance reviews are not open to you.</p>';
+      } else if (!d.reviews.length) {
+        reviews.innerHTML = '<p class="cns-text-muted cns-text-sm">No compliance review recorded.</p>';
+      } else {
+        reviews.innerHTML = '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><caption class="cns-visually-hidden">Compliance reviews</caption>' +
+          '<thead><tr><th scope="col">Review</th><th scope="col">Raised</th><th scope="col">Decided</th><th scope="col">Decision</th><th scope="col">Days</th></tr></thead><tbody>' +
+          d.reviews.map(function (r) {
+            return "<tr><td>" + esc(r.review_type || r.name) + "</td><td>" + when(r.raised_on) + "</td><td>" + (r.decided_on ? when(r.decided_on) : pill("warning", "Waiting")) +
+              "</td><td>" + esc(r.decision || "") + "</td><td>" + esc(String(r.days)) + "</td></tr>";
+          }).join("") + "</tbody></table></div>";
+      }
+    }
+
+    function load() {
+      if (loaded) return;
+      loaded = true;
+      Consilium.api.call("consilium.governance.service_levels.forum_time_limits", { forum: FORUM }, { trackLoading: false })
+        .then(draw)
+        .catch(function (error) {
+          document.getElementById("timing-dates").innerHTML = '<p class="cns-text-muted cns-text-sm">' +
+            esc((error && error.message) || "The time limits could not be read.") + "</p>";
+        });
+    }
+
+    if (!panel.hidden) load();
+    new MutationObserver(function () { if (!panel.hidden) load(); })
+      .observe(panel, { attributes: true, attributeFilter: ["hidden"] });
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>

@@ -1,0 +1,235 @@
+/* ==========================================================================
+   Workspace (desk) theme
+   --------------------------------------------------------------------------
+   The administration interface under /app, dressed to match the portal's
+   Hybrid theme on its dense side: a white header with a brand rule, a
+   record-style page head with an icon tile for the record type, 32 px list
+   rows and controls, form sections as cards, and the brand colour on primary
+   buttons and links.
+
+   Loaded on every desk page through app_include_css (hooks.py). Why it is
+   safe to do so:
+     - The framework's source is not touched. The theme re-points the
+       framework's own CSS variables and restyles a small set of stable desk
+       classes (navbar, page head, sidebar, list rows, form sections, controls,
+       buttons). Nothing is hidden, moved or reordered, and no script depends
+       on it: delete the file and the desk is exactly as the framework ships.
+     - Every rule is scoped to  html[data-theme] body[data-route], which only
+       desk pages carry; the portal, the sign-in page and printed documents
+       never match.
+     - Views that draw their own chrome (the report view's grid, the workspace
+       editor, the print designer, charts) take the colours and corner radius
+       from the variables and keep their own layout.
+
+   The brand colour comes from Portal Branding: branding.boot_session puts it
+   in the boot data, and consilium-desk.js sets --cns-desk-brand,
+   --cns-desk-on-brand and --cns-desk-brand-dark on <html>. Until that runs,
+   the default brand colour applies.
+
+   The record-type icon uses the portal's vendored icon font, declared here
+   under its own family name so the desk needs nothing else loaded.
+   No imports, no external addresses.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Consilium Desk Icons";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("/assets/consilium/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff2") format("woff2");
+}
+
+:root:not([data-theme="dark"]) {
+  --dk-page: #f3f4f6;
+  --dk-card: #ffffff;
+  --dk-line: #e3e6eb;
+  --dk-line-strong: #c9ced6;
+  --dk-field-border: #7f899a;
+  --dk-head: #f6f7f9;
+  --dk-label: #3a4353;
+  --dk-brand: var(--cns-desk-brand, #1d3557);
+  --dk-on-brand: var(--cns-desk-on-brand, #ffffff);
+  --dk-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.06);
+
+  --bg-color: var(--dk-page);
+  --fg-color: #ffffff;
+  --card-bg: #ffffff;
+  --navbar-bg: #ffffff;
+  --control-bg: #ffffff;
+  --control-bg-on-gray: #ffffff;
+  --border-color: var(--dk-line);
+  --primary: var(--dk-brand);
+  --primary-color: var(--dk-brand);
+  --btn-primary: var(--dk-brand);
+  --sidebar-select-color: #ffffff;
+  --fg-hover-color: var(--dk-head);
+  --heading-color: #111827;
+  --text-color: #1f2937;
+}
+[data-theme="dark"] {
+  --dk-page: #0d1117;
+  --dk-card: #161b22;
+  --dk-line: #2a313c;
+  --dk-line-strong: #3d4652;
+  --dk-field-border: #7d8590;
+  --dk-head: #1c222b;
+  --dk-label: #c9d1d9;
+  --dk-brand: var(--cns-desk-brand-dark, #8e9aab);
+  --dk-on-brand: #0d1117;
+  --dk-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+
+  --bg-color: var(--dk-page);
+  --fg-color: var(--dk-card);
+  --card-bg: var(--dk-card);
+  --navbar-bg: var(--dk-card);
+  --control-bg: #0f141a;
+  --border-color: var(--dk-line);
+  --primary: var(--dk-brand);
+  --btn-primary: var(--dk-brand);
+  --sidebar-select-color: var(--dk-head);
+}
+:root {
+  --border-radius: 6px;
+  --border-radius-sm: 6px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 10px;
+  --btn-height: 32px;
+  --input-height: 32px;
+  /* Record-type icon: settings by default, the record's own for the three
+     areas (the glyphs are code points of the vendored icon font). */
+  --dk-obj: #5c6b82;
+  --dk-glyph: "\f3e5";
+}
+body[data-route*="Governance Forum"],
+body[data-route*="Forum Meeting"],
+body[data-route*="Forum Formation"],
+body[data-route*="Formation Request"] { --dk-obj: #6f4bc0; --dk-glyph: "\f4d0"; }
+body[data-route*="Governing Document"],
+body[data-route*="Approval Route"] { --dk-obj: #0b7a6c; --dk-glyph: "\f38b"; }
+body[data-route*="Escalation"],
+body[data-route*="Risk Acceptance"],
+body[data-route*="Action Plan"] { --dk-obj: #b8322d; --dk-glyph: "\f335"; }
+body[data-route^="Workspaces"] { --dk-obj: var(--dk-brand); --dk-glyph: "\f425"; }
+[data-theme="dark"] body[data-route^="Workspaces"] { --dk-obj: #3c4a60; }
+
+/* ---- Shell and header ---------------------------------------------------- */
+html[data-theme] body[data-route] { background: var(--dk-page); -webkit-font-smoothing: antialiased; }
+html[data-theme] body[data-route] .navbar {
+  background: var(--dk-card);
+  border-bottom: 3px solid var(--dk-brand);
+  box-shadow: var(--dk-shadow);
+}
+html[data-theme] body[data-route] .search-bar .form-control {
+  background: var(--dk-card);
+  border: 1px solid var(--dk-field-border);
+  border-radius: 999px;
+}
+html[data-theme] body[data-route] .search-bar .form-control:focus {
+  border-color: var(--dk-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dk-brand) 20%, transparent);
+}
+html[data-theme] body[data-route] .dropdown-menu,
+html[data-theme] body[data-route] .awesomplete > ul {
+  border: 1px solid var(--dk-line-strong);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px -10px rgba(15, 23, 42, 0.3);
+}
+
+/* ---- Page head: a record header card ------------------------------------ */
+html[data-theme] body[data-route] .page-head { background: transparent; border-bottom: 0; }
+html[data-theme] body[data-route] .page-head .page-head-content {
+  margin-top: 8px;
+  padding: 0 14px;
+  background: var(--dk-card);
+  border: 1px solid var(--dk-line);
+  border-radius: 10px;
+  box-shadow: var(--dk-shadow);
+}
+html[data-theme] body[data-route] .page-head .title-area { align-items: center; }
+html[data-theme] body[data-route] .page-head .title-area::before {
+  content: var(--dk-glyph);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+  border-radius: 8px;
+  font-family: "Consilium Desk Icons";
+  font-size: 16px;
+  line-height: 1;
+  color: #ffffff;
+  background: var(--dk-obj);
+}
+html[data-theme] body[data-route] .page-title .title-text { font-weight: 700; letter-spacing: -0.015em; color: var(--heading-color); }
+
+/* ---- Sidebar ------------------------------------------------------------- */
+html[data-theme] body[data-route] .layout-side-section .standard-sidebar-item.selected {
+  background: var(--dk-card);
+  box-shadow: inset 3px 0 0 var(--dk-brand), var(--dk-shadow);
+  font-weight: 650;
+}
+
+/* ---- Cards: the list container, form sections, workspace link cards ------- */
+/* Workspace shortcuts and spacers keep the framework's borderless look: a
+   card round a one-line shortcut crowds it, and a spacer must stay invisible. */
+html[data-theme] body[data-route] .layout-main-section.frappe-card,
+html[data-theme] body[data-route] .form-layout .form-section.card-section,
+html[data-theme] body[data-route] .form-dashboard-section,
+html[data-theme] body[data-route] .widget.links-widget-box,
+html[data-theme] body[data-route] .widget.number-widget-box,
+html[data-theme] body[data-route] .widget.dashboard-widget-box {
+  background: var(--dk-card);
+  border: 1px solid var(--dk-line);
+  border-radius: 10px;
+  box-shadow: var(--dk-shadow);
+}
+html[data-theme] body[data-route] .form-layout .form-page { border: 0; background: transparent; box-shadow: none; }
+html[data-theme] body[data-route] .form-layout .form-section.card-section { margin-bottom: 12px; }
+html[data-theme] body[data-route] .form-section .section-head { font-weight: 700; }
+html[data-theme] body[data-route] .form-tabs-list .form-tabs .nav-link.active { font-weight: 700; color: var(--heading-color); border-bottom: 3px solid var(--dk-brand); }
+
+/* ---- List view: dense rows ----------------------------------------------- */
+html[data-theme] body[data-route] .frappe-list .list-row-head {
+  background: var(--dk-head);
+  border-bottom: 1px solid var(--dk-line-strong);
+  font-weight: 650;
+  color: var(--dk-label);
+}
+html[data-theme] body[data-route] .frappe-list .list-row { height: 36px; }
+html[data-theme] body[data-route] .frappe-list .list-row-container:hover { background: var(--dk-head); }
+html[data-theme] body[data-route] .frappe-list .list-row-border { border-color: var(--dk-line); }
+html[data-theme] body[data-route] .frappe-list .list-subject a,
+html[data-theme] body[data-route] .frappe-list .list-subject .bold { color: var(--dk-brand); }
+
+/* ---- Controls ------------------------------------------------------------- */
+/* A field's edge meets 3:1 (WCAG 1.4.11): the framework's borderless grey
+   fields are hard to find for anyone with low contrast sensitivity. */
+html[data-theme] body[data-route] .frappe-control .form-control,
+html[data-theme] body[data-route] .frappe-control select,
+html[data-theme] body[data-route] .page-form .form-control {
+  background-color: var(--control-bg);
+  border: 1px solid var(--dk-field-border);
+}
+html[data-theme] body[data-route] .frappe-control .form-control:focus,
+html[data-theme] body[data-route] .page-form .form-control:focus {
+  border-color: var(--dk-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dk-brand) 20%, transparent);
+}
+html[data-theme] body[data-route] .frappe-control .control-label { color: var(--dk-label); }
+
+/* ---- Buttons and pills ---------------------------------------------------- */
+html[data-theme] body[data-route] .btn-primary {
+  background: var(--dk-brand);
+  border: 1px solid var(--dk-brand);
+  color: var(--dk-on-brand);
+}
+html[data-theme] body[data-route] .btn-primary:hover,
+html[data-theme] body[data-route] .btn-primary:focus { background: color-mix(in srgb, var(--dk-brand) 88%, #000000); color: var(--dk-on-brand); }
+[data-theme="dark"] body[data-route] .btn-primary:hover,
+[data-theme="dark"] body[data-route] .btn-primary:focus { background: color-mix(in srgb, var(--dk-brand) 85%, #ffffff); }
+html[data-theme] body[data-route] .btn-default,
+html[data-theme] body[data-route] .btn-secondary { background: var(--dk-card); border: 1px solid var(--dk-line-strong); box-shadow: none; }
+html[data-theme] body[data-route] .btn-default:hover,
+html[data-theme] body[data-route] .btn-secondary:hover { background: var(--dk-head); }

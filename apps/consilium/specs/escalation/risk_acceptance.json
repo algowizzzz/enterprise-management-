@@ -192,6 +192,14 @@
       "description": "Core's approval record. An acceptance whose state takes effect without one is refused."
     },
     {
+      "fieldname": "approval_route",
+      "fieldtype": "Link",
+      "label": "Approval Route",
+      "options": "Risk Acceptance Approval Route",
+      "read_only": 1,
+      "description": "The approval chain this acceptance was sent through. Empty when it went to one independent approver."
+    },
+    {
       "fieldname": "approval_motion",
       "fieldtype": "Link",
       "label": "Approval Motion",

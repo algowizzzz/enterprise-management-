@@ -37,7 +37,7 @@ DEFAULTS = {
     "favicon": "",
     "primary_colour": "#1d3557",
     "accent_colour": "#0f6c8c",
-    "header_style": "Primary colour",
+    "header_style": "Glass",
     "font_family": "",
     "font_regular": "",
     "font_bold": "",
@@ -293,6 +293,23 @@ def brand_style() -> str:
             css.append(_font_face(family, bold, 700))
         css.append(f':root{{--cns-font-sans:"{family}",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;}}')
     return "".join(css)
+
+
+def boot_session(bootinfo) -> None:
+    """The brand colour for the workspace theme (desk-theme.css).
+
+    The workspace is drawn by the framework, so the portal's generated brand
+    tokens never reach it. The two colours it needs travel in the boot data
+    instead, and consilium-desk.js sets them as CSS variables; the same
+    derivation as brand_style() keeps the dark-theme colour legible.
+    """
+    brand = get_brand()
+    primary = brand["primary_colour"] if _HEX.match(brand["primary_colour"] or "") else DEFAULTS["primary_colour"]
+    bootinfo.consilium_brand = {
+        "primary": primary,
+        "on_primary": "#111111" if _luminance(primary) > 0.45 else "#ffffff",
+        "primary_dark": _mix(primary, "#ffffff", 0.5),
+    }
 
 
 def _font_face(family: str, url: str, weight: int) -> str:

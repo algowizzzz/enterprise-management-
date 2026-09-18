@@ -44,7 +44,7 @@ WWW = Path(frappe.get_app_path("consilium", "www"))
 #: What each page must show an administrator on an empty site: its heading and
 #: the sections that do not depend on data. A marker is literal page text.
 KEY_SECTIONS = {
-	"": ["Where the inventory stands", "Using the system"],
+	"": ["My work", "From the governance office", "Guides"],
 	"admin": ["Administration", "People and access", "Reference data"],
 	"attestation-campaigns": ["Attestation campaigns", "Campaigns"],
 	"create-forum": ["Request a new forum", "Before you start"],
@@ -53,6 +53,7 @@ KEY_SECTIONS = {
 	"emerging-risks": ["Emerging risks", "Leading indicators"],
 	"escalation": ["Escalation matter"],
 	"escalations": ["Escalation register", "Narrow the list"],
+	"exports": ["Exports", "What you can export", "Export log"],
 	"formation-request": ["Formation request"],
 	"formation-requests": ["Formation requests", "Narrow the list"],
 	"forum-disband": ["Disbandment"],
@@ -60,6 +61,7 @@ KEY_SECTIONS = {
 	"forum-review": ["Compliance review"],
 	"forum": ["Forum"],
 	"forums": ["Forum inventory", "Narrow the list"],
+	"guide": ["About this guide", "User guide", "Search the guide", "Chapters"],
 	"governance-gaps": ["Gaps and risk", "Governance risk assessment"],
 	"horizon-scanning": ["Horizon scanning", "Regulatory updates"],
 	"imports": ["Imports", "Upload a file", "Batches"],
@@ -70,6 +72,7 @@ KEY_SECTIONS = {
 	"policy-intake": ["Request a policy or change", "Request a document"],
 	"policy": ["Governing document"],
 	"raise-escalation": ["Raise an escalation", "Before you start"],
+	"records": ["Records and disposal", "Waiting for a decision", "Legal holds in force", "Disposal log"],
 	"regulatory-updates": ["Regulatory updates", "Regulatory requirements"],
 	"reports": ["Management reporting", "The headline"],
 	"tasks": ["My work", "What to show"],
@@ -102,7 +105,7 @@ ROLE_PERSONAS = [p for p in PERSONAS if p != "nobody"]
 ERROR = re.compile(r"Traceback \(most recent call last\)|TemplateSyntaxError|UndefinedError|jinja2\.exceptions")
 
 #: Every address value a page reads. A page that ignores one is unaffected.
-PARAMS = ("name", "forum", "version", "request", "batch", "requirement")
+PARAMS = ("name", "forum", "version", "request", "batch", "requirement", "chapter", "q")
 PAYLOAD = '"><script>cnsxss()</script>'
 
 PEOPLE = PersonaPool()
@@ -260,6 +263,10 @@ class TestAdministrator(PortalPageCase):
 				status, body = render(route, "Administrator", query)
 				self.assertRendered(route, "Administrator", status, body)
 				self.assertIn(title, body, f"/{route}: the record's title is not on its page")
+				if route != "policy-impact":
+					# The theme draws the record's summary card as its highlights
+					# panel by this class, not by the card's id.
+					self.assertIn("cns-record-summary", body, f"/{route}: the summary card lost its class")
 
 	def test_a_reference_that_does_not_exist_renders_an_empty_state(self):
 		for route in ("forum", "policy", "escalation", "formation-request", "document-view", "policy-impact"):

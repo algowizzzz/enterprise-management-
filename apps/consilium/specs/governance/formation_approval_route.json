@@ -8,7 +8,7 @@
   "sort_field": "modified",
   "sort_order": "DESC",
   "title_field": "route_title",
-  "search_fields": "route_title,request_type",
+  "search_fields": "route_title,request_type,forum_type,change_materiality",
   "fields": [
     {
       "fieldname": "route_title",
@@ -26,6 +26,24 @@
       "reqd": 1,
       "default": "Any",
       "in_list_view": 1
+    },
+    {
+      "fieldname": "forum_type",
+      "fieldtype": "Link",
+      "label": "Applies To Forum Type",
+      "options": "Governance Forum Type",
+      "in_list_view": 1,
+      "description": "Leave empty to apply to every forum type. A route naming the request's forum type is preferred over one that does not."
+    },
+    {
+      "fieldname": "change_materiality",
+      "fieldtype": "Select",
+      "label": "Applies To Materiality",
+      "options": "Any\nMinor\nSignificant\nMaterial",
+      "reqd": 1,
+      "default": "Any",
+      "in_list_view": 1,
+      "description": "The materiality of change the request records at intake. A route naming it is preferred over one that applies to any."
     },
     {
       "fieldname": "is_active",
@@ -82,5 +100,5 @@
       "export": 1
     }
   ],
-  "provenance": "02-data-model.md \u00a76; added because the acceptance criterion requires the steps to be configuration rather than code. One active route per request type wins, most recently modified first."
+  "provenance": "02-data-model.md \u00a76; added because the acceptance criterion requires the steps to be configuration rather than code. G-8: the path may differ by forum type and by materiality of change, so a route is keyed by request type, forum type and materiality; the most specific active match wins, most recently modified first among equals"
 }

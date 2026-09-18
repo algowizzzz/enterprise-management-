@@ -86,10 +86,17 @@ def _controlled_doctypes() -> dict[str, bool]:
 
 
 def _matches(target_doctype: str, record_filter, name: str) -> bool:
-    filters = _loads(record_filter)
-    filters["name"] = name
+    # The record's own name is added as a condition of its own, never written
+    # over the filter's: a hold or an assignment scoped by name ({"name": X} or
+    # {"name": ["in", [...]]}) used to have its condition replaced by the record
+    # being asked about, and so matched every record of the DocType.
+    conditions = [
+        [field, "=", value] if not isinstance(value, (list, tuple)) else [field, *value]
+        for field, value in _loads(record_filter).items()
+    ]
+    conditions.append(["name", "=", name])
     try:
-        return bool(frappe.db.exists(target_doctype, filters))
+        return bool(frappe.get_all(target_doctype, filters=conditions, pluck="name", limit_page_length=1))
     except Exception:
         # A filter naming a field the DocType does not have is a configuration
         # error, not a licence to bypass the control.
@@ -287,16 +294,35 @@ def execute_disposition(disposition_event: str, evidence: dict | None = None) ->
     event.save(ignore_permissions=True)
 
 
-def _disposition_pending(archive_record: str, events: list[dict]) -> bool:
+#: The decision value (a configuration option, not a state) by which a records
+#: manager keeps a record past its due date. See ``consilium_core.records``.
+DECISION_RETAIN = "Retain"
+
+
+def _retained(row, as_of) -> bool:
+    """An approved decision to keep the record, still running on ``as_of``.
+
+    No ``retained_until`` means kept permanently, which the records screen only
+    allows for a class that archives permanently.
+    """
+    if row.get("decision") != DECISION_RETAIN or not row.get("approved_by"):
+        return False
+    return not row.get("retained_until") or getdate(row.get("retained_until")) >= getdate(as_of)
+
+
+def _disposition_pending(archive_record: str, events: list[dict], as_of=None) -> bool:
     """Whether an archive already has a disposition in hand or behind it.
 
     Read from facts, not the status label: an event still open (scheduled, held
     or approved) is in hand, and one with ``executed_on`` set has been carried
-    out. Only a cancelled event — closed and never executed — leaves the archive
-    to be flagged again, because cancelling a disposal is not the same as
-    deciding the record is kept for ever.
+    out. An approved decision to retain holds the archive back until its
+    ``retained_until`` date, after which it is flagged again for a fresh
+    decision. Only a cancelled event — closed and never executed — leaves the
+    archive to be flagged again at once, because cancelling a disposal is not
+    the same as deciding the record is kept for ever.
     """
-    return any(int(row.is_open or 0) or row.executed_on for row in events)
+    as_of = as_of or nowdate()
+    return any(int(row.is_open or 0) or row.executed_on or _retained(row, as_of) for row in events)
 
 
 def flag_due_for_disposal(as_of=None) -> dict[str, list[str]]:
@@ -324,7 +350,9 @@ def flag_due_for_disposal(as_of=None) -> dict[str, list[str]]:
 
     events_by_archive: dict[str, list[dict]] = {}
     for row in frappe.get_all(
-        "Disposition Event", fields=["name", "archive_record", "is_open", "executed_on", "held_by_legal_hold"]
+        "Disposition Event",
+        fields=["name", "archive_record", "is_open", "executed_on", "held_by_legal_hold",
+                "decision", "approved_by", "retained_until"],
     ):
         events_by_archive.setdefault(row.archive_record, []).append(row)
 
@@ -334,7 +362,7 @@ def flag_due_for_disposal(as_of=None) -> dict[str, list[str]]:
         fields=["name", "subject_doctype", "subject_name"],
         order_by="disposition_due_on asc",
     ):
-        if _disposition_pending(archive.name, events_by_archive.get(archive.name, [])):
+        if _disposition_pending(archive.name, events_by_archive.get(archive.name, []), as_of):
             continue
         # One archive at a time: a class deleted from under an archive, say, is
         # that archive's problem and must not stop the rest being flagged.

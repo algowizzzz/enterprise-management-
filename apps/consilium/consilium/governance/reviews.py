@@ -33,8 +33,100 @@ def _active_forum_filter() -> dict:
     return {"is_active": 1}
 
 
-def open_inventory_attestation(period_label: str, *, opens_on=None, due_on=None, population_filter=None):
-    """The G-10 annual inventory attestation, to every attesting seat."""
+# ---------------------------------------------------------------------------
+# G-10: the inventory attestation is conducted in the first quarter.
+#
+# "Conducted in the first quarter" is read as: the campaign is due by the end
+# of a first quarter (1 January to 31 March). When it opens is left free — an
+# office may open it in December so that people have the whole quarter — but
+# the date by which everyone must have attested falls inside the quarter.
+#
+# Three things enforce it. A daily job opens the year's campaign in the first
+# quarter when nobody has (``open_first_quarter_inventory``). Opening one due
+# outside a first quarter is refused and the refusal audited, unless the office
+# records why an off-cycle campaign is needed — a catch-up after a missed
+# quarter, a population added mid-year — and the reason is kept on the
+# campaign. And a year with no first-quarter campaign is reported
+# (``inventory_q1_standing``), on the campaign screen and in reporting, so a
+# missed quarter is visible rather than inferred.
+# ---------------------------------------------------------------------------
+
+#: The last month of the quarter the inventory attestation is conducted in.
+FIRST_QUARTER_LAST_MONTH = 3
+
+#: Days before the due date that the first-quarter campaign reminds people,
+#: with the note each reminder carries. The opening notice is added per
+#: campaign (it falls on the day the campaign opens).
+FIRST_QUARTER_REMINDERS = (
+    (14, "Two weeks before the first-quarter deadline."),
+    (3, "Final reminder: the attestation closes at the end of the quarter."),
+)
+
+
+def first_quarter(year: int) -> tuple:
+    """First and last day of ``year``'s first quarter."""
+    return getdate(f"{int(year)}-01-01"), getdate(f"{int(year)}-03-31")
+
+
+def in_first_quarter(day) -> bool:
+    return getdate(day).month <= FIRST_QUARTER_LAST_MONTH
+
+
+def next_first_quarter_due(from_day=None):
+    """The first-quarter deadline on or after ``from_day``: this year's 31 March
+    while still in the quarter, next year's after it."""
+    day = getdate(from_day or nowdate())
+    year = day.year if in_first_quarter(day) else day.year + 1
+    return first_quarter(year)[1]
+
+
+def inventory_window_problem(due_on) -> str | None:
+    """Why an inventory campaign due on ``due_on`` is not a first-quarter one, or None."""
+    due = getdate(due_on)
+    if in_first_quarter(due):
+        return None
+    return _(
+        "The annual forum inventory attestation is conducted in the first quarter: it must be due between "
+        "1 January and 31 March. {0} is outside the quarter."
+    ).format(frappe.utils.formatdate(due))
+
+
+def open_inventory_attestation(period_label: str, *, opens_on=None, due_on=None, population_filter=None,
+                               off_cycle_reason: str | None = None):
+    """The G-10 annual inventory attestation, to every attesting seat.
+
+    Due by the end of a first quarter (see the note above). A campaign due
+    outside one is refused, audited, unless ``off_cycle_reason`` says why it is
+    needed; the reason is then kept on the campaign's timeline. With no due
+    date the next first-quarter deadline is used.
+    """
+    opens = getdate(opens_on or nowdate())
+    due = getdate(due_on or next_first_quarter_due(opens))
+    problem = inventory_window_problem(due)
+    off_cycle_reason = (off_cycle_reason or "").strip() or None
+    if problem and not off_cycle_reason:
+        from consilium.consilium_core import audit
+
+        audit.refuse(
+            problem + " " + _("To open an off-cycle campaign, record why it is needed."),
+            subject_doctype="Attestation Campaign",
+            subject_name=period_label,
+            attempted_action="Other",
+            control="inventory attestation first quarter",
+            context={"opens_on": str(opens), "due_on": str(due)},
+            exc=frappe.ValidationError,
+        )
+    campaign = _insert_inventory_campaign(period_label, opens, due, population_filter)
+    if problem:
+        campaign.add_comment(
+            "Info",
+            _("Off-cycle inventory attestation (due {0}, outside the first quarter), opened by {1}. Reason: {2}")
+            .format(due, frappe.session.user, off_cycle_reason),
+        )
+    return campaign
+
+
+def _insert_inventory_campaign(period_label: str, opens, due, population_filter):
     campaign = frappe.get_doc(
         {
             "doctype": "Attestation Campaign",
@@ -49,12 +141,130 @@ def open_inventory_attestation(period_label: str, *, opens_on=None, due_on=None,
             "seat_user_field": "member",
             "seat_role_field": "forum_role",
             "seat_end_date_field": "end_date",
-            "opens_on": getdate(opens_on or nowdate()),
-            "due_on": getdate(due_on or add_years(getdate(nowdate()), 1)),
+            "opens_on": opens,
+            "due_on": due,
             "status": "Open",
         }
     ).insert(ignore_permissions=True)
     return campaign
+
+
+def first_quarter_campaign(year: int) -> str | None:
+    """The inventory campaign conducted in ``year``'s first quarter, if one was.
+
+    One due inside the quarter that is open, or that asked anybody (it has
+    tasks). A campaign left in draft asked nobody and does not count. Read from
+    dates, the ``is_open`` flag and the task rows, never a status label — which
+    also means a campaign cancelled after asking people still counts as held.
+    """
+    start, end = first_quarter(year)
+    rows = frappe.get_all(
+        "Attestation Campaign",
+        filters={"campaign_type": INVENTORY_CAMPAIGN, "target_doctype": "Governance Forum",
+                 "due_on": ["between", [start, end]]},
+        fields=["name", "is_open"],
+        order_by="due_on asc, creation asc",
+    )
+    for row in rows:
+        if row.is_open or frappe.db.exists("Attestation Task", {"campaign": row.name}):
+            return row.name
+    return None
+
+
+def inventory_q1_standing(as_of=None) -> dict:
+    """Whether each year had its first-quarter inventory attestation (G-10).
+
+    Years run from the first year any inventory campaign was due (or this year,
+    on a site that has never run one) to this year. A year is ``held`` with a
+    campaign, ``missed`` without one once its quarter is over, and ``due`` while
+    its quarter is still under way with none opened yet — the daily job opens
+    it. ``off_cycle`` lists the inventory campaigns due outside a first quarter.
+    """
+    as_of = getdate(as_of or nowdate())
+    campaigns = frappe.get_all(
+        "Attestation Campaign",
+        filters={"campaign_type": INVENTORY_CAMPAIGN, "target_doctype": "Governance Forum"},
+        fields=["name", "campaign_title", "period_label", "opens_on", "due_on"],
+        order_by="due_on asc",
+    )
+    due_years = [getdate(row.due_on).year for row in campaigns if row.due_on]
+    first = min([*due_years, as_of.year])
+    years = []
+    for year in range(first, as_of.year + 1):
+        campaign = first_quarter_campaign(year)
+        if campaign:
+            standing = "held"
+        elif as_of > first_quarter(year)[1]:
+            standing = "missed"
+        else:
+            standing = "due"
+        years.append({"year": year, "campaign": campaign, "standing": standing})
+    off_cycle = [
+        {"name": row.name, "campaign_title": row.campaign_title, "period_label": row.period_label,
+         "opens_on": str(row.opens_on) if row.opens_on else None, "due_on": str(row.due_on)}
+        for row in campaigns if row.due_on and not in_first_quarter(row.due_on)
+    ]
+    return {
+        "as_of": str(as_of),
+        "years": years,
+        "missed": [row["year"] for row in years if row["standing"] == "missed"],
+        "due": [row["year"] for row in years if row["standing"] == "due"],
+        "off_cycle": off_cycle,
+        "next_due_on": str(next_first_quarter_due(as_of)),
+    }
+
+
+@frappe.whitelist(methods=["GET"])
+def inventory_attestation_standing() -> dict:
+    """``inventory_q1_standing`` for the campaign screen and reporting.
+
+    Campaign names and dates only — nothing about any forum — so anyone who
+    may read the forum inventory may see whether its attestation was held.
+    """
+    if frappe.session.user == "Guest" or not frappe.has_permission("Governance Forum", "read"):
+        frappe.throw(_("The forum inventory is not open to you."), frappe.PermissionError)
+    return inventory_q1_standing()
+
+
+def _free_inventory_label(year: int) -> str:
+    """A period label no inventory campaign has used: the year, if it is free."""
+    label, counter = str(year), 1
+    while frappe.db.exists("Attestation Campaign", {"campaign_type": INVENTORY_CAMPAIGN, "period_label": label}):
+        counter += 1
+        label = f"{year} Q1" if counter == 2 else f"{year} Q1 #{counter - 1}"
+    return label
+
+
+def open_first_quarter_inventory(as_of=None) -> str | None:
+    """Scheduled daily (hooks.py). Opens this year's inventory attestation in Q1.
+
+    Does nothing outside the first quarter, when the year's first-quarter
+    campaign exists (however it was opened), or when there is no active forum
+    to attest — a campaign that asks nobody would look, on every list, exactly
+    like one that had been answered. Otherwise the campaign opens today, due on
+    31 March, over every active forum, and its tasks are generated at once.
+
+    Its reminder schedule starts with a point on the opening day, so the first
+    daily reminder run tells everyone asked that the attestation is open, then
+    the ``FIRST_QUARTER_REMINDERS`` points before the deadline.
+    """
+    as_of = getdate(as_of or nowdate())
+    if not in_first_quarter(as_of) or first_quarter_campaign(as_of.year):
+        return None
+    if not frappe.get_all("Governance Forum", filters=_active_forum_filter(), limit=1, pluck="name"):
+        return None
+    due = first_quarter(as_of.year)[1]
+    campaign = open_inventory_attestation(_free_inventory_label(as_of.year), opens_on=as_of, due_on=due)
+    campaign.append("reminder_schedule", {
+        "offset_days": (due - as_of).days,
+        "note": _("The first-quarter forum inventory attestation is open."),
+    })
+    for offset, note in FIRST_QUARTER_REMINDERS:
+        if offset < (due - as_of).days:
+            campaign.append("reminder_schedule", {"offset_days": offset, "note": _(note)})
+    campaign.save(ignore_permissions=True)
+    generate(campaign)
+    return campaign.name
 
 
 def open_annual_review(period_label: str, *, opens_on=None, due_on=None, population_filter=None):
@@ -214,12 +424,16 @@ def forum_campaign_overview() -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-def open_forum_campaign(kind: str, period_label: str, due_on: str, opens_on: str | None = None) -> dict:
+def open_forum_campaign(kind: str, period_label: str, due_on: str, opens_on: str | None = None,
+                        off_cycle_reason: str | None = None) -> dict:
     """Open one of the two forum campaigns and generate its tasks in one step.
 
     One step, because a campaign opened with no tasks asks nobody anything and
     looks, on every list, exactly like one that has been answered. If generating
     fails the campaign is not left behind: both happen in the one transaction.
+
+    The inventory attestation is due in a first quarter (G-10); one due outside
+    it needs ``off_cycle_reason`` and is refused, audited, without it.
     """
     _require_forum_campaign_right()
     opener = CAMPAIGN_OPENERS.get(kind)
@@ -228,7 +442,10 @@ def open_forum_campaign(kind: str, period_label: str, due_on: str, opens_on: str
     period_label = (period_label or "").strip()
     if not period_label:
         frappe.throw(_("Name the period the campaign covers, such as the year."), title=_("Period Required"))
-    campaign = opener(period_label, opens_on=opens_on or None, due_on=due_on)
+    if opener is open_inventory_attestation:
+        campaign = opener(period_label, opens_on=opens_on or None, due_on=due_on, off_cycle_reason=off_cycle_reason)
+    else:
+        campaign = opener(period_label, opens_on=opens_on or None, due_on=due_on)
     return attestation.generate_and_report(campaign)
 
 

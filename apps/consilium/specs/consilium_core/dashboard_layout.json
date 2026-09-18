@@ -1,0 +1,57 @@
+{
+  "name": "Dashboard Layout",
+  "module": "Consilium Core",
+  "description": "One person's saved arrangement of a dashboard page: which sections and dimensions it shows, and in what order. A preference, not a record of the business: it changes what a page draws for its owner and grants nothing.",
+  "autoname": "DLAY-.#####",
+  "allow_rename": 0,
+  "track_changes": 0,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "user",
+      "fieldtype": "Link",
+      "label": "User",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "page",
+      "fieldtype": "Data",
+      "label": "Page",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "The dashboard page's route, without the leading slash (reports, governance-gaps, emerging-risks)."
+    },
+    {
+      "fieldname": "layout",
+      "fieldtype": "JSON",
+      "label": "Layout",
+      "description": "The sections in order, each with whether it is shown and its dimensions in order. Empty means the page's own default."
+    },
+    {
+      "fieldname": "is_customised",
+      "fieldtype": "Check",
+      "label": "Customised",
+      "default": "0",
+      "read_only": 1,
+      "in_list_view": 1,
+      "description": "Cleared by Reset to default; the row is kept so a later save reuses it."
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    }
+  ],
+  "provenance": "REQUIREMENTS-COVERAGE O-3 (class d): per-user dashboard customisation"
+}

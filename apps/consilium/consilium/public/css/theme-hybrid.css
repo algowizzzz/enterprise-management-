@@ -1,0 +1,933 @@
+/* ==========================================================================
+   Portal theme: Hybrid
+   --------------------------------------------------------------------------
+   The portal's look. Glass where people arrive and orient themselves; dense,
+   solid surfaces where they work.
+
+     Glass   the header and its menus, pop-overs (search results, the user
+             menu, the Help panel), the home banner, the home tiles and the
+             dashboard metric tiles, and the large page titles.
+     Dense   cards, registers (tables), record pages (a highlights panel and a
+             chevron lifecycle path), forms, tabs and administration.
+
+   Layering. Loaded by base_portal.html after tokens.css, consilium.css,
+   brand.css and assistant.css, and BEFORE the generated <style id="cns-brand">.
+   That order is the whole contract with Portal Branding: this file sets the
+   theme's own defaults, and the saved brand (primary ramp, accent, typeface)
+   is written afterwards with selectors at least as specific, so it wins.
+
+   Selector scope. Component rules are prefixed with
+       html.cns-root[data-theme] body.cns-portal
+   which outranks every light and dark rule in consilium.css and brand.css
+   without !important, and matches nothing outside the portal layout.
+
+   Cost. backdrop-filter is the one expensive property on a virtual desktop or
+   a laptop without a GPU. It is used only where content moves underneath or an
+   overlay opens over content: the sticky header (glass header style only) and
+   the menus and pop-overs. Cards and tiles never blur: over a static backdrop
+   a blur is invisible, and on every card it cost more than half the frame
+   rate in a software-rendering test (docs/KNOWLEDGE-BASE.md, section 4). The
+   fixed Help button is solid for the same reason: a blurred fixed element is
+   re-composited on every scrolled frame.
+
+   Accessibility.
+     - prefers-reduced-transparency, or <html data-transparency="reduce">
+       (set by the pre-paint script from the "cns:transparency" preference),
+       turns every frosted surface solid.
+     - prefers-reduced-motion stops the menu animation and hover lifts; the
+       portal's own rule in consilium.css shortens every transition.
+     - Text on translucent surfaces is checked against the worst-case backdrop
+       by scripts/check_contrast.py.
+
+   No imports, no external addresses, no images. The typeface is the Inter the
+   framework already serves from this host; the system font stack follows it.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Consilium Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/assets/frappe/css/fonts/inter/InterVariable.woff2") format("woff2");
+}
+
+/* ---- Tokens: light ------------------------------------------------------ */
+:root:not([data-theme="dark"]) {
+  --hy-base: #f1f3f7;
+  --hy-ambient:
+    radial-gradient(1000px 520px at 6% -12%, rgba(96, 130, 246, 0.20), transparent 62%),
+    radial-gradient(800px 460px at 98% -6%, rgba(34, 184, 207, 0.13), transparent 60%);
+  --hy-card: #ffffff;
+  --hy-tile: rgba(255, 255, 255, 0.74);
+  --hy-chrome: rgba(250, 251, 253, 0.74);
+  --hy-pop: rgba(255, 255, 255, 0.9);
+  --hy-head: #f6f7f9;
+  --hy-line: #e3e6eb;
+  --hy-line-strong: #cfd4dc;
+  --hy-fill: rgba(15, 23, 42, 0.05);
+  --hy-fill-strong: rgba(15, 23, 42, 0.08);
+  --hy-hairline: rgba(15, 23, 42, 0.08);
+  --hy-highlight: rgba(255, 255, 255, 0.85);
+  --hy-seg-on: #ffffff;
+  --hy-path-idle: #eceef2;
+  --hy-path-idle-fg: #3a4353;
+  --hy-shadow-card: 0 0 0 1px rgba(16, 24, 40, 0.02), 0 1px 2px rgba(16, 24, 40, 0.05);
+  --hy-shadow-tile:
+    0 0 0 1px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 var(--hy-highlight),
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 28px -12px rgba(15, 23, 42, 0.14);
+  --hy-shadow-pop:
+    0 0 0 1px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 var(--hy-highlight),
+    0 12px 32px -6px rgba(15, 23, 42, 0.18),
+    0 36px 72px -24px rgba(15, 23, 42, 0.22);
+
+  --cns-surface-page: var(--hy-base);
+  --cns-surface: #ffffff;
+  --cns-surface-raised: #ffffff;
+  --cns-surface-muted: var(--hy-head);
+  --cns-surface-sunken: #eceef2;
+  --cns-surface-hover: #f3f5f8;
+  --cns-text: #111827;
+  --cns-text-secondary: #374151;
+  --cns-text-muted: #525c6b;
+  --cns-text-disabled: #8a93a3;
+  --cns-border: var(--hy-line);
+  --cns-border-subtle: #eceef2;
+  --cns-border-strong: #b9c0cb;
+  --cns-border-field: #7f899a;
+  --cns-divider: #eceef2;
+  --cns-shadow-xs: var(--hy-shadow-card);
+  --cns-shadow-sm: var(--hy-shadow-card);
+  --cns-shadow-md: 0 8px 24px -8px rgba(15, 23, 42, 0.16);
+  --cns-shadow-lg: 0 24px 56px -16px rgba(15, 23, 42, 0.26);
+}
+
+/* ---- Tokens: dark ------------------------------------------------------- */
+:root[data-theme="dark"] {
+  --hy-base: #0a0f19;
+  --hy-ambient:
+    radial-gradient(1000px 520px at 6% -12%, rgba(64, 98, 222, 0.30), transparent 62%),
+    radial-gradient(800px 460px at 98% -6%, rgba(20, 150, 170, 0.18), transparent 60%);
+  --hy-card: #131a27;
+  --hy-tile: rgba(24, 33, 52, 0.66);
+  --hy-chrome: rgba(12, 18, 30, 0.72);
+  --hy-pop: rgba(22, 30, 48, 0.92);
+  --hy-head: #182030;
+  --hy-line: #243044;
+  --hy-line-strong: #33415a;
+  --hy-fill: rgba(255, 255, 255, 0.06);
+  --hy-fill-strong: rgba(255, 255, 255, 0.1);
+  --hy-hairline: rgba(255, 255, 255, 0.08);
+  --hy-highlight: rgba(255, 255, 255, 0.07);
+  --hy-seg-on: rgba(255, 255, 255, 0.14);
+  --hy-path-idle: #1f2838;
+  --hy-path-idle-fg: #c3cddc;
+  --hy-shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --hy-shadow-tile: 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 1px 0 var(--hy-highlight), 0 12px 32px -10px rgba(0, 0, 0, 0.5);
+  --hy-shadow-pop: 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 1px 0 var(--hy-highlight), 0 24px 64px -12px rgba(0, 0, 0, 0.7);
+
+  --cns-surface-page: var(--hy-base);
+  --cns-surface: var(--hy-card);
+  --cns-surface-raised: #182132;
+  --cns-surface-muted: var(--hy-head);
+  --cns-surface-sunken: #0f1520;
+  --cns-surface-hover: #1b2435;
+  --cns-text: #eef2f8;
+  --cns-text-secondary: #c6cfdd;
+  --cns-text-muted: #a1adbf;
+  --cns-text-disabled: #6f7c92;
+  --cns-border: var(--hy-line);
+  --cns-border-subtle: #1c2536;
+  --cns-border-strong: #3a4862;
+  --cns-border-field: #6f7c92;
+  --cns-divider: #1c2536;
+}
+
+/* ---- Tokens: both themes ------------------------------------------------ */
+:root {
+  --hy-chrome-filter: blur(24px) saturate(180%);
+  --hy-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --hy-body: 0.875rem;
+  --hy-small: 0.78rem;
+  --hy-h: 2.25rem;
+
+  --cns-font-sans: "Consilium Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --cns-radius-xs: 3px;
+  --cns-radius-sm: 6px;
+  --cns-radius-md: 8px;
+  --cns-radius-lg: 12px;
+  --cns-transition-fast: 120ms var(--hy-ease);
+  --cns-transition-base: 200ms var(--hy-ease);
+  --cns-container-max: 1440px;
+}
+
+/* ---- Less transparency --------------------------------------------------- */
+/* Frosted surfaces become solid. Nothing moves: only the fill changes. */
+@media (prefers-reduced-transparency: reduce) {
+  :root:not([data-theme="dark"]) { --hy-chrome: #ffffff; --hy-pop: #ffffff; --hy-tile: #ffffff; }
+  :root[data-theme="dark"] { --hy-chrome: #111827; --hy-pop: #182132; --hy-tile: #151d2c; }
+  :root { --hy-chrome-filter: none; }
+}
+:root[data-transparency="reduce"]:not([data-theme="dark"]) { --hy-chrome: #ffffff; --hy-pop: #ffffff; --hy-tile: #ffffff; }
+:root[data-transparency="reduce"][data-theme="dark"] { --hy-chrome: #111827; --hy-pop: #182132; --hy-tile: #151d2c; }
+:root[data-transparency="reduce"] { --hy-chrome-filter: none; }
+/* A browser without backdrop-filter gets near-solid chrome, never see-through. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root:not([data-theme="dark"]) { --hy-chrome: rgba(255, 255, 255, 0.97); --hy-pop: #ffffff; }
+  :root[data-theme="dark"] { --hy-chrome: rgba(17, 24, 39, 0.97); --hy-pop: #182132; }
+}
+
+/* ==========================================================================
+   Shell
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal {
+  font-size: var(--hy-body);
+  background-color: var(--hy-base);
+  font-feature-settings: "cv11", "ss01", "ss03";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* The ambient backdrop is a fixed layer of its own, not
+   background-attachment: fixed, which repaints the page on every scroll. */
+html.cns-root[data-theme] body.cns-portal::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--hy-ambient), var(--hy-base);
+}
+html.cns-root[data-theme] body.cns-portal .cns-container { padding-inline: 1.25rem; }
+html.cns-root[data-theme] body.cns-portal .cns-main { padding-block: 1.25rem 3rem; }
+html.cns-root[data-theme] body.cns-portal p { margin-bottom: 0.625rem; }
+
+/* ==========================================================================
+   Header
+   Three styles, chosen in Portal Branding:
+     Glass           (body.cns-header-glass)  frosted, dark text
+     White           (body.cns-header-light)  solid, dark text, a brand rule
+     Primary colour  (neither class)          the brand colour, light text
+   The controls read a few header-local properties, so one set of rules serves
+   all three.
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-header {
+  --hh-fill: color-mix(in srgb, currentColor 11%, transparent);
+  --hh-fill-strong: color-mix(in srgb, currentColor 18%, transparent);
+  --hh-active-bg: color-mix(in srgb, currentColor 18%, transparent);
+  --hh-active-shadow: none;
+  --hh-menu: currentColor;
+}
+html.cns-root[data-theme] body.cns-portal.cns-header-glass .cns-header,
+html.cns-root[data-theme] body.cns-portal.cns-header-light .cns-header {
+  --hh-fill: var(--hy-fill);
+  --hh-fill-strong: var(--hy-fill-strong);
+  --hh-active-bg: var(--hy-seg-on);
+  --hh-active-shadow: 0 0 0 1px var(--hy-hairline), 0 1px 2px rgba(15, 23, 42, 0.08), 0 4px 12px -4px rgba(15, 23, 42, 0.12);
+  --hh-menu: var(--cns-text-secondary);
+}
+
+/* Glass. The frost is on a pseudo-element, not the header: an element with
+   backdrop-filter becomes the backdrop root of everything inside it, and the
+   menus (which live inside the header) could then blur only the header. */
+html.cns-root[data-theme] body.cns-portal.cns-header-glass .cns-header {
+  background: transparent;
+  color: var(--cns-text);
+  border-bottom: 1px solid var(--hy-hairline);
+  box-shadow: 0 8px 24px -18px rgba(15, 23, 42, 0.25);
+}
+html.cns-root[data-theme] body.cns-portal.cns-header-glass .cns-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--hy-chrome);
+  -webkit-backdrop-filter: var(--hy-chrome-filter);
+  backdrop-filter: var(--hy-chrome-filter);
+}
+html.cns-root[data-theme] body.cns-portal.cns-header-glass .cns-header-bar :focus-visible,
+html.cns-root[data-theme] body.cns-portal.cns-header-glass .cns-menubar > .cns-menu > .cns-menu-trigger:focus-visible { outline-color: var(--cns-focus-ring-contrast); }
+
+html.cns-root[data-theme] body.cns-portal .cns-header-inner { min-height: 3.5rem; gap: 1rem; }
+html.cns-root[data-theme] body.cns-portal .cns-brand { font-size: 1.0625rem; font-weight: 650; letter-spacing: -0.015em; }
+html.cns-root[data-theme] body.cns-portal .cns-brand-mark-img { width: 1.9rem; height: 1.9rem; border-radius: 8px; box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.25); }
+html.cns-root[data-theme] body.cns-portal .cns-header .cns-control-btn,
+html.cns-root[data-theme] body.cns-portal .cns-header .cns-fontsize {
+  background: var(--hh-fill);
+  border: 1px solid transparent;
+  color: inherit;
+  border-radius: 999px;
+}
+html.cns-root[data-theme] body.cns-portal .cns-header .cns-control-btn { min-height: 2.125rem; padding-inline: 0.8rem; font-weight: 550; }
+html.cns-root[data-theme] body.cns-portal .cns-header .cns-theme-btn { width: 2.125rem; padding: 0; }
+html.cns-root[data-theme] body.cns-portal .cns-header .cns-fontsize button { min-height: 2.125rem; min-width: 2.125rem; color: inherit; }
+html.cns-root[data-theme] body.cns-portal .cns-header .cns-control-btn:hover,
+html.cns-root[data-theme] body.cns-portal .cns-header .cns-fontsize button:hover:not(:disabled) { background: var(--hh-fill-strong); }
+
+/* Search: a pill that becomes a solid field when used. */
+html.cns-root[data-theme] body.cns-portal .cns-gsearch { max-width: 36rem; }
+html.cns-root[data-theme] body.cns-portal .cns-gsearch-input {
+  height: 2.375rem;
+  padding-left: 2.5rem;
+  border-radius: 999px;
+  background: var(--hh-fill);
+  border: 1px solid transparent;
+  color: inherit;
+  font-size: var(--hy-body);
+}
+html.cns-root[data-theme] body.cns-portal .cns-gsearch-input:hover { background: var(--hh-fill-strong); }
+html.cns-root[data-theme] body.cns-portal.cns-header-glass .cns-gsearch-input::placeholder,
+html.cns-root[data-theme] body.cns-portal.cns-header-light .cns-gsearch-input::placeholder { color: var(--cns-text-muted); opacity: 1; }
+html.cns-root[data-theme] body.cns-portal .cns-gsearch-input:focus {
+  background: var(--hy-pop);
+  border-color: var(--hy-line-strong);
+  color: var(--cns-text);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cns-primary) 18%, transparent);
+}
+html.cns-root[data-theme] body.cns-portal .cns-gsearch-input:focus-visible { outline: 2px solid var(--cns-focus-ring-contrast); outline-offset: 1px; }
+html.cns-root[data-theme] body.cns-portal .cns-gsearch-icon { left: 0.95rem; }
+/* The framework's kbd style draws white on black; here it is a quiet key cap in
+   the header's own colour. */
+html.cns-root[data-theme] body.cns-portal .cns-gsearch-kbd { background: transparent; color: inherit; opacity: 0.7; box-shadow: none; border-radius: 6px; right: 0.75rem; }
+
+/* Menu row: a segmented control. */
+html.cns-root[data-theme] body.cns-portal .cns-mainnav { border-top: 0; }
+html.cns-root[data-theme] body.cns-portal .cns-mainnav-inner { padding-bottom: 0.5rem; }
+html.cns-root[data-theme] body.cns-portal .cns-menubar { gap: 0.2rem; }
+html.cns-root[data-theme] body.cns-portal .cns-menu-trigger {
+  height: 2.125rem;
+  padding-inline: 0.85rem;
+  border-radius: 999px;
+  color: var(--hh-menu);
+  opacity: 1;
+  font-weight: 550;
+  font-size: var(--hy-body);
+}
+html.cns-root[data-theme] body.cns-portal .cns-menu-trigger::after { display: none; }
+html.cns-root[data-theme] body.cns-portal .cns-menu-trigger:hover,
+html.cns-root[data-theme] body.cns-portal .cns-menu.is-open > .cns-menu-trigger { background: var(--hh-fill); color: inherit; }
+html.cns-root[data-theme] body.cns-portal .cns-menu-trigger[data-active] {
+  background: var(--hh-active-bg);
+  color: inherit;
+  font-weight: 650;
+  box-shadow: var(--hh-active-shadow);
+}
+html.cns-root[data-theme="light"] body.cns-portal.cns-header-glass .cns-menu-trigger[data-active] .cns-menu-icon,
+html.cns-root[data-theme="light"] body.cns-portal.cns-header-light .cns-menu-trigger[data-active] .cns-menu-icon { color: var(--cns-primary); opacity: 1; }
+
+/* Menus and pop-overs: frosted, opening from their trigger. */
+html.cns-root[data-theme] body.cns-portal .cns-gsearch-panel,
+html.cns-root[data-theme] body.cns-portal .dropdown-menu,
+html.cns-root[data-theme] body.cns-portal .cns-menu-panel {
+  background: var(--hy-pop);
+  -webkit-backdrop-filter: var(--hy-chrome-filter);
+  backdrop-filter: var(--hy-chrome-filter);
+  border: 0;
+  border-radius: 16px;
+  box-shadow: var(--hy-shadow-pop);
+}
+html.cns-root[data-theme] body.cns-portal .dropdown-menu { padding: 0.4rem; font-size: var(--hy-body); }
+html.cns-root[data-theme] body.cns-portal .dropdown-item { border-radius: 8px; }
+html.cns-root[data-theme] body.cns-portal a.cns-gsearch-option { border-radius: 10px; }
+html.cns-root[data-theme] body.cns-portal .cns-menu-panel {
+  top: calc(100% + 0.55rem);
+  padding: 0.5rem;
+  transform-origin: 1.5rem top;
+  animation: hy-pop-in 200ms var(--hy-ease);
+}
+html.cns-root[data-theme] body.cns-portal .cns-menu-panel--wide { width: 40rem; gap: 0.4rem; }
+html.cns-root[data-theme] body.cns-portal .cns-menu-panel--wide .cns-menu-group + .cns-menu-group { border-left-color: var(--hy-hairline); padding-left: 0.4rem; }
+html.cns-root[data-theme] body.cns-portal .cns-menu-group-label { text-transform: none; letter-spacing: 0; font-size: 0.75rem; font-weight: 600; padding: 0.3rem 0.55rem 0.2rem; }
+html.cns-root[data-theme] body.cns-portal a.cns-menu-item { padding: 0.5rem 0.55rem; border-radius: 12px; gap: 0.75rem; }
+html.cns-root[data-theme] body.cns-portal a.cns-menu-item:hover,
+html.cns-root[data-theme] body.cns-portal a.cns-menu-item:focus-visible { background: color-mix(in srgb, var(--cns-primary) 8%, transparent); }
+html.cns-root[data-theme] body.cns-portal .cns-menu-item-icon {
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 10px;
+  color: var(--cns-primary);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--cns-primary) 6%, #ffffff), color-mix(in srgb, var(--cns-primary) 16%, #ffffff));
+  box-shadow: 0 0 0 1px var(--hy-hairline), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+html.cns-root[data-theme="dark"] body.cns-portal .cns-menu-item-icon { color: var(--cns-text-link); background: rgba(255, 255, 255, 0.07); box-shadow: 0 0 0 1px var(--hy-hairline); }
+html.cns-root[data-theme] body.cns-portal .cns-menu-item-label { font-size: 0.875rem; font-weight: 600; letter-spacing: -0.008em; }
+html.cns-root[data-theme] body.cns-portal .cns-menu-item-desc { font-size: 0.76rem; }
+html.cns-root[data-theme] body.cns-portal .cns-menu-item[aria-current="page"] .cns-menu-item-icon { background: var(--cns-primary); color: var(--cns-on-primary); }
+html.cns-root[data-theme="dark"] body.cns-portal .cns-menu-item[aria-current="page"] .cns-menu-item-icon { color: var(--cns-surface); }
+@keyframes hy-pop-in { from { opacity: 0; transform: translateY(-5px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* ==========================================================================
+   Page header: large type, compact footprint
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-breadcrumb-bar { background: transparent; border: 0; }
+html.cns-root[data-theme] body.cns-portal .cns-breadcrumb { padding: 0.9rem 0 0; font-size: 0.8rem; }
+html.cns-root[data-theme] body.cns-portal .cns-breadcrumb a { color: var(--cns-text-muted); }
+html.cns-root[data-theme] body.cns-portal .cns-breadcrumb-bar + .cns-main { padding-top: 0.4rem; }
+html.cns-root[data-theme] body.cns-portal .cns-page-header { margin-bottom: 1.1rem; align-items: flex-end; gap: 0.75rem 1.5rem; }
+html.cns-root[data-theme] body.cns-portal .cns-page-title {
+  font-size: clamp(1.6rem, 1.2rem + 1vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  margin-bottom: 0.3rem;
+}
+html.cns-root[data-theme] body.cns-portal .cns-page-description { font-size: 0.9375rem; color: var(--cns-text-muted); max-width: 72ch; }
+html.cns-root[data-theme] body.cns-portal h2,
+html.cns-root[data-theme] body.cns-portal h3 { letter-spacing: -0.015em; }
+html.cns-root[data-theme] body.cns-portal .cns-eyebrow,
+html.cns-root[data-theme] body.cns-portal h2.cns-eyebrow {
+  text-transform: none;
+  letter-spacing: -0.01em;
+  font-size: 1.0625rem;
+  font-weight: 650;
+  color: var(--cns-text);
+  margin: 1.5rem 0 0.75rem;
+}
+html.cns-root[data-theme] body.cns-portal .cns-card .cns-eyebrow { font-size: var(--hy-small); font-weight: 600; color: var(--cns-text-muted); margin: 0.25rem 0 0.5rem; }
+
+html.cns-root[data-theme] body.cns-portal .cns-page-actions { gap: 0.4rem; padding-top: 0; }
+html.cns-root[data-theme] body.cns-portal .cns-page-actions .cns-btn-secondary,
+html.cns-root[data-theme] body.cns-portal .cns-page-actions .cns-btn-ghost {
+  background: var(--hy-card);
+  border: 1px solid var(--hy-line-strong);
+  color: var(--cns-text);
+}
+html.cns-root[data-theme] body.cns-portal .cns-page-actions a.cns-btn-secondary,
+html.cns-root[data-theme] body.cns-portal .cns-page-actions a.cns-btn-ghost { color: var(--cns-text); }
+html.cns-root[data-theme] body.cns-portal .cns-page-actions .cns-btn-secondary:hover,
+html.cns-root[data-theme] body.cns-portal .cns-page-actions .cns-btn-ghost:hover { background: var(--cns-surface-hover); }
+
+/* Record pages. The summary card under the title (class cns-record-summary)
+   is a highlights panel: status pills, then the key fields in one row. Where
+   the browser supports :has(), the page header and that card join into a
+   single panel; elsewhere they are two panels one above the other, which
+   reads just as well. */
+html.cns-root[data-theme] body.cns-portal .cns-record-summary {
+  background: var(--hy-tile);
+  border: 0;
+  border-radius: 14px;
+  box-shadow: var(--hy-shadow-tile);
+}
+html.cns-root[data-theme] body.cns-portal .cns-record-summary > .cns-card-body { padding: 0.75rem 1.25rem 0.9rem; }
+html.cns-root[data-theme] body.cns-portal .cns-record-summary .cns-dl {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, max-content));
+  gap: 0.4rem 2.5rem;
+}
+html.cns-root[data-theme] body.cns-portal .cns-record-summary .cns-dl > div { border: 0; padding: 0; }
+@supports selector(:has(+ *)) {
+  html.cns-root[data-theme] body.cns-portal .cns-page-header:has(+ .cns-record-summary) {
+    margin-bottom: 0;
+    padding: 1.1rem 1.25rem 0.9rem;
+    background: var(--hy-tile);
+    border-radius: 14px 14px 0 0;
+    box-shadow: var(--hy-shadow-tile);
+    align-items: center;
+  }
+  html.cns-root[data-theme] body.cns-portal .cns-page-header + .cns-record-summary {
+    border-top: 1px solid var(--hy-hairline);
+    border-radius: 0 0 14px 14px;
+    /* The shared edge must not show the card's shadow over the header. */
+    clip-path: inset(0 -40px -40px -40px);
+  }
+}
+
+/* ==========================================================================
+   Home and dashboards
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-hero {
+  border-radius: 22px;
+  min-height: 16rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 30px 60px -32px color-mix(in srgb, var(--cns-primary-700) 70%, transparent);
+  background:
+    radial-gradient(55% 90% at 88% 8%, color-mix(in srgb, var(--cns-accent) 70%, transparent) 0, transparent 62%),
+    radial-gradient(45% 70% at 62% 115%, color-mix(in srgb, var(--cns-primary-400) 80%, transparent) 0, transparent 60%),
+    linear-gradient(135deg, var(--cns-primary-800), var(--cns-primary-600) 55%, var(--cns-primary-500));
+}
+/* Two panes of glass, drawn, not blurred: over a gradient a real blur would
+   look the same and cost a compositing layer each. */
+html.cns-root[data-theme] body.cns-portal .cns-hero:not(.cns-hero-has-image)::before,
+html.cns-root[data-theme] body.cns-portal .cns-hero:not(.cns-hero-has-image)::after {
+  content: "";
+  position: absolute;
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow: 0 24px 48px -20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+html.cns-root[data-theme] body.cns-portal .cns-hero:not(.cns-hero-has-image)::before { right: 19%; top: 16%; width: 18%; height: 60%; transform: rotate(-8deg); }
+html.cns-root[data-theme] body.cns-portal .cns-hero:not(.cns-hero-has-image)::after { right: 6%; top: 28%; width: 20%; height: 54%; transform: rotate(6deg); z-index: 1; }
+html.cns-root[data-theme] body.cns-portal .cns-hero-body { padding: 2.5rem 3rem; max-width: 42rem; }
+html.cns-root[data-theme] body.cns-portal .cns-hero-title { font-size: clamp(1.9rem, 1.3rem + 1.6vw, 2.6rem); letter-spacing: -0.035em; line-height: 1.06; font-weight: 750; }
+html.cns-root[data-theme] body.cns-portal .cns-hero-text { font-size: 1.0625rem; margin-bottom: 1.25rem; }
+html.cns-root[data-theme] body.cns-portal a.cns-hero-btn { padding: 0.65rem 1.2rem; }
+html.cns-root[data-theme] body.cns-portal a.cns-hero-btn-primary { background: #ffffff; color: var(--cns-primary-700); box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.45); }
+html.cns-root[data-theme] body.cns-portal a.cns-hero-btn-primary:hover { background: #ffffff; color: var(--cns-primary-800); }
+
+html.cns-root[data-theme] body.cns-portal .cns-quick-grid { gap: 1rem; margin-bottom: 0.5rem; }
+html.cns-root[data-theme] body.cns-portal a.cns-quick-tile,
+html.cns-root[data-theme] body.cns-portal .cns-metric-grid > .cns-card {
+  background: var(--hy-tile);
+  border: 0;
+  border-radius: 16px;
+  box-shadow: var(--hy-shadow-tile);
+}
+html.cns-root[data-theme] body.cns-portal a.cns-quick-tile { padding: 1.1rem 1.2rem; gap: 0.9rem; align-items: center; transition: transform 220ms var(--hy-ease), box-shadow 220ms var(--hy-ease); }
+html.cns-root[data-theme] body.cns-portal a.cns-quick-tile:hover { transform: translateY(-2px); box-shadow: var(--hy-shadow-pop); }
+html.cns-root[data-theme] body.cns-portal .cns-quick-icon {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 13px;
+  color: #ffffff;
+  background: linear-gradient(150deg, var(--cns-primary-400), var(--cns-primary-600));
+  box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--cns-primary-600) 90%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+html.cns-root[data-theme] body.cns-portal a.cns-quick-tile:nth-child(2) .cns-quick-icon { background: linear-gradient(150deg, #2aa39a, #11706b); }
+html.cns-root[data-theme] body.cns-portal a.cns-quick-tile:nth-child(3) .cns-quick-icon { background: linear-gradient(150deg, #e0725a, #b23b2e); }
+html.cns-root[data-theme] body.cns-portal a.cns-quick-tile:nth-child(4) .cns-quick-icon { background: linear-gradient(150deg, #8a78f0, #5a44c9); }
+html.cns-root[data-theme] body.cns-portal .cns-quick-title { font-size: 1rem; font-weight: 650; letter-spacing: -0.012em; }
+html.cns-root[data-theme] body.cns-portal .cns-quick-note { font-size: 0.8125rem; }
+
+html.cns-root[data-theme] body.cns-portal .cns-metric-grid { gap: 1rem; margin-bottom: 1rem; }
+html.cns-root[data-theme] body.cns-portal .cns-metric-grid .cns-card-body { padding: 1rem 1.2rem; }
+html.cns-root[data-theme] body.cns-portal .cns-stat { gap: 0.1rem; }
+html.cns-root[data-theme] body.cns-portal .cns-stat-value { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1.08; font-feature-settings: "tnum", "cv11"; }
+html.cns-root[data-theme] body.cns-portal .cns-stat-label { order: -1; text-transform: none; letter-spacing: -0.005em; font-size: 0.8125rem; font-weight: 600; color: var(--cns-text-secondary); }
+html.cns-root[data-theme] body.cns-portal .cns-metric-note { font-size: var(--hy-small); }
+html.cns-root[data-theme] body.cns-portal a.cns-metric-link:hover { background: color-mix(in srgb, var(--cns-primary) 5%, transparent); }
+html.cns-root[data-theme] body.cns-portal a.cns-metric-link .cns-stat-label::after { content: " \203A"; color: var(--cns-text-muted); }
+
+/* The home page (www/index.html). Arrival, so its area cards and action
+   tiles are glass tiles like the dashboard's; My work, the lists and the
+   guide stay solid cards. The rows space the cards, not their margins. */
+html.cns-root[data-theme] body.cns-portal .cns-home .cns-card { margin-bottom: 0; }
+html.cns-root[data-theme] body.cns-portal .cns-home-module {
+  background: var(--hy-tile);
+  border: 0;
+  border-radius: 16px;
+  box-shadow: var(--hy-shadow-tile);
+  padding: 1.1rem 1.2rem 0.9rem;
+}
+html.cns-root[data-theme] body.cns-portal .cns-home-module .cns-quick-icon { width: 2.5rem; height: 2.5rem; font-size: 1.15rem; }
+html.cns-root[data-theme] body.cns-portal #module-policies .cns-quick-icon { background: linear-gradient(150deg, #2aa39a, #11706b); }
+html.cns-root[data-theme] body.cns-portal #module-escalations .cns-quick-icon { background: linear-gradient(150deg, #e0725a, #b23b2e); }
+html.cns-root[data-theme] body.cns-portal #module-insights .cns-quick-icon { background: linear-gradient(150deg, #8a78f0, #5a44c9); }
+html.cns-root[data-theme] body.cns-portal .cns-home-module-title { font-size: 1.0625rem; font-weight: 650; letter-spacing: -0.015em; }
+html.cns-root[data-theme] body.cns-portal a.cns-home-figure { background: var(--hy-fill); border-radius: 12px; }
+html.cns-root[data-theme] body.cns-portal a.cns-home-figure:hover { background: var(--hy-fill-strong); }
+html.cns-root[data-theme] body.cns-portal .cns-home-figure-value { font-size: 1.75rem; letter-spacing: -0.035em; font-feature-settings: "tnum", "cv11"; }
+html.cns-root[data-theme] body.cns-portal .cns-home-links { border-top-color: var(--hy-hairline); }
+html.cns-root[data-theme] body.cns-portal a.cns-home-chip { border-color: var(--hy-line); background: var(--hy-card); }
+html.cns-root[data-theme] body.cns-portal a.cns-home-chip:hover { border-color: var(--hy-line-strong); background: var(--cns-surface-hover); }
+html.cns-root[data-theme] body.cns-portal a.cns-home-action {
+  border: 0;
+  background: var(--hy-fill);
+  border-radius: 12px;
+  transition: background-color var(--cns-transition-fast), transform 200ms var(--hy-ease);
+}
+html.cns-root[data-theme] body.cns-portal a.cns-home-action:hover { background: var(--hy-fill-strong); transform: translateX(2px); }
+html.cns-root[data-theme] body.cns-portal .cns-home-action-icon {
+  border-radius: 11px;
+  color: #ffffff;
+  background: linear-gradient(150deg, var(--cns-primary-400), var(--cns-primary-600));
+  box-shadow: 0 6px 14px -8px color-mix(in srgb, var(--cns-primary-600) 90%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+html.cns-root[data-theme="dark"] body.cns-portal .cns-home-action-icon { background: linear-gradient(150deg, #3b5b8c, #22385a); }
+html.cns-root[data-theme="dark"] body.cns-portal #module-governance .cns-quick-icon { background: linear-gradient(150deg, #3b5b8c, #22385a); }
+html.cns-root[data-theme] body.cns-portal .cns-home-note,
+html.cns-root[data-theme] body.cns-portal .cns-home-guide { border-color: var(--hy-line); border-radius: 10px; }
+html.cns-root[data-theme] body.cns-portal .cns-home-map { border-color: var(--hy-line); border-radius: 10px; }
+html.cns-root[data-theme="dark"] body.cns-portal .cns-hero .cns-hero-greeting { color: #f4f7fb; }
+@media (prefers-reduced-motion: reduce) {
+  html.cns-root[data-theme] body.cns-portal a.cns-home-action:hover { transform: none; }
+}
+
+/* ==========================================================================
+   Cards: solid, crisp, dense
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-card {
+  background: var(--hy-card);
+  border: 1px solid var(--hy-line);
+  border-radius: 12px;
+  box-shadow: var(--hy-shadow-card);
+  margin-bottom: 1rem;
+}
+html.cns-root[data-theme] body.cns-portal .cns-card .cns-card { box-shadow: none; border-radius: 10px; }
+html.cns-root[data-theme] body.cns-portal .cns-card-header { background: transparent; border-bottom: 1px solid var(--cns-border-subtle); padding: 0.8rem 1.1rem 0.7rem; gap: 0.5rem; }
+html.cns-root[data-theme] body.cns-portal .cns-card-title { font-size: 0.975rem; font-weight: 650; letter-spacing: -0.012em; }
+html.cns-root[data-theme] body.cns-portal .cns-card-subtitle { font-size: var(--hy-small); }
+html.cns-root[data-theme] body.cns-portal .cns-card-body { padding: 0.9rem 1.1rem; }
+html.cns-root[data-theme] body.cns-portal .cns-card-footer { background: var(--hy-head); padding: 0.55rem 1.1rem; }
+
+html.cns-root[data-theme] body.cns-portal .cns-link-list { gap: 0.6rem; }
+html.cns-root[data-theme] body.cns-portal a.cns-link-card { padding: 0.7rem 0.85rem; border-radius: 10px; border-color: var(--hy-line); }
+html.cns-root[data-theme] body.cns-portal a.cns-link-card:hover { background: var(--cns-surface-hover); border-color: var(--hy-line-strong); }
+html.cns-root[data-theme] body.cns-portal .cns-link-card-title { font-size: var(--hy-body); color: var(--cns-text); }
+html.cns-root[data-theme] body.cns-portal .cns-link-card-title::after { content: " \203A"; color: var(--cns-text-muted); }
+html.cns-root[data-theme] body.cns-portal .cns-link-card-desc { font-size: var(--hy-small); }
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-btn {
+  min-height: 2.125rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 560;
+  transition: background-color var(--cns-transition-fast), box-shadow var(--cns-transition-fast), transform 100ms var(--hy-ease);
+}
+html.cns-root[data-theme] body.cns-portal .cns-btn:active { transform: scale(0.98); }
+html.cns-root[data-theme] body.cns-portal .cns-btn-primary {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cns-primary) 86%, #ffffff), var(--cns-primary));
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 1px 2px rgba(15, 23, 42, 0.16);
+}
+html.cns-root[data-theme="dark"] body.cns-portal .cns-btn-primary { background: linear-gradient(180deg, var(--cns-primary), color-mix(in srgb, var(--cns-primary) 86%, #000000)); }
+html.cns-root[data-theme] body.cns-portal .cns-btn-secondary { background: var(--hy-card); border-color: var(--hy-line-strong); color: var(--cns-text); box-shadow: 0 1px 1px rgba(15, 23, 42, 0.04); }
+html.cns-root[data-theme] body.cns-portal .cns-btn-secondary:hover { background: var(--cns-surface-hover); }
+html.cns-root[data-theme] body.cns-portal .cns-btn-sm { min-height: 1.75rem; padding: 0.2rem 0.65rem; border-radius: 7px; font-size: var(--hy-small); }
+html.cns-root[data-theme] body.cns-portal .cns-btn-group { gap: 0.4rem; }
+
+/* ==========================================================================
+   Pills and badges
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-pill {
+  border: 0;
+  padding: 0.12rem 0.6rem 0.12rem 0.5rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 15%, transparent);
+}
+html.cns-root[data-theme] body.cns-portal .cns-pill::before { width: 0.42rem; height: 0.42rem; }
+html.cns-root[data-theme] body.cns-portal .cns-badge { border-radius: 999px; padding: 0.05rem 0.5rem; font-weight: 600; }
+html.cns-root[data-theme] body.cns-portal .cns-badge--count { background: var(--hy-fill-strong); border-color: transparent; color: var(--cns-text-secondary); }
+
+/* ==========================================================================
+   Tables: dense registers
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-datatable { border-color: var(--hy-line); border-radius: 12px; background: var(--hy-card); }
+html.cns-root[data-theme] body.cns-portal .cns-card .cns-datatable { border-radius: 10px; }
+html.cns-root[data-theme] body.cns-portal .cns-dt-toolbar { background: var(--hy-card); border-bottom-color: var(--cns-border-subtle); padding: 0.55rem 0.85rem; }
+html.cns-root[data-theme] body.cns-portal .cns-dt-footer { background: var(--hy-card); border-top-color: var(--cns-border-subtle); padding: 0.45rem 0.85rem; }
+html.cns-root[data-theme] body.cns-portal table.cns-table { font-size: 0.84rem; background: transparent; }
+html.cns-root[data-theme] body.cns-portal table.cns-table > thead > tr > th {
+  background: var(--hy-head);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--hy-small);
+  font-weight: 650;
+  color: var(--cns-text-secondary);
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--hy-line);
+}
+/* One line per record, as a register should read. A long value ends in an
+   ellipsis and the full text is offered as a tooltip (consilium-table.js sets
+   the title on any cell it finds cut short). */
+html.cns-root[data-theme] body.cns-portal table.cns-table > tbody > tr > td,
+html.cns-root[data-theme] body.cns-portal table.cns-table > tbody > tr > th {
+  padding: 0.45rem 0.75rem;
+  height: var(--hy-h);
+  border-bottom: 1px solid var(--cns-border-subtle);
+  white-space: nowrap;
+  max-width: 20rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html.cns-root[data-theme] body.cns-portal table.cns-table > tbody > tr > th { font-weight: 650; }
+/* Cells that hold forms, lists or paragraphs of their own keep wrapping (two
+   rules, so a browser without :has() still honours the class). */
+html.cns-root[data-theme] body.cns-portal table.cns-table.cns-table--wrap > tbody > tr > td { white-space: normal; max-width: none; overflow: visible; }
+html.cns-root[data-theme] body.cns-portal table.cns-table > tbody > tr > td:has(> form, > ul, > ol, > p) { white-space: normal; max-width: none; overflow: visible; }
+html.cns-root[data-theme] body.cns-portal table.cns-table > tbody > tr:hover { background: color-mix(in srgb, var(--cns-primary) 4%, transparent); }
+html.cns-root[data-theme] body.cns-portal .cns-table--striped > tbody > tr:nth-child(odd) { background: transparent; }
+html.cns-root[data-theme] body.cns-portal .cns-table--compact > tbody > tr > td { padding: 0.35rem 0.75rem; }
+html.cns-root[data-theme] body.cns-portal table.cns-table td a { text-decoration: none; font-weight: 600; }
+html.cns-root[data-theme] body.cns-portal table.cns-table td a:hover { text-decoration: underline; }
+html.cns-root[data-theme] body.cns-portal .cns-page-btn { border-radius: 7px; border-color: var(--hy-line); }
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-field { margin-bottom: 0.75rem; }
+html.cns-root[data-theme] body.cns-portal .cns-label { font-size: 0.8rem; font-weight: 600; color: var(--cns-text-secondary); margin-bottom: 0.25rem; }
+html.cns-root[data-theme] body.cns-portal .cns-input,
+html.cns-root[data-theme] body.cns-portal .cns-select,
+html.cns-root[data-theme] body.cns-portal .cns-textarea {
+  min-height: var(--hy-h);
+  padding: 0.35rem 0.75rem;
+  font-size: var(--hy-body);
+  border-radius: 8px;
+  border: 1px solid var(--cns-border-field);
+  background-color: var(--hy-card);
+  transition: border-color var(--cns-transition-fast), box-shadow var(--cns-transition-fast);
+}
+html.cns-root[data-theme] body.cns-portal .cns-select { padding-right: 2.2rem; }
+html.cns-root[data-theme] body.cns-portal .cns-input:hover,
+html.cns-root[data-theme] body.cns-portal .cns-select:hover,
+html.cns-root[data-theme] body.cns-portal .cns-textarea:hover { border-color: var(--cns-text-muted); }
+html.cns-root[data-theme] body.cns-portal .cns-input:focus,
+html.cns-root[data-theme] body.cns-portal .cns-select:focus,
+html.cns-root[data-theme] body.cns-portal .cns-textarea:focus { border-color: var(--cns-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cns-primary) 18%, transparent); }
+html.cns-root[data-theme] body.cns-portal .cns-input[aria-invalid="true"],
+html.cns-root[data-theme] body.cns-portal .cns-select[aria-invalid="true"],
+html.cns-root[data-theme] body.cns-portal .cns-textarea[aria-invalid="true"] { border-color: var(--cns-danger); }
+html.cns-root[data-theme] body.cns-portal .cns-input:disabled,
+html.cns-root[data-theme] body.cns-portal .cns-select:disabled,
+html.cns-root[data-theme] body.cns-portal .cns-textarea:disabled { background-color: var(--cns-surface-sunken); }
+html.cns-root[data-theme] body.cns-portal .cns-textarea { min-height: 5rem; }
+html.cns-root[data-theme] body.cns-portal .cns-help { font-size: var(--hy-small); }
+html.cns-root[data-theme] body.cns-portal .cns-form-grid { gap: 0 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+html.cns-root[data-theme] body.cns-portal .cns-fieldset { border-color: var(--hy-line); border-radius: 10px; padding: 0.6rem 0.9rem 0.3rem; margin-bottom: 0.9rem; }
+html.cns-root[data-theme] body.cns-portal .cns-fieldset > legend { font-size: 0.9rem; font-weight: 650; float: none; width: auto; padding: 0 0.3rem; margin: 0; }
+html.cns-root[data-theme] body.cns-portal .cns-search { max-width: 20rem; }
+html.cns-root[data-theme] body.cns-portal .cns-search .cns-input { border-radius: 999px; padding-left: 2.3rem; }
+
+/* ==========================================================================
+   Tabs
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-tabs { gap: 0.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--hy-line); }
+html.cns-root[data-theme] body.cns-portal .cns-tab {
+  position: relative;
+  border: 0;
+  border-radius: 8px 8px 0 0;
+  padding: 0.55rem 0.8rem;
+  font-size: var(--hy-body);
+  font-weight: 550;
+  color: var(--cns-text-muted);
+}
+html.cns-root[data-theme] body.cns-portal .cns-tab::after { content: ""; position: absolute; left: 0.8rem; right: 0.8rem; bottom: -1px; height: 3px; border-radius: 2px 2px 0 0; background: transparent; }
+html.cns-root[data-theme] body.cns-portal .cns-tab:hover { background: var(--hy-fill); color: var(--cns-text); }
+html.cns-root[data-theme] body.cns-portal .cns-tab[aria-selected="true"] { color: var(--cns-text); font-weight: 650; }
+html.cns-root[data-theme] body.cns-portal .cns-tab[aria-selected="true"]::after { background: var(--cns-primary); }
+html.cns-root[data-theme="dark"] body.cns-portal .cns-tab[aria-selected="true"]::after { background: var(--cns-text-link); }
+/* The analysis pages' switcher (Insights): a segmented control. */
+html.cns-root[data-theme] body.cns-portal .cns-analysis-nav {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 11px;
+  background: var(--hy-fill-strong);
+  margin-bottom: 1rem;
+}
+html.cns-root[data-theme] body.cns-portal .cns-analysis-nav .cns-btn { border: 0; border-radius: 8px; background: transparent; box-shadow: none; color: var(--cns-text-secondary); }
+html.cns-root[data-theme] body.cns-portal .cns-analysis-nav .cns-btn-secondary { background: var(--hy-seg-on); color: var(--cns-text); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1), 0 0 0 0.5px var(--hy-hairline); }
+html.cns-root[data-theme] body.cns-portal .cns-analysis-nav a.cns-btn { color: var(--cns-text-secondary); }
+html.cns-root[data-theme] body.cns-portal .cns-analysis-nav a.cns-btn-secondary { color: var(--cns-text); }
+
+/* ==========================================================================
+   Lifecycle: a chevron path with rounded ends
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-workflow { display: flex; flex-wrap: nowrap; gap: 0; width: 100%; overflow-x: auto; }
+html.cns-root[data-theme] body.cns-portal .cns-workflow-step {
+  flex: 1 1 0;
+  min-width: 7rem;
+  justify-content: center;
+  height: 2.25rem;
+  padding: 0 1rem 0 1.4rem;
+  margin-left: calc(-0.7rem + 3px);
+  border: 0;
+  border-radius: 0;
+  font-size: 0.84rem;
+  font-weight: 550;
+  white-space: nowrap;
+  color: var(--hy-path-idle-fg);
+  background: var(--hy-path-idle);
+  clip-path: polygon(0 0, calc(100% - 0.7rem) 0, 100% 50%, calc(100% - 0.7rem) 100%, 0 100%, 0.7rem 50%);
+}
+html.cns-root[data-theme] body.cns-portal .cns-workflow-step:first-child {
+  margin-left: 0;
+  padding-left: 1rem;
+  border-radius: 999px 0 0 999px;
+  clip-path: polygon(0 0, calc(100% - 0.7rem) 0, 100% 50%, calc(100% - 0.7rem) 100%, 0 100%);
+}
+html.cns-root[data-theme] body.cns-portal .cns-workflow-step:last-child { border-radius: 0 999px 999px 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0.7rem 50%); }
+html.cns-root[data-theme] body.cns-portal .cns-workflow-step:only-child { border-radius: 999px; clip-path: none; }
+html.cns-root[data-theme] body.cns-portal .cns-workflow-step .cns-workflow-marker { border: 0; width: auto; height: auto; }
+html.cns-root[data-theme] body.cns-portal .cns-workflow-step[data-state="pending"] .cns-workflow-marker { display: none; }
+html.cns-root[data-theme] body.cns-portal .cns-workflow-step[data-state="done"] { background: color-mix(in srgb, var(--cns-success) 15%, var(--hy-card)); color: var(--cns-success-fg); }
+html.cns-root[data-theme] body.cns-portal .cns-workflow-step[data-state="current"] {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cns-primary) 84%, #ffffff), var(--cns-primary));
+  color: var(--cns-on-primary);
+  font-weight: 650;
+}
+html.cns-root[data-theme="dark"] body.cns-portal .cns-workflow-step[data-state="current"] { background: var(--cns-primary); color: var(--cns-surface-page); }
+html.cns-root[data-theme] body.cns-portal .cns-workflow-step[data-state="blocked"] { background: var(--cns-danger-bg); color: var(--cns-danger-fg); }
+/* A long path wraps into rows on a phone rather than scrolling sideways. */
+@media (max-width: 575.98px) {
+  html.cns-root[data-theme] body.cns-portal .cns-workflow { flex-wrap: wrap; row-gap: 4px; }
+  html.cns-root[data-theme] body.cns-portal .cns-workflow-step { flex: 1 1 40%; }
+}
+
+/* ==========================================================================
+   Detail lists, bars, alerts, states, inbox
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-dl { gap: 0.6rem 1.25rem; }
+html.cns-root[data-theme] body.cns-portal .cns-dl dt { text-transform: none; letter-spacing: 0; font-size: var(--hy-small); font-weight: 550; color: var(--cns-text-muted); margin-bottom: 0.1rem; }
+html.cns-root[data-theme] body.cns-portal .cns-dl dd { font-size: 0.9rem; }
+
+html.cns-root[data-theme] body.cns-portal .cns-bars { gap: 0.5rem; }
+html.cns-root[data-theme] body.cns-portal .cns-bar-track { border: 0; background: var(--hy-fill-strong); height: 0.55rem; }
+/* A bar without a status is a plain count: it takes the brand colour. */
+html.cns-root[data-theme] body.cns-portal .cns-bar-fill { background: linear-gradient(90deg, var(--cns-primary-400), var(--cns-primary)); }
+html.cns-root[data-theme="dark"] body.cns-portal .cns-bar-fill { background: var(--cns-text-link); }
+html.cns-root[data-theme] body.cns-portal .cns-bar-fill.cns-status-neutral { background: var(--cns-neutral); }
+html.cns-root[data-theme] body.cns-portal .cns-bar-fill.cns-status-success { background: var(--cns-success); }
+html.cns-root[data-theme] body.cns-portal .cns-bar-fill.cns-status-warning { background: var(--cns-warning); }
+html.cns-root[data-theme] body.cns-portal .cns-bar-fill.cns-status-danger { background: var(--cns-danger); }
+html.cns-root[data-theme] body.cns-portal .cns-bar-fill.cns-status-info { background: var(--cns-info); }
+html.cns-root[data-theme] body.cns-portal .cns-bar-label,
+html.cns-root[data-theme] body.cns-portal .cns-bar-value { font-size: 0.84rem; }
+
+html.cns-root[data-theme] body.cns-portal .cns-alert { border-radius: 10px; padding: 0.6rem 0.9rem; font-size: 0.84rem; margin-bottom: 1rem; }
+html.cns-root[data-theme] body.cns-portal .cns-ai-box { border-radius: 10px; }
+
+html.cns-root[data-theme] body.cns-portal .cns-state { padding: 2.75rem 1.25rem; gap: 0.6rem; }
+html.cns-root[data-theme] body.cns-portal .cns-state-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 18px;
+  font-size: 1.5rem;
+  color: var(--cns-primary);
+  background: linear-gradient(150deg, color-mix(in srgb, var(--cns-primary) 6%, var(--hy-card)), color-mix(in srgb, var(--cns-primary) 16%, var(--hy-card)));
+  box-shadow: 0 0 0 1px var(--hy-hairline), 0 10px 24px -12px rgba(15, 23, 42, 0.3);
+}
+html.cns-root[data-theme="dark"] body.cns-portal .cns-state-icon { color: var(--cns-text-link); }
+html.cns-root[data-theme] body.cns-portal .cns-state-title { font-size: 1rem; font-weight: 650; }
+html.cns-root[data-theme] body.cns-portal .cns-state-message { font-size: 0.875rem; }
+html.cns-root[data-theme] body.cns-portal .cns-state--error .cns-state-icon { color: var(--cns-danger-fg); background: var(--cns-danger-bg); }
+
+html.cns-root[data-theme] body.cns-portal .cns-inbox-groups { gap: 1rem; margin-top: 1rem; }
+html.cns-root[data-theme] body.cns-portal .cns-inbox-item { padding: 0.6rem 0 0.6rem 0.75rem; align-items: center; }
+html.cns-root[data-theme] body.cns-portal .cns-inbox-title a { text-decoration: none; }
+html.cns-root[data-theme] body.cns-portal .cns-inbox-title a:hover { text-decoration: underline; }
+html.cns-root[data-theme] body.cns-portal .cns-inbox-meta { font-size: var(--hy-small); margin-top: 0.1rem; }
+
+html.cns-root[data-theme] body.cns-portal .cns-toast {
+  background: var(--hy-pop);
+  -webkit-backdrop-filter: var(--hy-chrome-filter);
+  backdrop-filter: var(--hy-chrome-filter);
+  border: 0;
+  border-radius: 12px;
+  box-shadow: var(--hy-shadow-pop);
+}
+html.cns-root[data-theme] body.cns-portal .cns-toast--success { box-shadow: inset 4px 0 0 var(--cns-success), var(--hy-shadow-pop); }
+html.cns-root[data-theme] body.cns-portal .cns-toast--warning { box-shadow: inset 4px 0 0 var(--cns-warning), var(--hy-shadow-pop); }
+html.cns-root[data-theme] body.cns-portal .cns-toast--danger { box-shadow: inset 4px 0 0 var(--cns-danger), var(--hy-shadow-pop); }
+html.cns-root[data-theme] body.cns-portal .cns-toast--info { box-shadow: inset 4px 0 0 var(--cns-info), var(--hy-shadow-pop); }
+
+/* ==========================================================================
+   Footer and Help
+   ========================================================================== */
+
+html.cns-root[data-theme] body.cns-portal .cns-footer { background: transparent; border-top-color: var(--hy-line); }
+/* Solid on purpose: a blurred element fixed to the viewport is re-composited
+   on every scrolled frame, the most expensive place a blur can be. */
+html.cns-root[data-theme] body.cns-portal .cns-assistant-toggle {
+  background: var(--cns-primary);
+  border: 1px solid color-mix(in srgb, #ffffff 22%, transparent);
+  box-shadow: 0 14px 32px -12px color-mix(in srgb, var(--cns-primary) 80%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  font-size: 0.9375rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 1.1rem 0.45rem 0.9rem;
+  transition: transform 200ms var(--hy-ease), background-color 200ms var(--hy-ease);
+}
+html.cns-root[data-theme] body.cns-portal .cns-assistant-toggle:hover { transform: translateY(-2px); background: var(--cns-primary-hover); }
+html.cns-root[data-theme="dark"] body.cns-portal .cns-assistant-toggle { background: var(--cns-surface-raised); color: var(--cns-text); border-color: var(--hy-line-strong); }
+html.cns-root[data-theme] body.cns-portal .cns-assistant-panel {
+  background: var(--hy-pop);
+  -webkit-backdrop-filter: var(--hy-chrome-filter);
+  backdrop-filter: var(--hy-chrome-filter);
+  border: 0;
+  border-radius: 18px;
+  box-shadow: var(--hy-shadow-pop);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.cns-root[data-theme] body.cns-portal .cns-menu-panel { animation: none; }
+  html.cns-root[data-theme] body.cns-portal a.cns-quick-tile:hover,
+  html.cns-root[data-theme] body.cns-portal .cns-assistant-toggle:hover,
+  html.cns-root[data-theme] body.cns-portal .cns-btn:active { transform: none; }
+}
+
+/* ==========================================================================
+   Dark theme: the banner
+   The dark scale inverts the primary ramp (the 800 step is the lightest tint),
+   so a banner built from it would turn pale. In the dark theme it is a deep,
+   brand-tinted night with light text instead.
+   ========================================================================== */
+
+html.cns-root[data-theme="dark"] body.cns-portal .cns-hero {
+  background:
+    radial-gradient(55% 90% at 88% 8%, color-mix(in srgb, var(--cns-accent) 38%, transparent) 0, transparent 62%),
+    radial-gradient(45% 70% at 62% 115%, rgba(84, 112, 224, 0.32) 0, transparent 60%),
+    linear-gradient(135deg, #0a1324, color-mix(in srgb, var(--cns-primary) 26%, #0c1930) 60%, color-mix(in srgb, var(--cns-primary) 40%, #0f213d));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07), 0 30px 60px -30px rgba(0, 0, 0, 0.8);
+}
+html.cns-root[data-theme="dark"] body.cns-portal .cns-hero .cns-hero-title,
+html.cns-root[data-theme="dark"] body.cns-portal .cns-hero .cns-hero-text { color: #f4f7fb; }
+html.cns-root[data-theme="dark"] body.cns-portal a.cns-hero-btn-primary,
+html.cns-root[data-theme="dark"] body.cns-portal a.cns-hero-btn-primary:hover { color: #0b1524; }
+html.cns-root[data-theme="dark"] body.cns-portal a.cns-hero-btn-secondary { color: #f4f7fb; }
+
+/* ==========================================================================
+   Phones: one bar, the menus in a frosted slide-out panel
+   ========================================================================== */
+
+@media (max-width: 767.98px) {
+  html.cns-root[data-theme] body.cns-portal .cns-container { padding-inline: 1rem; }
+  html.cns-root[data-theme] body.cns-portal.cns-header-glass .cns-gsearch {
+    background: var(--hy-chrome);
+    -webkit-backdrop-filter: var(--hy-chrome-filter);
+    backdrop-filter: var(--hy-chrome-filter);
+  }
+  html.cns-root[data-theme] body.cns-portal .cns-mainnav {
+    background: var(--hy-pop);
+    -webkit-backdrop-filter: var(--hy-chrome-filter);
+    backdrop-filter: var(--hy-chrome-filter);
+    color: var(--cns-text);
+    border-radius: 0 22px 22px 0;
+    box-shadow: var(--hy-shadow-pop);
+  }
+  html.cns-root[data-theme] body.cns-portal .cns-drawer-head { background: transparent; border-bottom-color: var(--hy-hairline); }
+  html.cns-root[data-theme] body.cns-portal .cns-drawer-title { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
+  html.cns-root[data-theme] body.cns-portal .cns-drawer-close { border-radius: 999px; background: var(--hy-fill); }
+  html.cns-root[data-theme] body.cns-portal .cns-menubar { padding: 0.5rem; gap: 2px; }
+  html.cns-root[data-theme] body.cns-portal .cns-menu { border-bottom: 0; }
+  html.cns-root[data-theme] body.cns-portal .cns-menu-trigger { min-height: 2.9rem; border-radius: 12px; font-size: 0.95rem; color: var(--cns-text); box-shadow: none; }
+  html.cns-root[data-theme] body.cns-portal .cns-menu-trigger:hover,
+  html.cns-root[data-theme] body.cns-portal .cns-menu.is-open > .cns-menu-trigger { background: var(--hy-fill); color: var(--cns-text); }
+  html.cns-root[data-theme] body.cns-portal .cns-menu-trigger[data-active] { background: color-mix(in srgb, var(--cns-primary) 9%, transparent); color: var(--cns-text); box-shadow: none; }
+  html.cns-root[data-theme] body.cns-portal .cns-menu-panel { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; animation: none; padding: 0.2rem 0.2rem 0.4rem 0.6rem; }
+  html.cns-root[data-theme] body.cns-portal .cns-menu-panel--wide .cns-menu-group + .cns-menu-group { padding-left: 0; }
+  html.cns-root[data-theme] body.cns-portal .cns-nav-backdrop:not([hidden]) { background: rgba(8, 12, 22, 0.34); }
+  html.cns-root[data-theme] body.cns-portal .cns-drawer-foot .cns-fontsize { background: var(--hy-fill); border-color: transparent; color: var(--cns-text); }
+  html.cns-root[data-theme] body.cns-portal .cns-hero { min-height: 0; border-radius: 18px; }
+  html.cns-root[data-theme] body.cns-portal .cns-hero-body { padding: 1.75rem 1.25rem; }
+  html.cns-root[data-theme] body.cns-portal .cns-hero::before,
+  html.cns-root[data-theme] body.cns-portal .cns-hero::after { display: none; }
+  html.cns-root[data-theme] body.cns-portal .cns-assistant-toggle { right: 1rem; bottom: 1rem; }
+}
+
+@media print {
+  html.cns-root[data-theme] body.cns-portal::before { display: none; }
+  html.cns-root[data-theme] body.cns-portal .cns-card,
+  html.cns-root[data-theme] body.cns-portal .cns-record-summary { box-shadow: none; background: #ffffff; }
+}

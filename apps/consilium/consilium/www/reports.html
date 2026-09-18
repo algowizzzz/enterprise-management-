@@ -89,6 +89,22 @@
 {%- if cns_can_read("Governance Forum") %}
 <section id="forums" aria-labelledby="forums-heading" style="margin-top: var(--cns-space-6);">
   <h2 id="forums-heading" class="cns-eyebrow">Governance forums</h2>
+  {#- G-10: a year with no first-quarter inventory attestation is reported. -#}
+  {%- if inventory_q1 and (inventory_q1.missed or inventory_q1.due) %}
+  <div class="cns-alert {{ 'cns-status-danger' if inventory_q1.missed else 'cns-status-warning' }}" id="inventory-q1-flag"
+       style="margin-bottom: var(--cns-space-4);">
+    <i class="bi bi-calendar-x" aria-hidden="true"></i>
+    <div>
+      {%- if inventory_q1.missed %}
+      <strong>No first-quarter inventory attestation in {{ inventory_q1.missed | join(", ") | e }}.</strong>
+      {%- else %}
+      <strong>The {{ inventory_q1.due | join(", ") | e }} inventory attestation has not been opened yet.</strong>
+      {%- endif %}
+      The annual attestation is due by 31 March each year.
+      <a href="/attestation-campaigns#q1-standing">See the attestation campaigns</a>.
+    </div>
+  </div>
+  {%- endif %}
 
   <div class="cns-metric-grid">
     <div class="cns-card">
@@ -157,6 +173,9 @@
   </div>
 </section>
 {%- endif %}
+
+{#- G-12: forum service levels, counted on the server over readable forums. -#}
+{% include "consilium/templates/includes/forum_service_levels.html" %}
 
 <!-- ===================== Coverage gaps (O-3) ======================= -->
 {%- if cns_can_read("Governance Forum") or cns_can_read("Governing Document") %}
@@ -1031,7 +1050,7 @@
     button.addEventListener("click", function () {
       var section = button.getAttribute("data-policy-export");
       button.disabled = true;
-      api.call("consilium.policy.reporting.export", { section: section }, { trackLoading: false })
+      api.call("consilium.policy.reporting.export", { section: section }, { method: "POST", trackLoading: false })
         .then(function (csv) {
           if (!csv) { Consilium.toast.info("There is nothing to download for this section yet."); return; }
           var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });

@@ -556,3 +556,134 @@ def seed_templates() -> list[str]:
 def seed_all() -> None:
     seed_email_channel()
     seed_templates()
+
+
+# ------------------------------------------------------------------------------
+# G-14 / O-4: meeting schedules and charter reviews; P-8: approval steps left
+# pending. Appended as their own block so this module's list above stays as it
+# was; ``EVENTS`` and ``EVENT_INDEX`` are what every reader uses.
+# ------------------------------------------------------------------------------
+
+GOVERNANCE_MEETING_AND_CHARTER_EVENTS: list[tuple[str, str, str, str, str]] = [
+    (
+        "governance.meeting.scheduled",
+        "Caller: governance meetings. A forum meeting was scheduled. To the forum's current members, the "
+        "meeting's chair and its secretary (G-14).",
+        "forum_name, meeting_reference, scheduled_on, location",
+        "Meeting scheduled: {{ forum_name }}, {{ scheduled_on }}",
+        "{{ forum_name }} meets on {{ scheduled_on }}{% if location %} at {{ location }}{% endif %} "
+        "({{ meeting_reference }}).\n\n{{ link }}",
+    ),
+    (
+        "governance.meeting.rescheduled",
+        "Caller: governance meetings. A scheduled forum meeting moved to another time or place. To the "
+        "forum's current members, the meeting's chair and its secretary (G-14).",
+        "forum_name, meeting_reference, scheduled_on, location, previous_scheduled_on, previous_location",
+        "Meeting moved: {{ forum_name }}, now {{ scheduled_on }}",
+        "The {{ forum_name }} meeting {{ meeting_reference }} has moved from {{ previous_scheduled_on }}"
+        "{% if previous_location %} ({{ previous_location }}){% endif %} to {{ scheduled_on }}"
+        "{% if location %} at {{ location }}{% endif %}.\n\n{{ link }}",
+    ),
+    (
+        "governance.meeting.cancelled",
+        "Caller: governance meetings. A forum meeting that had not yet taken place was cancelled. To the "
+        "forum's current members, the meeting's chair and its secretary (G-14).",
+        "forum_name, meeting_reference, scheduled_on",
+        "Meeting cancelled: {{ forum_name }}, {{ scheduled_on }}",
+        "The {{ forum_name }} meeting {{ meeting_reference }} on {{ scheduled_on }} has been cancelled."
+        "\n\n{{ link }}",
+    ),
+    (
+        "governance.charter.review_due",
+        "Daily. A charter in force has its review falling due within the notice period. To the forum owner "
+        "and the committee secretary (G-10, G-14).",
+        "charter_title, forum_name, due_on, days_until",
+        "Charter review due {{ due_on }}: {{ charter_title }}",
+        "The charter {{ charter_title }} of {{ forum_name }} is due for review on {{ due_on }}, in "
+        "{{ days_until }} day(s). Review it and publish a new version, or record that it stands.\n\n{{ link }}",
+    ),
+    (
+        "governance.charter.review_overdue",
+        "Daily, repeated weekly. A charter in force is past its review date. To the forum owner and the "
+        "committee secretary (G-10, G-14).",
+        "charter_title, forum_name, due_on, days_overdue",
+        "Charter review overdue: {{ charter_title }}",
+        "The review of the charter {{ charter_title }} of {{ forum_name }} fell due on {{ due_on }} and is "
+        "{{ days_overdue }} day(s) overdue.\n\n{{ link }}",
+    ),
+    (
+        "governance.charter.challenge_recorded",
+        "Caller: governance charters. The risk governance office recorded its challenge on a charter — changes "
+        "requested, or cleared. To the forum owner, the committee secretary and the risk governance office "
+        "(G-7, G-14).",
+        "charter_title, forum_name, outcome, comments, reviewed_by, outstanding",
+        "Charter {% if outstanding %}challenged{% else %}challenge {{ outcome | lower }}{% endif %}: "
+        "{{ charter_title }}",
+        "{{ reviewed_by }} recorded \"{{ outcome }}\" on the risk governance office's challenge of "
+        "{{ charter_title }}{% if forum_name %} ({{ forum_name }}){% endif %}."
+        "{% if comments %}\n\n{{ comments }}{% endif %}"
+        "{% if outstanding %}\n\nThe challenge is outstanding: the charter is not cleared for approval until "
+        "it is answered.{% endif %}\n\n{{ link }}",
+    ),
+    (
+        "policy.approval.step_due_soon",
+        "Daily. An approval step on a governing document is due within the notice period. To the step's "
+        "assignee, or everyone in its queue (P-8).",
+        "approval_step, due_on, days_until, queue, document, document_name",
+        "Approval due {{ due_on }}: {{ document_name }}",
+        "The step \"{{ approval_step }}\" on {{ document_name }} ({{ document }}) is waiting for "
+        "{% if queue %}a decision from the {{ queue }} queue{% else %}your decision{% endif %}, due on "
+        "{{ due_on }} ({{ days_until }} day(s)).\n\n{{ link }}",
+    ),
+    (
+        "policy.approval.step_overdue",
+        "Daily, repeated every few days. An approval step on a governing document is past its due date. To the "
+        "step's assignee, or everyone in its queue (P-8).",
+        "approval_step, due_on, days_overdue, queue, document, document_name",
+        "Approval overdue: {{ document_name }}",
+        "The step \"{{ approval_step }}\" on {{ document_name }} ({{ document }}) was due on "
+        "{{ due_on }} and is {{ days_overdue }} day(s) overdue.{% if queue %} It is waiting in the {{ queue }} "
+        "queue: any member may decide it.{% endif %}\n\n{{ link }}",
+    ),
+    (
+        "policy.approval.step_escalated",
+        "Daily, repeated every few days. An approval step has been overdue beyond the escalation lag. To the "
+        "document approver, or the document sponsor when the approver holds the step (P-8).",
+        "approval_step, assigned_to, due_on, days_overdue, document, document_name",
+        "Escalated: approval of {{ document_name }} is {{ days_overdue }} days overdue",
+        "The step \"{{ approval_step }}\" on {{ document_name }} ({{ document }}), assigned to "
+        "{{ assigned_to }}, was due on {{ due_on }} and is {{ days_overdue }} day(s) overdue. You are receiving "
+        "this so that it can be chased, delegated or, with a recorded exception, bypassed.\n\n{{ link }}",
+    ),
+]
+
+EVENTS.extend(GOVERNANCE_MEETING_AND_CHARTER_EVENTS)
+EVENT_INDEX.update({row[0]: row for row in GOVERNANCE_MEETING_AND_CHARTER_EVENTS})
+
+
+# G-13: a forum's chair, sponsor or secretary nominates their own delegate from
+# /forum (governance/delegates.py), and may end the delegation early.
+DELEGATE_NOMINATION_EVENTS: list[tuple[str, str, str, str, str]] = [
+    (
+        "governance.delegate.nominated",
+        "Caller: governance delegates. A forum's chair, sponsor or secretary nominated someone to act for "
+        "them on the forum's administrative tasks. To the delegate.",
+        "forum_name, delegator, delegator_name, valid_from, valid_to, actions",
+        "You are {{ delegator_name }}'s delegate for {{ forum_name }}",
+        "{{ delegator_name }} has nominated you to act for them on {{ forum_name }} from {{ valid_from }} to "
+        "{{ valid_to }}, for: {{ actions }}.\n\nWhat you do under the delegation is recorded as done on their "
+        "behalf.\n\n{{ link }}",
+    ),
+    (
+        "governance.delegate.ended",
+        "Caller: governance delegates. The person who delegated ended the delegation before its end date. "
+        "To the delegate.",
+        "forum_name, delegator, delegator_name, valid_from, valid_to, actions",
+        "Your delegation for {{ forum_name }} has ended",
+        "{{ delegator_name }} has ended your delegation for {{ forum_name }}. From today you no longer act for "
+        "them on it.\n\n{{ link }}",
+    ),
+]
+
+EVENTS.extend(DELEGATE_NOMINATION_EVENTS)
+EVENT_INDEX.update({row[0]: row for row in DELEGATE_NOMINATION_EVENTS})

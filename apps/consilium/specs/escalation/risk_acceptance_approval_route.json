@@ -1,0 +1,117 @@
+{
+  "name": "Risk Acceptance Approval Route",
+  "module": "Escalation",
+  "description": "The approval chain a risk acceptance goes through, for a matter type and severity. Blank type or severity means any. Lower priority is tried first and the more specific route breaks a tie. With no matching route an acceptance takes one independent approver, or a forum motion.",
+  "autoname": "field:route_code",
+  "naming_rule": "By fieldname",
+  "allow_rename": 1,
+  "title_field": "route_title",
+  "show_title_field_in_link": 1,
+  "search_fields": "route_title,route_code",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Escalation Owner",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Escalation Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "allow_import": 1,
+  "provenance": "REQUIREMENTS-COVERAGE.md E-9: configurable sequential or parallel approvals by type and severity",
+  "fields": [
+    {
+      "fieldname": "route_code",
+      "fieldtype": "Data",
+      "label": "Route Code",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "route_title",
+      "fieldtype": "Data",
+      "label": "Route",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "escalation_type",
+      "fieldtype": "Link",
+      "label": "Escalation Type",
+      "options": "Escalation Type",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Leave empty to match every type."
+    },
+    {
+      "fieldname": "severity",
+      "fieldtype": "Select",
+      "label": "Severity",
+      "options": "\nHigh\nMedium\nLow",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "The matter's severity. Leave empty to match every severity."
+    },
+    {
+      "fieldname": "priority",
+      "fieldtype": "Int",
+      "label": "Priority",
+      "reqd": 1,
+      "default": "100",
+      "in_list_view": 1,
+      "description": "Lower is tried first; the first matching route wins, and specificity breaks ties."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "steps",
+      "fieldtype": "Table",
+      "label": "Steps",
+      "options": "Risk Acceptance Approval Step",
+      "reqd": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    }
+  ]
+}

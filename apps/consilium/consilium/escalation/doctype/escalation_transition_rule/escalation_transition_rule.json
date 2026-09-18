@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:rule_code",
+ "creation": "2026-09-18 19:57:28.513187",
+ "description": "One allowed move of an escalation matter's status, for a matter type and severity. A blank type, severity, from or to state means any. For each matter the most specific set of matching rules applies: type and severity, then type, then severity, then the rules that name neither.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_code",
+  "escalation_type",
+  "severity",
+  "from_status",
+  "to_status",
+  "allowed_role",
+  "is_active",
+  "description"
+ ],
+ "fields": [
+  {
+   "description": "Stable identifier. Deactivate a rule rather than deleting it, so the history of what was allowed stays readable.",
+   "fieldname": "rule_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rule Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "Leave empty to apply to every type.",
+   "fieldname": "escalation_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Escalation Type",
+   "options": "Escalation Type"
+  },
+  {
+   "description": "Leave empty to apply to every severity.",
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Severity",
+   "options": "\nHigh\nMedium\nLow"
+  },
+  {
+   "description": "The state the matter is in. Leave empty for any state it can be worked in.",
+   "fieldname": "from_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "From Status",
+   "options": "\nOpen\nIn Progress\nUnder Review\nPending Review\nClosed\nClosed \u2014 Tracked Externally"
+  },
+  {
+   "description": "The state it may move to, including the states it comes to rest in on closure. Leave empty for any.",
+   "fieldname": "to_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "To Status",
+   "options": "\nOpen\nIn Progress\nUnder Review\nPending Review\nClosed\nClosed \u2014 Tracked Externally"
+  },
+  {
+   "description": "Who may make this move, on top of holding the matter at its stage. Leave empty for whoever holds it.",
+   "fieldname": "allowed_role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Allowed Role",
+   "options": "Role"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-18 19:57:28.513311",
+ "modified_by": "Administrator",
+ "module": "Escalation",
+ "name": "Escalation Transition Rule",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Administrator",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Owner"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Escalation Reviewer"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Consilium Audit"
+  }
+ ],
+ "search_fields": "rule_code,escalation_type,severity",
+ "sort_field": "rule_code",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "rule_code",
+ "track_changes": 1
+}

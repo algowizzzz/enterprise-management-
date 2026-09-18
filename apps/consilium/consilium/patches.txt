@@ -4,3 +4,4 @@
 consilium.patches.v0_1.backfill_is_affirmative
 consilium.patches.v0_1.share_formation_requests_with_originators
 consilium.patches.v0_1.rename_openai_request_format
+consilium.patches.v0_1.default_header_to_glass

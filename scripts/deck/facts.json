@@ -1,0 +1,258 @@
+{
+ "_comment": "Numbers and statuses the leadership briefing is built from. Edit here, then run scripts/deck/build_deck.py. Coverage classes mirror docs/delivery/REQUIREMENTS-COVERAGE.md §3; backlog counts mirror docs/delivery/EPICS.md 'Status at a glance'. No provider names, no passwords.",
+ "release": "1.0.0",
+ "briefing_date": "18 September 2026",
+ "measured": "18 Sep 2026",
+ "tests": {
+  "run": 1453,
+  "passed": 1453,
+  "seconds": 1433,
+  "history": [
+   [
+    "Core only (README)",
+    293
+   ],
+   [
+    "Readiness checklist",
+    722
+   ],
+   [
+    "Build session end",
+    724
+   ],
+   [
+    "17 Sep coverage run",
+    780
+   ],
+   [
+    "Final wave",
+    1372
+   ]
+  ]
+ },
+ "checks": {
+  "pytest": 57,
+  "ui_sweep": 302,
+  "journeys": 11,
+  "platform_rules": 6,
+  "verify": 14,
+  "health": 17,
+  "compat_windows": 22
+ },
+ "entities": {
+  "total": 144,
+  "core": 64,
+  "governance": 24,
+  "policy": 38,
+  "escalation": 18,
+  "tables": 378,
+  "logical": 114
+ },
+ "demo": {
+  "personas": 23,
+  "forums": 14,
+  "documents": 15,
+  "versions": 157,
+  "escalations": 15,
+  "meetings": 67,
+  "motions": 24,
+  "votes": 137,
+  "attestation_tasks": 92,
+  "minute_versions": 38,
+  "charter_versions": 17
+ },
+ "ai": {
+  "requests": 20,
+  "succeeded": 20
+ },
+ "backlog": {
+  "labels": [
+   "Foundation",
+   "Governance forums",
+   "Policy",
+   "Escalation",
+   "Cross-cutting engines",
+   "Interface",
+   "Deployment",
+   "Gaps found by measurement",
+   "Deployment readiness",
+   "Navigation and integrations"
+  ],
+  "done": [
+   18,
+   27,
+   23,
+   9,
+   12,
+   6,
+   5,
+   43,
+   0,
+   8
+  ],
+  "partial": [
+   6,
+   0,
+   0,
+   0,
+   10,
+   4,
+   7,
+   3,
+   6,
+   3
+  ],
+  "notstarted": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0
+  ],
+  "totals": [
+   151,
+   39,
+   0,
+   1,
+   191
+  ],
+  "orig": [
+   100,
+   127
+  ],
+  "added": 64
+ },
+ "coverage": {
+  "G-1": "a",
+  "G-2": "a",
+  "G-3": "a",
+  "G-4": "a",
+  "G-5": "a",
+  "G-6": "b",
+  "G-7": "a",
+  "G-8": "d",
+  "G-9": "a",
+  "G-10": "d",
+  "G-11": "a",
+  "G-12": "c",
+  "G-13": "c",
+  "G-14": "d",
+  "G-15": "a",
+  "G-16": "c",
+  "G-17": "a",
+  "G-18": "a",
+  "G-19": "c",
+  "P-1": "a",
+  "P-2": "a",
+  "P-3": "a",
+  "P-4": "a",
+  "P-5": "c",
+  "P-6": "a",
+  "P-7": "a",
+  "P-8": "d",
+  "P-9": "a",
+  "P-10": "a",
+  "P-11": "a",
+  "P-12": "a",
+  "P-13": "a",
+  "P-14": "b",
+  "P-15": "b",
+  "P-16": "a",
+  "P-17": "b",
+  "P-18": "c",
+  "P-19": "a",
+  "P-20": "c",
+  "P-21": "a",
+  "P-22": "a",
+  "P-23": "a",
+  "P-24": "a",
+  "P-25": "a",
+  "P-26": "a",
+  "E-1": "a",
+  "E-2": "a",
+  "E-3": "a",
+  "E-4": "a",
+  "E-5": "a",
+  "E-6": "a",
+  "E-7": "a",
+  "E-8": "d",
+  "E-9": "d",
+  "E-10": "a",
+  "E-11": "b",
+  "E-12": "a",
+  "E-13": "a",
+  "E-14": "a",
+  "E-15": "a",
+  "E-16": "a",
+  "E-17": "b",
+  "E-18": "c",
+  "E-19": "c",
+  "O-1": "a",
+  "O-2": "a",
+  "O-3": "d",
+  "O-4": "d",
+  "O-5": "a",
+  "O-6": "a",
+  "O-7": "a"
+ },
+ "coverage_baseline_17sep": {
+  "a": 19,
+  "b": 3,
+  "c": 24,
+  "d": 18
+ },
+ "partial_tests": [
+  "G-8",
+  "G-10",
+  "G-12",
+  "G-14",
+  "P-5",
+  "P-8",
+  "P-12",
+  "P-17",
+  "E-8",
+  "E-9"
+ ],
+ "gap_topics": {
+  "G-8": "formation route by forum type and materiality",
+  "G-10": "Q1 rule for the annual inventory attestation",
+  "G-14": "meeting and charter-review notices",
+  "O-4": "meeting and charter-review notices",
+  "P-8": "approval-step reminders and group routing",
+  "E-8": "escalation transitions by type and severity",
+  "E-9": "risk-acceptance approval chain",
+  "O-3": "dashboard personalisation",
+  "G-16": "carrying out an approved disposal",
+  "P-18": "carrying out an approved disposal",
+  "E-18": "carrying out an approved disposal",
+  "G-19": "outbound export",
+  "P-20": "outbound export",
+  "E-19": "outbound export",
+  "G-12": "forum service-level view",
+  "G-13": "delegate nomination by chairs",
+  "P-5": "external links on a document"
+ },
+ "title_topics": {
+  "approval and routing depth": [
+   "G-8",
+   "E-8",
+   "E-9",
+   "P-8"
+  ],
+  "two notices": [
+   "G-14",
+   "O-4"
+  ],
+  "a Q1 rule": [
+   "G-10"
+  ],
+  "dashboard personalisation": [
+   "O-3"
+  ]
+ }
+}

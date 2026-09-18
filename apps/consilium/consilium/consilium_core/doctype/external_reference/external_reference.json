@@ -14,9 +14,13 @@
   "external_key",
   "external_type",
   "label",
+  "url",
   "last_seen_on",
   "source_import_batch",
-  "notes"
+  "notes",
+  "is_active",
+  "removed_by",
+  "removed_on"
  ],
  "fields": [
   {
@@ -63,6 +67,13 @@
    "label": "Label"
   },
   {
+   "description": "Where the record can be opened in its own system: http or https only. Shown as a link; the platform never fetches it.",
+   "fieldname": "url",
+   "fieldtype": "Data",
+   "label": "Link",
+   "length": 1000
+  },
+  {
    "fieldname": "last_seen_on",
    "fieldtype": "Date",
    "label": "Last Seen On"
@@ -77,11 +88,32 @@
    "fieldname": "notes",
    "fieldtype": "Text",
    "label": "Notes"
+  },
+  {
+   "default": "1",
+   "description": "Cleared when the link is removed. The row is kept, with who removed it and when, so the change log reads back.",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "removed_by",
+   "fieldtype": "Link",
+   "label": "Removed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "removed_on",
+   "fieldtype": "Datetime",
+   "label": "Removed On",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-17 23:50:00.708742",
+ "modified": "2026-09-18 23:30:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "External Reference",

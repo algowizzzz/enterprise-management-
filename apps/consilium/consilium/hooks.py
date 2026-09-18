@@ -7,17 +7,30 @@ app_license = "MIT"
 
 # All front-end assets are vendored. Nothing is fetched from a CDN at build
 # or run time, because the target environment has no internet access.
-# Deliberately no app_include_*: the portal stylesheet and scripts are for the
-# custom screens. The framework's own administration interface is left as it
-# comes, and loading our assets into every one of its pages would buy nothing.
+# The portal stylesheets and scripts are for the custom screens and are not
+# loaded into the framework's administration interface (the workspace, /app).
+# The workspace gets two small files of its own instead (app_include_*, below):
+# a theme so it reads as the same product as the portal, and a script for its
+# forms. Both are plain files served as they are, with no build step.
 
 web_include_css = [
     "/assets/consilium/css/tokens.css",
     "/assets/consilium/css/consilium.css",
 ]
 # The workspace (desk) forms: the automatic status check boxes are hidden from
-# business users. Plain JavaScript, served as it is — no build step.
+# business users, and the brand colour is handed to the workspace theme.
+# Plain JavaScript, served as it is — no build step.
 app_include_js = ["/assets/consilium/js/consilium-desk.js"]
+# The workspace theme (desk-theme.css): the portal's look carried into /app,
+# so an administrator moving between the two sees one product. It is safe to
+# load on every workspace page because it only re-points the framework's own
+# CSS variables and restyles a few stable classes (header, page head, lists,
+# form sections, controls, buttons); it hides, moves and scripts nothing, and
+# every rule is scoped to body[data-route], which only workspace pages carry.
+# Removing this line returns the workspace to exactly what the framework ships.
+app_include_css = ["/assets/consilium/css/desk-theme.css"]
+# The brand colour for that theme, in the boot data (branding.boot_session).
+boot_session = "consilium.consilium_core.branding.boot_session"
 
 web_include_js = [
     "/assets/consilium/js/consilium.js",
@@ -105,6 +118,9 @@ jinja = {
         "consilium.consilium_core.navigation.cns_nav",
         # The Doc AI and horizon-scanning buttons: labels, states, who sees them.
         "consilium.consilium_core.integrations.external_tools.cns_external_tools",
+        # The guide's chapters the viewer may read (titles, summaries, /guide
+        # addresses), for the home page's guide cards.
+        "consilium.consilium_core.guide.cns_guide_chapters",
     ]
 }
 
@@ -187,9 +203,24 @@ scheduler_events = {
         # Records past their retention period are put up for disposal review
         # (a Disposition Event awaiting approval). Nothing is deleted on a schedule.
         "consilium.consilium_core.retention.flag_due_for_disposal",
+        # G-10: the annual forum inventory attestation opens in the first
+        # quarter, due 31 March, if nobody has opened it. A no-op otherwise.
+        "consilium.governance.reviews.open_first_quarter_inventory",
     ],
     "hourly": [
         "consilium.consilium_core.notification.retry_failed",
         "consilium.consilium_core.reminders.hourly",
     ],
 }
+
+# G-16, P-18, E-18: a record whose retention counts from a terminal event
+# (retirement, closure, disbandment) is archived once that event has passed,
+# so the disposal flag above has something to flag the day its period ends.
+# G-19, P-20, E-19: scheduled export drops, written only under the drop root
+# the server administrator configures (consilium_export_drop_root). Appended
+# rather than written into the list above, so parallel changes to the list
+# do not collide.
+scheduler_events["daily"] += [
+    "consilium.consilium_core.records.archive_on_trigger",
+    "consilium.consilium_core.exporting.run_scheduled",
+]

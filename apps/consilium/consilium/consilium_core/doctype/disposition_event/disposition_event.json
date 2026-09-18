@@ -15,8 +15,16 @@
   "is_open",
   "is_editable",
   "held_by_legal_hold",
+  "decision",
+  "decision_reason",
+  "retained_until",
+  "proposed_by",
+  "proposed_on",
   "approved_by",
+  "approved_on",
+  "approval_note",
   "executed_on",
+  "executed_by",
   "evidence"
  ],
  "fields": [
@@ -50,7 +58,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Scheduled\nHeld\nApproved\nExecuted\nCancelled",
+   "options": "Scheduled\nHeld\nApproved\nExecuted\nCancelled\nRetained",
    "reqd": 1
   },
   {
@@ -75,15 +83,64 @@
    "read_only": 1
   },
   {
+   "description": "What the records manager proposes. It takes effect only once a second person approves it.",
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "label": "Decision",
+   "options": "\nDispose\nRetain"
+  },
+  {
+   "fieldname": "decision_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason For The Decision"
+  },
+  {
+   "description": "For a decision to retain: when the record comes up for review again. Empty keeps it permanently, which only a class that archives permanently allows.",
+   "fieldname": "retained_until",
+   "fieldtype": "Date",
+   "label": "Retained Until"
+  },
+  {
+   "fieldname": "proposed_by",
+   "fieldtype": "Link",
+   "label": "Proposed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proposed_on",
+   "fieldtype": "Datetime",
+   "label": "Proposed On",
+   "read_only": 1
+  },
+  {
    "fieldname": "approved_by",
    "fieldtype": "Link",
    "label": "Approved By",
    "options": "User"
   },
   {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_note",
+   "fieldtype": "Small Text",
+   "label": "Approval Note"
+  },
+  {
    "fieldname": "executed_on",
    "fieldtype": "Datetime",
    "label": "Executed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "executed_by",
+   "fieldtype": "Link",
+   "label": "Executed By",
+   "options": "User",
    "read_only": 1
   },
   {
@@ -94,7 +151,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 21:00:00.000000",
+ "modified": "2026-09-18 23:30:00.000000",
  "modified_by": "Administrator",
  "module": "Consilium Core",
  "name": "Disposition Event",

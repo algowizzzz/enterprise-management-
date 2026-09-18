@@ -1,0 +1,178 @@
+{#-
+  ===== Linked risk-programme records on the policy page (P-5) =====
+  Included from policy.html. It needs only `record_name`.
+  The document's External References — risks, controls, processes, training,
+  issues held in other systems — listed with their links, and added,
+  corrected and removed by someone who may edit the document
+  (consilium.policy.external_links, which checks again on every post). Links
+  are http(s) only and are never fetched; a removed link is kept, marked
+  removed, and every change is written to the document's history.
+-#}
+{%- if record_name %}
+<section class="cns-card" id="external-links" aria-labelledby="external-links-heading" data-document="{{ record_name | e }}">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="external-links-heading">Linked risk-programme records</h2>
+      <p class="cns-card-subtitle">Risks, controls, processes, training and issues held in other systems that
+        this document relates to. Each opens in its own system.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    <div id="external-links-list"><p class="cns-text-muted cns-text-sm">Reading&hellip;</p></div>
+    <form id="external-link-form" class="cns-fieldset" hidden novalidate style="margin-top: var(--cns-space-4);">
+      <legend id="external-link-legend">Add a link</legend>
+      <input type="hidden" id="external-link-name">
+      <div class="cns-form-grid">
+        <div class="cns-field">
+          <label class="cns-label" for="external-link-label">Label<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" id="external-link-label" maxlength="140" required>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="external-link-url">Address<span class="cns-required" aria-hidden="true">*</span></label>
+          <input class="cns-input" id="external-link-url" type="url" inputmode="url" maxlength="1000" required
+                 placeholder="https://" aria-describedby="external-link-url-help">
+          <span class="cns-help" id="external-link-url-help">A full address starting with http:// or https://.</span>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="external-link-type">Kind of record</label>
+          <select class="cns-select" id="external-link-type"></select>
+        </div>
+        <div class="cns-field" id="external-link-system-field">
+          <label class="cns-label" for="external-link-system">System</label>
+          <select class="cns-select" id="external-link-system"></select>
+        </div>
+        <div class="cns-field">
+          <label class="cns-label" for="external-link-key">Identifier in that system</label>
+          <input class="cns-input" id="external-link-key" maxlength="140" aria-describedby="external-link-key-help">
+          <span class="cns-help" id="external-link-key-help">Optional. The address is used when it is left empty.</span>
+        </div>
+      </div>
+      <div class="cns-form-actions">
+        <button type="submit" class="cns-btn cns-btn-primary" id="external-link-submit">Add the link</button>
+        <button type="button" class="cns-btn cns-btn-ghost" id="external-link-cancel" hidden>Cancel</button>
+      </div>
+    </form>
+  </div>
+</section>
+<script>
+(function () {
+  "use strict";
+
+  function start() {
+    var card = document.getElementById("external-links");
+    if (!card || !window.Consilium || !Consilium.api) return;
+    var DOC = card.getAttribute("data-document");
+    var M = "consilium.policy.external_links.";
+    var esc = Consilium.util.escapeHtml, escAttr = Consilium.util.escapeAttr;
+    var form = document.getElementById("external-link-form");
+    var state = null;
+
+    function safeHref(url) { return /^https?:\/\/[^\s"'<>]+$/i.test(url || "") ? url : null; }
+
+    function resetForm() {
+      form.reset();
+      document.getElementById("external-link-name").value = "";
+      document.getElementById("external-link-legend").textContent = "Add a link";
+      document.getElementById("external-link-submit").textContent = "Add the link";
+      document.getElementById("external-link-cancel").hidden = true;
+      document.getElementById("external-link-system-field").hidden = false;
+    }
+
+    function draw(data) {
+      state = data;
+      var list = document.getElementById("external-links-list");
+      list.innerHTML = data.links.length
+        ? '<div class="cns-table-wrap"><table class="cns-table cns-table--compact"><caption class="cns-visually-hidden">Linked risk-programme records</caption>' +
+          '<thead><tr><th scope="col">Record</th><th scope="col">Kind</th><th scope="col">System</th><th scope="col">Identifier</th>' +
+          (data.may_edit ? '<th scope="col"><span class="cns-visually-hidden">Actions</span></th>' : "") + "</tr></thead><tbody>" +
+          data.links.map(function (r) {
+            var href = safeHref(r.url);
+            var label = esc(r.label || r.external_key);
+            return "<tr><td>" + (href ? '<a href="' + escAttr(href) + '" target="_blank" rel="noopener noreferrer">' + label +
+              ' <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="cns-visually-hidden"> (opens in a new tab)</span></a>' : label) +
+              "</td><td>" + esc(r.external_type || "") + "</td><td>" + esc(r.system_title || r.external_system) + '</td><td class="cns-mono cns-text-sm">' +
+              esc(r.external_key) + "</td>" +
+              (data.may_edit ? '<td><button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-edit="' + escAttr(r.name) + '" aria-label="Edit ' + escAttr(r.label || r.external_key) + '">Edit</button> ' +
+                '<button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-remove="' + escAttr(r.name) + '" aria-label="Remove ' + escAttr(r.label || r.external_key) + '">Remove</button></td>' : "") +
+              "</tr>";
+          }).join("") + "</tbody></table></div>"
+        : '<p class="cns-text-muted cns-text-sm">No record in another system is linked to this document.</p>';
+      form.hidden = !data.may_edit;
+      if (data.may_edit) {
+        var type = document.getElementById("external-link-type");
+        if (!type.options.length) {
+          type.innerHTML = '<option value="">Not stated</option>' + data.types.map(function (t) {
+            return '<option value="' + escAttr(t) + '">' + esc(t) + "</option>";
+          }).join("");
+          document.getElementById("external-link-system").innerHTML = '<option value="">A linked web page</option>' +
+            data.systems.map(function (s) { return '<option value="' + escAttr(s.name) + '">' + esc(s.title || s.name) + "</option>"; }).join("");
+        }
+      }
+    }
+
+    function fail(error) { Consilium.toast.error((error && error.message) || "The server refused.", { title: "Not done" }); }
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var name = document.getElementById("external-link-name").value;
+      var url = document.getElementById("external-link-url").value.trim();
+      var label = document.getElementById("external-link-label").value.trim();
+      if (!label) { Consilium.toast.error("Give the link a label."); document.getElementById("external-link-label").focus(); return; }
+      if (!safeHref(url)) { Consilium.toast.error("The address must start with http:// or https://."); document.getElementById("external-link-url").focus(); return; }
+      var args = { url: url, label: label, external_type: document.getElementById("external-link-type").value,
+                   external_key: document.getElementById("external-link-key").value.trim() };
+      var method = "update_document_link";
+      if (name) { args.link = name; } else {
+        method = "add_document_link";
+        args.document = DOC;
+        args.external_system = document.getElementById("external-link-system").value;
+      }
+      Consilium.api.call(M + method, args, { method: "POST" })
+        .then(function (data) {
+          draw(data); resetForm();
+          Consilium.toast.success(name ? "The link is changed." : "The link is added.", { title: "Saved" });
+        })
+        .catch(fail);
+    });
+
+    document.getElementById("external-link-cancel").addEventListener("click", resetForm);
+
+    document.getElementById("external-links-list").addEventListener("click", function (event) {
+      var edit = event.target.closest("button[data-edit]");
+      var remove = event.target.closest("button[data-remove]");
+      if (edit) {
+        var row = state.links.filter(function (r) { return r.name === edit.getAttribute("data-edit"); })[0];
+        if (!row) return;
+        document.getElementById("external-link-name").value = row.name;
+        document.getElementById("external-link-label").value = row.label || "";
+        document.getElementById("external-link-url").value = row.url || "";
+        document.getElementById("external-link-type").value = row.external_type || "";
+        document.getElementById("external-link-key").value = row.external_key || "";
+        document.getElementById("external-link-system-field").hidden = true;
+        document.getElementById("external-link-legend").textContent = "Change the link";
+        document.getElementById("external-link-submit").textContent = "Save the change";
+        document.getElementById("external-link-cancel").hidden = false;
+        document.getElementById("external-link-label").focus();
+      } else if (remove) {
+        var reason = window.prompt("Remove this link from the document. Why? (optional)", "");
+        if (reason === null) return;
+        remove.disabled = true;
+        Consilium.api.call(M + "remove_document_link", { link: remove.getAttribute("data-remove"), reason: reason }, { method: "POST" })
+          .then(function (data) { draw(data); Consilium.toast.success("The link is removed. It stays in the document's history.", { title: "Removed" }); })
+          .catch(function (error) { remove.disabled = false; fail(error); });
+      }
+    });
+
+    Consilium.api.call(M + "document_links", { document: DOC }, { trackLoading: false })
+      .then(draw)
+      .catch(function (error) {
+        document.getElementById("external-links-list").innerHTML = '<p class="cns-text-muted cns-text-sm">' +
+          esc((error && error.message) || "The links could not be read.") + "</p>";
+      });
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>
+{%- endif %}

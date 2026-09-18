@@ -191,6 +191,9 @@ imports it at module scope, so a psutil-backed stub is registered in
 | Job Objects for process cleanup | Only reliable way to kill a tree on Windows; orphaned workers hold DB connections and break the next start | `taskkill /T` — races |
 | PostgreSQL | Already first-class in Frappe; it's a config switch, not a port | Keeping MariaDB — against our standard |
 | Serve statics in-process | No nginx to configure; `--no-statics` available when a real proxy exists | Requiring nginx on Windows |
+| Portal look in one theme file (`public/css/theme-hybrid.css`), loaded after the portal's own CSS and **before** the generated `<style id="cns-brand">` | The theme sets defaults; Portal Branding's colours and typeface are written afterwards and win. Swapping or removing the look is one `<link>` in `base_portal.html` | Editing `tokens.css`/`consilium.css` in place — mixes the look into the component rules and makes the brand order fragile |
+| `backdrop-filter` only on the header, menus and pop-overs; cards and tiles are solid or plain translucent; the fixed Help button is solid | A blur over a static backdrop is invisible but still costs a compositing layer per element. In a software-rendering test (GPU off, CPU 4× slower) a blur on every card cut Home to 12–14 fps against 30 for the same page without it | Blur on every card (the full "glass" direction) |
+| Workspace theme (`public/css/desk-theme.css`) via `app_include_css` | Re-points the framework's own CSS variables and restyles a few stable desk classes, scoped to `body[data-route]`; hides and scripts nothing, so removing the hook restores the stock workspace | Editing the framework's desk styles — forbidden (never edit Frappe's source) |
 
 ---
 
@@ -211,7 +214,10 @@ python scripts/check_availability.py --target-windows
 # 4. end-to-end against a running site -- 8 checks
 python scripts/smoke_test.py --site <site> --port 8000
 
-# 5. frappe's own tests against postgres (a sample)
+# 5. colour contrast of the portal and workspace themes (WCAG AA) -- no site needed
+python scripts/check_contrast.py
+
+# 6. frappe's own tests against postgres (a sample)
 cd <bench>/sites && ../env/bin/python -m frappe.utils.bench_helper frappe \
     --site <site> run-tests --module frappe.tests.test_document
 ```
@@ -224,6 +230,7 @@ Expected results at handover:
 | audit | 18 findings: 10 blocker, 4 warning, 4 note |
 | availability (`--target-windows`) | 139 wheels + 6 pure-Python sdists (145 packages; dev-only tools are in `requirements-dev.txt`) |
 | smoke test | 8 passed, 0 failed |
+| `check_contrast.py` | 78/78 pairs meet WCAG AA (default brand) |
 | `frappe.tests.test_document` | 36 run, OK |
 | `frappe.tests.test_permissions` | 34 run, OK |
 | `workflow.doctype.workflow.test_workflow` | 12 run, OK |

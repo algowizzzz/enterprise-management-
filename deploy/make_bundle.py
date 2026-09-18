@@ -181,8 +181,9 @@ KIT_FILES = (
 
 # The documents the help assistant reads at runtime, relative to docs/. The
 # assistant looks for the first three by these names under the directory the
-# site's `assistant_docs_path` names; the guides folder carries the images the
-# user guide refers to.
+# site's `assistant_docs_path` names. The guides folder is the illustrated
+# onboarding guide: its chapters are what the in-platform guide reader (/guide)
+# shows and the assistant cites, and guides/images holds every picture they use.
 ASSISTANT_DOCS = ("USER-GUIDE.md", "ADMIN-GUIDE.md", "product/05-glossary.md", "guides")
 
 
@@ -488,27 +489,42 @@ def verify_offline(wheelhouse: Path, requirements: Path, target: Target) -> None
     verify_closure(wheelhouse, target)
 
 
+def guide_image_gaps(guides: Path) -> list[str]:
+    """Pictures a guide chapter refers to that are not in the folder.
+
+    The guide reader serves a chapter's pictures from guides/images; one left
+    out of the bundle is a broken picture on every installation made from it.
+    """
+    gaps = []
+    for chapter in sorted(guides.glob("[0-9][0-9]-*.md")):
+        for ref in re.findall(r"!\[[^\]]*\]\(\s*(images/[^)\s]+)", chapter.read_text(encoding="utf-8")):
+            if not (guides / ref).is_file():
+                gaps.append(f"{chapter.name}: {ref}")
+    return gaps
+
+
 def copy_assistant_docs(source: Path, destination: Path) -> int:
     docs = source / "docs"
     copied = 0
     for rel in ASSISTANT_DOCS:
         path = docs / rel
         if not path.exists():
-            if rel == "guides":
-                continue  # optional: illustrations only
             if source != REPO:
                 # Bundling an earlier release that predates the document.
                 print(f"  note: {source.name} has no docs/{rel}; that release's assistant goes without it")
                 continue
             raise SystemExit(
-                f"docs/{rel} is missing. The help assistant reads it at runtime; "
-                f"without it the assistant cannot explain how anything works."
+                f"docs/{rel} is missing. The help assistant and the guide reader read it at "
+                f"runtime; without it the platform cannot explain how anything works."
             )
         target = destination / rel
         target.parent.mkdir(parents=True, exist_ok=True)
         if path.is_dir():
             shutil.copytree(path, target)
             copied += sum(1 for p in target.rglob("*") if p.is_file())
+            gaps = guide_image_gaps(target) if rel == "guides" else []
+            if gaps and source == REPO:
+                raise SystemExit("guide pictures are missing from docs/guides/images:\n  " + "\n  ".join(gaps))
         else:
             shutil.copy2(path, target)
             copied += 1

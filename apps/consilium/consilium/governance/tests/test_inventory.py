@@ -97,7 +97,7 @@ class TestAttestationStamp(GovernanceTestCase):
         make_seat(forum.name, seat_role(is_chair_role=1, max_holders=1, can_attest=1), chair)
 
         campaign = reviews.open_inventory_attestation(unique("period"),
-                                                      due_on=add_days(nowdate(), 30))
+                                                      due_on=reviews.next_first_quarter_due())
         task_name = task_for(reviews.generate(campaign), forum.name)
 
         self.assertIsNone(inventory.stamp_attestation(task_name))
@@ -112,7 +112,7 @@ class TestAttestationStamp(GovernanceTestCase):
         forum = make_forum()
         make_seat(forum.name, seat_role(is_owner_role=1, max_holders=1, can_attest=1), make_user())
         campaign = reviews.open_inventory_attestation(unique("period"),
-                                                      due_on=add_days(nowdate(), 30))
+                                                      due_on=reviews.next_first_quarter_due())
         for task in reviews.generate(campaign)["created"]:
             attestation.respond(task, "Attested")
         self.assertIn(forum.name, inventory.refresh_last_attested(campaign.name))
@@ -121,7 +121,7 @@ class TestAttestationStamp(GovernanceTestCase):
         forum = make_forum()
         make_seat(forum.name, seat_role(is_owner_role=1, max_holders=1, can_attest=1), make_user())
         campaign = reviews.open_inventory_attestation(unique("period"),
-                                                      due_on=add_days(nowdate(), 30))
+                                                      due_on=reviews.next_first_quarter_due())
         task_name = task_for(reviews.generate(campaign), forum.name)
         attestation.respond(task_name, "Declined", statement="The record is out of date.")
 

@@ -65,7 +65,7 @@ Story-level status: [`docs/delivery/EPICS.md`](docs/delivery/EPICS.md).
 
 ```bash
 git clone <this repository> consilium && cd consilium
-git checkout consilium-delivery          # the branch this hand-off describes
+git checkout main                        # the delivery is on main
 ./scripts/dev_setup.sh
 ```
 
@@ -406,3 +406,4 @@ Not yet proven. Each is on the organisation's side:
 | Demo personas and roles | `docs/delivery/DEMO-LOGINS.md` |
 | Architecture and history | `HANDOVER.md`, `docs/delivery/SESSION-SUMMARY.md` |
 | Refresh guide screenshots | `scripts/capture_screenshots.py`, then `scripts/build_guides.sh` |
+| Rebuild the leadership deck | `.venv/bin/python scripts/deck/build_deck.py` (numbers in `scripts/deck/facts.json`; see `docs/OPERATIONS.md` §F) |

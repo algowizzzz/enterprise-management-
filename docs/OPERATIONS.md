@@ -502,7 +502,7 @@ record controls:
 | Section | Fields | Where it shows |
 |---|---|---|
 | Identity | Portal name, organisation name, logo, browser-tab icon | Portal header and footer, the browser tab, the sign-in page, the workspace header and loading screen. |
-| Colours | Primary colour, accent colour, header style (primary colour or white) | Every portal page. Shades are derived from the primary colour, and the dark theme is adjusted to keep contrast. |
+| Colours | Primary colour, accent colour, header style (glass, primary colour or white) | Every portal page. Shades are derived from the primary colour, and the dark theme is adjusted to keep contrast. |
 | Typeface | Font family name, regular and bold font files | Every portal page. |
 | Home page banner | Heading, text, image, two buttons and their links | The top of the home page. |
 | Footer | A line of text | Every portal page. |
@@ -875,3 +875,44 @@ rather than its number, draws the numbered callouts as a temporary overlay in
 the page just before each picture, and writes `docs/guides/images/manifest.json`.
 The build script needs pandoc, and Google Chrome (through the repository's
 Playwright) or LibreOffice.
+
+## F. Rebuilding the leadership briefing (slide deck)
+
+One command, from the repository root:
+
+```bash
+.venv/bin/python scripts/deck/build_deck.py
+# writes ~/Desktop/Consilium-deliverables/Consilium-Leadership-Briefing.pptx
+.venv/bin/python scripts/deck/build_deck.py --out deliverables/Consilium-Leadership-Briefing.pptx
+# refreshes the copy committed with the release
+```
+
+It needs python-pptx from `requirements-dev.txt`, a pure-Python wheel; its
+lxml and Pillow dependencies are wheels already in `requirements.txt`. It uses
+no network, no Node.js and no npm. The sources are in `scripts/deck/`:
+
+- `facts.json` holds every number and status: tests, checks, entities,
+  demonstration counts, the backlog and the coverage class of every
+  requirement.
+- `slides.py` holds the slides in order, with their text, layout and speaker
+  notes.
+- `deckkit.py` holds the drawing primitives.
+
+The screenshots come from `docs/guides/images/`, the same set the onboarding
+guide uses. Re-capture them first (§E) if the interface has changed.
+
+**After a re-grade, edit only `facts.json["coverage"]`.** The coverage chart,
+the heatmap and its title, the "still open" list, the roadmap's first phase
+and the appendix trace table are all computed from it. Slide text names
+numbers as `<<name>>` placeholders, resolved from `facts.json` by
+`build_deck.compute_values`. An unknown name stops the build rather than
+leaving a gap.
+
+The script exits with status 2 if a screenshot is missing; it draws a
+labelled placeholder on the slide in its place. Check the result visually
+before it goes out:
+
+```bash
+soffice --headless --convert-to pdf Consilium-Leadership-Briefing.pptx
+pdftoppm -r 60 -jpeg Consilium-Leadership-Briefing.pdf slide
+```

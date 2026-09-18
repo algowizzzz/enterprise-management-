@@ -20,6 +20,9 @@ Forum annual review and attestation     forum owner, assignee,           —
 Action plan end date                    plan owner                       accountable executive (overdue)
 Attestation task, on the campaign's     person asked, then the           —
 reminder schedule                       second signatory
+Charter review (G-10, G-14)             forum owner and secretary        —
+Policy approval step left pending       step's assignee, or everyone     document approver, or sponsor
+(P-8)                                   in its role or group queue       when the approver holds the step
 ======================================  ===============================  ==================================
 
 Hourly, the service-level clocks are brought up to date and swept (warnings
@@ -639,6 +642,177 @@ def remind_action_plans(as_of=None, plans=None) -> list[str]:
     return _each("action plan", rows, one)
 
 
+# ----------------------------------------------- G-10, G-14 charter reviews
+
+#: Days before a charter's review date that its owner and secretary are told.
+CHARTER_REVIEW_NOTICE_DAYS = 30
+
+
+def remind_charter_reviews(as_of=None, charters=None) -> list[str]:
+    """Charters in force whose review date is near or past (G-10, G-14).
+
+    "In force": the charter has not ended (no ``effective_to``, or one still to
+    come) and governs a live forum (its ``is_active`` flag). A charter drafted
+    against a formation request governs nothing yet and is not reviewed.
+    Written with the query builder because "no end date" must be ``IS NULL``.
+    """
+    as_of = getdate(as_of or nowdate())
+    horizon = add_days(as_of, CHARTER_REVIEW_NOTICE_DAYS)
+    charter = frappe.qb.DocType("Committee Charter")
+    forum = frappe.qb.DocType("Governance Forum")
+    rows = [
+        frappe._dict(row) for row in (
+            frappe.qb.from_(charter)
+            .join(forum).on(forum.name == charter.forum)
+            .select(charter.name, charter.charter_title, charter.next_charter_review_on, charter.forum,
+                    forum.forum_name, forum.forum_owner, forum.secretary)
+            .where(charter.next_charter_review_on.isnotnull())
+            .where(charter.next_charter_review_on <= horizon)
+            .where(charter.effective_to.isnull() | (charter.effective_to >= as_of))
+            .where(forum.is_active == 1)
+            .run(as_dict=True)
+        )
+        if _in(charters, row["name"])
+    ]
+
+    def one(row):
+        return _due_or_overdue(
+            ("governance.charter.review_due", "governance.charter.review_overdue"),
+            [row.forum_owner, row.secretary], doctype="Committee Charter", name=row.name,
+            due_on=row.next_charter_review_on, as_of=as_of,
+            context={"charter_title": row.charter_title or row.name, "forum_name": row.forum_name or row.forum},
+        )
+
+    return _each("charter review", rows, one)
+
+
+# ------------------------------------------------ P-8 policy approval steps
+#
+# A step raised on a governing document and left undecided used to wait
+# forever: nothing read open ``Approval Decision`` rows, and the phase time
+# limit warned only the document owner. Each open step on the version now in
+# the chain, once it is its turn, is now given a due date — the target of an
+# open service-level clock on the step itself when an administrator has
+# configured one (an ``SLA Definition`` on Approval Decision), otherwise a
+# configured number of days from the moment it became decidable. Before that
+# date the assignee is told once; after it they are chased every few days;
+# and after a further lag the document approver is told — or, when the
+# approver is the one holding the step, the document sponsor. A step routed to
+# a role or group queue tells the whole queue.
+
+#: Days an approval step has, from becoming decidable, when no service-level
+#: clock runs on it. Site configuration ``consilium_approval_step_due_days``.
+APPROVAL_STEP_DUE_DAYS = 5
+
+#: Days before the due date the assignee is first told.
+APPROVAL_STEP_NOTICE_DAYS = 2
+
+#: Days overdue before the approver (or sponsor) is told. Site configuration
+#: ``consilium_approval_step_escalate_days``.
+APPROVAL_STEP_ESCALATE_DAYS = 3
+
+#: An overdue step is chased at most this often: an approval holds a document
+#: up, so more often than the weekly chase of a review.
+APPROVAL_STEP_REPEAT_DAYS = 3
+
+
+def _conf_days(key: str, default: int) -> int:
+    value = frappe.conf.get(key)
+    try:
+        return int(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
+def approval_step_due(row, as_of=None):
+    """When an open step is due: its own clock's target, or the configured lag
+    from when it became decidable (raised, or the last step ahead decided)."""
+    if frappe.db.table_exists("SLA Clock"):
+        target = frappe.get_all(
+            "SLA Clock",
+            filters={"subject_doctype": "Approval Decision", "subject_name": row.name, "is_open": 1},
+            pluck="target_on", order_by="target_on asc", limit=1,
+        )
+        if target and target[0]:
+            return getdate(target[0])
+    started = getdate(row.creation)
+    ahead = frappe.get_all(
+        "Approval Decision",
+        filters={"subject_doctype": row.subject_doctype, "subject_name": row.subject_name, "is_open": 0,
+                 "step_sequence": ["<", int(row.step_sequence or 0)]},
+        fields=["decided_on", "based_on_version"],
+    )
+    for other in ahead:
+        if (other.based_on_version or None) == (row.based_on_version or None) and other.decided_on:
+            started = max(started, getdate(other.decided_on))
+    return add_days(started, _conf_days("consilium_approval_step_due_days", APPROVAL_STEP_DUE_DAYS))
+
+
+def remind_approval_steps(as_of=None, decisions=None) -> list[str]:
+    """Open approval steps on governing documents: due soon, overdue, escalated."""
+    try:
+        from consilium.policy import routing
+    except ImportError:
+        return []
+    from consilium.consilium_core import approvals
+
+    as_of = getdate(as_of or nowdate())
+    escalate_after = _conf_days("consilium_approval_step_escalate_days", APPROVAL_STEP_ESCALATE_DAYS)
+    rows = [
+        row for row in frappe.get_all(
+            "Approval Decision",
+            filters={"subject_doctype": routing.DOCTYPE, "is_open": 1, "docstatus": ["<", 2]},
+            fields=["name", "subject_doctype", "subject_name", "approval_step", "step_sequence", "mode",
+                    "assigned_to", "based_on_version", "creation"],
+        )
+        if _in(decisions, row.name)
+    ]
+    documents: dict[str, object] = {}
+
+    def one(row):
+        doc = documents.get(row.subject_name)
+        if doc is None:
+            doc = documents[row.subject_name] = frappe.get_doc(routing.DOCTYPE, row.subject_name)
+        # A step raised on an earlier version is abandoned, not pending; and a
+        # sequential step behind an undecided one is not yet anyone's to decide.
+        if (row.based_on_version or None) != (routing._current_version_name(doc) or None):
+            return []
+        if not approvals.is_turn(row.name):
+            return []
+        due_on = approval_step_due(row, as_of)
+        days_until = _days(as_of, due_on)
+        if days_until > APPROVAL_STEP_NOTICE_DAYS:
+            return []
+        queue = routing.step_queue(doc, row.approval_step)
+        told = routing.queue_members(queue) if queue else [row.assigned_to]
+        # The reminder's subject is the step, so two steps of one document due
+        # the same day are two reminders, not one; the link opens the document,
+        # where the step is decided (the step record itself is not readable by
+        # the people it names).
+        context = {"approval_step": row.approval_step, "due_on": str(due_on),
+                   "queue": queue["label"] if queue else "", "assigned_to": row.assigned_to,
+                   "document": doc.name, "document_name": doc.get("document_name") or doc.name,
+                   "link": frappe.utils.get_url(f"/policy?name={frappe.utils.quote(doc.name, safe='')}")}
+        subject = {"subject_doctype": "Approval Decision", "subject_name": row.name}
+        if days_until > 0:
+            return remind("policy.approval.step_due_soon", told, **subject, due_on=due_on, as_of=as_of,
+                          context={**context, "days_until": days_until})
+        days_overdue = -days_until
+        sent = remind("policy.approval.step_overdue", told, **subject, due_on=due_on, as_of=as_of,
+                      repeat_days=APPROVAL_STEP_REPEAT_DAYS, context={**context, "days_overdue": days_overdue})
+        if days_overdue >= escalate_after:
+            above = doc.get("document_approver")
+            if not above or above in told:
+                above = doc.get("document_sponsor")
+            if above and above not in told:
+                sent += remind("policy.approval.step_escalated", [above], **subject, due_on=due_on, as_of=as_of,
+                               repeat_days=APPROVAL_STEP_REPEAT_DAYS,
+                               context={**context, "days_overdue": days_overdue})
+        return sent
+
+    return _each("approval step", rows, one)
+
+
 # -------------------------------------------------------------- schedules
 
 
@@ -657,6 +831,8 @@ DAILY = (
     ("forum reviews", "Governance Forum", remind_forum_reviews),
     ("attestation campaigns", "Attestation Campaign", remind_attestation_campaigns),
     ("action plans", "Action Plan", remind_action_plans),
+    ("charter reviews", "Committee Charter", remind_charter_reviews),
+    ("approval steps", "Approval Decision", remind_approval_steps),
 )
 
 

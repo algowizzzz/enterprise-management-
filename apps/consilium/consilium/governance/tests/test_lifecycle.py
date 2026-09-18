@@ -225,7 +225,7 @@ class TestAnnualReview(GovernanceTestCase):
         make_seat(forum.name, seat_role(is_chair_role=1, max_holders=1, can_attest=1), chair)
         make_seat(forum.name, seat_role(can_attest=0), make_user())
 
-        campaign = reviews.open_inventory_attestation(unique("period"), due_on=add_days(nowdate(), 30))
+        campaign = reviews.open_inventory_attestation(unique("period"), due_on=reviews.next_first_quarter_due())
         result = reviews.generate(campaign)
         assignees = frappe.get_all(
             "Attestation Task", filters={"campaign": campaign.name, "subject_name": forum.name},

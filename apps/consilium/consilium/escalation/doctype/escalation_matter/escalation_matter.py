@@ -14,7 +14,7 @@ from frappe.model.document import Document
 from frappe.utils import getdate, now
 
 from consilium.consilium_core import state_flags
-from consilium.escalation import assignment, resolution, routing, sensitivity, templates
+from consilium.escalation import assignment, resolution, routing, sensitivity, templates, transitions
 from consilium.escalation.doctype.escalation_impacted_entity.escalation_impacted_entity import (
     ENTITY_DOCTYPES,
 )
@@ -32,6 +32,9 @@ class EscalationMatter(Document):
         routing.apply_routing(self)
         routing.validate_pathway(self)
         state_flags.apply_state_flags(self)
+        # A person changing the status on the desk follows the moves configured
+        # for the matter's type and severity, as the portal does (E-8).
+        transitions.validate_status_change(self)
         templates.apply_template(self, templates.SCOPE_ESCALATION, self.severity)
         resolution.validate_closure(self)
 

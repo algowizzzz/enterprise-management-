@@ -26,6 +26,7 @@
   "requires_statement",
   "governance_forums",
   "approval_decision",
+  "approval_route",
   "approval_motion",
   "approved_by",
   "approved_on",
@@ -166,6 +167,14 @@
    "read_only": 1
   },
   {
+   "description": "The approval chain this acceptance was sent through. Empty when it went to one independent approver.",
+   "fieldname": "approval_route",
+   "fieldtype": "Link",
+   "label": "Approval Route",
+   "options": "Risk Acceptance Approval Route",
+   "read_only": 1
+  },
+  {
    "description": "Where the approval was taken as a forum motion instead.",
    "fieldname": "approval_motion",
    "fieldtype": "Link",
@@ -213,7 +222,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 21:00:00.000000",
+ "modified": "2026-09-18 23:10:00.000000",
  "modified_by": "Administrator",
  "module": "Escalation",
  "name": "Risk Acceptance",

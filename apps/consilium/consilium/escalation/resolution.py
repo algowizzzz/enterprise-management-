@@ -23,7 +23,7 @@ from frappe import _
 from frappe.utils import now
 
 from consilium.consilium_core import audit, notification, sla, state_flags
-from consilium.escalation import routing
+from consilium.escalation import routing, transitions
 
 MATTER = "Escalation Matter"
 
@@ -408,12 +408,8 @@ def _options(doctype: str, fieldname: str) -> list[str]:
     return [o for o in (field.options or "").split("\n") if o] if field else []
 
 
-def status_targets(matter) -> list[dict]:
-    """The open states the matter may move to: every configured open state but its own.
-
-    Closing is a separate action with its own gate, so the states a matter
-    rests in are not offered here.
-    """
+def open_states(matter) -> list[dict]:
+    """Every configured open state but the matter's own: the moves there are at all."""
     by_value = state_flags.get_flag_map(MATTER).get("status", {})
     return [
         {"value": value, "requires_review": int(flags.get("requires_review") or 0)}
@@ -423,15 +419,49 @@ def status_targets(matter) -> list[dict]:
     ]
 
 
-def closing_states() -> list[dict]:
-    """The states a matter may come to rest in, and whether each needs an external reference."""
+def status_targets(matter, user: str | None = None) -> list[dict]:
+    """The open states this user may move the matter to.
+
+    Every open state but its own, narrowed by the moves configured for the
+    matter's type and severity (E-8, `transitions`), including the role a
+    configured move asks for. Closing is a separate action with its own gate,
+    so the states a matter rests in are not offered here.
+    """
+    user = user or frappe.session.user
+    return [target for target in open_states(matter) if transitions.permits(matter, target["value"], user)]
+
+
+def closing_states(matter=None, user: str | None = None) -> list[dict]:
+    """The states a matter may come to rest in, and whether each needs an external reference.
+
+    Given the matter, only those its configured workflow lets this user close it
+    into from where it stands now (E-8): a type or severity whose matters must
+    pass through review first offers none until they have.
+    """
     by_value = state_flags.get_flag_map(MATTER).get("status", {})
-    return [
+    states = [
         {"value": value, "is_committable": int(flags.get("is_committable") or 0)}
         for value in _options(MATTER, "status")
         for flags in [by_value.get(value) or {}]
         if flags and not int(flags.get("is_open") or 0)
     ]
+    if matter is None:
+        return states
+    user = user or frappe.session.user
+    return [state for state in states if transitions.permits(matter, state["value"], user)]
+
+
+def refuse_move(matter, status: str) -> None:
+    """Refuse, audited, a move the configured workflow does not allow this caller."""
+    audit.refuse(
+        transitions.refusal_reason(matter, status),
+        subject_doctype=MATTER,
+        subject_name=matter.name,
+        attempted_action="Other",
+        control="escalation transition rule",
+        context={"from_status": matter.status, "to_status": status},
+        exc=frappe.ValidationError,
+    )
 
 
 def _people() -> list[dict]:
@@ -522,6 +552,13 @@ def workbench(escalation_matter: str) -> dict:
     # screen offers "Record the closure" alone. Offering both sent people to a
     # button whose only answer was "record the closure first".
     actions["close"] = actions["close"] and bool(closure)
+    # A move or a closure the configured workflow gives this matter no way to
+    # make is not offered: a button whose only answer is "not from here" is not
+    # an action (E-8).
+    targets = status_targets(matter, user) if actions["move_status"] else []
+    actions["move_status"] = actions["move_status"] and bool(targets)
+    closing = closing_states(matter, user) if actions["close"] else []
+    actions["close"] = actions["close"] and bool(closing)
     labels = dict(ACTION_LABELS)
     if closure:
         labels["record_closure"] = _("Revise the closure")
@@ -548,8 +585,11 @@ def workbench(escalation_matter: str) -> dict:
         },
         "actions": actions,
         "action_labels": labels,
-        "status_targets": status_targets(matter) if actions["move_status"] else [],
-        "closing_states": closing_states() if actions["close"] else [],
+        "status_targets": targets,
+        "closing_states": closing,
+        # The moves configured for this matter's type and severity (E-8), so the
+        # page can say why a state it might expect is not offered.
+        "transition_rules": transitions.describe(matter) if acting else [],
         "plans": plans,
         "plan_statuses": _options("Action Plan", "status"),
         "acceptances": acceptances,
@@ -604,12 +644,16 @@ def move_matter_status(escalation_matter: str, status: str) -> dict:
     is under review (including handing it back). Closing is `close_matter`."""
     matter = load_matter(escalation_matter, "write")
     authorise(matter, "move_status")
-    if status not in [target["value"] for target in status_targets(matter)]:
+    if status not in [target["value"] for target in open_states(matter)]:
         frappe.throw(
             _("Escalation {0} cannot be moved to {1} from here. A matter comes to rest only through "
               "its closure.").format(matter.name, status),
             title=_("Not A Move"),
         )
+    # The move exists; whether this matter's type and severity allow it, from
+    # here and by this person, is configuration (E-8).
+    if not transitions.permits(matter, status):
+        refuse_move(matter, status)
     matter.status = status
     matter.save(ignore_permissions=True)
     return workbench(matter.name)
@@ -795,6 +839,8 @@ def close_matter(escalation_matter: str, status: str, response_template_complete
     targets = {row["value"]: row for row in closing_states()}
     if status not in targets:
         frappe.throw(_("{0} is not a state a matter comes to rest in.").format(status), title=_("Not A Closure"))
+    if not transitions.permits(matter, status):
+        refuse_move(matter, status)
     name = closure_of(matter.name)
     if not name:
         frappe.throw(_("Record the closure — how the matter ended and against which criteria — before closing it."),
@@ -826,11 +872,19 @@ def my_escalation_queue() -> dict:
     user = frappe.session.user
     if not frappe.has_permission(MATTER, "read"):
         return {"approvals": [], "reviews": [], "owned": []}
-    decisions = frappe.get_all(
-        "Approval Decision",
-        filters={"subject_doctype": "Risk Acceptance", "is_open": 1, "assigned_to": user},
-        pluck="subject_name",
-    )
+    from consilium.consilium_core import approvals as core_approvals
+
+    # A step of an approval chain that is waiting on the steps ahead of it is
+    # not yet anyone's to decide (E-9), so it is not listed until it is due.
+    decisions = [
+        row.subject_name
+        for row in frappe.get_all(
+            "Approval Decision",
+            filters={"subject_doctype": "Risk Acceptance", "is_open": 1, "assigned_to": user},
+            fields=["name", "subject_name"],
+        )
+        if core_approvals.is_turn(row.name)
+    ]
     approvals = frappe.get_list(
         "Risk Acceptance", filters={"name": ["in", decisions or [""]]},
         fields=["name", "risk_acceptance_name", "escalation_matter", "status"],

@@ -59,7 +59,7 @@
 </div>
 {%- else %}
 
-<div id="matter-summary" class="cns-card">
+<div id="matter-summary" class="cns-card cns-record-summary">
   <div class="cns-card-body">
     <p class="cns-text-muted cns-text-sm">Loading the record&hellip;</p>
   </div>
@@ -780,7 +780,16 @@
             var acc = acceptanceById(row.name);
             if (!acc) return "";
             var out = [];
-            if (acc.decision && acc.decision.is_open) {
+            var chain = acc.chain || [];
+            var waitingOn = acc.waiting_on || [];
+            if (chain.length > 1) {
+              /* An approval chain (E-9): how far it has got, and who it waits on now. */
+              var decided = chain.filter(function (s) { return !s.is_open; }).length;
+              out.push('<span class="cns-text-sm">' + decided + " of " + chain.length + " steps decided" +
+                (waitingOn.length ? " &middot; waiting on " +
+                  waitingOn.map(function (p) { return Consilium.Table.formatters.person(p); }).join(", ") : "") +
+                "</span>");
+            } else if (acc.decision && acc.decision.is_open) {
               out.push('<span class="cns-text-sm">Waiting on ' + Consilium.Table.formatters.person(acc.decision.assigned_to) + "</span>");
             }
             if (acc.can_decide) {
@@ -1331,22 +1340,53 @@
     var open = (WB.acceptances || []).filter(function (a) { return a.can_request; });
     if (!open.length) { notice("Nothing to send.", "No acceptance is with its author."); return; }
     var chosen = acceptanceById(which) || open[0];
-    var approvers = (WB.approvers || []).filter(function (p) {
-      return p.name !== user && p.name !== chosen.accountable_executive;
-    }).map(function (p) { return { value: p.name, label: p.full_name || p.name }; });
+    var route = chosen.route;
+    var specs = [
+      { name: "risk_acceptance", label: "Acceptance", type: "select", required: true, value: chosen.name,
+        options: open.map(function (a) { return { value: a.name, label: a.risk_acceptance_name + " (" + a.name + ")" }; }) }
+    ];
+    var intro;
+    if (route) {
+      /* E-9: the matter's type and severity call for an approval chain. The
+         server resolved it; the page shows it and asks only for the people a
+         step leaves to the person asking. */
+      intro = "This acceptance goes through the approval route <strong>" + escapeHtml(route.title) +
+        "</strong>, set for this matter's type and severity. It takes effect only when every step approves; " +
+        "a rejection at any step returns it to you." +
+        '<ol class="cns-prose" style="margin: var(--cns-space-2) 0 0;">' + route.steps.map(function (s) {
+          return "<li>" + escapeHtml(s.approval_step) +
+            (s.mode === "Parallel" ? " (alongside the other steps)" : " (step " + s.step_sequence + ")") + " &middot; " +
+            (s.chosen ? "you choose the approver below" : Consilium.Table.formatters.person(s.assignee)) + "</li>";
+        }).join("") + "</ol>";
+      route.steps.forEach(function (s) {
+        if (!s.chosen) return;
+        specs.push({ name: "approver_" + s.key, label: s.approval_step, type: "select", required: true,
+          options: (s.candidates || []).map(function (p) { return { value: p.name, label: p.full_name || p.name }; }),
+          help: "Holds the " + s.required_role + " role, can see this matter and is independent of it." });
+      });
+    } else {
+      var approvers = (WB.approvers || []).filter(function (p) {
+        return p.name !== user && p.name !== chosen.accountable_executive;
+      }).map(function (p) { return { value: p.name, label: p.full_name || p.name }; });
+      intro = "The approver must be independent of you and of the acceptance's accountable executive. " +
+        "They decide it from this page; until then it has no effect.";
+      specs.push({ name: "approver", label: "Approver", type: "select", required: true, options: approvers });
+    }
     openPanel({
       title: actionLabel("request_approval"),
-      intro: "The approver must be independent of you and of the acceptance's accountable executive. " +
-        "They decide it from this page; until then it has no effect.",
-      specs: [
-        { name: "risk_acceptance", label: "Acceptance", type: "select", required: true, value: chosen.name,
-          options: open.map(function (a) { return { value: a.name, label: a.risk_acceptance_name + " (" + a.name + ")" }; }) },
-        { name: "approver", label: "Approver", type: "select", required: true, options: approvers }
-      ],
+      intro: intro,
+      specs: specs,
       submit: "Request approval",
       onSubmit: function (v) {
+        if (!route) {
+          return act("approvals.request_risk_acceptance_approval",
+            { risk_acceptance: v.risk_acceptance, approver: v.approver }, "Approval requested.");
+        }
+        var chosenApprovers = {};
+        route.steps.forEach(function (s) { if (s.chosen) chosenApprovers[s.key] = v["approver_" + s.key]; });
         return act("approvals.request_risk_acceptance_approval",
-          { risk_acceptance: v.risk_acceptance, approver: v.approver }, "Approval requested.");
+          { risk_acceptance: v.risk_acceptance, approvers: JSON.stringify(chosenApprovers) },
+          "Approval requested from every step of the route.");
       },
       afterRender: function () {
         $("act-risk_acceptance").addEventListener("change", function () { panelRequest(this.value); });
@@ -1360,6 +1400,13 @@
     var chosen = acceptanceById(which) || open[0];
     var reasonNeeded = {};
     (WB.decision_choices || []).forEach(function (c) { reasonNeeded[c.decision] = c.needs_reason; });
+    /* On an approval chain the caller decides a step of it (E-9): say which. */
+    var chainSteps = chosen.chain || [];
+    var mySteps = chainSteps.filter(function (s) { return s.can_decide; });
+    var stepNote = chainSteps.length > 1 && mySteps.length
+      ? '<p style="margin-top: var(--cns-space-2);">You decide the step <strong>' + escapeHtml(mySteps[0].approval_step) +
+        "</strong> of " + chainSteps.length + ". The acceptance takes effect when every step has approved.</p>"
+      : "";
     openPanel({
       title: actionLabel("decide_approval"),
       intro: "<strong>" + escapeHtml(chosen.risk_acceptance_name) + "</strong> &middot; " +
@@ -1367,15 +1414,22 @@
         escapeHtml(Consilium.util.formatDate(chosen.end_date, false)) + " &middot; accountable: " +
         Consilium.Table.formatters.person(chosen.accountable_executive) +
         '<p class="cns-prose" style="margin-top: var(--cns-space-2);">' + escapeHtml(chosen.rationale || "") + "</p>" +
-        "An approval gives the acceptance effect. Any other decision returns it to its author, with your reason.",
+        stepNote +
+        (chainSteps.length > 1
+          ? "An approval moves the chain on. Any other decision returns the acceptance to its author, with your reason."
+          : "An approval gives the acceptance effect. Any other decision returns it to its author, with your reason."),
       specs: [
         { name: "risk_acceptance", label: "Acceptance", type: "select", required: true, value: chosen.name,
-          options: open.map(function (a) { return { value: a.name, label: a.risk_acceptance_name + " (" + a.name + ")" }; }) },
+          options: open.map(function (a) { return { value: a.name, label: a.risk_acceptance_name + " (" + a.name + ")" }; }) }
+      ].concat(mySteps.length > 1 ? [
+        { name: "approval_decision", label: "Step", type: "select", required: true, value: mySteps[0].name,
+          options: mySteps.map(function (s) { return { value: s.name, label: s.approval_step }; }) }
+      ] : []).concat([
         { name: "decision", label: "Decision", type: "select", required: true,
           options: (WB.decision_choices || []).map(function (c) { return c.decision; }) },
         { name: "comments", label: "Reason", type: "textarea", rows: 3,
           help: "Required when the decision returns the acceptance." }
-      ],
+      ]),
       submit: "Record the decision",
       onSubmit: function (v) {
         if (reasonNeeded[v.decision] && !v.comments) {
@@ -1383,8 +1437,9 @@
           $("act-comments").focus();
           return null;
         }
-        return act("approvals.decide_risk_acceptance",
-          { risk_acceptance: v.risk_acceptance, decision: v.decision, comments: v.comments },
+        var decideArgs = { risk_acceptance: v.risk_acceptance, decision: v.decision, comments: v.comments };
+        if (v.approval_decision) decideArgs.approval_decision = v.approval_decision;
+        return act("approvals.decide_risk_acceptance", decideArgs,
           "Decision recorded: " + v.decision + ".");
       },
       afterRender: function () {

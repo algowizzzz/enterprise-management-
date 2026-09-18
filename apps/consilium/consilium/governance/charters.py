@@ -51,7 +51,69 @@ def record_challenge(charter, status: str, *, comments: str | None = None, by: s
     charter.rgo_reviewed_by = by or frappe.session.user
     charter.rgo_reviewed_on = now()
     charter.save(ignore_permissions=True)
+    notify_challenge(charter)
     return charter
+
+
+# ------------------------------------------------ G-14 charter notifications
+
+#: Raised when the risk governance office records its challenge outcome.
+CHALLENGE_EVENT = "governance.charter.challenge_recorded"
+
+
+def charter_people(charter) -> list[str]:
+    """Who answers for a charter: the owner and the secretary of the forum it
+    governs, or — for a charter drafted against a formation request, before
+    any forum exists — the request's originator and sponsor."""
+    people = []
+    if charter.get("forum"):
+        forum = frappe.db.get_value("Governance Forum", charter.forum, ["forum_owner", "secretary"], as_dict=True)
+        if forum:
+            people += [forum.forum_owner, forum.secretary]
+    if charter.get("formation_request"):
+        request = frappe.db.get_value("Committee Formation Request", charter.formation_request,
+                                      ["requester", "forum_sponsor"], as_dict=True)
+        if request:
+            people += [request.requester, request.forum_sponsor]
+    return [person for person in dict.fromkeys(people) if person]
+
+
+def challenge_office() -> list[str]:
+    """The risk governance office: everyone holding the role that challenges."""
+    from consilium.governance import formation
+
+    return formation.role_queue(CHALLENGE_ROLE)
+
+
+def notify_challenge(charter) -> list[str]:
+    """Tell the charter's owner, its secretary and the risk governance office
+    that a challenge outcome was recorded — changes requested (the charter is
+    challenged) or cleared (G-14). Whether it is outstanding is the charter's
+    ``requires_review`` flag, never its label. Never raises: the outcome is
+    recorded whether or not the notice could be sent."""
+    from consilium.consilium_core import notification
+
+    try:
+        forum_name = (frappe.db.get_value("Governance Forum", charter.forum, "forum_name")
+                      if charter.get("forum") else "") or ""
+        return notification.notify(
+            CHALLENGE_EVENT,
+            [*charter_people(charter), *challenge_office()],
+            {
+                "charter_title": charter.charter_title or charter.name,
+                "forum_name": forum_name,
+                "outcome": charter.rgo_challenge_status,
+                "comments": charter.rgo_challenge_comments or "",
+                "reviewed_by": frappe.utils.get_fullname(charter.rgo_reviewed_by) if charter.rgo_reviewed_by else "",
+                "outstanding": bool(charter.requires_review),
+            },
+            "Committee Charter",
+            charter.name,
+        )
+    except Exception:
+        frappe.log_error(title=_("Charter challenge notice for {0} failed").format(charter.name),
+                         message=frappe.get_traceback())
+        return []
 
 
 def clearance_blockers(charter) -> list[str]:

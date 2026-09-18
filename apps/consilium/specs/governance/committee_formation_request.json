@@ -39,6 +39,15 @@
       "description": "Required for a modify or retire request."
     },
     {
+      "fieldname": "change_materiality",
+      "fieldtype": "Select",
+      "label": "Materiality Of Change",
+      "options": "\nMinor\nSignificant\nMaterial",
+      "mandatory_depends_on": "eval:doc.request_type=='Modify'",
+      "description": "How material the requested change is. Required for a change to an existing forum; it selects the approval path.",
+      "provenance": "G-8: the approval path differs by materiality of change; captured at intake"
+    },
+    {
       "fieldname": "is_new_committee",
       "fieldtype": "Check",
       "label": "Is New Committee",
@@ -212,7 +221,7 @@
       "default": "Draft",
       "in_list_view": 1,
       "in_standard_filter": 1,
-      "description": "The nine-state formation flow. A label: logic reads the semantic flags."
+      "description": "Where the request stands in the formation process."
     },
     {
       "fieldname": "is_editable",
@@ -248,7 +257,7 @@
       "label": "Requires Statement",
       "read_only": 1,
       "default": "0",
-      "description": "Semantic flag. Set by states that cannot be entered without a written reason."
+      "description": "Set automatically from the status: ticked when a written reason is needed."
     },
     {
       "fieldname": "is_committable",
@@ -256,7 +265,7 @@
       "label": "Is Committable",
       "read_only": 1,
       "default": "0",
-      "description": "Semantic flag. True only in the state from which a forum may be created."
+      "description": "Set automatically from the status: ticked once the forum may be created."
     },
     {
       "fieldname": "return_questions",

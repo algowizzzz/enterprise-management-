@@ -27,6 +27,58 @@
 </div>
 {%- else %}
 
+{#- G-10: the inventory attestation is conducted in the first quarter. A year
+    without one, and any campaign run off-cycle, is said here. -#}
+{%- if inventory_q1 %}
+{%- set q1_missed = inventory_q1.missed %}
+{%- set q1_due = inventory_q1.due %}
+<section class="cns-card" id="q1-standing" aria-labelledby="q1-heading" style="margin-bottom: var(--cns-space-5);">
+  <div class="cns-card-header">
+    <div>
+      <h2 class="cns-card-title" id="q1-heading">First-quarter inventory attestation</h2>
+      <p class="cns-card-subtitle">Chairs, secretaries and forum owners confirm the forum inventory once a year,
+        by 31 March. The campaign opens by itself on the first day of the quarter if nobody has opened it.</p>
+    </div>
+  </div>
+  <div class="cns-card-body">
+    {%- if q1_missed %}
+    <div class="cns-alert cns-status-danger" role="alert">
+      <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
+      <div><strong>No first-quarter attestation in {{ q1_missed | join(", ") | e }}.</strong>
+        The inventory was not confirmed in the quarter the standard requires{% if inventory_q1.off_cycle %}; an
+        off-cycle campaign does not replace it{% endif %}.</div>
+    </div>
+    {%- elif q1_due %}
+    <div class="cns-alert cns-status-warning">
+      <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+      <div><strong>The {{ q1_due | join(", ") | e }} attestation has not been opened yet.</strong>
+        It opens automatically today or tomorrow, or you can open it below.</div>
+    </div>
+    {%- else %}
+    <div class="cns-alert cns-status-success">
+      <i class="bi bi-check-circle" aria-hidden="true"></i>
+      <div><strong>Every year on record had its first-quarter attestation.</strong>
+        The next one is due by {{ inventory_q1.next_due_label | e }}.</div>
+    </div>
+    {%- endif %}
+    <dl class="cns-dl" style="margin-top: var(--cns-space-4);">
+      {%- for row in inventory_q1.years %}
+      <div><dt>{{ row.year | e }}</dt><dd>
+        {%- if row.campaign %}Held &middot; <span class="cns-mono">{{ row.campaign | e }}</span>
+        {%- elif row.standing == "missed" %}<span class="cns-pill cns-status-danger">Missed</span>
+        {%- else %}<span class="cns-pill cns-status-warning">Not opened yet</span>{% endif %}</dd></div>
+      {%- endfor %}
+    </dl>
+    {%- if inventory_q1.off_cycle %}
+    <p class="cns-text-sm cns-text-muted" style="margin-top: var(--cns-space-3);">Off-cycle (due outside a first
+      quarter):
+      {%- for row in inventory_q1.off_cycle %} <span class="cns-mono">{{ row.name | e }}</span>
+      ({{ row.period_label | e }}, due {{ row.due_label | e }}){{ "," if not loop.last }}{%- endfor %}.</p>
+    {%- endif %}
+  </div>
+</section>
+{%- endif %}
+
 {%- if may_open_forum %}
 <section class="cns-card" aria-labelledby="open-heading">
   <div class="cns-card-header">
@@ -50,7 +102,7 @@
         </div>
         <div class="cns-field">
           <label class="cns-label" for="open-period">Period<span class="cns-required" aria-hidden="true">*</span></label>
-          <input class="cns-input" id="open-period" value="{{ default_period }}" required aria-describedby="open-period-help">
+          <input class="cns-input" id="open-period" value="{{ inventory_default_period | e }}" required aria-describedby="open-period-help">
           <span class="cns-help" id="open-period-help">One campaign of each kind per period.</span>
         </div>
         <div class="cns-field">
@@ -59,8 +111,18 @@
         </div>
         <div class="cns-field">
           <label class="cns-label" for="open-due">Due on<span class="cns-required" aria-hidden="true">*</span></label>
-          <input class="cns-input" id="open-due" type="date" value="{{ default_due }}" required>
+          <input class="cns-input" id="open-due" type="date" value="{{ inventory_default_due | e }}" required
+                 aria-describedby="open-due-help">
+          <span class="cns-help" id="open-due-help">The inventory attestation is due by the end of a first quarter
+            (1 January to 31 March).</span>
         </div>
+      </div>
+      <div class="cns-field" id="off-cycle-field" hidden>
+        <label class="cns-label" for="open-off-cycle">Why is this campaign off-cycle?<span class="cns-required" aria-hidden="true">*</span></label>
+        <textarea class="cns-textarea" id="open-off-cycle" rows="3" aria-describedby="open-off-cycle-help"></textarea>
+        <span class="cns-help" id="open-off-cycle-help">This due date is outside the first quarter. An off-cycle
+          inventory attestation needs a recorded reason, such as a catch-up after a missed quarter. It does not
+          replace the first-quarter attestation.</span>
       </div>
       <div class="cns-form-actions">
         <button type="submit" class="cns-btn cns-btn-primary">
@@ -232,6 +294,37 @@
   });
 
   var openForm = document.getElementById("open-form");
+
+  /* G-10: the inventory attestation is due in a first quarter. The form offers
+     the next quarter's deadline for it, and asks for a reason when the chosen
+     date is outside the quarter; the server refuses such a campaign without one. */
+  var DEFAULTS = {
+    inventory: { period: {{ inventory_default_period | tojson }}, due: {{ inventory_default_due | tojson }} },
+    annual_review: { period: {{ default_period | tojson }}, due: {{ default_due | string | tojson }} }
+  };
+  function outsideFirstQuarter() {
+    var kind = document.getElementById("open-kind").value;
+    var due = document.getElementById("open-due").value;
+    if (kind !== "inventory" || !due) return false;
+    return Number(due.slice(5, 7)) > 3;
+  }
+  function syncOffCycle() {
+    var field = document.getElementById("off-cycle-field");
+    if (field) field.hidden = !outsideFirstQuarter();
+  }
+  if (openForm) {
+    document.getElementById("open-kind").addEventListener("change", function () {
+      var defaults = DEFAULTS[this.value];
+      if (defaults) {
+        document.getElementById("open-period").value = defaults.period;
+        document.getElementById("open-due").value = defaults.due;
+      }
+      document.getElementById("open-due-help").hidden = this.value !== "inventory";
+      syncOffCycle();
+    });
+    document.getElementById("open-due").addEventListener("change", syncOffCycle);
+    document.getElementById("open-due").addEventListener("input", syncOffCycle);
+  }
   if (openForm) {
     openForm.addEventListener("submit", function (event) {
       event.preventDefault();
@@ -239,18 +332,27 @@
       var due = document.getElementById("open-due");
       if (!period.value.trim()) { Consilium.toast.error("Name the period the campaign covers."); period.focus(); return; }
       if (!due.value) { Consilium.toast.error("Choose when the campaign is due."); due.focus(); return; }
+      var offCycle = document.getElementById("open-off-cycle");
+      if (outsideFirstQuarter() && !offCycle.value.trim()) {
+        Consilium.toast.error("That date is outside the first quarter. Say why an off-cycle campaign is needed, " +
+                              "or choose a date by 31 March.");
+        offCycle.focus();
+        return;
+      }
       var button = openForm.querySelector('button[type="submit"]');
       button.disabled = true;
       Consilium.api.call("consilium.governance.reviews.open_forum_campaign", {
         kind: document.getElementById("open-kind").value,
         period_label: period.value.trim(),
         opens_on: document.getElementById("open-opens").value,
-        due_on: due.value
+        due_on: due.value,
+        off_cycle_reason: outsideFirstQuarter() ? offCycle.value.trim() : ""
       }, { method: "POST" })
         .then(function (result) {
           result.target_doctype = "Governance Forum";
           showResult(result, "Campaign " + result.campaign + " opened.");
           Consilium.toast.success("Campaign " + result.campaign + " opened.", { title: "Opened" });
+          offCycle.value = "";
           return load();
         })
         .catch(function (error) {

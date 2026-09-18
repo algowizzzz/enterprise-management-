@@ -52,6 +52,11 @@
       "read": 1,
       "report": 1,
       "export": 1
+    },
+    {
+      "role": "Records Manager",
+      "read": 1,
+      "report": 1
     }
   ],
   "allow_import": 1,

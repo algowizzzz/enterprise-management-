@@ -1021,4 +1021,33 @@
       );
     }
   };
+  /* ------------------------------------------------------------------------
+     Full text for cells the theme cuts short.
+
+     The theme keeps register rows to one line: a long value ends in an
+     ellipsis. This offers the whole value as the cell's tooltip, but only
+     for a cell that is actually cut short, and only when someone points at
+     it or moves focus into it, so nothing runs per row as tables draw, a
+     screen reader does not hear every cell twice, and it covers every table
+     on the portal, including those page scripts build themselves.
+     ------------------------------------------------------------------------ */
+  function offerFullText(event) {
+    var target = event.target;
+    var cell = target && target.closest ? target.closest("table.cns-table td, table.cns-table tbody th") : null;
+    if (!cell) return;
+    var cut = cell.scrollWidth > cell.clientWidth + 1;
+    if (cut && !cell.hasAttribute("title")) {
+      var text = (cell.textContent || "").replace(/\s+/g, " ").trim();
+      if (text) {
+        cell.setAttribute("title", text);
+        cell.setAttribute("data-cns-full-text", "");
+      }
+    } else if (!cut && cell.hasAttribute("data-cns-full-text")) {
+      /* The column widened (a resize, a larger text size): the text is whole. */
+      cell.removeAttribute("title");
+      cell.removeAttribute("data-cns-full-text");
+    }
+  }
+  document.addEventListener("mouseover", offerFullText, { passive: true });
+  document.addEventListener("focusin", offerFullText);
 })(window, document);

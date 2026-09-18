@@ -62,6 +62,40 @@
       "label": "Filter"
     },
     {
+      "fieldname": "file_format",
+      "fieldtype": "Data",
+      "label": "Format",
+      "read_only": 1
+    },
+    {
+      "fieldname": "record_names",
+      "fieldtype": "JSON",
+      "label": "Records Exported",
+      "read_only": 1,
+      "description": "The identifier of every record in the file, in file order: the linkage register that lets a reply from the receiving system be traced back."
+    },
+    {
+      "fieldname": "excluded_count",
+      "fieldtype": "Int",
+      "label": "Left Out As Restricted",
+      "read_only": 1
+    },
+    {
+      "fieldname": "capped",
+      "fieldtype": "Check",
+      "label": "Reached The Row Limit",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "delivered_to",
+      "fieldtype": "Data",
+      "label": "Delivered To",
+      "read_only": 1,
+      "length": 500,
+      "description": "Downloaded by the person who ran it, or the drop folder a scheduled run wrote to."
+    },
+    {
       "fieldname": "status",
       "fieldtype": "Select",
       "label": "Status",

@@ -1,0 +1,121 @@
+{
+  "name": "Escalation Transition Rule",
+  "module": "Escalation",
+  "description": "One allowed move of an escalation matter's status, for a matter type and severity. A blank type, severity, from or to state means any. For each matter the most specific set of matching rules applies: type and severity, then type, then severity, then the rules that name neither.",
+  "autoname": "field:rule_code",
+  "naming_rule": "By fieldname",
+  "allow_rename": 1,
+  "title_field": "rule_code",
+  "search_fields": "rule_code,escalation_type,severity",
+  "sort_field": "rule_code",
+  "sort_order": "ASC",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Consilium Administrator",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "Escalation Owner",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Escalation Reviewer",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    },
+    {
+      "role": "Consilium Audit",
+      "read": 1,
+      "report": 1,
+      "export": 1
+    }
+  ],
+  "allow_import": 1,
+  "provenance": "REQUIREMENTS-COVERAGE.md E-8: workflow configurable by matter type and severity",
+  "fields": [
+    {
+      "fieldname": "rule_code",
+      "fieldtype": "Data",
+      "label": "Rule Code",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1,
+      "description": "Stable identifier. Deactivate a rule rather than deleting it, so the history of what was allowed stays readable."
+    },
+    {
+      "fieldname": "escalation_type",
+      "fieldtype": "Link",
+      "label": "Escalation Type",
+      "options": "Escalation Type",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Leave empty to apply to every type."
+    },
+    {
+      "fieldname": "severity",
+      "fieldtype": "Select",
+      "label": "Severity",
+      "options": "\nHigh\nMedium\nLow",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "description": "Leave empty to apply to every severity."
+    },
+    {
+      "fieldname": "from_status",
+      "fieldtype": "Select",
+      "label": "From Status",
+      "options": "\nOpen\nIn Progress\nUnder Review\nPending Review\nClosed\nClosed — Tracked Externally",
+      "in_list_view": 1,
+      "description": "The state the matter is in. Leave empty for any state it can be worked in."
+    },
+    {
+      "fieldname": "to_status",
+      "fieldtype": "Select",
+      "label": "To Status",
+      "options": "\nOpen\nIn Progress\nUnder Review\nPending Review\nClosed\nClosed — Tracked Externally",
+      "in_list_view": 1,
+      "description": "The state it may move to, including the states it comes to rest in on closure. Leave empty for any."
+    },
+    {
+      "fieldname": "allowed_role",
+      "fieldtype": "Link",
+      "label": "Allowed Role",
+      "options": "Role",
+      "in_list_view": 1,
+      "description": "Who may make this move, on top of holding the matter at its stage. Leave empty for whoever holds it."
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    }
+  ]
+}

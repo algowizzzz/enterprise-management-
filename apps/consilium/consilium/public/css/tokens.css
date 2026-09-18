@@ -130,7 +130,9 @@
   /* Text */
   --cns-text: #16202e;
   --cns-text-secondary: #46536b;
-  --cns-text-muted: #66738c;
+  /* 4.9:1 on the page background: the lightest surface muted text sits on.
+     (It was #66738c, 4.41:1, just under the 4.5:1 WCAG AA needs.) */
+  --cns-text-muted: #5f6b82;
   --cns-text-disabled: #97a1b3;
   --cns-text-inverse: #f4f6f9;
   --cns-text-link: var(--cns-primary-500);
@@ -139,6 +141,10 @@
   /* Borders */
   --cns-border: #d7dde7;
   --cns-border-strong: #b6c0ce;
+  /* The outline of a form field. A field's edge is what tells someone where to
+     click and type, so WCAG 1.4.11 asks 3:1 against its surroundings; the
+     general strong border (1.84:1) is kept for dividers and quiet buttons. */
+  --cns-border-field: #848fa3;
   --cns-border-subtle: #e6eaf1;
   --cns-divider: #e6eaf1;
 
@@ -237,6 +243,7 @@
 
   --cns-border: #27364f;
   --cns-border-strong: #3b4d6c;
+  --cns-border-field: #607391;
   --cns-border-subtle: #1c2940;
   --cns-divider: #1c2940;
 

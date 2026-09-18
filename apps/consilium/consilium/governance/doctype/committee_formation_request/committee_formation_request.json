@@ -11,6 +11,7 @@
   "requester",
   "request_type",
   "subject_forum",
+  "change_materiality",
   "is_new_committee",
   "rationale",
   "purpose_scope",
@@ -81,6 +82,14 @@
    "fieldtype": "Link",
    "label": "Subject Forum",
    "options": "Governance Forum"
+  },
+  {
+   "description": "How material the requested change is. Required for a change to an existing forum; it selects the approval path.",
+   "fieldname": "change_materiality",
+   "fieldtype": "Select",
+   "label": "Materiality Of Change",
+   "mandatory_depends_on": "eval:doc.request_type=='Modify'",
+   "options": "\nMinor\nSignificant\nMaterial"
   },
   {
    "default": "1",
@@ -368,7 +377,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 21:00:00.000000",
+ "modified": "2026-09-18 19:59:18.830431",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Committee Formation Request",

@@ -69,7 +69,7 @@
 </div>
 {%- else %}
 
-<div id="forum-summary" class="cns-card">
+<div id="forum-summary" class="cns-card cns-record-summary">
   <div class="cns-card-body">
     <p class="cns-text-muted cns-text-sm">Loading the record&hellip;</p>
   </div>
@@ -91,6 +91,7 @@
   <button class="cns-tab" role="tab" id="tab-decisions" aria-controls="panel-decisions" aria-selected="false" tabindex="-1">Decisions</button>
   <button class="cns-tab" role="tab" id="tab-escalations" aria-controls="panel-escalations" aria-selected="false" tabindex="-1">Escalations</button>
   <button class="cns-tab" role="tab" id="tab-history"  aria-controls="panel-history"  aria-selected="false" tabindex="-1">History</button>
+  <button class="cns-tab" role="tab" id="tab-timing"   aria-controls="panel-timing"   aria-selected="false" tabindex="-1">Time limits</button>
 </div>
 
 <!-- ------------------------------ Details ------------------------------ -->
@@ -138,6 +139,8 @@
       <div id="members-table"></div>
     </div>
   </section>
+  {#- G-13: the chair, sponsor or secretary nominates their own delegate. -#}
+  {% include "consilium/templates/includes/forum_delegates.html" %}
 </div>
 
 <!-- ----------------------------- Linkages ------------------------------ -->
@@ -361,6 +364,9 @@
     </div>
   </section>
 </div>
+
+{#- G-12: time at each status, dated obligations and clocks. -#}
+{% include "consilium/templates/includes/forum_timing.html" %}
 
 {%- endif %}
 {% endblock %}

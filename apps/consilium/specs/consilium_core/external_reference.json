@@ -51,6 +51,13 @@
       "label": "Label"
     },
     {
+      "fieldname": "url",
+      "fieldtype": "Data",
+      "label": "Link",
+      "length": 1000,
+      "description": "Where the record can be opened in its own system: http or https only. Shown as a link; the platform never fetches it."
+    },
+    {
       "fieldname": "last_seen_on",
       "fieldtype": "Date",
       "label": "Last Seen On"
@@ -65,6 +72,27 @@
       "fieldname": "notes",
       "fieldtype": "Text",
       "label": "Notes"
+    },
+    {
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Active",
+      "default": "1",
+      "in_list_view": 1,
+      "description": "Cleared when the link is removed. The row is kept, with who removed it and when, so the change log reads back."
+    },
+    {
+      "fieldname": "removed_by",
+      "fieldtype": "Link",
+      "label": "Removed By",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "removed_on",
+      "fieldtype": "Datetime",
+      "label": "Removed On",
+      "read_only": 1
     }
   ],
   "permissions": [

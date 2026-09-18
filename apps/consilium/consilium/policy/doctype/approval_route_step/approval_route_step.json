@@ -12,6 +12,7 @@
   "required_role",
   "assignee_source",
   "assignee",
+  "user_group",
   "mode",
   "condition",
   "is_mandatory"
@@ -40,11 +41,12 @@
   },
   {
    "default": "Document Owner",
+   "description": "Who decides the step. Role Queue and User Group send it to everyone holding the required role, or in the group: any of them may decide it.",
    "fieldname": "assignee_source",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Assignee Source",
-   "options": "Document Owner\nDocument Approver\nDocument Sponsor\nDocument Liaison\nParent Document Owner\nNamed User",
+   "options": "Document Owner\nDocument Approver\nDocument Sponsor\nDocument Liaison\nParent Document Owner\nNamed User\nRole Queue\nUser Group",
    "reqd": 1
   },
   {
@@ -52,6 +54,15 @@
    "fieldtype": "Link",
    "label": "Named Assignee",
    "options": "User"
+  },
+  {
+   "depends_on": "eval:doc.assignee_source=='User Group'",
+   "description": "The group whose members may decide this step, when the assignee source is User Group.",
+   "fieldname": "user_group",
+   "fieldtype": "Link",
+   "label": "User Group",
+   "mandatory_depends_on": "eval:doc.assignee_source=='User Group'",
+   "options": "User Group"
   },
   {
    "default": "Sequential",
@@ -76,7 +87,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-09-17 23:50:00.735615",
+ "modified": "2026-09-18 20:04:18.726773",
  "modified_by": "Administrator",
  "module": "Policy",
  "name": "Approval Route Step",

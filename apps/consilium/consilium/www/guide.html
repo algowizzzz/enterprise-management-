@@ -1,0 +1,159 @@
+{% extends "consilium/templates/base_portal.html" %}
+
+{#-
+  The guide reader (/guide).
+  The onboarding guide in docs/guides, a chapter at a time: the contents on the
+  left (chapters in two groups, User guide and Admin guide, and the current
+  chapter's sections, highlighted as you scroll), the chapter in the middle,
+  previous and next at the foot. Below 992px the contents fold into a
+  "Contents" button above the chapter.
+
+  guide.html (the chapter) is rendered from markdown and cleaned on the server
+  (consilium_core/guide.py) — it is the one value printed without `| e`.
+  Everything else is escaped here. Behaviour: consilium-guide.js.
+-#}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ asset_url('/assets/consilium/css/guide.css') }}">
+{% endblock %}
+
+{% block page_content %}
+{%- set g = guide %}
+<div class="cns-guide" data-cns-guide>
+  <aside class="cns-guide-side" aria-labelledby="cns-guide-contents-label">
+    <div class="cns-guide-side-inner">
+      <form class="cns-guide-search" action="/guide" method="get" role="search">
+        <label class="cns-visually-hidden" for="cns-guide-q">Search the guide</label>
+        <input class="cns-input cns-guide-search-input" id="cns-guide-q" name="q" type="search"
+               maxlength="100" autocomplete="off" placeholder="Search the guide"
+               value="{{ (g.query if g else '') | e }}">
+        <button type="submit" class="cns-btn cns-btn-secondary cns-btn-sm">Search</button>
+      </form>
+
+      <details class="cns-guide-contents" open data-cns-guide-contents>
+        <summary class="cns-guide-contents-toggle">
+          <i class="bi bi-list-ul" aria-hidden="true"></i>
+          <span id="cns-guide-contents-label">Contents</span>
+          <i class="bi bi-chevron-down cns-guide-contents-caret" aria-hidden="true"></i>
+        </summary>
+        <nav class="cns-guide-nav" aria-labelledby="cns-guide-contents-label">
+          <a class="cns-guide-home{% if g and g.current == 'index' and g.results is none %} is-current{% endif %}"
+             href="/guide"{% if g and g.current == 'index' and g.results is none %} aria-current="page"{% endif %}>
+            <i class="bi bi-journal-bookmark" aria-hidden="true"></i> About this guide
+          </a>
+          {%- for group in [("User guide", g.user_chapters if g else []), ("Admin guide", g.admin_chapters if g else [])] %}
+          {%- if group[1] %}
+          <p class="cns-guide-group" id="cns-guide-group-{{ loop.index }}">{{ group[0] }}</p>
+          <ol class="cns-guide-chapters" aria-labelledby="cns-guide-group-{{ loop.index }}">
+            {%- for ch in group[1] %}
+            {%- set is_current = g.current == ch.id and g.results is none %}
+            <li class="cns-guide-chapter{% if is_current %} is-current{% endif %}">
+              <a href="{{ ch.url | e }}"{% if is_current %} aria-current="page"{% endif %}>{{ ch.title | e }}</a>
+              {%- if is_current and g.toc %}
+              <ul class="cns-guide-toc" aria-label="In this chapter">
+                {%- for s in g.toc %}
+                <li class="cns-guide-toc-l{{ s.level }}"><a href="#{{ s.anchor | e }}" data-cns-toc-link>{{ s.text | e }}</a></li>
+                {%- endfor %}
+              </ul>
+              {%- endif %}
+            </li>
+            {%- endfor %}
+          </ol>
+          {%- endif %}
+          {%- endfor %}
+        </nav>
+      </details>
+    </div>
+  </aside>
+
+  <div class="cns-guide-main">
+    {%- if not g or not g.available %}
+    <section class="cns-card" aria-labelledby="cns-guide-missing">
+      <div class="cns-card-body">
+        <h1 class="cns-card-title" id="cns-guide-missing">The guide is not installed on this server</h1>
+        <p>The guide's files were not found. Your administrator can point the platform at them;
+          until then, the <strong>Help</strong> button still answers questions.</p>
+      </div>
+    </section>
+
+    {%- elif g.results is not none %}
+    <article class="cns-guide-article">
+      <h1>Search the guide</h1>
+      <p class="cns-guide-result-count" role="status">
+        {%- if g.results %}{{ g.results | length }} section{{ '' if g.results | length == 1 else 's' }} match
+        &ldquo;{{ g.query | e }}&rdquo;.
+        {%- else %}Nothing in the guide matches &ldquo;{{ g.query | e }}&rdquo;. Try other words, or ask
+        <strong>Help</strong>.{% endif %}
+      </p>
+      {%- if g.results %}
+      <ol class="cns-guide-results">
+        {%- for r in g.results %}
+        <li>
+          <a class="cns-guide-result-title" href="{{ r.url | e }}">{{ r.section | e }}</a>
+          <span class="cns-guide-result-chapter">{{ r.chapter_title | e }}</span>
+          {%- if r.excerpt %}<p class="cns-guide-result-excerpt">{{ r.excerpt | e }}</p>{% endif %}
+        </li>
+        {%- endfor %}
+      </ol>
+      {%- endif %}
+      <p><a href="/guide">Back to the guide</a></p>
+    </article>
+
+    {%- else %}
+    <article class="cns-guide-article" data-cns-guide-article>
+      <div class="cns-guide-tools">
+        {%- if g.current_admin %}<span class="cns-guide-badge"><i class="bi bi-shield-lock" aria-hidden="true"></i> Admin guide</span>{% endif %}
+        <button type="button" class="cns-btn cns-btn-ghost cns-btn-sm" data-cns-guide-print>
+          <i class="bi bi-printer" aria-hidden="true"></i> Print
+        </button>
+      </div>
+      {#- Rendered from markdown and cleaned on the server (guide.render). #}
+      {{ g.html }}
+
+      {%- if g.current == 'index' %}
+      <section class="cns-guide-cards" aria-labelledby="cns-guide-chapters-heading">
+        <h2 id="cns-guide-chapters-heading">Chapters</h2>
+        {%- for group in [("User guide", g.user_chapters), ("Admin guide", g.admin_chapters)] %}
+        {%- if group[1] %}
+        {%- if g.admin_chapters %}<h3>{{ group[0] }}</h3>{% endif %}
+        <ul class="cns-guide-card-list">
+          {%- for ch in group[1] %}
+          <li>
+            <a class="cns-guide-card" href="{{ ch.url | e }}">
+              <i class="bi {{ ch.icon | e }} cns-guide-card-icon" aria-hidden="true"></i>
+              <span class="cns-guide-card-title">{{ ch.title | e }}</span>
+              <span class="cns-guide-card-desc">{{ ch.summary | e }}</span>
+            </a>
+          </li>
+          {%- endfor %}
+        </ul>
+        {%- endif %}
+        {%- endfor %}
+      </section>
+      {%- endif %}
+
+      {%- if g.prev or g.next %}
+      <nav class="cns-guide-pager" aria-label="Previous and next chapter">
+        {%- if g.prev %}
+        <a class="cns-guide-pager-link cns-guide-pager-prev" href="{{ g.prev.url | e }}" rel="prev">
+          <span class="cns-guide-pager-dir"><i class="bi bi-arrow-left" aria-hidden="true"></i> Previous</span>
+          <span class="cns-guide-pager-title">{{ g.prev.title | e }}</span>
+        </a>
+        {%- else %}<span></span>{% endif %}
+        {%- if g.next %}
+        <a class="cns-guide-pager-link cns-guide-pager-next" href="{{ g.next.url | e }}" rel="next">
+          <span class="cns-guide-pager-dir">Next <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+          <span class="cns-guide-pager-title">{{ g.next.title | e }}</span>
+        </a>
+        {%- endif %}
+      </nav>
+      {%- endif %}
+    </article>
+    {%- endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ asset_url('/assets/consilium/js/consilium-guide.js') }}"></script>
+{% endblock %}

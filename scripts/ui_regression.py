@@ -146,7 +146,8 @@ def check_reflection(frappe, sweep: Sweep) -> None:
     such pages read; the payload must never come back verbatim.
     """
     for route in portal_pages():
-        params = {k: PAYLOAD for k in ("name", "forum", "version", "request", "batch", "requirement")}
+        params = {k: PAYLOAD for k in ("name", "forum", "version", "request", "batch", "requirement",
+                                       "chapter", "q")}
         status, body = render(frappe, route, "Administrator", params)
         if PAYLOAD in body or "<script>cnsxss()" in body:
             sweep.fail("address values are escaped", f"/{route}: payload reflected unescaped")

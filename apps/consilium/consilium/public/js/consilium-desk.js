@@ -26,6 +26,18 @@
     return ADMIN_ROLES.some(function (role) { return roles.indexOf(role) !== -1; });
   }
 
+  /* The workspace theme (desk-theme.css) takes the brand colour from Portal
+     Branding, which the server puts in the boot data (branding.boot_session).
+     Set once, on <html>, as the two variables the theme reads; without them
+     the theme falls back to the default brand colour. */
+  var brand = window.frappe && frappe.boot && frappe.boot.consilium_brand;
+  var HEX = /^#[0-9a-fA-F]{6}$/;
+  if (brand && HEX.test(brand.primary || "") && HEX.test(brand.primary_dark || "") && HEX.test(brand.on_primary || "")) {
+    document.documentElement.style.setProperty("--cns-desk-brand", brand.primary);
+    document.documentElement.style.setProperty("--cns-desk-on-brand", brand.on_primary);
+    document.documentElement.style.setProperty("--cns-desk-brand-dark", brand.primary_dark);
+  }
+
   $(document).on("form-refresh", function (event, frm) {
     if (!frm || !frm.meta || MODULES.indexOf(frm.meta.module) === -1 || isAdministrator()) return;
     FLAGS.forEach(function (fieldname) {

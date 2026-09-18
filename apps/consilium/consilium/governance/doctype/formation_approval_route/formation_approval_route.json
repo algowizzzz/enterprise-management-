@@ -10,6 +10,8 @@
  "field_order": [
   "route_title",
   "request_type",
+  "forum_type",
+  "change_materiality",
   "is_active",
   "description",
   "steps"
@@ -30,6 +32,24 @@
    "in_list_view": 1,
    "label": "Applies To Request Type",
    "options": "Any\nCreate\nModify\nRetire",
+   "reqd": 1
+  },
+  {
+   "description": "Leave empty to apply to every forum type. A route naming the request's forum type is preferred over one that does not.",
+   "fieldname": "forum_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Applies To Forum Type",
+   "options": "Governance Forum Type"
+  },
+  {
+   "default": "Any",
+   "description": "The materiality of change the request records at intake. A route naming it is preferred over one that applies to any.",
+   "fieldname": "change_materiality",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Applies To Materiality",
+   "options": "Any\nMinor\nSignificant\nMaterial",
    "reqd": 1
   },
   {
@@ -54,7 +74,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-18 03:31:55.000000",
+ "modified": "2026-09-18 19:59:18.830431",
  "modified_by": "Administrator",
  "module": "Governance",
  "name": "Formation Approval Route",
@@ -94,7 +114,7 @@
    "role": "Consilium Audit"
   }
  ],
- "search_fields": "route_title,request_type",
+ "search_fields": "route_title,request_type,forum_type,change_materiality",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

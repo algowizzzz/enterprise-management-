@@ -348,6 +348,16 @@ def _approval_items(user: str, today) -> list[dict]:
             if row.name not in seen:
                 rows.append(row)
                 queued.add(row.name)
+    # A governing-document step routed to a role queue or a user group (P-8)
+    # waits there the same way; the policy module says which steps and who.
+    if frappe.db.exists("DocType", "Governing Document"):
+        from consilium.policy import routing
+
+        seen = {row.name for row in rows}
+        for row in routing.queued_steps_for(user):
+            if row.name not in seen:
+                rows.append(row)
+                queued.add(row.name)
     items = []
     for row in rows:
         # A sequential step behind an undecided one is not yet anyone's task:

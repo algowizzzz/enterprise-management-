@@ -354,7 +354,8 @@ class TestCampaignAdministration(InboxCase):
         with self.assertRaises(frappe.ValidationError):
             reviews.open_forum_campaign("not-a-kind", unique("period"), str(add_days(nowdate(), 30)))
 
-        opened = reviews.open_forum_campaign("inventory", unique("period"), str(add_days(nowdate(), 30)))
+        # Due in a first quarter: the inventory attestation is conducted then (G-10).
+        opened = reviews.open_forum_campaign("inventory", unique("period"), str(reviews.next_first_quarter_due()))
         doc = frappe.get_doc("Attestation Campaign", opened["campaign"])
         self.assertEqual(doc.target_doctype, "Governance Forum")
         self.assertTrue(doc.is_open)

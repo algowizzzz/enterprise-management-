@@ -45,6 +45,9 @@ STATE_FLAGS = [
     ("Disposition Event", "status", "Approved",                     1, 1, 0, 1, 0, 0, 0),
     ("Disposition Event", "status", "Executed",                     0, 0, 0, 0, 0, 0, 0),
     ("Disposition Event", "status", "Cancelled",                    0, 0, 0, 0, 0, 0, 0),
+    # Kept on an approved decision to retain: closed, and not flagged again
+    # until its retained_until date (consilium_core/records.py).
+    ("Disposition Event", "status", "Retained",                     0, 0, 0, 0, 0, 0, 0),
 
     # Import Batch — editable until it has been committed.
     ("Import Batch", "status", "Uploaded",                          1, 1, 0, 1, 0, 0, 0),

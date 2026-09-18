@@ -287,15 +287,19 @@ class. The Result column describes the cited tests.
 
 ### 4.1 Class (d): not implemented, wholly or in a mandatory clause
 
+**Being built now (18 Sep).** All of the items below are in a build round
+under way: G-8, G-10, G-14 and O-4, P-8, E-8, E-9 and O-3. They will be
+re-measured and re-graded when it finishes.
+
 | ID | Missing | What would close it |
 |---|---|---|
 | G-8 | Approval path chosen by forum type and by materiality of change. `formation.resolve_route` matches only `request_type`. | Add `forum_type` (and a materiality select captured at intake) to `Formation Approval Route`, choose the most specific match in `resolve_route`, and test that two forum types raise different steps. |
-| G-10 | First-quarter enforcement of the annual inventory attestation. Opening is manual at any date; the 2026 demo campaign opened in August. | A scheduled job (or a validated default) that opens the Forum Inventory campaign in Q1 with a Q1 due date. Flag a year with no Q1 campaign on `/attestation-campaigns` and `/reports`. |
-| G-14, O-4 | Meeting-schedule and charter-review notifications. | Add events and templates for a scheduled or rescheduled `Forum Meeting` and for charter challenge and charter review due, raised through `notification.notify`. |
-| O-3 | Dashboard customisation. | Let a viewer choose and save which sections and dimensions `/reports` shows (per-user state), or ship Dashboard Charts and Number Cards on the Governance workspace so desk users can compose their own. |
-| P-8 | Reminders and escalation for approval steps left pending: no job reads open `Approval Decision` rows, and the phase SLA warns only the document owner. There is also no routing of policy approval steps to a user group or role queue: `required_role` is stored but unused for policy steps. | A daily section in `consilium_core/reminders.py` over open Approval Decisions (due from the step's SLA or a configured lag), telling the assignee and escalating to the document approver or sponsor, de-duplicated through Reminder Log. Add a "Role Queue" / "User Group" `assignee_source` to `Approval Route Step`, reusing the formation role-queue pattern (`governance/formation.py`). |
 | E-8 | Workflow configurable by matter type and severity. The set of states is configuration, but moves are the same for every type and severity: the stage's role may move an open matter to any other open state. No Workflow exists on `Escalation Matter`. | Configurable allowed transitions per type and severity (for example a transition table keyed by type and severity, or a framework Workflow with transition conditions), read by `resolution.status_targets` and enforced in `move_matter_status`. |
 | E-9 | Configurable sequential or parallel approvals aligned to type, severity and hierarchy. A risk acceptance has one named approver (or a forum motion); a second request is refused; no chain is configured per type or severity. | Resolve an approval route for a risk acceptance (and, if wanted, the matter) from configuration keyed by type and severity, raising several `Approval Decision` steps through Core's sequential or parallel mode, as policy routes already do. |
+| P-8 | Reminders and escalation for approval steps left pending: no job reads open `Approval Decision` rows, and the phase SLA warns only the document owner. There is also no routing of policy approval steps to a user group or role queue: `required_role` is stored but unused for policy steps. | A daily section in `consilium_core/reminders.py` over open Approval Decisions (due from the step's SLA or a configured lag), telling the assignee and escalating to the document approver or sponsor, de-duplicated through Reminder Log. Add a "Role Queue" / "User Group" `assignee_source` to `Approval Route Step`, reusing the formation role-queue pattern (`governance/formation.py`). |
+| G-14, O-4 | Meeting-schedule and charter-review notifications. | Add events and templates for a scheduled or rescheduled `Forum Meeting` and for charter challenge and charter review due, raised through `notification.notify`. |
+| G-10 | First-quarter enforcement of the annual inventory attestation. Opening is manual at any date; the 2026 demo campaign opened in August. | A scheduled job (or a validated default) that opens the Forum Inventory campaign in Q1 with a Q1 due date. Flag a year with no Q1 campaign on `/attestation-campaigns` and `/reports`. |
+| O-3 | Dashboard customisation. | Let a viewer choose and save which sections and dimensions `/reports` shows (per-user state), or ship Dashboard Charts and Number Cards on the Governance workspace so desk users can compose their own. |
 
 ### 4.2 Class (c): backend exists, a step has no screen
 
