@@ -94,8 +94,17 @@ markdown2==2.5.5
 markdownify==0.14.1
 MarkupSafe==3.0.3
 matplotlib-inline==0.2.2
-maxminddb-geolite2==2018.703
-maxminddb==3.2.0
+# maxminddb-geolite2 and maxminddb are deliberately NOT here.
+#
+# The framework uses them only to guess a country from an IP address, in the
+# setup wizard and on a session record. It wraps the import in try/except
+# ImportError and returns None when they are absent, so nothing breaks.
+#
+# They are removed because of the data, not the code. The Python wrapper is
+# BSD-licensed, but the package embeds a 2018 snapshot of a geo-IP database
+# whose upstream terms changed the following year. Explaining that to a
+# licence-review team, for a feature this product does not use, costs more than
+# the feature is worth. 724 tests pass without them.
 monotonic==1.6
 more-itertools==11.1.0
 num2words==0.5.14

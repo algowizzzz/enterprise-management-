@@ -4,6 +4,7 @@ authors = [{ name = "Consilium", email = "dev@example.com" }]
 description = "Enterprise Governance, Risk & Policy platform"
 requires-python = ">=3.10"
 readme = "README.md"
+license = { text = "MIT" }
 dynamic = ["version"]
 dependencies = []
 

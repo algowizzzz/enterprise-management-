@@ -2,6 +2,7 @@
 name = "winbench"
 version = "0.1.0"
 description = "Cross-platform (Windows-first) replacement for frappe's `bench` CLI: no supervisor, no nginx, no gunicorn, Postgres-only."
+license = { text = "MIT" }
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "click>=8.1",
